@@ -1,3 +1,5 @@
+server:
+  port: 8090
 spring:
   datasource:
     url: jdbc:h2:mem:num;MODE=PostgreSQL
@@ -23,3 +25,4 @@ hapi:
     validation:
       enabled: false
       request-only: true
+
