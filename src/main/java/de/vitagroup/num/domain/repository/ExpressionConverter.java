@@ -17,7 +17,7 @@ public class ExpressionConverter implements AttributeConverter<Expression, Strin
             ObjectMapper mapper = new ObjectMapper();
             return mapper.writeValueAsString(expression);
         } catch (JsonProcessingException e) {
-            log.error("JSON writing error", e);
+            log.error("Cannot convert expression to JSON", e);
         }
         return StringUtils.EMPTY;
     }
@@ -28,7 +28,7 @@ public class ExpressionConverter implements AttributeConverter<Expression, Strin
             ObjectMapper mapper = new ObjectMapper();
             return mapper.readValue(json, Expression.class);
         } catch (JsonProcessingException e) {
-            log.error("JSON reading error", e);
+            log.error("Cannot convert JSON to expression", e);
         }
         return null;
     }

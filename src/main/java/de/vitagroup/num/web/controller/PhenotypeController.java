@@ -4,7 +4,6 @@ import de.vitagroup.num.domain.Phenotype;
 import de.vitagroup.num.service.PhenotypeService;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,18 +27,6 @@ public class PhenotypeController {
     @ApiOperation(value = "Stores a phenotype")
     public ResponseEntity<Phenotype> createPhenotype(@NotNull @Valid @RequestBody Phenotype phenotype) {
         return ResponseEntity.ok(phenotypeService.createPhenotypes(phenotype));
-    }
-
-    @PutMapping("/phenotype")
-    @ApiOperation(value = "Updates an existing phenotype")
-    public ResponseEntity<List<Phenotype>> updatePhenotype() {
-        throw new NotImplementedException();
-    }
-
-    @DeleteMapping("/phenotype")
-    @ApiOperation(value = "Deletes an existing phenotype")
-    public ResponseEntity<List<Phenotype>> deletePhenotype() {
-        throw new NotImplementedException();
     }
 
 }
