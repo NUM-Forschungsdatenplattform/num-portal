@@ -1,8 +1,13 @@
 # Num-portal
 
-Spring boot shell project
+### Database 
 
-### Database
+Start local instance of PostgreSQL: 
 
-H2 in memory database setup
-Admin console can be accessed at http://localhost:8090/h2/
+``` 
+docker run --name postgres -e POSTGRES_PASSWORD=postgres -d postgres -p 5432:5432
+```
+
+### Swagger
+
+http://localhost:8090/swagger-ui/
