@@ -31,7 +31,7 @@ public class ExpressionValidator implements ConstraintValidator<ValidExpression,
                 return false;
             } else if (current instanceof AqlExpression && isInvalidAqlExpression((AqlExpression) current)) {
                 return false;
-            } else if (current instanceof AqlExpression) {
+            } else if (current instanceof GroupExpression) {
                 queue.addAll(((GroupExpression) current).getChildren());
             }
         }
