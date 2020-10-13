@@ -19,6 +19,8 @@ jobs:
           command: |
             echo 'SONAR NOT IMPLEMENTED!'
   update-version:
+    docker:
+      - image: circleci/openjdk:stretch
     steps:
       - configure-git-for-ci-bot
       - run:
