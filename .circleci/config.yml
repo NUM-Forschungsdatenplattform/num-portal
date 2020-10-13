@@ -28,18 +28,17 @@ jobs:
     steps:
       - checkout
       - configure-git-for-ci-bot
-      - update-and-publish-snapshot-release-version
       - setup_remote_docker:
           version: 19.03.13
+          docker_layer_caching: true
       - run:
           name: Build and tag image and push
           command: |
             if [ $CIRCLE_BRANCH = "master" ]; then
                 TAG=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
             else
-                TAG="develop"
+                TAG=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
             fi
-            echo "Publishing Docker image with following tag: ${TAG}"
             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
             ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$DOCKER_USER/num-portal:$TAG -Djdk.tls.client.protocols=TLSv1.2
             docker push $DOCKER_USER/num-portal:$TAG
@@ -55,7 +54,7 @@ commands:
   update-and-publish-snapshot-release-version:
     steps:
       - run:
-          name: Update Snapshot Release Version and push it to the develop
+          name: Update Snapshot Release Version
           command: |
             echo test
             last_commit="$(git log -1 --pretty=%B | cat)"
@@ -125,4 +124,5 @@ commands:
           command: |
             git config --global user.email "50235421+ehrbase-tech-user@users.noreply.github.com"
             git config --global user.name "ci-bot"
+            # git config --global push.followTags true
             git remote -v
