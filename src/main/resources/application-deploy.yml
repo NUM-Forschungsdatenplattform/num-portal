@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DATABASE_SERVER}/${DATABASE_NAME}?currentSchema=num
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  flyway:
+    user: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
