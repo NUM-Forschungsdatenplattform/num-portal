@@ -18,19 +18,9 @@ jobs:
           name: Run Sonar
           command: |
             echo 'SONAR NOT IMPLEMENTED!'
-  configure-git-for-ci-bot:
-    steps:
-      - add_ssh_keys:
-          fingerprints:
-            - 0c:dd:08:d5:13:cf:20:3c:25:c4:f3:59:a8:a5:c4:36
-      - run:
-          name: Configure GIT
-          command: |
-            git config --global user.email "50235421+ehrbase-tech-user@users.noreply.github.com"
-            git config --global user.name "ci-bot"
-            git remote -v
   update-version:
     steps:
+      - configure-git-for-ci-bot
       - run:
           name: Update Snapshot Develop Version
           description: |
@@ -96,3 +86,16 @@ workflows:
           filters:
             branches:
               only: master|develop|/release\/.*/
+
+commands:
+  configure-git-for-ci-bot:
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - 0c:dd:08:d5:13:cf:20:3c:25:c4:f3:59:a8:a5:c4:36
+      - run:
+          name: Configure GIT
+          command: |
+            git config --global user.email "50235421+ehrbase-tech-user@users.noreply.github.com"
+            git config --global user.name "ci-bot"
+            git remote -v
