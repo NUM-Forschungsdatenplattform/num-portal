@@ -37,7 +37,7 @@ jobs:
             if [ $CIRCLE_BRANCH = "master" ]; then
                 TAG=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
             else
-                TAG="develop"
+                TAG=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
             fi
             echo "Publishing Docker image with following tag: $TAG"
             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
