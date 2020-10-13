@@ -83,7 +83,6 @@ workflows:
   build_and_test:
     jobs:
       - test
-      - configure-git-for-ci-bot
       - update-version:
           requires:
             - test
