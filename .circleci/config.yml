@@ -1,0 +1,127 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: circleci/openjdk:stretch
+    steps:
+      - checkout
+      - run:
+          name: Run unit tests
+          command: |
+            echo 'UNIT TESTS NOT IMPLEMENTED!'
+      - run:
+          name: Run CVE scan
+          command: |
+            echo 'CVE SCAN NOT IMPLEMENTED!'
+      - run:
+          name: Run Sonar
+          command: |
+            echo 'SONAR NOT IMPLEMENTED!'
+
+  build_and_deploy:
+    docker:
+      - image: circleci/openjdk:stretch
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_HUB_PASSWORD
+    steps:
+      - checkout
+      - configure-git-for-ci-bot
+      - update-and-publish-snapshot-release-version
+      - setup_remote_docker:
+          version: 19.03.13
+      - run:
+          name: Build and tag image and push
+          command: |
+            if [ $CIRCLE_BRANCH = "master" ]; then
+                TAG=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
+            else
+                TAG=$CIRCLE_BRANCH
+            fi
+            echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+            ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$DOCKER_USER/num-portal:$TAG -Djdk.tls.client.protocols=TLSv1.2
+            docker push $DOCKER_USER/num-portal:$TAG
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - test
+      - build_and_deploy
+
+commands:
+  update-and-publish-snapshot-release-version:
+    steps:
+      - run:
+          name: Update Snapshot Release Version and push it to the develop
+          command: |
+            echo test
+            last_commit="$(git log -1 --pretty=%B | cat)"
+            echo $last_commit
+            case $last_commit in
+                *"[major]"*)
+
+                    echo "bump major release version"
+                    ./mvnw build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.nextMajorVersion}.0.0 versions:commit
+                    SDK_VERSION=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
+
+                    git commit -am "updated major version to v${SDK_VERSION}-SNAPSHOT [skip ci]"
+                    git checkout -b major-snapshot-update
+                    git merge --strategy=ours develop
+                    git checkout develop
+                    git merge major-snapshot-update
+                    git tag -a v${SDK_VERSION}-SNAPSHOT -m "v${SDK_VERSION}-SNAPSHOT release"
+                    git push --set-upstream origin develop v${SDK_VERSION}-SNAPSHOT
+
+                    exit 0
+                    ;;
+                *"[minor]"*)
+
+                    echo "bump minor release version"
+                    ./mvnw build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.nextMinorVersion}.0 versions:commit
+                    SDK_VERSION=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
+
+                    git commit -am "updated minor version to v${SDK_VERSION}-SNAPSHOT [skip ci]"
+                    git checkout -b minor-snapshot-update
+                    git merge --strategy=ours develop
+                    git checkout develop
+                    git merge minor-snapshot-update
+                    git tag -a v${SDK_VERSION}-SNAPSHOT -m "v${SDK_VERSION}-SNAPSHOT release"
+                    git push --set-upstream origin develop v${SDK_VERSION}-SNAPSHOT
+
+                    exit 0
+                    ;;
+                *"[patch]"*)
+
+                    echo "bump patch release version"
+                    ./mvnw build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion} versions:commit
+                    SDK_VERSION=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
+
+                    git commit -am "updated patch version to v${SDK_VERSION}-SNAPSHOT [skip ci]"
+                    git checkout -b patch-snapshot-update
+                    git merge --strategy=ours develop
+                    git checkout develop
+                    git merge patch-snapshot-update
+                    git tag -a v${SDK_VERSION}-SNAPSHOT -m "v${SDK_VERSION}-SNAPSHOT release"
+                    git push --set-upstream origin develop v${SDK_VERSION}-SNAPSHOT
+
+                    exit 0
+                    ;;
+                *)
+                    echo "This was just a simple merge - no versions updated"
+                    exit 0
+                    ;;
+            esac
+
+  configure-git-for-ci-bot:
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - 0c:dd:08:d5:13:cf:20:3c:25:c4:f3:59:a8:a5:c4:36
+      - run:
+          name: Configure GIT
+          command: |
+            git config --global user.email "50235421+ehrbase-tech-user@users.noreply.github.com"
+            git config --global user.name "ci-bot"
+            git remote -v
