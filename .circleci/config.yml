@@ -78,7 +78,6 @@ workflows:
       - update-version:
           requires:
             - test
-            - configure-git-for-ci-bot
           filters:
             branches:
               only: develop|/release\/.*/
