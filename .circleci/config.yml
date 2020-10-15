@@ -65,7 +65,7 @@ jobs:
 
   build_and_deploy:
     docker:
-      - image: circleci/openjdk:stretch
+      - image: circleci/openjdk:11.0.8-jdk
         auth:
           username: $DOCKER_USER
           password: $DOCKER_HUB_PASSWORD
@@ -73,7 +73,7 @@ jobs:
       - checkout
       - configure-git-for-ci-bot
       - setup_remote_docker:
-          version: 19.03.11
+          version: 19.03.13
       - run:
           name: Build and tag image and push
           command: |
