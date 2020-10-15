@@ -18,7 +18,7 @@ workflows:
           filters:
             branches:
               only:
-                - master|develop|/^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+)$/
+                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop)$/
 
 jobs:
   test:
