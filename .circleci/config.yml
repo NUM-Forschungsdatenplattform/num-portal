@@ -11,14 +11,14 @@ workflows:
           filters:
             branches:
               only:
-                - ^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+)$
+                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+)$/
       - build_and_deploy:
           requires:
             - tag-version
           filters:
             branches:
               only:
-                - master|develop|^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+)$
+                - master|develop|/^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+)$/
 
 jobs:
   test:
