@@ -13,7 +13,7 @@ workflows:
               only: /release\/.*/|/hotfix\/.*/
       - build_and_deploy:
           requires:
-            - update-version
+            - tag-version
           filters:
             branches:
               only: master|develop|/release\/.*/|/hotfix\/.*/
