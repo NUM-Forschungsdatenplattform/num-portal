@@ -8,15 +8,9 @@ workflows:
       - tag-version:
           requires:
             - test
-          filters:
-            branches:
-              only: ^release\/v\d+\.\d+\.\d+$
       - build_and_deploy:
           requires:
             - tag-version
-          filters:
-            branches:
-              only: ^release\/v\d+\.\d+\.\d+$
 
 jobs:
   test:
