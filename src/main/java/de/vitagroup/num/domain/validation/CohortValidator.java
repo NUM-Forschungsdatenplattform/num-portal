@@ -2,6 +2,7 @@ package de.vitagroup.num.domain.validation;
 
 import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.dtos.CohortGroupDto;
+import org.apache.commons.collections4.CollectionUtils;
 
 import javax.validation.*;
 import java.util.ArrayDeque;
@@ -37,15 +38,15 @@ public class CohortValidator implements ConstraintValidator<ValidCohort, CohortG
     }
 
     private boolean isInvalidGroup(CohortGroupDto cohortGroup) {
-        if (cohortGroup.getChildren() == null || cohortGroup.getChildren().isEmpty() ||
-                cohortGroup.getOperator() == null || (cohortGroup.getOperator().equals(Operator.NOT) && cohortGroup.getChildren().size() > 1)) {
+        if (CollectionUtils.isEmpty(cohortGroup.getChildren()) || cohortGroup.getOperator() == null
+                || (cohortGroup.getOperator().equals(Operator.NOT) && cohortGroup.getChildren().size() > 1)) {
             return true;
         }
         return false;
     }
 
     private boolean isInvalidPhenotype(CohortGroupDto cohortGroup) {
-        if ((cohortGroup.getChildren() != null && cohortGroup.getChildren().size() > 0) || cohortGroup.getPhenotypeId() == 0) {
+        if (CollectionUtils.isNotEmpty(cohortGroup.getChildren()) || cohortGroup.getPhenotypeId() == 0) {
             return true;
         }
         return false;

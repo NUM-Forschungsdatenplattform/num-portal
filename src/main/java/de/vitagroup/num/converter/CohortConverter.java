@@ -49,12 +49,14 @@ public class CohortConverter {
     public Cohort convertToEntity(CohortDto dto) {
         Cohort cohort = modelMapper.map(dto, Cohort.class);
         Optional<Study> study = studyService.getStudyById(dto.getStudyId());
-        if (!study.isPresent()) {
-            throw new BadRequestException("Invalid study id");
-        } else {
+
+        if (study.isPresent()) {
             cohort.setStudy(study.get());
             study.get().setCohort(cohort);
+        } else {
+            throw new BadRequestException("Invalid study id");
         }
+
         cohort.setCohortGroup(convertToCohortGroupEntity(dto.getCohortGroupDto()));
         return cohort;
     }
@@ -64,11 +66,13 @@ public class CohortConverter {
 
         if (dto.getType() == Type.PHENOTYPE) {
             Optional<Phenotype> phenotype = phenotypeService.getPhenotypeById(dto.getPhenotypeId());
-            if (!phenotype.isPresent()) {
-                throw new BadRequestException("Invalid phenotype id");
-            } else {
+
+            if (phenotype.isPresent()) {
                 cohortGroup.setPhenotype(phenotype.get());
+            } else {
+                throw new BadRequestException("Invalid phenotype id");
             }
+
         }
 
         if (dto.getType() == Type.GROUP) {
