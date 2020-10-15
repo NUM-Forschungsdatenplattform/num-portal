@@ -13,6 +13,16 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 public class SwaggerConfig {
 
     @Bean
+    public Docket cohortApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("Cohort")
+                .select()
+                .apis(RequestHandlerSelectors.any())
+                .paths(PathSelectors.regex("/cohort*"))
+                .build();
+    }
+
+    @Bean
     public Docket phenotypeApi() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .groupName("Phenotype")

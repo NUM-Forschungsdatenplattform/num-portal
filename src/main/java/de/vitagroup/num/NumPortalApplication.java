@@ -1,7 +1,9 @@
 package de.vitagroup.num;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 public class NumPortalApplication {
@@ -10,4 +12,8 @@ public class NumPortalApplication {
         SpringApplication.run(NumPortalApplication.class, args);
     }
 
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
 }
