@@ -10,13 +10,13 @@ workflows:
             - test
           filters:
             branches:
-              only: /release\/.*/|/hotfix\/.*/
+              only: release\/.*/|hotfix\/.*/
       - build_and_deploy:
           requires:
             - tag-version
           filters:
             branches:
-              only: master|develop|/release\/.*/|/hotfix\/.*/
+              only: master|develop|release\/.*/|hotfix\/.*/
 
 jobs:
   test:
