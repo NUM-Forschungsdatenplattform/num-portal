@@ -51,7 +51,7 @@ jobs:
             If the commit is to the develop branch, there is a patch version bump, if the commit is to the
             release branch, we will bump the minor version
           command: |
-            VERSION_NUMBER=echo "${CIRCLE_BRANCH}" | awk -F'/' '{print $2}'
+            VERSION_NUMBER="$(echo $CIRCLE_BRANCH | awk -F'/' '{print $2;}')"
             echo "Updating the application version from the branch to ${VERSION_NUMBER}"
             ./mvnw build-helper:parse-version versions:set -DnewVersion=\${VERSION_NUMBER} versions:commit
 
@@ -82,7 +82,7 @@ jobs:
             elif [ $CIRCLE_BRANCH = "develop" ]; then
                 TAG=$CIRCLE_BRANCH
             else
-                TAG=echo $CIRCLE_BRANCH | awk -F'/' '{print $2}"-rc"'
+                TAG="$(echo $CIRCLE_BRANCH | awk -F'/' '{print $2;}')-rc"
             fi
             echo "Publishing Docker image with following tag: ${TAG}"
             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
