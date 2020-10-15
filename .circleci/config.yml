@@ -36,7 +36,7 @@ jobs:
           name: Run Sonar
           command: |
             echo 'SONAR NOT IMPLEMENTED!'
-  update-version:
+  tag-version:
     docker:
       - image: circleci/openjdk:stretch
     steps:
