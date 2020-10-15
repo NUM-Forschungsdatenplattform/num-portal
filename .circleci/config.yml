@@ -53,7 +53,7 @@ jobs:
           command: |
             VERSION_NUMBER="$(echo $CIRCLE_BRANCH | awk -F'/' '{print $2;}')"
             echo "Updating the application version from the branch to ${VERSION_NUMBER}"
-            ./mvnw build-helper:parse-version versions:set -DnewVersion=\${VERSION_NUMBER} versions:commit
+            ./mvnw versions:set -DnewVersion=$VERSION_NUMBER versions:commit
 
             git commit -am "updated patch version to v${VERSION_NUMBER} [skip ci]"
             git tag -a VERSION_NUMBER -m "num-portal release version ${VERSION_NUMBER}"
