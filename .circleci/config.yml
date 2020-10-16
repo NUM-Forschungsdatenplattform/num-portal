@@ -19,7 +19,6 @@ workflows:
             branches:
               only:
                 - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop)$/
-
 jobs:
   test:
     docker:
@@ -78,11 +77,11 @@ jobs:
           name: Build and tag image and push
           command: |
             if [ $CIRCLE_BRANCH = "master" ]; then
-              TAG=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
+                TAG=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
             elif [ $CIRCLE_BRANCH = "develop" ]; then
-              TAG=$CIRCLE_BRANCH
+                TAG=$CIRCLE_BRANCH
             else
-              TAG="$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)-rc"
+                TAG="$(echo $CIRCLE_BRANCH | awk -F'/' '{print $2;}')-rc"
             fi
             echo "Publishing Docker image with following tag: ${TAG}"
             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
