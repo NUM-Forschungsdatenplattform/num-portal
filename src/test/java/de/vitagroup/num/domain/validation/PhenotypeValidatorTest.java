@@ -1,5 +1,8 @@
 package de.vitagroup.num.domain.validation;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+
 import de.vitagroup.num.domain.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,9 +13,6 @@ import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import java.util.Arrays;
 import java.util.Set;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 public class PhenotypeValidatorTest {
 

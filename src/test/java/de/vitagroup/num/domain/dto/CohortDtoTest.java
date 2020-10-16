@@ -1,5 +1,11 @@
 package de.vitagroup.num.domain.dto;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import de.vitagroup.num.converter.CohortConverter;
 import de.vitagroup.num.domain.*;
 import de.vitagroup.num.service.PhenotypeService;
@@ -16,12 +22,6 @@ import org.modelmapper.ModelMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CohortDtoTest {
