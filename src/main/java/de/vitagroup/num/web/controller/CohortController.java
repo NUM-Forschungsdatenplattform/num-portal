@@ -2,7 +2,7 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.converter.CohortConverter;
 import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.dtos.CohortDto;
+import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.service.CohortService;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;

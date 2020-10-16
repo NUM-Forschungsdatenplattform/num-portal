@@ -1,7 +1,7 @@
 package de.vitagroup.num.domain.validation;
 
 import de.vitagroup.num.domain.*;
-import de.vitagroup.num.domain.dtos.CohortGroupDto;
+import de.vitagroup.num.domain.dto.CohortGroupDto;
 import org.apache.commons.collections4.CollectionUtils;
 
 import javax.validation.*;
@@ -16,7 +16,7 @@ public class CohortValidator implements ConstraintValidator<ValidCohort, CohortG
     }
 
     private boolean isValid(CohortGroupDto cohortGroupDto) {
-        if (cohortGroupDto == null) {
+        if (cohortGroupDto == null || cohortGroupDto.getType() == null) {
             return false;
         }
 
@@ -38,10 +38,22 @@ public class CohortValidator implements ConstraintValidator<ValidCohort, CohortG
     }
 
     private boolean isInvalidGroup(CohortGroupDto cohortGroup) {
-        if (CollectionUtils.isEmpty(cohortGroup.getChildren()) || cohortGroup.getOperator() == null
-                || (cohortGroup.getOperator().equals(Operator.NOT) && cohortGroup.getChildren().size() > 1)) {
+        // Group children cannot be empty
+        if (CollectionUtils.isEmpty(cohortGroup.getChildren())) {
             return true;
         }
+
+        // NOT operator is unary - group cannot have more than one child
+        if ((cohortGroup.getOperator().equals(Operator.NOT) && cohortGroup.getChildren().size() > 1)) {
+            return true;
+        }
+
+        // AND and OR cannot be applied to a single child
+        if ((cohortGroup.getOperator().equals(Operator.OR) || cohortGroup.getOperator().equals(Operator.AND))
+                && cohortGroup.getChildren().size() == 1) {
+            return true;
+        }
+
         return false;
     }
 

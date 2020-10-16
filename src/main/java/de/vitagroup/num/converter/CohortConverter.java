@@ -1,8 +1,8 @@
 package de.vitagroup.num.converter;
 
 import de.vitagroup.num.domain.*;
-import de.vitagroup.num.domain.dtos.CohortDto;
-import de.vitagroup.num.domain.dtos.CohortGroupDto;
+import de.vitagroup.num.domain.dto.CohortDto;
+import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.service.PhenotypeService;
 import de.vitagroup.num.service.StudyService;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -88,7 +88,9 @@ public class CohortConverter {
 
     private CohortGroupDto convertToCohortGroupDto(CohortGroup cohortGroup) {
         CohortGroupDto dto = modelMapper.map(cohortGroup, CohortGroupDto.class);
-        dto.setChildren(cohortGroup.getChildren().stream().map(g -> convertToCohortGroupDto(g)).collect(Collectors.toList()));
+        if(cohortGroup.getType().equals(Type.GROUP)){
+            dto.setChildren(cohortGroup.getChildren().stream().map(g -> convertToCohortGroupDto(g)).collect(Collectors.toList()));
+        }
         return dto;
     }
 

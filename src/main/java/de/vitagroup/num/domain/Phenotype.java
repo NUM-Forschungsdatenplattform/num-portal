@@ -5,6 +5,7 @@ import de.vitagroup.num.domain.repository.ExpressionConverter;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,6 +18,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Phenotype {
     @ApiModelProperty(
             required = true,
@@ -29,13 +31,13 @@ public class Phenotype {
     @ApiModelProperty(
             required = true,
             value = "The name of the phenotype")
-    @NotBlank(message = "Name is mandatory")
+    @NotBlank(message = "Phenotype name is mandatory")
     private String name;
 
     @ApiModelProperty(
             required = true,
             value = "The description of the phenotype")
-    @NotBlank(message = "Description is mandatory")
+    @NotBlank(message = "Phenotype description is mandatory")
     private String description;
 
     @ApiModelProperty(

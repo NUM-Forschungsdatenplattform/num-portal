@@ -4,6 +4,7 @@ import de.vitagroup.num.domain.AqlExpression;
 import de.vitagroup.num.domain.Expression;
 import de.vitagroup.num.domain.GroupExpression;
 import de.vitagroup.num.domain.Operator;
+import org.apache.commons.collections4.CollectionUtils;
 
 import javax.validation.*;
 import java.util.ArrayDeque;
@@ -39,15 +40,32 @@ public class ExpressionValidator implements ConstraintValidator<ValidExpression,
     }
 
     private boolean isInvalidAqlExpression(AqlExpression node) {
+        if (node.getAql() == null) {
+            return true;
+        }
+
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         Validator validator = factory.getValidator();
+
         return !validator.validate(node.getAql()).isEmpty();
     }
 
     private boolean isInvalidGroupExpression(GroupExpression node) {
-        if (node.getChildren() == null || node.getChildren().isEmpty() || (node.getOperator().equals(Operator.NOT) && node.getChildren().size() > 1)){
+        // Group children cannot be empty
+        if (CollectionUtils.isEmpty(node.getChildren())) {
             return true;
         }
+
+        // NOT operator is unary - group cannot have more than one child
+        if ((node.getOperator().equals(Operator.NOT) && node.getChildren().size() > 1)) {
+            return true;
+        }
+
+        // AND and OR cannot be applied to a single child
+        if ((node.getOperator().equals(Operator.OR) || node.getOperator().equals(Operator.AND)) && node.getChildren().size() == 1) {
+            return true;
+        }
+
         return false;
     }
 
