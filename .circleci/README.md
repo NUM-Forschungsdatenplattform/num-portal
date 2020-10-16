@@ -23,3 +23,4 @@ will execute here.
 In the case of release and hotfix branches a new Docker image is built that has a tag with the version plus suffix -rc, 
 for example v1.0.1-rc. In the case of master branch the version is pulled from the POM.xml, and that is used as a tag
 and in the case of develop, an image with a tag `develop` is pushed.
+

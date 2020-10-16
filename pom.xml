@@ -6,7 +6,7 @@
 
     <groupId>de.vitagroup.num-portal</groupId>
     <artifactId>num-portal</artifactId>
-    <version>1.1.0</version>
+    <version>v1.0.0</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -65,6 +65,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+            <version>2.3.5</version>
         </dependency>
     </dependencies>
 
