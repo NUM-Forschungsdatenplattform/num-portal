@@ -89,7 +89,7 @@ public class CohortConverter {
     private CohortGroupDto convertToCohortGroupDto(CohortGroup cohortGroup) {
         CohortGroupDto dto = modelMapper.map(cohortGroup, CohortGroupDto.class);
         if(cohortGroup.getType().equals(Type.GROUP)){
-            dto.setChildren(cohortGroup.getChildren().stream().map(g -> convertToCohortGroupDto(g)).collect(Collectors.toList()));
+            dto.setChildren(cohortGroup.getChildren().stream().map(this::convertToCohortGroupDto).collect(Collectors.toList()));
         }
         return dto;
     }

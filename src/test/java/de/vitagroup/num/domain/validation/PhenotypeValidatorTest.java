@@ -18,6 +18,9 @@ public class PhenotypeValidatorTest {
 
     private Validator validator;
 
+    private final String AQL_NAME = "AQL query name";
+    private final String AQL_QUERY = "SELECT A ... FROM E ... WHERE ...";
+
     @Before
     public void setup() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
@@ -26,7 +29,7 @@ public class PhenotypeValidatorTest {
 
     @Test
     public void supportsSingleAqlQuery() {
-        Aql aql = Aql.builder().id(1L).name("AQL query name").query("SELECT A ... FROM E ... WHERE ...").build();
+        Aql aql = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
         AqlExpression aqlExpression = AqlExpression.builder().aql(aql).build();
         Phenotype phenotype = Phenotype.builder().id(1L).name("Phenotype name").description("Single AQL valid phenotype").query(aqlExpression).build();
 
@@ -36,8 +39,8 @@ public class PhenotypeValidatorTest {
 
     @Test
     public void supportsSimpleAndOperation() {
-        Aql aql1 = Aql.builder().id(1L).name("AQL query name 1 ").query("SELECT A1 ... FROM E1 ... WHERE ...").build();
-        Aql aql2 = Aql.builder().id(2L).name("AQL query name 2").query("SELECT A2 ... FROM E2 ... WHERE ...").build();
+        Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
+        Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
         AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
         AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
@@ -52,8 +55,8 @@ public class PhenotypeValidatorTest {
 
     @Test
     public void supportsSimpleOrOperation() {
-        Aql aql1 = Aql.builder().id(1L).name("AQL query name 1 ").query("SELECT A1 ... FROM E1 ... WHERE ...").build();
-        Aql aql2 = Aql.builder().id(2L).name("AQL query name 2").query("SELECT A2 ... FROM E2 ... WHERE ...").build();
+        Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
+        Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
         AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
         AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
@@ -68,7 +71,7 @@ public class PhenotypeValidatorTest {
 
     @Test
     public void supportsSimpleNotOperation() {
-        Aql aql = Aql.builder().id(1L).name("AQL query name 1 ").query("SELECT A1 ... FROM E1 ... WHERE ...").build();
+        Aql aql = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
         AqlExpression aqlExpression = AqlExpression.builder().aql(aql).build();
 
         GroupExpression notAql = GroupExpression.builder().operator(Operator.NOT).children(Arrays.asList(aqlExpression)).build();
@@ -81,8 +84,8 @@ public class PhenotypeValidatorTest {
 
     @Test
     public void correctlyValidatesNotOperation() {
-        Aql aql1 = Aql.builder().id(1L).name("AQL query name 1 ").query("SELECT A1 ... FROM E1 ... WHERE ...").build();
-        Aql aql2 = Aql.builder().id(2L).name("AQL query name 2").query("SELECT A2 ... FROM E2 ... WHERE ...").build();
+        Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
+        Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
         AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
         AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
@@ -95,13 +98,13 @@ public class PhenotypeValidatorTest {
         Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
         assertThat(violations.isEmpty(), is(false));
         assertThat(violations.size(), is(1));
-        assertThat(violations.iterator().next().getMessage(), is("Invalid phenotype query"));
+        assertThat(violations.iterator().next().getMessage(), is("Invalid phenotype definition"));
     }
 
 
     @Test
     public void correctlyValidatesOrOperation() {
-        Aql aql = Aql.builder().id(1L).name("AQL query name 1 ").query("SELECT A1 ... FROM E1 ... WHERE ...").build();
+        Aql aql = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
 
         AqlExpression aqlExpression = AqlExpression.builder().aql(aql).build();
         GroupExpression query = GroupExpression.builder().operator(Operator.OR).children(Arrays.asList(aqlExpression)).build();
@@ -112,12 +115,12 @@ public class PhenotypeValidatorTest {
         Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
         assertThat(violations.isEmpty(), is(false));
         assertThat(violations.size(), is(1));
-        assertThat(violations.iterator().next().getMessage(), is("Invalid phenotype query"));
+        assertThat(violations.iterator().next().getMessage(), is("Invalid phenotype definition"));
     }
 
     @Test
     public void correctlyValidatesPhenotypeNameAndDescription() {
-        Aql aql = Aql.builder().id(1L).name("AQL query name 1 ").query("SELECT A1 ... FROM E1 ... WHERE ...").build();
+        Aql aql = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
         AqlExpression query = AqlExpression.builder().aql(aql).build();
         Phenotype noNameNoDescriptionPhenotype = Phenotype.builder().id(1L).query(query).build();
 
@@ -138,6 +141,6 @@ public class PhenotypeValidatorTest {
         Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
         assertThat(violations.isEmpty(), is(false));
         assertThat(violations.size(), is(1));
-        assertThat(violations.iterator().next().getMessage(), is("Invalid phenotype query"));
+        assertThat(violations.iterator().next().getMessage(), is("Invalid phenotype definition"));
     }
 }

@@ -45,7 +45,7 @@ public class Phenotype {
             value = "The aql query tree defining the phenotype")
     @Convert(converter = ExpressionConverter.class)
     @NotNull(message = "Query is mandatory")
-    @ValidExpression(message = "Invalid phenotype query")
+    @ValidExpression(message = "Invalid phenotype definition")
     private Expression query;
 
 }
