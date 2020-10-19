@@ -42,4 +42,15 @@ public class SwaggerConfig {
                 .build();
     }
 
+    @Bean
+    public Docket adminApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("Admin")
+                .select()
+                .apis(RequestHandlerSelectors.any())
+                .paths(PathSelectors.regex("/admin.*"))
+                .build();
+    }
+
+
 }
