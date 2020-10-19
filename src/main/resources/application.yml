@@ -27,4 +27,18 @@ hapi:
     validation:
       enabled: false
       request-only: true
+keycloak-admin:
+  authServerUrl: http://localhost:8180/auth
+  realm: Num
+  client: numPortal
+  secret: 3c18c1dc-ba8d-4ab7-9a91-0178130f74ba
+keycloak:
+  enabled: false
+
+logging:
+  level:
+    de.vitasystems: trace
+    org.springframework.web: trace
+
+
 
