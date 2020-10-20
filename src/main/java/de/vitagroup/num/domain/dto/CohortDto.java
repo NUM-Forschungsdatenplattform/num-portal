@@ -1,9 +1,10 @@
-package de.vitagroup.num.domain.dtos;
+package de.vitagroup.num.domain.dto;
 
 import de.vitagroup.num.domain.validation.ValidCohort;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import javax.validation.constraints.NotNull;
 
 @ApiModel
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class CohortDto {
@@ -24,8 +26,8 @@ public class CohortDto {
     @ApiModelProperty(
             required = true,
             value = "The name of the cohort")
-    @NotBlank(message = "Name should not be blank")
-    @NotNull(message = "Name is mandatory")
+    @NotBlank(message = "Cohort name should not be blank")
+    @NotNull(message = "Cohort name is mandatory")
     private String name;
 
     @ApiModelProperty(
@@ -41,7 +43,7 @@ public class CohortDto {
     @ApiModelProperty(
             required = true,
             value = "Cohort phenotypes groups")
-    @NotNull(message = "Cohort phenotype group mandatory")
+    @NotNull(message = "Cohort group is mandatory")
     @ValidCohort(message = "Invalid cohort group")
     private CohortGroupDto cohortGroupDto;
 
