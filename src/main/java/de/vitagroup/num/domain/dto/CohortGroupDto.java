@@ -1,10 +1,11 @@
-package de.vitagroup.num.domain.dtos;
+package de.vitagroup.num.domain.dto;
 
 import de.vitagroup.num.domain.Operator;
 import de.vitagroup.num.domain.Type;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 @ApiModel
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class CohortGroupDto {
