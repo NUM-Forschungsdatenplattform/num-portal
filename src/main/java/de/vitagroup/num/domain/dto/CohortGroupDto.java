@@ -31,7 +31,7 @@ public class CohortGroupDto {
     private Operator operator;
 
     @ApiModelProperty(
-            value = "Cohort group parameter map representing the name of the aql parameter and the corresponding")
+            value = "Cohort group parameter map representing the name of the aql parameter and the corresponding value")
     private Map<String, String> parameters;
 
     @ApiModelProperty(
