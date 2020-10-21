@@ -42,7 +42,7 @@ public class CohortConverter {
     public CohortDto convertToDto(Cohort cohort) {
         CohortDto cohortDto = modelMapper.map(cohort, CohortDto.class);
         CohortGroupDto cohortGroupDto = convertToCohortGroupDto(cohort.getCohortGroup());
-        cohortDto.setCohortGroupDto(cohortGroupDto);
+        cohortDto.setCohortGroup(cohortGroupDto);
         return cohortDto;
     }
 
@@ -57,7 +57,7 @@ public class CohortConverter {
             throw new BadRequestException("Invalid study id");
         }
 
-        cohort.setCohortGroup(convertToCohortGroupEntity(dto.getCohortGroupDto()));
+        cohort.setCohortGroup(convertToCohortGroupEntity(dto.getCohortGroup()));
         return cohort;
     }
 

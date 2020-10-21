@@ -38,8 +38,8 @@ public class CohortValidator implements ConstraintValidator<ValidCohort, CohortG
     }
 
     private boolean isInvalidGroup(CohortGroupDto cohortGroup) {
-        // Group children cannot be empty
-        if (CollectionUtils.isEmpty(cohortGroup.getChildren())) {
+        // Group children cannot be empty nor group operator can be null
+        if (CollectionUtils.isEmpty(cohortGroup.getChildren()) || cohortGroup.getOperator() == null) {
             return true;
         }
 

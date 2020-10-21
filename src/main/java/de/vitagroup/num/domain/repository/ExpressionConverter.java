@@ -11,25 +11,27 @@ import javax.persistence.AttributeConverter;
 @Slf4j
 public class ExpressionConverter implements AttributeConverter<Expression, String> {
 
+    private final ObjectMapper mapper = new ObjectMapper();
+
     @Override
     public String convertToDatabaseColumn(Expression expression) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
             return mapper.writeValueAsString(expression);
         } catch (JsonProcessingException e) {
             log.error("Cannot convert expression to JSON", e);
         }
+
         return StringUtils.EMPTY;
     }
 
     @Override
     public Expression convertToEntityAttribute(String json) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
             return mapper.readValue(json, Expression.class);
         } catch (JsonProcessingException e) {
             log.error("Cannot convert JSON to expression", e);
         }
+
         return null;
     }
 }

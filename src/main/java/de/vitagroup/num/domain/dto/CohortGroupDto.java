@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 
 @ApiModel
 @Data
@@ -28,6 +29,10 @@ public class CohortGroupDto {
             value = "Cohort group operation to be applied to the children",
             example = "AND")
     private Operator operator;
+
+    @ApiModelProperty(
+            value = "Cohort group parameter map representing the name of the aql parameter and the corresponding")
+    private Map<String, String> parameters;
 
     @ApiModelProperty(
             required = true,
