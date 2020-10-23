@@ -17,6 +17,18 @@ spring:
     show-sql: false
     hibernate:
       ddl-auto: none
+  security:
+    oauth2:
+      client:
+        registration:
+          numPortal:
+            authorization-grant-type: client_credentials
+            client-id: numPortal
+            client-secret: bc1843c0-3c57-4c2c-9b40-ac38e6dd545e
+        provider:
+          numPortal:
+            token-uri: https://temp-keycloak.10.214.4.21.xip.io/auth/realms/Num/protocol/openid-connect/token
+
 hapi:
   fhir:
     version: r4
@@ -27,13 +39,58 @@ hapi:
     validation:
       enabled: false
       request-only: true
-keycloak-admin:
-  authServerUrl: http://localhost:8180/auth
-  realm: Num
-  client: numPortal
-  secret: 3c18c1dc-ba8d-4ab7-9a91-0178130f74ba
-keycloak:
-  enabled: false
+feign:
+  httpclient:
+    disableSslValidation: true
+    enabled: false
+  okhttp:
+    enabled: true
+  client:
+    config:
+      numPortal:
+        connectTimeout: 1000
+        readTimeout: 1200
+        loggerLevel: FULL
+        url: http://localhost:8180/auth/admin/realms/Num
+
+logging:
+  level:
+    de.vitasystems: trace
+    org.springframework.web: trace
+
+---
+spring:
+  profiles: local
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=num
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+  flyway:
+    enabled: true
+    user: postgres
+    password: postgres
+  security:
+    oauth2:
+      client:
+        registration:
+          numPortal:
+            authorization-grant-type: client_credentials
+            client-id: numPortal
+            client-secret: 3c18c1dc-ba8d-4ab7-9a91-0178130f74ba
+        provider:
+          numPortal:
+            token-uri: http://localhost:8180/auth/realms/Num/protocol/openid-connect/token
+feign:
+  httpclient:
+    disableSslValidation: true
+  client:
+    config:
+      numPortal:
+        connectTimeout: 1000
+        readTimeout: 1200
+        loggerLevel: FULL
+        url: http://localhost:8180/auth/admin/realms/Num
 
 logging:
   level:

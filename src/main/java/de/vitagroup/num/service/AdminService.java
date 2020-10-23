@@ -1,14 +1,12 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.config.KeycloakConfig;
+import de.vitagroup.num.domain.admin.Role;
+import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.web.feign.KeycloakFeign;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.representations.idm.MappingsRepresentation;
-import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,24 +14,27 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 public class AdminService {
-    private final Keycloak keycloak;
-    private final KeycloakConfig config;
+    private final KeycloakFeign keycloakFeign;
 
-    public Set<UserRepresentation> getUsersByRole(String role) {
-        return keycloak.realm(config.getRealm()).roles().get(role).getRoleUserMembers();
+    public Set<User> getUsersByRole(String role) {
+        Set<User> users = keycloakFeign.getUsersByRole(role);
+        return users.stream().map(this::fetchRoles).collect(Collectors.toSet());
     }
 
-    public UserRepresentation getUser(String userId) {
-        UserRepresentation userRepresentation = keycloak.realm(config.getRealm()).users().get(userId).toRepresentation();
+    public User getUser(String userId) {
+        User user = keycloakFeign.getUSer(userId);
         // Query for roles as they're not returned by user query
-        MappingsRepresentation mappingsRepresentation = getUsersRoles(userId);
-        List<String> roles = mappingsRepresentation.getRealmMappings().stream().map(roleRepresentation -> roleRepresentation.getName()).collect(Collectors.toList());
-        userRepresentation.setRealmRoles(roles);
-        return userRepresentation;
+        return fetchRoles(user);
     }
 
-    public MappingsRepresentation getUsersRoles(String userId) {
-        return keycloak.realm(config.getRealm()).users().get(userId).roles().getAll();
+    public Set<Role> getRolesOfUser(String userId) {
+        return keycloakFeign.getRolesOfUser(userId);
+    }
+
+    private User fetchRoles(User user) {
+        Set<Role> roles = keycloakFeign.getRolesOfUser(user.getId());
+        user.setRoles(roles.stream().map(Role::getName).collect(Collectors.toSet()));
+        return user;
     }
 
 }
