@@ -15,10 +15,10 @@ public class SwaggerConfig {
     @Bean
     public Docket cohortApi() {
         return new Docket(DocumentationType.SWAGGER_2)
-                .groupName("Cohort")
-                .select()
-                .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.regex("/cohort*"))
+            .groupName("Cohort")
+            .select()
+            .apis(RequestHandlerSelectors.any())
+            .paths(PathSelectors.ant("/cohort/**"))
                 .build();
     }
 
