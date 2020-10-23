@@ -31,4 +31,11 @@ public class CohortService {
 
         return List.of(UUID.randomUUID().toString(), UUID.randomUUID().toString());
     }
+
+    public long getCohortSize(long cohortId) {
+        //TODO: execute cohort and remove mocked list
+        //Optional<Cohort> cohort =  cohortRepository.findById(cohortId);
+        //ehrBaseService.getPatientIds("SELECT e/ehr_id/value FROM EHR e df");
+        return executeCohort(cohortId).size();
+    }
 }

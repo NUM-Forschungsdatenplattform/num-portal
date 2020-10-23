@@ -53,4 +53,14 @@ public class CohortController {
       return ResponseEntity.badRequest().build();
     }
   }
+
+  @PostMapping("{cohortId}/size")
+  @ApiOperation(value = "Retrieves the cohort size")
+  public ResponseEntity<Long> retrieveCohortSize(@PathVariable String cohortId) {
+    try {
+      return ResponseEntity.ok(cohortService.getCohortSize(Long.parseLong(cohortId)));
+    } catch (WrongStatusCodeException e) {
+      return ResponseEntity.badRequest().build();
+    }
+  }
 }
