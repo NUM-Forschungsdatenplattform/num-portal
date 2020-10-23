@@ -1,4 +1,4 @@
-package de.vitagroup.num.service;
+package de.vitagroup.num.service.ehrbase;
 
 import java.util.List;
 import java.util.UUID;

@@ -1,7 +1,10 @@
 package de.vitagroup.num.config;
 
+import de.vitagroup.num.properties.EhrBaseProperties;
+import de.vitagroup.num.service.ehrbase.EhrTemplateProvider;
 import java.net.URI;
 import java.net.URISyntaxException;
+import lombok.RequiredArgsConstructor;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -14,20 +17,25 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@RequiredArgsConstructor
 public class EhrBaseConfig {
 
-    @Bean
-    public DefaultRestClient createRestClient() throws URISyntaxException {
-        CredentialsProvider provider = new BasicCredentialsProvider();
-        provider.setCredentials(AuthScope.ANY,
-            new UsernamePasswordCredentials("ehrbase-user", "SuperSecretPassword"));
+  private final EhrBaseProperties ehrBaseProperties;
 
-        CloseableHttpClient httpClient = HttpClientBuilder.create()
-            .setDefaultCredentialsProvider(provider)
-            .build();
+  @Bean
+  public DefaultRestClient createRestClient() throws URISyntaxException {
+    CredentialsProvider provider = new BasicCredentialsProvider();
+    provider.setCredentials(
+        AuthScope.ANY,
+        new UsernamePasswordCredentials(
+            ehrBaseProperties.getUsername(), ehrBaseProperties.getPassword()));
 
-        return new DefaultRestClient(
-            new OpenEhrClientConfig(new URI("http://localhost:8080/ehrbase/rest/openehr/v1/")),
-            new EhrTemplateProvider(), httpClient);
-    }
+    CloseableHttpClient httpClient =
+        HttpClientBuilder.create().setDefaultCredentialsProvider(provider).build();
+
+    return new DefaultRestClient(
+        new OpenEhrClientConfig(new URI(ehrBaseProperties.getRestApiUrl())),
+        new EhrTemplateProvider(),
+        httpClient);
+  }
 }

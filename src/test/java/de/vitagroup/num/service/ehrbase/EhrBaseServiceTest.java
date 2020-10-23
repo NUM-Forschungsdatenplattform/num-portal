@@ -1,4 +1,4 @@
-package de.vitagroup.num.service;
+package de.vitagroup.num.service.ehrbase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

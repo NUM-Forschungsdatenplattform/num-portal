@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.repository.CohortRepository;
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;

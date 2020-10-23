@@ -1,4 +1,4 @@
-package de.vitagroup.num.config;
+package de.vitagroup.num.service.ehrbase;
 
 import java.util.Optional;
 import org.ehrbase.client.templateprovider.TemplateProvider;
