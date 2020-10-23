@@ -28,6 +28,8 @@ spring:
         provider:
           numPortal:
             token-uri: https://temp-keycloak.10.214.4.21.xip.io/auth/realms/Num/protocol/openid-connect/token
+userstore:
+  url: https://temp-keycloak.10.214.4.21.xip.io/auth/admin/realms/Num
 
 hapi:
   fhir:
@@ -51,7 +53,7 @@ feign:
         connectTimeout: 1000
         readTimeout: 1200
         loggerLevel: FULL
-        url: http://localhost:8180/auth/admin/realms/Num
+
 
 logging:
   level:
@@ -81,6 +83,9 @@ spring:
         provider:
           numPortal:
             token-uri: http://localhost:8180/auth/realms/Num/protocol/openid-connect/token
+userstore:
+  url: http://localhost:8180/auth/admin/realms/Num
+
 feign:
   httpclient:
     disableSslValidation: true
@@ -90,7 +95,6 @@ feign:
         connectTimeout: 1000
         readTimeout: 1200
         loggerLevel: FULL
-        url: http://localhost:8180/auth/admin/realms/Num
 
 logging:
   level:

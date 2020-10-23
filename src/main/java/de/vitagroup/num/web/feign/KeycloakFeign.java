@@ -8,14 +8,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.Set;
 
-@FeignClient(name = "keycloak", url = "${feign.client.config.numPortal.url}")
+@FeignClient(name = "keycloak", url = "${userstore.url}")
 public interface KeycloakFeign {
-    @GetMapping("/users/{userId}")
-    User getUSer(@PathVariable String userId);
+  @GetMapping("/users/{userId}")
+  User getUser(@PathVariable String userId);
 
-    @GetMapping("/users/{userId}/role-mappings/realm")
-    Set<Role> getRolesOfUser(@PathVariable String userId);
+  @GetMapping("/users/{userId}/role-mappings/realm")
+  Set<Role> getRolesOfUser(@PathVariable String userId);
 
-    @GetMapping("/roles/{role}/users")
-    Set<User> getUsersByRole(@PathVariable String role);
+  @GetMapping("/roles/{role}/users")
+  Set<User> getUsersByRole(@PathVariable String role);
 }

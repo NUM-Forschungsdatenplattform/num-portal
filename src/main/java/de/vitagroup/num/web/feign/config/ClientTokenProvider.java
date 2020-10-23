@@ -14,61 +14,57 @@ import java.util.Collection;
 @Component
 public class ClientTokenProvider implements TokenProvider {
 
-    private final static String clientRegistrationId = "numPortal";
-    @Autowired
-    OAuth2AuthorizedClientManager oAuth2AuthorizedClientManager;
+  private static final String clientRegistrationId = "numPortal";
+  @Autowired OAuth2AuthorizedClientManager oAuth2AuthorizedClientManager;
+
+  @Override
+  public OAuth2AccessToken getAccessToken() {
+
+    OAuth2AuthorizedClient auth2AuthorizedClient =
+        oAuth2AuthorizedClientManager.authorize(
+            OAuth2AuthorizeRequest.withClientRegistrationId(clientRegistrationId)
+                .principal(new ClientAuthentication())
+                .build());
+
+    if (auth2AuthorizedClient == null) {
+      return null;
+    }
+    return auth2AuthorizedClient.getAccessToken();
+  }
+
+  /** Principal not used but needed for creation of the OAuth2AuthorizeRequest; only name used */
+  private class ClientAuthentication implements Authentication {
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+      return null;
+    }
 
     @Override
-    public OAuth2AccessToken getAccessToken() {
-
-        OAuth2AuthorizedClient auth2AuthorizedClient = oAuth2AuthorizedClientManager
-                .authorize(OAuth2AuthorizeRequest.withClientRegistrationId(clientRegistrationId)
-                        .principal(new ClientAuthentication()).build());
-
-        if(auth2AuthorizedClient == null) {
-            return null;
-        }
-        return auth2AuthorizedClient.getAccessToken();
+    public Object getCredentials() {
+      return null;
     }
 
-    /**
-     * Principal not used but needed for creation of the OAuth2AuthorizeRequest; only name used
-     */
-    private class ClientAuthentication implements Authentication {
-        @Override
-        public Collection<? extends GrantedAuthority> getAuthorities() {
-            return null;
-        }
-
-        @Override
-        public Object getCredentials() {
-            return null;
-        }
-
-        @Override
-        public Object getDetails() {
-            return null;
-        }
-
-        @Override
-        public Object getPrincipal() {
-            return null;
-        }
-
-        @Override
-        public boolean isAuthenticated() {
-            return false;
-        }
-
-        @Override
-        public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
-        }
-
-        @Override
-        public String getName() {
-            return clientRegistrationId;
-        }
+    @Override
+    public Object getDetails() {
+      return null;
     }
 
+    @Override
+    public Object getPrincipal() {
+      return null;
+    }
+
+    @Override
+    public boolean isAuthenticated() {
+      return false;
+    }
+
+    @Override
+    public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {}
+
+    @Override
+    public String getName() {
+      return clientRegistrationId;
+    }
+  }
 }
-

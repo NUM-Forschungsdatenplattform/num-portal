@@ -16,23 +16,25 @@ import java.util.List;
 @EnableConfigurationProperties(OAuth2ClientProperties.class)
 public class OAuth2Configuration {
 
-    @Bean
-    public OAuth2AuthorizedClientManager authorizedClientManager(OAuth2ClientProperties properties) {
+  @Bean
+  public OAuth2AuthorizedClientManager authorizedClientManager(OAuth2ClientProperties properties) {
 
-        OAuth2AuthorizedClientProvider authorizedClientProvider =
-                OAuth2AuthorizedClientProviderBuilder.builder()
-                        .clientCredentials()
-                        .build();
+    OAuth2AuthorizedClientProvider authorizedClientProvider =
+        OAuth2AuthorizedClientProviderBuilder.builder().clientCredentials().build();
 
-        List<ClientRegistration> registrations = new ArrayList<>(
-                OAuth2ClientPropertiesRegistrationAdapter.getClientRegistrations(properties).values());
+    List<ClientRegistration> registrations =
+        new ArrayList<>(
+            OAuth2ClientPropertiesRegistrationAdapter.getClientRegistrations(properties).values());
 
-        InMemoryClientRegistrationRepository clientRegistrationRepository = new InMemoryClientRegistrationRepository(registrations);
+    InMemoryClientRegistrationRepository clientRegistrationRepository =
+        new InMemoryClientRegistrationRepository(registrations);
 
-        AuthorizedClientServiceOAuth2AuthorizedClientManager manager =
-                new AuthorizedClientServiceOAuth2AuthorizedClientManager(clientRegistrationRepository, new InMemoryOAuth2AuthorizedClientService(clientRegistrationRepository));
-        manager.setAuthorizedClientProvider(authorizedClientProvider);
+    AuthorizedClientServiceOAuth2AuthorizedClientManager manager =
+        new AuthorizedClientServiceOAuth2AuthorizedClientManager(
+            clientRegistrationRepository,
+            new InMemoryOAuth2AuthorizedClientService(clientRegistrationRepository));
+    manager.setAuthorizedClientProvider(authorizedClientProvider);
 
-        return manager;
-    }
+    return manager;
+  }
 }

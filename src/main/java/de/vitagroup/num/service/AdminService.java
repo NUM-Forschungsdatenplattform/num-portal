@@ -14,27 +14,25 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 public class AdminService {
-    private final KeycloakFeign keycloakFeign;
+  private final KeycloakFeign keycloakFeign;
 
-    public Set<User> getUsersByRole(String role) {
-        Set<User> users = keycloakFeign.getUsersByRole(role);
-        return users.stream().map(this::fetchRoles).collect(Collectors.toSet());
-    }
+  public Set<User> getUsersByRole(String role) {
+    return keycloakFeign.getUsersByRole(role);
+  }
 
-    public User getUser(String userId) {
-        User user = keycloakFeign.getUSer(userId);
-        // Query for roles as they're not returned by user query
-        return fetchRoles(user);
-    }
+  public User getUser(String userId) {
+    User user = keycloakFeign.getUser(userId);
+    // Query for roles as they're not returned by user query
+    return fetchRoles(user);
+  }
 
-    public Set<Role> getRolesOfUser(String userId) {
-        return keycloakFeign.getRolesOfUser(userId);
-    }
+  public Set<Role> getRolesOfUser(String userId) {
+    return keycloakFeign.getRolesOfUser(userId);
+  }
 
-    private User fetchRoles(User user) {
-        Set<Role> roles = keycloakFeign.getRolesOfUser(user.getId());
-        user.setRoles(roles.stream().map(Role::getName).collect(Collectors.toSet()));
-        return user;
-    }
-
+  private User fetchRoles(User user) {
+    Set<Role> roles = keycloakFeign.getRolesOfUser(user.getId());
+    user.setRoles(roles.stream().map(Role::getName).collect(Collectors.toSet()));
+    return user;
+  }
 }
