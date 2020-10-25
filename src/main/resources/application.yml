@@ -42,11 +42,6 @@ hapi:
       enabled: false
       request-only: true
 feign:
-  httpclient:
-    disableSslValidation: true
-    enabled: false
-  okhttp:
-    enabled: true
   client:
     config:
       numPortal:
@@ -87,8 +82,6 @@ userstore:
   url: http://localhost:8180/auth/admin/realms/Num
 
 feign:
-  httpclient:
-    disableSslValidation: true
   client:
     config:
       numPortal:
