@@ -3,12 +3,11 @@ package de.vitagroup.num.service;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.web.feign.KeycloakFeign;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,6 +27,16 @@ public class AdminService {
 
   public Set<Role> getRolesOfUser(String userId) {
     return keycloakFeign.getRolesOfUser(userId);
+  }
+
+  public void setRole(String userId, String roleName) {
+    Role role = keycloakFeign.getRole(roleName);
+    keycloakFeign.addRole(userId, new Role[] {role});
+  }
+
+  public void removeRole(String userId, String roleName) {
+    Role role = keycloakFeign.getRole(roleName);
+    keycloakFeign.removeRole(userId, new Role[] {role});
   }
 
   private User fetchRoles(User user) {
