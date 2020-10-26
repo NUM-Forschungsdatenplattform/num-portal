@@ -6,8 +6,8 @@ import org.openehr.schemas.v1.OPERATIONALTEMPLATE;
 
 public class EhrTemplateProvider implements TemplateProvider {
 
-    @Override
-    public Optional<OPERATIONALTEMPLATE> find(String templateId) {
-        return Optional.empty();
-    }
+  @Override
+  public Optional<OPERATIONALTEMPLATE> find(String templateId) {
+    return Optional.empty();
+  }
 }

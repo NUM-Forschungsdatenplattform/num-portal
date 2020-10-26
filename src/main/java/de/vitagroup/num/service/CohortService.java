@@ -12,30 +12,30 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class CohortService {
 
-    private final CohortRepository cohortRepository;
+  private final CohortRepository cohortRepository;
 
-    private final EhrBaseService ehrBaseService;
+  private final EhrBaseService ehrBaseService;
 
-    public List<Cohort> getAllCohorts() {
-        return cohortRepository.findAll();
-    }
+  public List<Cohort> getAllCohorts() {
+    return cohortRepository.findAll();
+  }
 
-    public Cohort createCohort(Cohort cohort) {
-        return cohortRepository.save(cohort);
-    }
+  public Cohort createCohort(Cohort cohort) {
+    return cohortRepository.save(cohort);
+  }
 
-    public List<String> executeCohort(long cohortId) {
-        //TODO: execute cohort and remove mocked list
-        //Optional<Cohort> cohort =  cohortRepository.findById(cohortId);
-        //ehrBaseService.getPatientIds("SELECT e/ehr_id/value FROM EHR e df");
+  public List<String> executeCohort(long cohortId) {
+    // TODO: execute cohort and remove mocked list
+    // Optional<Cohort> cohort =  cohortRepository.findById(cohortId);
+    // ehrBaseService.getPatientIds("SELECT e/ehr_id/value FROM EHR e df");
 
-        return List.of(UUID.randomUUID().toString(), UUID.randomUUID().toString());
-    }
+    return List.of(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+  }
 
-    public long getCohortSize(long cohortId) {
-        //TODO: execute cohort and remove mocked list
-        //Optional<Cohort> cohort =  cohortRepository.findById(cohortId);
-        //ehrBaseService.getPatientIds("SELECT e/ehr_id/value FROM EHR e df");
-        return executeCohort(cohortId).size();
-    }
+  public long getCohortSize(long cohortId) {
+    // TODO: execute cohort and remove mocked list
+    // Optional<Cohort> cohort =  cohortRepository.findById(cohortId);
+    // ehrBaseService.getPatientIds("SELECT e/ehr_id/value FROM EHR e df");
+    return executeCohort(cohortId).size();
+  }
 }

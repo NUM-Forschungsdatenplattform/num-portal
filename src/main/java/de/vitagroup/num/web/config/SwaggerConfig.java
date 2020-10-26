@@ -12,34 +12,33 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableSwagger2
 public class SwaggerConfig {
 
-    @Bean
-    public Docket cohortApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
-            .groupName("Cohort")
-            .select()
-            .apis(RequestHandlerSelectors.any())
-            .paths(PathSelectors.ant("/cohort/**"))
-                .build();
-    }
+  @Bean
+  public Docket cohortApi() {
+    return new Docket(DocumentationType.SWAGGER_2)
+        .groupName("Cohort")
+        .select()
+        .apis(RequestHandlerSelectors.any())
+        .paths(PathSelectors.ant("/cohort/**"))
+        .build();
+  }
 
-    @Bean
-    public Docket phenotypeApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .groupName("Phenotype")
-                .select()
-                .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.regex("/phenotype*"))
-                .build();
-    }
+  @Bean
+  public Docket phenotypeApi() {
+    return new Docket(DocumentationType.SWAGGER_2)
+        .groupName("Phenotype")
+        .select()
+        .apis(RequestHandlerSelectors.any())
+        .paths(PathSelectors.regex("/phenotype*"))
+        .build();
+  }
 
-    @Bean
-    public Docket aqlApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .groupName("Aql")
-                .select()
-                .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.regex("/aql*"))
-                .build();
-    }
-
+  @Bean
+  public Docket aqlApi() {
+    return new Docket(DocumentationType.SWAGGER_2)
+        .groupName("Aql")
+        .select()
+        .apis(RequestHandlerSelectors.any())
+        .paths(PathSelectors.regex("/aql*"))
+        .build();
+  }
 }
