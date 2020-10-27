@@ -34,11 +34,6 @@ public class AdminService {
     keycloakFeign.addRole(userId, new Role[] {role});
   }
 
-  public void removeRole(String userId, String roleName) {
-    Role role = keycloakFeign.getRole(roleName);
-    keycloakFeign.removeRole(userId, new Role[] {role});
-  }
-
   private User fetchRoles(User user) {
     Set<Role> roles = keycloakFeign.getRolesOfUser(user.getId());
     user.setRoles(roles.stream().map(Role::getName).collect(Collectors.toSet()));

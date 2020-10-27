@@ -21,9 +21,6 @@ public interface KeycloakFeign {
   @PostMapping("/users/{userId}/role-mappings/realm")
   void addRole(@PathVariable String userId, @RequestBody Role[] role);
 
-  @DeleteMapping("/users/{userId}/role-mappings/realm")
-  void removeRole(@PathVariable String userId, @RequestBody Role[] role);
-
   @GetMapping("/roles/{role}/users")
   Set<User> getUsersByRole(@PathVariable String role);
 

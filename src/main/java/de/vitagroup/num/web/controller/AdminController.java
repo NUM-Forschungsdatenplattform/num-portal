@@ -48,12 +48,4 @@ public class AdminController {
     adminService.setRole(userId, roleName.asText());
     return ResponseEntity.ok(roleName.asText());
   }
-
-  @DeleteMapping("/users/{userId}/roles")
-  @ApiOperation(value = "Removes the given role from the user")
-  public ResponseEntity<String> removeRole(
-      @NotNull @PathVariable String userId, @NotNull @RequestBody TextNode roleName) {
-    adminService.removeRole(userId, roleName.asText());
-    return ResponseEntity.ok(roleName.asText());
-  }
 }
