@@ -24,8 +24,6 @@ public class CohortService {
   }
 
   public List<String> executeCohort(long cohortId) {
-    // TODO: execute cohort and remove mocked list
-    // Optional<Cohort> cohort =  cohortRepository.findById(cohortId);
     return ehrBaseService.getPatientIds("SELECT e/ehr_id/value FROM EHR e");
   }
 
