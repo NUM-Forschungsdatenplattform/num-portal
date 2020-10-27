@@ -1,6 +1,10 @@
 package de.vitagroup.num.converter;
 
-import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.Cohort;
+import de.vitagroup.num.domain.CohortGroup;
+import de.vitagroup.num.domain.Phenotype;
+import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.service.PhenotypeService;

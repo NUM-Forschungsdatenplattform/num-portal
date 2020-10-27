@@ -3,15 +3,17 @@ package de.vitagroup.num.domain.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Expression;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.AttributeConverter;
 
 @Slf4j
+@AllArgsConstructor
 public class ExpressionConverter implements AttributeConverter<Expression, String> {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private ObjectMapper mapper;
 
     @Override
     public String convertToDatabaseColumn(Expression expression) {
