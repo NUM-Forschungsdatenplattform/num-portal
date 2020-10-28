@@ -38,7 +38,7 @@ public class PhenotypeExecutorTest {
 
     @Before
     public void setup() {
-        when(mockEhrService.getAllPatientIds()).thenReturn(Set.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+        when(mockEhrService.getAllPatientIds()).thenReturn(Set.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
     }
 
     @Test
@@ -46,8 +46,8 @@ public class PhenotypeExecutorTest {
         Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
         Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-        when(mockEhrService.executeAql(aql1)).thenReturn(Set.of(1, 5, 10));
-        when(mockEhrService.executeAql(aql2)).thenReturn(Set.of(1, 4, 5, 6, 10));
+        when(mockEhrService.executeAql(aql1)).thenReturn(Set.of("1", "5", "10"));
+        when(mockEhrService.executeAql(aql2)).thenReturn(Set.of("1", "4", "5", "6", "10"));
 
         AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
         AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
@@ -56,10 +56,10 @@ public class PhenotypeExecutorTest {
 
         Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
 
-        Set<Integer> result = phenotypeExecutor.execute(phenotype);
+        Set<String> result = phenotypeExecutor.execute(phenotype);
 
         assertThat(result, notNullValue());
-        assertThat(result.equals(Set.of(1, 5, 10)), is(true));
+        assertThat(result.equals(Set.of("1", "5", "10")), is(true));
     }
 
     @Test
@@ -67,8 +67,8 @@ public class PhenotypeExecutorTest {
         Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
         Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-        when(mockEhrService.executeAql(aql1)).thenReturn(Set.of(1, 2, 3));
-        when(mockEhrService.executeAql(aql2)).thenReturn(Set.of(3, 4, 5, 6, 7));
+        when(mockEhrService.executeAql(aql1)).thenReturn(Set.of("1", "2", "3"));
+        when(mockEhrService.executeAql(aql2)).thenReturn(Set.of("3", "4", "5", "6", "7"));
 
         AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
         AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
@@ -77,10 +77,10 @@ public class PhenotypeExecutorTest {
 
         Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
 
-        Set<Integer> result = phenotypeExecutor.execute(phenotype);
+        Set<String> result = phenotypeExecutor.execute(phenotype);
 
         assertThat(result, notNullValue());
-        assertThat(result.equals(Set.of(1, 2, 3, 4, 5, 6, 7)), is(true));
+        assertThat(result.equals(Set.of("1", "2", "3", "4", "5", "6", "7")), is(true));
     }
 
     @Test
@@ -88,8 +88,8 @@ public class PhenotypeExecutorTest {
         Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
         Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-        when(mockEhrService.executeAql(aql1)).thenReturn(Set.of(1, 4));
-        when(mockEhrService.executeAql(aql2)).thenReturn(Set.of(1, 2, 3));
+        when(mockEhrService.executeAql(aql1)).thenReturn(Set.of("1", "4"));
+        when(mockEhrService.executeAql(aql2)).thenReturn(Set.of("1", "2", "3"));
 
         AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
         AqlExpression notAql = AqlExpression.builder().aql(aql2).build();
@@ -99,10 +99,10 @@ public class PhenotypeExecutorTest {
 
         Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
 
-        Set<Integer> result = phenotypeExecutor.execute(phenotype);
+        Set<String> result = phenotypeExecutor.execute(phenotype);
 
         assertThat(result, notNullValue());
-        assertThat(result.equals(Set.of(1, 4, 5, 6, 7, 8, 9, 10)), is(true));
+        assertThat(result.equals(Set.of("1", "4", "5", "6", "7", "8", "9", "10")), is(true));
     }
 
     @Test
@@ -110,8 +110,8 @@ public class PhenotypeExecutorTest {
         Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
         Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-        when(mockEhrService.executeAql(aql1)).thenReturn(Set.of(1, 4));
-        when(mockEhrService.executeAql(aql2)).thenReturn(Set.of(1, 2, 3));
+        when(mockEhrService.executeAql(aql1)).thenReturn(Set.of("1", "4"));
+        when(mockEhrService.executeAql(aql2)).thenReturn(Set.of("1", "2", "3"));
 
         AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
         AqlExpression notAql = AqlExpression.builder().aql(aql2).build();
@@ -121,10 +121,10 @@ public class PhenotypeExecutorTest {
 
         Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
 
-        Set<Integer> result = phenotypeExecutor.execute(phenotype);
+        Set<String> result = phenotypeExecutor.execute(phenotype);
 
         assertThat(result, notNullValue());
-        assertThat(result.equals(Set.of(4)), is(true));
+        assertThat(result.equals(Set.of("4")), is(true));
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -24,7 +24,7 @@ public class CohortExecutor {
     private final PhenotypeExecutor phenotypeExecutor;
     private final MockEhrService mockEhrService;
 
-    public Set<Integer> execute(Cohort cohort) {
+    public Set<String> execute(Cohort cohort) {
 
         if (cohort == null || cohort.getCohortGroup() == null) {
             throw new IllegalArgumentException("Cannot execute an empty cohort");
@@ -33,10 +33,10 @@ public class CohortExecutor {
         return execute(cohort.getCohortGroup());
     }
 
-    private Set<Integer> execute(CohortGroup cohortGroup) {
+    private Set<String> execute(CohortGroup cohortGroup) {
         if (cohortGroup.getType() == Type.GROUP) {
 
-            List<Set<Integer>> sets = cohortGroup.getChildren().stream().map(this::execute).collect(Collectors.toList());
+            List<Set<String>> sets = cohortGroup.getChildren().stream().map(this::execute).collect(Collectors.toList());
 
             return setOperations.apply(cohortGroup.getOperator(), sets, getAllPatientIds());
 
@@ -50,7 +50,7 @@ public class CohortExecutor {
 
     //TODO: implement call to the service responsible for querying open ehr for all patient ids;
     // service should cache patient ids per cohort execution
-    private Set<Integer> getAllPatientIds() {
+    private Set<String> getAllPatientIds() {
         return mockEhrService.getAllPatientIds();
     }
 

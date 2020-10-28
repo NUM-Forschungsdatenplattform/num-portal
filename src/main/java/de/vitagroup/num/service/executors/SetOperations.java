@@ -14,7 +14,7 @@ import java.util.Set;
 @Service
 public class SetOperations {
 
-    public Set<Integer> apply(Operator operator, List<Set<Integer>> sets, Set<Integer> all){
+    public Set<String> apply(Operator operator, List<Set<String>> sets, Set<String> all){
         switch (operator) {
             case AND:
                 return intersection(sets);
@@ -27,27 +27,27 @@ public class SetOperations {
         }
     }
 
-    public Set<Integer> intersection(List<Set<Integer>> listOfSets) {
-        HashSet<Integer> intersection = new HashSet<>();
+    public Set<String> intersection(List<Set<String>> listOfSets) {
+        HashSet<String> intersection = new HashSet<>();
         listOfSets.stream().filter(Objects::nonNull).forEach(intersection::addAll);
 
         listOfSets.stream().filter(Objects::nonNull).forEach(intersection::retainAll);
         return intersection;
     }
 
-    public Set<Integer> union(List<Set<Integer>> listOfSets) {
-        HashSet<Integer> union = new HashSet<>();
+    public Set<String> union(List<Set<String>> listOfSets) {
+        HashSet<String> union = new HashSet<>();
         listOfSets.stream().filter(Objects::nonNull).forEach(union::addAll);
         return union;
     }
 
-    public Set<Integer> exclude(Set<Integer> from, Set<Integer> excludeSet) {
+    public Set<String> exclude(Set<String> from, Set<String> excludeSet) {
 
         if(CollectionUtils.isEmpty(from) || CollectionUtils.isEmpty(excludeSet)){
             throw new IllegalArgumentException("Relative complement requires two valid sets");
         }
 
-        Set<Integer> fromCopy = new HashSet<>(from);
+        Set<String> fromCopy = new HashSet<>(from);
         fromCopy.removeAll(excludeSet);
         return fromCopy;
     }

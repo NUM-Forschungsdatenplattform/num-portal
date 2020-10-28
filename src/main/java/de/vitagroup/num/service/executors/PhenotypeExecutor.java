@@ -21,7 +21,7 @@ public class PhenotypeExecutor {
     private final SetOperations setOperations;
     private final MockEhrService mockEhrService;
 
-    public Set<Integer> execute(Phenotype phenotype) {
+    public Set<String> execute(Phenotype phenotype) {
 
         if (phenotype == null || phenotype.getQuery() == null) {
             throw new IllegalArgumentException("Cannot execute an empty phenotype");
@@ -30,12 +30,12 @@ public class PhenotypeExecutor {
         return execute(phenotype.getQuery());
     }
 
-    private Set<Integer> execute(Expression expression) {
-        Set<Integer> all = getAllPatientIds();
+    private Set<String> execute(Expression expression) {
+        Set<String> all = getAllPatientIds();
 
         if (expression instanceof GroupExpression) {
             GroupExpression groupExpression = (GroupExpression) expression;
-            List<Set<Integer>> sets = groupExpression.getChildren().stream().map(this::execute).collect(Collectors.toList());
+            List<Set<String>> sets = groupExpression.getChildren().stream().map(this::execute).collect(Collectors.toList());
 
             return setOperations.apply(groupExpression.getOperator(), sets, all);
 
@@ -50,13 +50,13 @@ public class PhenotypeExecutor {
 
     //TODO: implement call to the service responsible for querying open ehr for all patient ids;
     // service should cache patient ids per cohort execution
-    private Set<Integer> getAllPatientIds() {
+    private Set<String> getAllPatientIds() {
         return mockEhrService.getAllPatientIds();
     }
 
 
     //TODO: implement call to the service responsible for executing aqls
-    private Set<Integer> executeAql(Aql aql) {
+    private Set<String> executeAql(Aql aql) {
         return mockEhrService.executeAql(aql);
     }
 

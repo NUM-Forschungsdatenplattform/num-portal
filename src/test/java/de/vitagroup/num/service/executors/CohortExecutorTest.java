@@ -40,7 +40,7 @@ public class CohortExecutorTest {
 
     @Before
     public void setup() {
-        when(mockEhrService.getAllPatientIds()).thenReturn(Set.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+        when(mockEhrService.getAllPatientIds()).thenReturn(Set.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
     }
 
     @Test
@@ -55,8 +55,8 @@ public class CohortExecutorTest {
         Phenotype phenotype1 = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(aqlExpression1).build();
         Phenotype phenotype2 = Phenotype.builder().id(2L).name(PHENOTYPE_NAME).query(aqlExpression2).build();
 
-        when(phenotypeExecutor.execute(phenotype1)).thenReturn(Set.of(1, 2, 5, 10));
-        when(phenotypeExecutor.execute(phenotype2)).thenReturn(Set.of(1, 2, 4, 5, 6, 10));
+        when(phenotypeExecutor.execute(phenotype1)).thenReturn(Set.of("1", "2", "5", "10"));
+        when(phenotypeExecutor.execute(phenotype2)).thenReturn(Set.of("1", "2", "4", "5", "6", "10"));
 
         CohortGroup first = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype1).build();
         CohortGroup second = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype2).build();
@@ -65,10 +65,10 @@ public class CohortExecutorTest {
 
         Cohort cohort = Cohort.builder().name(COHORT_NAME).cohortGroup(andCohort).build();
 
-        Set<Integer> result = cohortExecutor.execute(cohort);
+        Set<String> result = cohortExecutor.execute(cohort);
 
         assertThat(result, notNullValue());
-        assertThat(result.equals(Set.of(1, 2, 5, 10)), is(true));
+        assertThat(result.equals(Set.of("1", "2", "5", "10")), is(true));
     }
 
     @Test
@@ -83,8 +83,8 @@ public class CohortExecutorTest {
         Phenotype phenotype1 = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(aqlExpression1).build();
         Phenotype phenotype2 = Phenotype.builder().id(2L).name(PHENOTYPE_NAME).query(aqlExpression2).build();
 
-        when(phenotypeExecutor.execute(phenotype1)).thenReturn(Set.of(1, 2, 5, 10));
-        when(phenotypeExecutor.execute(phenotype2)).thenReturn(Set.of(4, 5, 6, 7, 8, 9, 10));
+        when(phenotypeExecutor.execute(phenotype1)).thenReturn(Set.of("1", "2", "5", "10"));
+        when(phenotypeExecutor.execute(phenotype2)).thenReturn(Set.of("4", "5", "6", "7", "8", "9", "10"));
 
         CohortGroup first = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype1).build();
         CohortGroup second = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype2).build();
@@ -93,10 +93,10 @@ public class CohortExecutorTest {
 
         Cohort cohort = Cohort.builder().name(COHORT_NAME).cohortGroup(orCohort).build();
 
-        Set<Integer> result = cohortExecutor.execute(cohort);
+        Set<String> result = cohortExecutor.execute(cohort);
 
         assertThat(result, notNullValue());
-        assertThat(result.equals(Set.of(1, 2, 4, 5, 6, 7, 8, 9, 10)), is(true));
+        assertThat(result.equals(Set.of("1", "2", "4", "5", "6", "7", "8", "9", "10")), is(true));
     }
 
     @Test(expected = IllegalArgumentException.class)
