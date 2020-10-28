@@ -3,17 +3,17 @@ package de.vitagroup.num.service;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.web.feign.KeycloakFeign;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class AdminService {
+
   private final KeycloakFeign keycloakFeign;
 
   public Set<User> getUsersByRole(String role) {

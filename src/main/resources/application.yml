@@ -96,3 +96,8 @@ logging:
 
 
 
+ehrbase:
+  rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
+  username: ehrbase-user
+  password: SuperSecretPassword
+

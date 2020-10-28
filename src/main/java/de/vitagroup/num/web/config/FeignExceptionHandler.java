@@ -11,6 +11,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @SuppressWarnings("unused")
 @ControllerAdvice
 public class FeignExceptionHandler extends ResponseEntityExceptionHandler {
+
   @ExceptionHandler(FeignException.class)
   public final ResponseEntity<String> handleAllExceptions(FeignException ex, WebRequest request) {
     HttpStatus status = HttpStatus.resolve(ex.status());

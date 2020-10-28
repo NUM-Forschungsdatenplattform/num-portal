@@ -1,6 +1,10 @@
 package de.vitagroup.num.converter;
 
-import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.Cohort;
+import de.vitagroup.num.domain.CohortGroup;
+import de.vitagroup.num.domain.Phenotype;
+import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.service.PhenotypeService;
@@ -42,7 +46,7 @@ public class CohortConverter {
     public CohortDto convertToDto(Cohort cohort) {
         CohortDto cohortDto = modelMapper.map(cohort, CohortDto.class);
         CohortGroupDto cohortGroupDto = convertToCohortGroupDto(cohort.getCohortGroup());
-        cohortDto.setCohortGroupDto(cohortGroupDto);
+        cohortDto.setCohortGroup(cohortGroupDto);
         return cohortDto;
     }
 
@@ -57,7 +61,7 @@ public class CohortConverter {
             throw new BadRequestException("Invalid study id");
         }
 
-        cohort.setCohortGroup(convertToCohortGroupEntity(dto.getCohortGroupDto()));
+        cohort.setCohortGroup(convertToCohortGroupEntity(dto.getCohortGroup()));
         return cohort;
     }
 

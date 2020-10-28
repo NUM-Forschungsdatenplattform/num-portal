@@ -4,6 +4,8 @@ import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.service.AdminService;
 import io.swagger.annotations.ApiOperation;
+import java.util.Set;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,13 +13,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.constraints.NotNull;
-import java.util.Set;
-
 @RestController
 @RequestMapping("/admin")
 @AllArgsConstructor
 public class AdminController {
+
   private final AdminService adminService;
 
   @GetMapping("/roles/{role}/users")

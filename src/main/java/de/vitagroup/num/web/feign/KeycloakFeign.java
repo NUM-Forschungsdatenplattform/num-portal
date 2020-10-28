@@ -2,14 +2,14 @@ package de.vitagroup.num.web.feign;
 
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
+import java.util.Set;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import java.util.Set;
-
 @FeignClient(name = "keycloak", url = "${userstore.url}")
 public interface KeycloakFeign {
+
   @GetMapping("/users/{userId}")
   User getUser(@PathVariable String userId);
 
