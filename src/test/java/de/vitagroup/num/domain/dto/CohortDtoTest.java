@@ -1,6 +1,7 @@
 package de.vitagroup.num.domain.dto;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.mockito.Matchers.any;
@@ -19,9 +20,7 @@ import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CohortDtoTest {
@@ -82,16 +81,16 @@ public class CohortDtoTest {
 
         assertThat(cohortDto.getStudyId(), is(study.getId()));
 
-        assertThat(cohortDto.getCohortGroupDto(), notNullValue());
-        assertThat(cohortDto.getCohortGroupDto().getType(), is(Type.GROUP));
-        assertThat(cohortDto.getCohortGroupDto().getOperator(), is(Operator.AND));
-        assertThat(cohortDto.getCohortGroupDto().getChildren().size(), is(2));
+        assertThat(cohortDto.getCohortGroup(), notNullValue());
+        assertThat(cohortDto.getCohortGroup().getType(), is(Type.GROUP));
+        assertThat(cohortDto.getCohortGroup().getOperator(), is(Operator.AND));
+        assertThat(cohortDto.getCohortGroup().getChildren().size(), is(2));
 
-        assertThat(cohortDto.getCohortGroupDto().getChildren().get(0).getType(), is(Type.PHENOTYPE));
-        assertThat(cohortDto.getCohortGroupDto().getChildren().get(1).getType(), is(Type.PHENOTYPE));
+        assertThat(cohortDto.getCohortGroup().getChildren().get(0).getType(), is(Type.PHENOTYPE));
+        assertThat(cohortDto.getCohortGroup().getChildren().get(1).getType(), is(Type.PHENOTYPE));
 
-        assertThat(cohortDto.getCohortGroupDto().getChildren().stream().anyMatch(c -> c.getPhenotypeId() == 1), is(true));
-        assertThat(cohortDto.getCohortGroupDto().getChildren().stream().anyMatch(c -> c.getPhenotypeId() == 2), is(true));
+        assertThat(cohortDto.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotypeId() == 1), is(true));
+        assertThat(cohortDto.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotypeId() == 2), is(true));
     }
 
     @Test
@@ -101,7 +100,7 @@ public class CohortDtoTest {
 
         CohortGroupDto andCohort = CohortGroupDto.builder().type(Type.GROUP).operator(Operator.AND).children(List.of(first, second)).build();
 
-        CohortDto cohortDto = CohortDto.builder().name("Cohort name").studyId(1L).cohortGroupDto(andCohort).build();
+        CohortDto cohortDto = CohortDto.builder().name("Cohort name").studyId(1L).cohortGroup(andCohort).build();
         Cohort cohort = converter.convertToEntity(cohortDto);
 
         assertThat(cohort, notNullValue());
@@ -119,5 +118,36 @@ public class CohortDtoTest {
 
     }
 
+    @Test
+    public void shouldCorrectlyConvertCohortDtoParameters() {
+
+        CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L)
+                .parameters(Map.of("param1", "value1", "param2", "value2")).build();
+        CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
+
+        CohortGroupDto andCohort = CohortGroupDto.builder().type(Type.GROUP).operator(Operator.AND).children(List.of(first, second)).build();
+
+        CohortDto cohortDto = CohortDto.builder().name("Cohort name").studyId(1L).cohortGroup(andCohort).build();
+        Cohort cohort = converter.convertToEntity(cohortDto);
+
+        assertThat(cohort, notNullValue());
+        assertThat(cohort.getStudy(), notNullValue());
+        assertThat(cohort.getStudy().getId(), is(1L));
+        assertThat(cohort.getStudy().getName(), is("Study name"));
+        assertThat(cohort.getCohortGroup().getOperator(), is(Operator.AND));
+        assertThat(cohort.getCohortGroup().getType(), is(Type.GROUP));
+
+        assertThat(cohort.getCohortGroup().getParameters(), nullValue());
+
+        assertThat(cohort.getCohortGroup().getChildren().size(), is(2));
+
+        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getParameters() != null
+                && c.getParameters().containsKey("param1") && c.getParameters().containsKey("param2")), is(true));
+
+        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotype().getId() == 1), is(true));
+        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotype().getId() == 2), is(true));
+
+        assertThat(cohort.getCohortGroup().getChildren().stream().allMatch(c -> c.getPhenotype().getQuery() instanceof AqlExpression), is(true));
+    }
 
 }
