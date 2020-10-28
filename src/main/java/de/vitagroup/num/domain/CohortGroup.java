@@ -2,10 +2,16 @@ package de.vitagroup.num.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.*;
+import de.vitagroup.num.domain.repository.ParametersConverter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -21,6 +27,9 @@ public class CohortGroup {
     private Long id;
     private Type type;
     private Operator operator;
+
+    @Convert(converter = ParametersConverter.class)
+    private Map<String, String> parameters;
 
     @ManyToOne
     @JsonBackReference

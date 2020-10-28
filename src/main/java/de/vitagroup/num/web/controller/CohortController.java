@@ -35,7 +35,7 @@ public class CohortController {
 
     @PostMapping("/cohort")
     @ApiOperation(value = "Stores a cohort")
-    public ResponseEntity<CohortDto> createPhenotype(@Valid @NotNull @RequestBody CohortDto cohort) {
+    public ResponseEntity<CohortDto> createCohort(@Valid @NotNull @RequestBody CohortDto cohort) {
         Cohort cohortEntity = cohortService.createCohort(converter.convertToEntity(cohort));
         return ResponseEntity.ok(converter.convertToDto(cohortEntity));
     }
