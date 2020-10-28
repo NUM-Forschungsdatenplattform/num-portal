@@ -5,8 +5,8 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>num-portal</artifactId>
   <groupId>de.vitagroup.num-portal</groupId>
+  <artifactId>num-portal</artifactId>
   <version>1.0.1</version>
 
   <parent>
