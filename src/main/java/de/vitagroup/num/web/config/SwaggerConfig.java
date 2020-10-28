@@ -18,7 +18,7 @@ public class SwaggerConfig {
         .groupName("Cohort")
         .select()
         .apis(RequestHandlerSelectors.any())
-        .paths(PathSelectors.regex("/cohort*"))
+        .paths(PathSelectors.ant("/cohort/**"))
         .build();
   }
 

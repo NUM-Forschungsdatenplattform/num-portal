@@ -1,12 +1,12 @@
 package de.vitagroup.num.domain.admin;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Data;
-
 import java.util.Set;
+import lombok.Data;
 
 @Data
 public class User {
+
   private String id;
   private String userName;
   private String firstName;

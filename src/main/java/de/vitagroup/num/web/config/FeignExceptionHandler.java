@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 @Slf4j
 public class FeignExceptionHandler extends ResponseEntityExceptionHandler {
+
   @ExceptionHandler(FeignException.class)
   public final ResponseEntity<String> handleAllExceptions(FeignException ex, WebRequest request) {
     log.info("Error while making a request to user store: " + ex.contentUTF8(), ex);

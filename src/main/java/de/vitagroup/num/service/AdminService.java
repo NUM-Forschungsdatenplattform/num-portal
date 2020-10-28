@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class AdminService {
+
   private final KeycloakFeign keycloakFeign;
 
   public Set<User> getUsersByRole(String role) {

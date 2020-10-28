@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin")
 @AllArgsConstructor
 public class AdminController {
+
   private final AdminService adminService;
 
   @GetMapping("/roles/{role}/users")

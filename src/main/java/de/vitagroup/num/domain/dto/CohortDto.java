@@ -45,6 +45,6 @@ public class CohortDto {
             value = "Cohort phenotypes groups")
     @NotNull(message = "Cohort group is mandatory")
     @ValidCohort(message = "Invalid cohort group")
-    private CohortGroupDto cohortGroupDto;
+    private CohortGroupDto cohortGroup;
 
 }
