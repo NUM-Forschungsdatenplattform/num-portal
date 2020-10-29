@@ -20,38 +20,38 @@ import de.vitagroup.num.service.exception.IllegalArgumentException;
 @AllArgsConstructor
 public class CohortExecutor {
 
-    private final SetOperations setOperations;
-    private final PhenotypeExecutor phenotypeExecutor;
-    private final MockEhrService mockEhrService;
+  private final SetOperationsService setOperations;
+  private final PhenotypeExecutor phenotypeExecutor;
+  private final MockEhrService mockEhrService;
 
-    public Set<String> execute(Cohort cohort) {
+  public Set<String> execute(Cohort cohort) {
 
-        if (cohort == null || cohort.getCohortGroup() == null) {
-            throw new IllegalArgumentException("Cannot execute an empty cohort");
-        }
-
-        return execute(cohort.getCohortGroup());
+    if (cohort == null || cohort.getCohortGroup() == null) {
+      throw new IllegalArgumentException("Cannot execute an empty cohort");
     }
 
-    private Set<String> execute(CohortGroup cohortGroup) {
-        if (cohortGroup.getType() == Type.GROUP) {
+    return execute(cohort.getCohortGroup());
+  }
 
-            List<Set<String>> sets = cohortGroup.getChildren().stream().map(this::execute).collect(Collectors.toList());
+  private Set<String> execute(CohortGroup cohortGroup) {
+    if (cohortGroup.getType() == Type.GROUP) {
 
-            return setOperations.apply(cohortGroup.getOperator(), sets, getAllPatientIds());
+      List<Set<String>> sets =
+          cohortGroup.getChildren().stream().map(this::execute).collect(Collectors.toList());
 
-        } else if (cohortGroup.getType() == Type.PHENOTYPE) {
+      return setOperations.apply(cohortGroup.getOperator(), sets, getAllPatientIds());
 
-            return phenotypeExecutor.execute(cohortGroup.getPhenotype());
-        }
+    } else if (cohortGroup.getType() == Type.PHENOTYPE) {
 
-        return SetUtils.emptySet();
+      return phenotypeExecutor.execute(cohortGroup.getPhenotype());
     }
 
-    //TODO: implement call to the service responsible for querying open ehr for all patient ids;
-    // service should cache patient ids per cohort execution
-    private Set<String> getAllPatientIds() {
-        return mockEhrService.getAllPatientIds();
-    }
+    return SetUtils.emptySet();
+  }
 
+  // TODO: implement call to the service responsible for querying open ehr for all patient ids;
+  // service should cache patient ids per cohort execution
+  private Set<String> getAllPatientIds() {
+    return mockEhrService.getAllPatientIds();
+  }
 }

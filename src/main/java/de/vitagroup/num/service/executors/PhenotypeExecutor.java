@@ -18,46 +18,45 @@ import de.vitagroup.num.service.exception.IllegalArgumentException;
 @AllArgsConstructor
 public class PhenotypeExecutor {
 
-    private final SetOperations setOperations;
-    private final MockEhrService mockEhrService;
+  private final SetOperationsService setOperations;
+  private final MockEhrService mockEhrService;
 
-    public Set<String> execute(Phenotype phenotype) {
+  public Set<String> execute(Phenotype phenotype) {
 
-        if (phenotype == null || phenotype.getQuery() == null) {
-            throw new IllegalArgumentException("Cannot execute an empty phenotype");
-        }
-
-        return execute(phenotype.getQuery());
+    if (phenotype == null || phenotype.getQuery() == null) {
+      throw new IllegalArgumentException("Cannot execute an empty phenotype");
     }
 
-    private Set<String> execute(Expression expression) {
-        Set<String> all = getAllPatientIds();
+    return execute(phenotype.getQuery());
+  }
 
-        if (expression instanceof GroupExpression) {
-            GroupExpression groupExpression = (GroupExpression) expression;
-            List<Set<String>> sets = groupExpression.getChildren().stream().map(this::execute).collect(Collectors.toList());
+  private Set<String> execute(Expression expression) {
+    Set<String> all = getAllPatientIds();
 
-            return setOperations.apply(groupExpression.getOperator(), sets, all);
+    if (expression instanceof GroupExpression) {
+      GroupExpression groupExpression = (GroupExpression) expression;
+      List<Set<String>> sets =
+          groupExpression.getChildren().stream().map(this::execute).collect(Collectors.toList());
 
-        } else if (expression instanceof AqlExpression) {
+      return setOperations.apply(groupExpression.getOperator(), sets, all);
 
-            AqlExpression aqlExpression = (AqlExpression) expression;
+    } else if (expression instanceof AqlExpression) {
 
-            return executeAql(aqlExpression.getAql());
-        }
-        return SetUtils.emptySet();
+      AqlExpression aqlExpression = (AqlExpression) expression;
+
+      return executeAql(aqlExpression.getAql());
     }
+    return SetUtils.emptySet();
+  }
 
-    //TODO: implement call to the service responsible for querying open ehr for all patient ids;
-    // service should cache patient ids per cohort execution
-    private Set<String> getAllPatientIds() {
-        return mockEhrService.getAllPatientIds();
-    }
+  // TODO: implement call to the service responsible for querying open ehr for all patient ids;
+  // service should cache patient ids per cohort execution
+  private Set<String> getAllPatientIds() {
+    return mockEhrService.getAllPatientIds();
+  }
 
-
-    //TODO: implement call to the service responsible for executing aqls
-    private Set<String> executeAql(Aql aql) {
-        return mockEhrService.executeAql(aql);
-    }
-
+  // TODO: implement call to the service responsible for executing aqls
+  private Set<String> executeAql(Aql aql) {
+    return mockEhrService.executeAql(aql);
+  }
 }
