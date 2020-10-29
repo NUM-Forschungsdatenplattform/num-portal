@@ -85,7 +85,7 @@ jobs:
             fi
             echo "Publishing Docker image with following tag: ${TAG}"
             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
-            ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$DOCKER_USER/num-portal:$TAG -Djdk.tls.client.protocols=TLSv1.2
+            ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$DOCKER_USER/num-portal:$TAG -DskipTests -Djdk.tls.client.protocols=TLSv1.2
             docker push $DOCKER_USER/num-portal:$TAG
 
 commands:

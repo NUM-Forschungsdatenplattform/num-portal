@@ -1,5 +1,6 @@
 package de.vitagroup.num.web.controller;
 
+import com.fasterxml.jackson.databind.node.TextNode;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.service.AdminService;
@@ -10,6 +11,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,7 +24,7 @@ public class AdminController {
   private final AdminService adminService;
 
   @GetMapping("/roles/{role}/users")
-  @ApiOperation(value = "Retrieves a list of users that have given role")
+  @ApiOperation(value = "Retrieves a list of users that have the given role")
   public ResponseEntity<Set<User>> getUsersByRole(@NotNull @PathVariable String role) {
     return ResponseEntity.ok(adminService.getUsersByRole(role));
   }
@@ -33,8 +36,16 @@ public class AdminController {
   }
 
   @GetMapping("/users/{userId}/roles")
-  @ApiOperation(value = "Retrieves the information about the given user")
+  @ApiOperation(value = "Retrieves the roles of the given user")
   public ResponseEntity<Set<Role>> getRolesOfUser(@NotNull @PathVariable String userId) {
     return ResponseEntity.ok(adminService.getRolesOfUser(userId));
+  }
+
+  @PostMapping("/users/{userId}/roles")
+  @ApiOperation(value = "Adds the given role to the user")
+  public ResponseEntity<String> addRole(
+      @NotNull @PathVariable String userId, @NotNull @RequestBody TextNode roleName) {
+    adminService.setRole(userId, roleName.asText());
+    return ResponseEntity.ok(roleName.asText());
   }
 }

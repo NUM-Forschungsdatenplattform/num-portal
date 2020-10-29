@@ -30,6 +30,11 @@ public class AdminService {
     return keycloakFeign.getRolesOfUser(userId);
   }
 
+  public void setRole(String userId, String roleName) {
+    Role role = keycloakFeign.getRole(roleName);
+    keycloakFeign.addRole(userId, new Role[] {role});
+  }
+
   private User fetchRoles(User user) {
     Set<Role> roles = keycloakFeign.getRolesOfUser(user.getId());
     user.setRoles(roles.stream().map(Role::getName).collect(Collectors.toSet()));
