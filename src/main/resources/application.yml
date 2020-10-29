@@ -28,6 +28,7 @@ spring:
         provider:
           numPortal:
             token-uri: https://temp-keycloak.10.214.4.21.xip.io/auth/realms/Num/protocol/openid-connect/token
+
 userstore:
   url: https://temp-keycloak.10.214.4.21.xip.io/auth/admin/realms/Num
 
@@ -41,6 +42,7 @@ hapi:
     validation:
       enabled: false
       request-only: true
+
 feign:
   client:
     config:
@@ -49,11 +51,16 @@ feign:
         readTimeout: 1200
         loggerLevel: FULL
 
-
 logging:
   level:
     de.vitasystems: trace
     org.springframework.web: trace
+
+# use local ehrbase until we get central one
+ehrbase:
+  rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
+  username: ehrbase-user
+  password: SuperSecretPassword
 
 ---
 spring:
@@ -78,6 +85,7 @@ spring:
         provider:
           numPortal:
             token-uri: http://localhost:8180/auth/realms/Num/protocol/openid-connect/token
+
 userstore:
   url: http://localhost:8180/auth/admin/realms/Num
 
@@ -93,8 +101,6 @@ logging:
   level:
     de.vitasystems: trace
     org.springframework.web: trace
-
-
 
 ehrbase:
   rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
