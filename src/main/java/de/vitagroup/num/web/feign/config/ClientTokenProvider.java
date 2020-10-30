@@ -1,7 +1,7 @@
 package de.vitagroup.num.web.feign.config;
 
 import java.util.Collection;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -11,11 +11,12 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
 public class ClientTokenProvider implements TokenProvider {
 
-  private static final String clientRegistrationId = "numPortal";
-  @Autowired
-  OAuth2AuthorizedClientManager oAuth2AuthorizedClientManager;
+  private static final String clientRegistrationId = "userStoreClient";
+
+  private final OAuth2AuthorizedClientManager oAuth2AuthorizedClientManager;
 
   @Override
   public OAuth2AccessToken getAccessToken() {
@@ -32,9 +33,7 @@ public class ClientTokenProvider implements TokenProvider {
     return auth2AuthorizedClient.getAccessToken();
   }
 
-  /**
-   * Principal not used but needed for creation of the OAuth2AuthorizeRequest; only name used
-   */
+  /** Principal not used but needed for creation of the OAuth2AuthorizeRequest; only name used */
   private class ClientAuthentication implements Authentication {
 
     @Override
@@ -63,8 +62,7 @@ public class ClientTokenProvider implements TokenProvider {
     }
 
     @Override
-    public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
-    }
+    public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {}
 
     @Override
     public String getName() {

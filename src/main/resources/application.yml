@@ -21,12 +21,12 @@ spring:
     oauth2:
       client:
         registration:
-          numPortal:
+          userStoreClient:
             authorization-grant-type: client_credentials
             client-id: numPortal
             client-secret: bc1843c0-3c57-4c2c-9b40-ac38e6dd545e
         provider:
-          numPortal:
+          userStoreClient:
             token-uri: https://temp-keycloak.10.214.4.21.xip.io/auth/realms/Num/protocol/openid-connect/token
 
 userstore:
@@ -78,12 +78,12 @@ spring:
     oauth2:
       client:
         registration:
-          numPortal:
+          userStoreClient:
             authorization-grant-type: client_credentials
             client-id: numPortal
             client-secret: 3c18c1dc-ba8d-4ab7-9a91-0178130f74ba
         provider:
-          numPortal:
+          userStoreClient:
             token-uri: http://localhost:8180/auth/realms/Num/protocol/openid-connect/token
 
 userstore:
