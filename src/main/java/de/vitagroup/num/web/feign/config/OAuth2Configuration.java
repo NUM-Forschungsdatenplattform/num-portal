@@ -1,21 +1,25 @@
 package de.vitagroup.num.web.feign.config;
 
 import feign.Client;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import javax.net.ssl.HostnameVerifier;
+import java.util.stream.Collectors;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.ssl.SSLContexts;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesRegistrationAdapter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -31,6 +35,7 @@ import org.springframework.security.oauth2.client.registration.InMemoryClientReg
 
 @Configuration
 @EnableConfigurationProperties(OAuth2ClientProperties.class)
+@Slf4j
 public class OAuth2Configuration {
 
   @Bean
@@ -57,54 +62,55 @@ public class OAuth2Configuration {
 
   // ---------------------------- CODE BELOW ONLY A HACK TO GET PAST SELF SIGNED CERTIFICATE IN
   // TEMPORARY KEYCLOAK
-  private static final HostnameVerifier jvmHostnameVerifier =
-      HttpsURLConnection.getDefaultHostnameVerifier();
+  private KeyStore getKeyStore()
+      throws CertificateException, KeyStoreException, NoSuchAlgorithmException, IOException {
+    CertificateFactory fact = CertificateFactory.getInstance("X.509");
+    InputStream is = OAuth2Configuration.class.getResourceAsStream("/temp-keycloak.pem");
+    X509Certificate cer = (X509Certificate) fact.generateCertificate(is);
+    KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+    keystore.load(null);
+    keystore.setCertificateEntry("temp", cer);
+    return keystore;
+  }
 
-  private static final HostnameVerifier trivialHostnameVerifier =
-      new HostnameVerifier() {
-        public boolean verify(String hostname, SSLSession sslSession) {
-          return true;
-        }
-      };
+  private TrustManager[] getTrustmanagers(KeyStore extraStore)
+      throws NoSuchAlgorithmException, KeyStoreException {
+    TrustManagerFactory extraTrustManagerFactory = TrustManagerFactory.getInstance("X509");
+    extraTrustManagerFactory.init(extraStore);
+    TrustManager[] extraTrustManagers = extraTrustManagerFactory.getTrustManagers();
+    TrustManagerFactory defaultTrustManagerFactory = TrustManagerFactory.getInstance("X509");
+    defaultTrustManagerFactory.init((KeyStore) null);
+    TrustManager[] defaultTrustManagers = defaultTrustManagerFactory.getTrustManagers();
+    List<TrustManager> trustManagerList = pruneTrustmanagers(extraTrustManagers);
+    trustManagerList.addAll(pruneTrustmanagers(defaultTrustManagers));
+    return trustManagerList.toArray(new TrustManager[] {});
+  }
 
-  private static final TrustManager[] UNQUESTIONING_TRUST_MANAGER =
-      new TrustManager[] {
-        new X509TrustManager() {
-          public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-            return null;
-          }
+  private List<TrustManager> pruneTrustmanagers(TrustManager[] trustManagers) {
+    return Arrays.stream(trustManagers)
+        .filter(trustManager -> trustManager instanceof X509TrustManager)
+        .collect(Collectors.toList());
+  }
 
-          public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-
-          public void checkServerTrusted(X509Certificate[] certs, String authType) {}
-        }
-      };
-
-  public static void turnOffSslChecking() throws NoSuchAlgorithmException, KeyManagementException {
-    HttpsURLConnection.setDefaultHostnameVerifier(trivialHostnameVerifier);
-    // Install the all-trusting trust manager
+  public void setupTrustManagers()
+      throws NoSuchAlgorithmException, KeyManagementException, CertificateException,
+          KeyStoreException, IOException {
+    // Install the trust manager
+    KeyStore keyStore = getKeyStore();
     SSLContext sc = SSLContext.getInstance("SSL");
-    sc.init(null, UNQUESTIONING_TRUST_MANAGER, null);
+    sc.init(null, getTrustmanagers(keyStore), null);
     HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
   }
 
   @Bean
   public Client feignClient() {
     try {
-      OAuth2Configuration.turnOffSslChecking();
+      setupTrustManagers();
     } catch (Exception e) {
-      // do nothing
+      log.error("trustmanager setup failed", e);
     }
-    return new Client.Default(getSSLSocketFactory(), new NoopHostnameVerifier());
-  }
-
-  private SSLSocketFactory getSSLSocketFactory() {
-    try {
-      SSLContext sslContext =
-          SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
-      return sslContext.getSocketFactory();
-    } catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
+    return new Client.Default(
+        HttpsURLConnection.getDefaultSSLSocketFactory(),
+        HttpsURLConnection.getDefaultHostnameVerifier());
   }
 }
