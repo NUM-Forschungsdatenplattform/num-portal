@@ -6,3 +6,21 @@ spring:
   flyway:
     user: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
+  security:
+    oauth2:
+      client:
+        registration:
+          numPortal:
+            client-id: ${KEYCLOAK_CLIENT_ID}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+        provider:
+          numPortal:
+            token-uri: ${KEYCLOAK_ENDPOINT}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
+userstore:
+  url: ${KEYCLOAK_ENDPOINT}/auth/admin/realms/${KEYCLOAK_REALM}
+
+
+ehrbase:
+  rest-api-url: ${EHRBASE_ENDPOINT}/ehrbase/rest/openehr/v1/
+  username: ${EHRBASE_USER}
+  password: ${EHRBASE_PASSWORD}
