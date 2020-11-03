@@ -14,19 +14,18 @@ import javax.persistence.*;
 @Builder
 public class Cohort {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    private String name;
+  private String name;
 
-    private String description;
+  private String description;
 
-    @OneToOne(mappedBy = "cohort")
-    private Study study;
+  @OneToOne(mappedBy = "cohort")
+  private Study study;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "cohort_group_id", referencedColumnName = "id")
-    private CohortGroup cohortGroup;
-
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "cohort_group_id", referencedColumnName = "id")
+  private CohortGroup cohortGroup;
 }

@@ -18,24 +18,17 @@ import java.io.Serializable;
 @Builder
 public class Aql implements Serializable {
 
-    @ApiModelProperty(
-            required = true,
-            value = "The unique identifier",
-            example = "1")
-    @NotNull(message = "Id is mandatory")
-    private Long id;
+  @ApiModelProperty(required = true, value = "The unique identifier", example = "1")
+  @NotNull(message = "Id is mandatory")
+  private Long id;
 
-    @ApiModelProperty(
-            required = true,
-            value = "The AQL query")
-    @NotBlank(message = "Query is mandatory")
-    @NotNull(message = "Query is mandatory")
-    private String query;
+  @ApiModelProperty(required = true, value = "The AQL query")
+  @NotBlank(message = "Query is mandatory")
+  @NotNull(message = "Query is mandatory")
+  private String query;
 
-    @ApiModelProperty(
-            required = true,
-            value = "The name of the AQL query")
-    @NotNull(message = "Name is mandatory")
-    @NotBlank(message = "Name is mandatory")
-    private String name;
+  @ApiModelProperty(required = true, value = "The name of the AQL query")
+  @NotNull(message = "Name is mandatory")
+  @NotBlank(message = "Name is mandatory")
+  private String name;
 }

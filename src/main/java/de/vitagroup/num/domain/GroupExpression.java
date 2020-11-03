@@ -14,8 +14,8 @@ import java.util.List;
 @AllArgsConstructor
 public class GroupExpression extends Expression {
 
-    @NotNull(message = "Operator mandatory")
-    private Operator operator;
+  @NotNull(message = "Operator mandatory")
+  private Operator operator;
 
-    private List<Expression> children;
+  private List<Expression> children;
 }

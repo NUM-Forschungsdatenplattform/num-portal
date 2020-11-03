@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AqlExpression extends Expression {
 
-    private Aql aql;
+  private Aql aql;
 }
