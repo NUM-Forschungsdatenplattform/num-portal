@@ -19,6 +19,9 @@ spring:
       ddl-auto: none
   security:
     oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://temp-keycloak.10.214.4.21.xip.io/auth/realms/Num/protocol/openid-connect/certs
       client:
         registration:
           userStoreClient:
@@ -76,6 +79,9 @@ spring:
     password: postgres
   security:
     oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8180/auth/realms/Num/protocol/openid-connect/certs
       client:
         registration:
           userStoreClient:
@@ -85,6 +91,8 @@ spring:
         provider:
           userStoreClient:
             token-uri: http://localhost:8180/auth/realms/Num/protocol/openid-connect/token
+  mvc:
+    log-request-details: false
 
 userstore:
   url: http://localhost:8180/auth/admin/realms/Num
