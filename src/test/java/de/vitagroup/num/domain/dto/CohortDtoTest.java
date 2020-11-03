@@ -1,6 +1,7 @@
 package de.vitagroup.num.domain.dto;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.mockito.Matchers.any;
@@ -120,4 +121,39 @@ public class CohortDtoTest {
     }
 
 
+    @Test
+    public void shouldNotCopyIdsFromCohortDtoToCohort() {
+        CohortGroupDto first = CohortGroupDto.builder().id(1L).type(Type.PHENOTYPE).phenotypeId(1L).build();
+        CohortGroupDto second = CohortGroupDto.builder().id(2L).type(Type.PHENOTYPE).phenotypeId(2L).build();
+
+        CohortGroupDto andCohort = CohortGroupDto.builder().id(12L).type(Type.GROUP).operator(Operator.AND).children(List.of(first, second)).build();
+
+        CohortDto cohortDto = CohortDto.builder().id(16L).name("Cohort name").studyId(1L).cohortGroupDto(andCohort).build();
+
+        Cohort cohort = converter.convertToEntity(cohortDto);
+
+        assertThat(cohort, notNullValue());
+        assertThat(cohort.getId(), is(nullValue()));
+        assertThat(cohort.getCohortGroup().getId(), is(nullValue()));
+        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == null), is(true));
+        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == null), is(true));
+    }
+
+    @Test
+    public void shouldCopyIdsFromCohortToCohortDto() {
+
+        CohortGroup first = CohortGroup.builder().id(1L).type(Type.PHENOTYPE).phenotype(null).build();
+        CohortGroup second = CohortGroup.builder().id(2L).type(Type.PHENOTYPE).phenotype(null).build();
+
+        CohortGroup andCohort = CohortGroup.builder().id(12L).type(Type.GROUP).operator(Operator.AND).children(Set.of(first, second)).build();
+
+        Cohort cohort = Cohort.builder().name("Cohort name").id(17L).study(null).cohortGroup(andCohort).build();
+        CohortDto cohortDto = converter.convertToDto(cohort);
+
+        assertThat(cohortDto, notNullValue());
+        assertThat(cohortDto.getId(), is(cohort.getId()));
+        assertThat(cohortDto.getCohortGroupDto().getId(), is(andCohort.getId()));
+        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == first.getId() || c.getId() == second.getId()), is(true));
+        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == first.getId() || c.getId() == second.getId()), is(true));
+    }
 }

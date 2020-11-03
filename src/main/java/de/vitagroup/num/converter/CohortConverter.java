@@ -25,18 +25,21 @@ public class CohortConverter {
 
     @PostConstruct
     public void setUp() {
-        PropertyMap<CohortGroup, CohortGroupDto> cohortGroupMap = new PropertyMap<>() {
+
+        PropertyMap<CohortGroup, CohortGroupDto> cohortGroupDtoMap = new PropertyMap<>() {
             protected void configure() {
                 map().setPhenotypeId(source.getPhenotype().getId());
             }
         };
-        PropertyMap<Cohort, CohortDto> cohortMap = new PropertyMap<>() {
+
+        PropertyMap<Cohort, CohortDto> cohortDtoMap = new PropertyMap<>() {
             protected void configure() {
                 map().setStudyId(source.getStudy().getId());
             }
         };
-        modelMapper.addMappings(cohortGroupMap);
-        modelMapper.addMappings(cohortMap);
+
+        modelMapper.addMappings(cohortDtoMap);
+        modelMapper.addMappings(cohortGroupDtoMap);
     }
 
     public CohortDto convertToDto(Cohort cohort) {
@@ -48,6 +51,7 @@ public class CohortConverter {
 
     public Cohort convertToEntity(CohortDto dto) {
         Cohort cohort = modelMapper.map(dto, Cohort.class);
+        cohort.setId(null);
         Optional<Study> study = studyService.getStudyById(dto.getStudyId());
 
         if (study.isPresent()) {
@@ -63,7 +67,7 @@ public class CohortConverter {
 
     private CohortGroup convertToCohortGroupEntity(CohortGroupDto dto) {
         CohortGroup cohortGroup = modelMapper.map(dto, CohortGroup.class);
-
+        cohortGroup.setId(null);
         if (dto.getType() == Type.PHENOTYPE) {
             Optional<Phenotype> phenotype = phenotypeService.getPhenotypeById(dto.getPhenotypeId());
 
@@ -88,7 +92,7 @@ public class CohortConverter {
 
     private CohortGroupDto convertToCohortGroupDto(CohortGroup cohortGroup) {
         CohortGroupDto dto = modelMapper.map(cohortGroup, CohortGroupDto.class);
-        if(cohortGroup.getType().equals(Type.GROUP)){
+        if (cohortGroup.getType().equals(Type.GROUP)) {
             dto.setChildren(cohortGroup.getChildren().stream().map(this::convertToCohortGroupDto).collect(Collectors.toList()));
         }
         return dto;
