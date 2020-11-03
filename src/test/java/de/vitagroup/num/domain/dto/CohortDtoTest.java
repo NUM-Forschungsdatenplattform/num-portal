@@ -153,7 +153,7 @@ public class CohortDtoTest {
         assertThat(cohortDto, notNullValue());
         assertThat(cohortDto.getId(), is(cohort.getId()));
         assertThat(cohortDto.getCohortGroupDto().getId(), is(andCohort.getId()));
-        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == first.getId() || c.getId() == second.getId()), is(true));
-        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == first.getId() || c.getId() == second.getId()), is(true));
+        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == first.getId()), is(true));
+        assertThat(cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == second.getId()), is(true));
     }
 }
