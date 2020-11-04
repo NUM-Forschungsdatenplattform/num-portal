@@ -5,38 +5,43 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.mockito.Mockito.when;
 
-import de.vitagroup.num.domain.*;
-import de.vitagroup.num.service.MockEhrService;
+import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.AqlExpression;
+import de.vitagroup.num.domain.Cohort;
+import de.vitagroup.num.domain.CohortGroup;
+import de.vitagroup.num.domain.Operator;
+import de.vitagroup.num.domain.Phenotype;
+import de.vitagroup.num.domain.Type;
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Set;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CohortExecutorTest {
-
-  @Spy private SetOperationsService setOperations;
-
-  @Mock private MockEhrService mockEhrService;
-
-  @Mock private PhenotypeExecutor phenotypeExecutor;
-
-  @InjectMocks private CohortExecutor cohortExecutor;
 
   private final String COHORT_NAME = "Phenotype name";
   private final String PHENOTYPE_NAME = "Phenotype name";
   private final String AQL_NAME = "AQL query name";
   private final String AQL_QUERY = "SELECT A ... FROM E ... WHERE ...";
+  @Spy
+  private SetOperationsService setOperations;
+  @Mock
+  private EhrBaseService ehrBaseService;
+  @Mock
+  private PhenotypeExecutor phenotypeExecutor;
+  @InjectMocks
+  private CohortExecutor cohortExecutor;
 
   @Before
   public void setup() {
-    when(mockEhrService.getAllPatientIds())
+    when(ehrBaseService.getAllPatientIds())
         .thenReturn(Set.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
   }
 

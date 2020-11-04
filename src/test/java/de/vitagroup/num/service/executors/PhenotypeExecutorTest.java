@@ -5,36 +5,40 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.mockito.Mockito.when;
 
-import de.vitagroup.num.domain.*;
-import de.vitagroup.num.service.MockEhrService;
+import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.AqlExpression;
+import de.vitagroup.num.domain.GroupExpression;
+import de.vitagroup.num.domain.Operator;
+import de.vitagroup.num.domain.Phenotype;
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.Set;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PhenotypeExecutorTest {
 
-  @Spy private SetOperationsService setOperations;
-
-  @Mock private MockEhrService mockEhrService;
-
-  @InjectMocks private PhenotypeExecutor phenotypeExecutor;
-
   private final String PHENOTYPE_NAME = "Phenotype name";
   private final String AQL_NAME = "AQL query name";
   private final String AQL_QUERY = "SELECT A ... FROM E ... WHERE ...";
+  @Spy
+  private SetOperationsService setOperations;
+  @Mock
+  private EhrBaseService ehrBaseService;
+  @InjectMocks
+  private PhenotypeExecutor phenotypeExecutor;
 
   @Before
   public void setup() {
-    when(mockEhrService.getAllPatientIds())
+    when(ehrBaseService.getAllPatientIds())
         .thenReturn(Set.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
   }
 
@@ -43,8 +47,8 @@ public class PhenotypeExecutorTest {
     Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-    when(mockEhrService.executeAql(aql1)).thenReturn(Set.of("1", "5", "10"));
-    when(mockEhrService.executeAql(aql2)).thenReturn(Set.of("1", "4", "5", "6", "10"));
+    when(ehrBaseService.executeAql(aql1)).thenReturn(Set.of("1", "5", "10"));
+    when(ehrBaseService.executeAql(aql2)).thenReturn(Set.of("1", "4", "5", "6", "10"));
 
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
     AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
@@ -68,8 +72,8 @@ public class PhenotypeExecutorTest {
     Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-    when(mockEhrService.executeAql(aql1)).thenReturn(Set.of("1", "2", "3"));
-    when(mockEhrService.executeAql(aql2)).thenReturn(Set.of("3", "4", "5", "6", "7"));
+    when(ehrBaseService.executeAql(aql1)).thenReturn(Set.of("1", "2", "3"));
+    when(ehrBaseService.executeAql(aql2)).thenReturn(Set.of("3", "4", "5", "6", "7"));
 
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
     AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
@@ -93,14 +97,17 @@ public class PhenotypeExecutorTest {
     Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-    when(mockEhrService.executeAql(aql1)).thenReturn(Set.of("1", "4"));
-    when(mockEhrService.executeAql(aql2)).thenReturn(Set.of("1", "2", "3"));
+    when(ehrBaseService.executeAql(aql1)).thenReturn(Set.of("1", "4"));
+    when(ehrBaseService.executeAql(aql2)).thenReturn(Set.of("1", "2", "3"));
 
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
     AqlExpression notAql = AqlExpression.builder().aql(aql2).build();
 
     GroupExpression notNode =
-        GroupExpression.builder().operator(Operator.NOT).children(Arrays.asList(notAql)).build();
+        GroupExpression.builder()
+            .operator(Operator.NOT)
+            .children(Collections.singletonList(notAql))
+            .build();
     GroupExpression query =
         GroupExpression.builder()
             .operator(Operator.OR)
@@ -120,14 +127,17 @@ public class PhenotypeExecutorTest {
     Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-    when(mockEhrService.executeAql(aql1)).thenReturn(Set.of("1", "4"));
-    when(mockEhrService.executeAql(aql2)).thenReturn(Set.of("1", "2", "3"));
+    when(ehrBaseService.executeAql(aql1)).thenReturn(Set.of("1", "4"));
+    when(ehrBaseService.executeAql(aql2)).thenReturn(Set.of("1", "2", "3"));
 
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
     AqlExpression notAql = AqlExpression.builder().aql(aql2).build();
 
     GroupExpression notNode =
-        GroupExpression.builder().operator(Operator.NOT).children(Arrays.asList(notAql)).build();
+        GroupExpression.builder()
+            .operator(Operator.NOT)
+            .children(Collections.singletonList(notAql))
+            .build();
     GroupExpression query =
         GroupExpression.builder()
             .operator(Operator.AND)

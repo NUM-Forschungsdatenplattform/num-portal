@@ -4,8 +4,10 @@ import de.vitagroup.num.converter.CohortConverter;
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.service.CohortService;
+import de.vitagroup.num.web.exception.BadRequestException;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -45,11 +47,11 @@ public class CohortController {
 
   @PostMapping("{cohortId}/execute")
   @ApiOperation(value = "Executes the cohort")
-  public ResponseEntity<List<String>> executeCohort(@PathVariable String cohortId) {
+  public ResponseEntity<Set<String>> executeCohort(@PathVariable String cohortId) {
     try {
-      List<String> patientIds = cohortService.executeCohort(Long.parseLong(cohortId));
+      Set<String> patientIds = cohortService.executeCohort(Long.parseLong(cohortId));
       return ResponseEntity.ok(patientIds);
-    } catch (WrongStatusCodeException e) {
+    } catch (WrongStatusCodeException | BadRequestException e) {
       return ResponseEntity.badRequest().build();
     }
   }
