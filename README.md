@@ -7,7 +7,7 @@
 In the root folder of the project, open cmd and run:
 
 1. Build app: ```mvn clean install```
-2. Run: ```mvn spring-boot:run -Dspring-boot.run.profiles=local```
+2. Run: ```mvn spring-boot:run```
 
 ### Database 
 
