@@ -4,7 +4,6 @@ import de.vitagroup.num.converter.CohortConverter;
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.service.CohortService;
-import de.vitagroup.num.web.exception.BadRequestException;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import java.util.Set;
@@ -12,7 +11,6 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,21 +46,12 @@ public class CohortController {
   @PostMapping("{cohortId}/execute")
   @ApiOperation(value = "Executes the cohort")
   public ResponseEntity<Set<String>> executeCohort(@PathVariable String cohortId) {
-    try {
-      Set<String> patientIds = cohortService.executeCohort(Long.parseLong(cohortId));
-      return ResponseEntity.ok(patientIds);
-    } catch (WrongStatusCodeException | BadRequestException e) {
-      return ResponseEntity.badRequest().build();
-    }
+    return ResponseEntity.ok(cohortService.executeCohort(Long.parseLong(cohortId)));
   }
 
   @PostMapping("{cohortId}/size")
   @ApiOperation(value = "Retrieves the cohort size")
   public ResponseEntity<Long> retrieveCohortSize(@PathVariable String cohortId) {
-    try {
-      return ResponseEntity.ok(cohortService.getCohortSize(Long.parseLong(cohortId)));
-    } catch (WrongStatusCodeException e) {
-      return ResponseEntity.badRequest().build();
-    }
+    return ResponseEntity.ok(cohortService.getCohortSize(Long.parseLong(cohortId)));
   }
 }
