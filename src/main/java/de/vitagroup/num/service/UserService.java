@@ -12,9 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.vitagroup.num.web.feign.exception.FeignBadRequestException;
-import de.vitagroup.num.web.feign.exception.FeignResourceNotFoundException;
-import de.vitagroup.num.web.feign.exception.FeignSystemException;
+import feign.FeignException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,10 +38,10 @@ public class UserService {
       users.forEach(this::addUserDetails);
       return users;
 
-    } catch (FeignBadRequestException | FeignSystemException e) {
+    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
       throw new SystemException(
           "An error has occurred, cannot retrieve user, please try again later");
-    } catch (FeignResourceNotFoundException e) {
+    } catch (FeignException.NotFound e) {
       throw new ResourceNotFound("No users found");
     }
   }
@@ -63,10 +61,10 @@ public class UserService {
       addUserDetails(user);
       return user;
 
-    } catch (FeignBadRequestException | FeignSystemException e) {
+    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
       throw new SystemException(
           "An error has occurred, cannot retrieve users, please try again later");
-    } catch (FeignResourceNotFoundException e) {
+    } catch (FeignException.NotFound e) {
       throw new ResourceNotFound("User not found");
     }
   }
@@ -80,10 +78,10 @@ public class UserService {
   public Set<Role> getUserRoles(String userId) {
     try {
       return keycloakFeign.getRolesOfUser(userId);
-    } catch (FeignBadRequestException | FeignSystemException e) {
+    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
       throw new SystemException(
           "An error has occurred, cannot retrieve user roles, please try again later");
-    } catch (FeignResourceNotFoundException e) {
+    } catch (FeignException.NotFound e) {
       throw new ResourceNotFound("No roles found");
     }
   }
@@ -103,9 +101,9 @@ public class UserService {
       }
 
       keycloakFeign.addRole(userId, new Role[] {role});
-    } catch (FeignBadRequestException | FeignSystemException e) {
+    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
       throw new SystemException("An error has occurred, please try again later");
-    } catch (FeignResourceNotFoundException e) {
+    } catch (FeignException.NotFound e) {
       throw new ResourceNotFound("Role or user not found");
     }
   }
@@ -115,8 +113,7 @@ public class UserService {
       return;
     }
 
-    Optional<UserDetails> userDetails =
-        userDetailsService.getUserDetailsById(user.getId());
+    Optional<UserDetails> userDetails = userDetailsService.getUserDetailsById(user.getId());
 
     if (userDetails.isPresent()) {
       user.setApproved(userDetails.get().getApproved());
