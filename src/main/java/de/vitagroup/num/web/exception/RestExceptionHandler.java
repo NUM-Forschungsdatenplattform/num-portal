@@ -34,7 +34,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(response, headers, HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler({Exception.class})
+  @ExceptionHandler({Exception.class, SystemException.class})
   public ResponseEntity<ErrorResponse> handleAll(Exception ex) {
     log.error(ex.getMessage(), ex);
 
@@ -61,5 +61,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     ErrorResponse response =
         ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
     return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler({ResourceNotFound.class})
+  public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFound ex) {
+    log.error(ex.getMessage(), ex);
+
+    ErrorResponse response =
+        ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
+    return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.NOT_FOUND);
   }
 }

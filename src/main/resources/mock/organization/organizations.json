@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Organization A",
+    "externalId": "12345a"
+  },
+  {
+    "name": "Organization B",
+    "externalId": "12345b"
+  },
+  {
+    "name": "Organization C",
+    "externalId": "12345c"
+  },
+  {
+    "name": "Organization D",
+    "externalId": "12345d"
+  },
+  {
+    "name": "Organization E",
+    "externalId": "12345e"
+  }
+]
