@@ -2,8 +2,11 @@ package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.repository.CohortRepository;
-import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.executors.CohortExecutor;
+import de.vitagroup.num.web.exception.BadRequestException;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +16,7 @@ public class CohortService {
 
   private final CohortRepository cohortRepository;
 
-  private final EhrBaseService ehrBaseService;
+  private final CohortExecutor cohortExecutor;
 
   public List<Cohort> getAllCohorts() {
     return cohortRepository.findAll();
@@ -23,8 +26,9 @@ public class CohortService {
     return cohortRepository.save(cohort);
   }
 
-  public List<String> executeCohort(long cohortId) {
-    return ehrBaseService.getPatientIds("SELECT e/ehr_id/value FROM EHR e");
+  public Set<String> executeCohort(long cohortId) {
+    Optional<Cohort> cohort = cohortRepository.findById(cohortId);
+    return cohortExecutor.execute(cohort.orElseThrow(BadRequestException::new));
   }
 
   public long getCohortSize(long cohortId) {
