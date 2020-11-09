@@ -59,7 +59,7 @@ public class AdminController {
 
   @PostMapping("/user/{userId}/organization")
   @ApiOperation(value = "Adds the given organization to the user")
-  public ResponseEntity addOrganization(
+  public ResponseEntity<String> addOrganization(
       @NotNull @PathVariable String userId, @NotNull @RequestBody OrganizationDto organization) {
     userDetailsService.createOrUpdateUserDetails(userId, organization.getId());
     return ResponseEntity.ok("Success");
@@ -67,7 +67,8 @@ public class AdminController {
 
   @PostMapping("/user/details")
   @ApiOperation(value = "Creates user details")
-  public ResponseEntity<UserDetailsDto> addOrganization(@NotNull @Valid @RequestBody UserDetailsDto userDetailsDto) {
+  public ResponseEntity<UserDetailsDto> addOrganization(
+      @NotNull @Valid @RequestBody UserDetailsDto userDetailsDto) {
     UserDetails userDetails =
         userDetailsService.createUserDetails(converter.convertToEntity(userDetailsDto));
     return ResponseEntity.ok(converter.convertToDto(userDetails));
