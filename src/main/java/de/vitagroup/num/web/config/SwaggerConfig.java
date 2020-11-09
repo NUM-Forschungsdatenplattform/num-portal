@@ -13,6 +13,16 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 public class SwaggerConfig {
 
   @Bean
+  public Docket organizationApi() {
+    return new Docket(DocumentationType.SWAGGER_2)
+        .groupName("Organization")
+        .select()
+        .apis(RequestHandlerSelectors.any())
+        .paths(PathSelectors.ant("/organization/**"))
+        .build();
+  }
+
+  @Bean
   public Docket cohortApi() {
     return new Docket(DocumentationType.SWAGGER_2)
         .groupName("Cohort")
