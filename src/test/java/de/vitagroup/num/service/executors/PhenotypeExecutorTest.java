@@ -68,6 +68,28 @@ public class PhenotypeExecutorTest {
   }
 
   @Test
+  public void shouldCorrectlyExecuteSingleAqlAndOperation() {
+    Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
+
+    when(ehrBaseService.executeAql(aql1)).thenReturn(Set.of("1", "5", "10"));
+
+    AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
+
+    GroupExpression query =
+            GroupExpression.builder()
+                    .operator(Operator.AND)
+                    .children(Arrays.asList(aqlExpression1))
+                    .build();
+
+    Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
+
+    Set<String> result = phenotypeExecutor.execute(phenotype);
+
+    assertThat(result, notNullValue());
+    assertThat(result.equals(Set.of("1", "5", "10")), is(true));
+  }
+
+  @Test
   public void shouldCorrectlyExecuteOrPhenotype() {
     Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
