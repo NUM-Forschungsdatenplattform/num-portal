@@ -26,27 +26,6 @@ public class UserService {
   private final UserDetailsService userDetailsService;
 
   /**
-   * Retrieves a set of users from the identity provider
-   *
-   * @param role Role of the user
-   * @return Set of users
-   */
-  public Set<User> getUsersByRole(String role) {
-    try {
-
-      Set<User> users = keycloakFeign.getUsersByRole(role);
-      users.forEach(this::addUserDetails);
-      return users;
-
-    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException(
-          "An error has occurred, cannot retrieve user, please try again later");
-    } catch (FeignException.NotFound e) {
-      throw new ResourceNotFound("No users found");
-    }
-  }
-
-  /**
    * Retrieves user, portal user details and corresponding roles from identity provider
    *
    * @param userId External id of the user
