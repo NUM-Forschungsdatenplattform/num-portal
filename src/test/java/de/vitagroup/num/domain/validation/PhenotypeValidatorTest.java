@@ -113,9 +113,7 @@ public class PhenotypeValidatorTest {
                 .query(query).build();
 
         Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
-        assertThat(violations.isEmpty(), is(false));
-        assertThat(violations.size(), is(1));
-        assertThat(violations.iterator().next().getMessage(), is("Invalid phenotype definition"));
+        assertThat(violations.isEmpty(), is(true));
     }
 
     @Test

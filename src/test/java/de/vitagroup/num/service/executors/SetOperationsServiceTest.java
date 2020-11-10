@@ -17,6 +17,14 @@ public class SetOperationsServiceTest {
   private final SetOperationsService setOperations = new SetOperationsService();
 
   @Test
+  public void shouldCorrectlyComputeSingleSetIntersection() {
+    Set<String> result = setOperations.intersection(List.of(Set.of("1", "2", "3", "8", "9", "5")));
+
+    assertThat(result, notNullValue());
+    assertThat(result.equals(Set.of("1", "2", "3", "8", "9", "5")), is(true));
+  }
+
+  @Test
   public void shouldCorrectlyComputeSetsIntersection() {
     Set<String> result =
         setOperations.intersection(
@@ -28,6 +36,14 @@ public class SetOperationsServiceTest {
 
     assertThat(result, notNullValue());
     assertThat(result.equals(Set.of("1", "3", "5")), is(true));
+  }
+
+  @Test
+  public void shouldCorrectlyComputeSingleSetUnion() {
+    Set<String> result = setOperations.intersection(List.of(Set.of("1", "2", "3", "8", "9", "5")));
+
+    assertThat(result, notNullValue());
+    assertThat(result.equals(Set.of("1", "2", "3", "8", "9", "5")), is(true));
   }
 
   @Test
