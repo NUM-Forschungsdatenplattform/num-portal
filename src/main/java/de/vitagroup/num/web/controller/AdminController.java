@@ -31,12 +31,6 @@ public class AdminController {
   private final UserDetailsService userDetailsService;
   private final UserDetailsConverter converter;
 
-  @GetMapping("/role/{role}/user")
-  @ApiOperation(value = "Retrieves a list of users that have the given role")
-  public ResponseEntity<Set<User>> getUsersByRole(@NotNull @PathVariable String role) {
-    return ResponseEntity.ok(userService.getUsersByRole(role));
-  }
-
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
   public ResponseEntity<User> getUser(@NotNull @PathVariable String userId) {
