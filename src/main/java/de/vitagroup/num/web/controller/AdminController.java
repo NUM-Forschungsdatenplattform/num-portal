@@ -10,6 +10,8 @@ import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import java.util.List;
 import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -66,5 +69,14 @@ public class AdminController {
     UserDetails userDetails =
         userDetailsService.createUserDetails(converter.convertToEntity(userDetailsDto));
     return ResponseEntity.ok(converter.convertToDto(userDetails));
+  }
+
+  @GetMapping("/user")
+  @ApiOperation(value = "Retrieves the users that match the query parameters")
+  public ResponseEntity<List<User>> getUnapprovedUsers(
+      @ApiParam(value = "Switch to show only approved or unapproved users.", required = true)
+          @RequestParam(required = true)
+          boolean approved) {
+    return ResponseEntity.ok(userService.getUsersByApproved(approved));
   }
 }

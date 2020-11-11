@@ -2,10 +2,10 @@ package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.UserDetails;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
+import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -31,5 +31,9 @@ public class UserDetailsService {
           UserDetails.builder().userId(userId).organizationId(organizationId).build();
       return userDetailsRepository.save(newUserDetails);
     }
+  }
+
+  public Optional<List<UserDetails>> getApprovedUsers(boolean approved) {
+    return userDetailsRepository.findAllByApproved(approved);
   }
 }

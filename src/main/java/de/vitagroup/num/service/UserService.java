@@ -7,12 +7,13 @@ import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
-
+import feign.FeignException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import feign.FeignException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -68,8 +69,8 @@ public class UserService {
   /**
    * Assigns a role to a particular user
    *
-   * @param userId
-   * @param roleName
+   * @param userId the user to add the role to
+   * @param roleName The name of the role to add to the user
    */
   public void setUserRole(String userId, String roleName) {
     try {
@@ -98,5 +99,41 @@ public class UserService {
       user.setApproved(userDetails.get().getApproved());
       user.setExternalOrganizationId(userDetails.get().getOrganizationId());
     }
+  }
+
+  /**
+   * List all users with entry in userdetails page and with requested approved status. Ignores users
+   * that have entry in userdetails table but don't exist in keycloak to allow listing users even
+   * when there is an invalid entry in the userdetails table.
+   *
+   * @param approved Either "true" or "false" to get approved or unapproved users.
+   * @return List of users with given approval status.
+   */
+  public List<User> getUsersByApproved(boolean approved) {
+    Optional<List<UserDetails>> userDetails = userDetailsService.getApprovedUsers(approved);
+    return userDetails
+        .map(
+            userDetailsSet ->
+                userDetailsSet.stream()
+                    .map(this::getUserDontFail)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()))
+        .orElse(new ArrayList<User>());
+  }
+
+  private User getUserDontFail(UserDetails userDetails) {
+    try {
+      User user = keycloakFeign.getUser(userDetails.getUserId());
+      user.setExternalOrganizationId(userDetails.getOrganizationId());
+      user.setApproved(userDetails.getApproved());
+      return user;
+    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
+      throw new SystemException("An error has occurred, please try again later");
+    } catch (FeignException.NotFound e) {
+      log.error("Error while fetching user from keycloak using id from userdetails.", e);
+      // do not throw exception as then one invalid entry in the userdetails would prevent all
+      // listings
+    }
+    return null;
   }
 }

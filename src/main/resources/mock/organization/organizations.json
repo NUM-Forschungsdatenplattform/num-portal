@@ -1,22 +1,22 @@
 [
   {
     "name": "Organization A",
-    "externalId": "12345a"
+    "id": "12345a"
   },
   {
     "name": "Organization B",
-    "externalId": "12345b"
+    "id": "12345b"
   },
   {
     "name": "Organization C",
-    "externalId": "12345c"
+    "id": "12345c"
   },
   {
     "name": "Organization D",
-    "externalId": "12345d"
+    "id": "12345d"
   },
   {
     "name": "Organization E",
-    "externalId": "12345e"
+    "id": "12345e"
   }
 ]
