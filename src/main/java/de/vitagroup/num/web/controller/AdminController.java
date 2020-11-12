@@ -2,9 +2,9 @@ package de.vitagroup.num.web.controller;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 import de.vitagroup.num.converter.UserDetailsConverter;
-import de.vitagroup.num.domain.UserDetails;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.service.UserDetailsService;
@@ -71,11 +71,17 @@ public class AdminController {
     return ResponseEntity.ok(converter.convertToDto(userDetails));
   }
 
+  @PostMapping("/user/{userId}/approve")
+  @ApiOperation(value = "Adds the given organization to the user")
+  public ResponseEntity<UserDetails> approveUSer(@NotNull @PathVariable String userId) {
+    return ResponseEntity.ok(userDetailsService.approveUser(userId));
+  }
+
   @GetMapping("/user")
   @ApiOperation(value = "Retrieves the users that match the query parameters")
   public ResponseEntity<List<User>> getUnapprovedUsers(
       @ApiParam(value = "Switch to show only approved or unapproved users.", required = true)
-          @RequestParam(required = true)
+          @RequestParam
           boolean approved) {
     return ResponseEntity.ok(userService.getUsersByApproved(approved));
   }

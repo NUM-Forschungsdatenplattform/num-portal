@@ -1,8 +1,8 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.UserDetails;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
@@ -102,7 +102,7 @@ public class UserService {
   }
 
   /**
-   * List all users with entry in userdetails page and with requested approved status. Ignores users
+   * List all users with entry in user details page and with requested approved status. Ignores users
    * that have entry in userdetails table but don't exist in keycloak to allow listing users even
    * when there is an invalid entry in the userdetails table.
    *
@@ -118,7 +118,7 @@ public class UserService {
                     .map(this::getUserDontFail)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()))
-        .orElse(new ArrayList<User>());
+        .orElse(new ArrayList<>());
   }
 
   private User getUserDontFail(UserDetails userDetails) {
@@ -130,8 +130,8 @@ public class UserService {
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
       throw new SystemException("An error has occurred, please try again later");
     } catch (FeignException.NotFound e) {
-      log.error("Error while fetching user from keycloak using id from userdetails.", e);
-      // do not throw exception as then one invalid entry in the userdetails would prevent all
+      log.error("Error while fetching user from keycloak using the id from the user details.", e);
+      // do not throw exception as then one invalid entry in the user details would prevent all
       // listings
     }
     return null;

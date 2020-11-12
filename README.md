@@ -11,7 +11,7 @@ In the root folder of the project, open cmd and run:
 
 ### Database 
 
-Start local instance of PostgreSQL: 
+Start a local instance of PostgreSQL: 
 
 ``` 
 docker run --name postgres -e POSTGRES_PASSWORD=postgres -d -p 5432:5432 postgres
