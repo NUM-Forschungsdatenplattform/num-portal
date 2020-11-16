@@ -102,9 +102,9 @@ public class UserService {
   }
 
   /**
-   * List all users with entry in user details page and with requested approved status. Ignores users
-   * that have entry in userdetails table but don't exist in keycloak to allow listing users even
-   * when there is an invalid entry in the userdetails table.
+   * List all users with entry in user details page and with requested approved status. Ignores
+   * users that have entry in userdetails table but don't exist in keycloak to allow listing users
+   * even when there is an invalid entry in the userdetails table.
    *
    * @param approved Either "true" or "false" to get approved or unapproved users.
    * @return List of users with given approval status.
@@ -121,6 +121,13 @@ public class UserService {
         .orElse(new ArrayList<>());
   }
 
+  /**
+   * Get user from the user store and add the details info to it.
+   *
+   * @param userDetails the user details of the user to get
+   * @return the user with details, if user is not found, returns null to allow listing users even
+   *     with invalid entry in the user details table
+   */
   private User getUserDontFail(UserDetails userDetails) {
     try {
       User user = keycloakFeign.getUser(userDetails.getUserId());
@@ -131,8 +138,6 @@ public class UserService {
       throw new SystemException("An error has occurred, please try again later");
     } catch (FeignException.NotFound e) {
       log.error("Error while fetching user from keycloak using the id from the user details.", e);
-      // do not throw exception as then one invalid entry in the user details would prevent all
-      // listings
     }
     return null;
   }
