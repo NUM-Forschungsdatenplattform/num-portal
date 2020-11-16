@@ -115,7 +115,7 @@ public class UserService {
         .map(
             userDetailsSet ->
                 userDetailsSet.stream()
-                    .map(this::getUserDontFail)
+                    .map(this::getUserIfExists)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()))
         .orElse(new ArrayList<>());
@@ -128,7 +128,7 @@ public class UserService {
    * @return the user with details, if user is not found, returns null to allow listing users even
    *     with invalid entry in the user details table
    */
-  private User getUserDontFail(UserDetails userDetails) {
+  private User getUserIfExists(UserDetails userDetails) {
     try {
       User user = keycloakFeign.getUser(userDetails.getUserId());
       user.setExternalOrganizationId(userDetails.getOrganizationId());
