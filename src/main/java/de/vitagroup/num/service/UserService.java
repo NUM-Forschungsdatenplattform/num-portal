@@ -110,7 +110,7 @@ public class UserService {
    * @return List of users with given approval status.
    */
   public List<User> getUsersByApproved(boolean approved) {
-    Optional<List<UserDetails>> userDetails = userDetailsService.getApprovedUsers(approved);
+    Optional<List<UserDetails>> userDetails = userDetailsService.getUsersByApproved(approved);
     return userDetails
         .map(
             userDetailsSet ->
