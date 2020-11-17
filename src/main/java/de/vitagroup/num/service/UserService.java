@@ -102,9 +102,9 @@ public class UserService {
   }
 
   /**
-   * List all users with entry in userdetails page and with requested approved status. Ignores users
-   * that have entry in userdetails table but don't exist in keycloak to allow listing users even
-   * when there is an invalid entry in the userdetails table.
+   * List all users with entry in userdetails table and with requested approved status. Ignores
+   * users that have entry in userdetails table but don't exist in keycloak to allow listing users
+   * even when there is an invalid entry in the userdetails table.
    *
    * @param approved Either "true" or "false" to get approved or unapproved users.
    * @return List of users with given approval status.
@@ -115,13 +115,20 @@ public class UserService {
         .map(
             userDetailsSet ->
                 userDetailsSet.stream()
-                    .map(this::getUserDontFail)
+                    .map(this::getUserIfExists)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()))
-        .orElse(new ArrayList<User>());
+        .orElse(new ArrayList<>());
   }
 
-  private User getUserDontFail(UserDetails userDetails) {
+  /**
+   * Get user from the user store and add the details info to it.
+   *
+   * @param userDetails the user details of the user to get
+   * @return the user with details, if user is not found, returns null to allow listing users even
+   *     with invalid entry in the user details table
+   */
+  private User getUserIfExists(UserDetails userDetails) {
     try {
       User user = keycloakFeign.getUser(userDetails.getUserId());
       user.setExternalOrganizationId(userDetails.getOrganizationId());
