@@ -138,8 +138,6 @@ public class UserService {
       throw new SystemException("An error has occurred, please try again later");
     } catch (FeignException.NotFound e) {
       log.error("Error while fetching user from keycloak using id from userdetails.", e);
-      // do not throw exception as then one invalid entry in the userdetails would prevent all
-      // listings
     }
     return null;
   }
