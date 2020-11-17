@@ -102,7 +102,7 @@ public class UserService {
   }
 
   /**
-   * List all users with entry in user details page and with requested approved status. Ignores
+   * List all users with entry in userdetails table and with requested approved status. Ignores
    * users that have entry in userdetails table but don't exist in keycloak to allow listing users
    * even when there is an invalid entry in the userdetails table.
    *
@@ -110,7 +110,7 @@ public class UserService {
    * @return List of users with given approval status.
    */
   public List<User> getUsersByApproved(boolean approved) {
-    Optional<List<UserDetails>> userDetails = userDetailsService.getApprovedUsers(approved);
+    Optional<List<UserDetails>> userDetails = userDetailsService.getUsersByApproved(approved);
     return userDetails
         .map(
             userDetailsSet ->

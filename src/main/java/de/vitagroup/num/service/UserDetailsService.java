@@ -34,7 +34,7 @@ public class UserDetailsService {
     }
   }
 
-  public Optional<List<UserDetails>> getApprovedUsers(boolean approved) {
+  public Optional<List<UserDetails>> getUsersByApproved(boolean approved) {
     return userDetailsRepository.findAllByApproved(approved);
   }
 

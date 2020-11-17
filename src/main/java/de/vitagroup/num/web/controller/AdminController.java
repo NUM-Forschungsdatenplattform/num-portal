@@ -79,7 +79,7 @@ public class AdminController {
 
   @GetMapping("/user")
   @ApiOperation(value = "Retrieves the users that match the query parameters")
-  public ResponseEntity<List<User>> getUnapprovedUsers(
+  public ResponseEntity<List<User>> getUsersByApproved(
       @ApiParam(value = "Switch to show only approved or unapproved users.", required = true)
           @RequestParam
           boolean approved) {
