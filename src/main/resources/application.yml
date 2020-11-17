@@ -1,6 +1,8 @@
 server:
   port: 8090
 spring:
+  application:
+    name: num-portal
   datasource:
     hikari:
       data-source-properties:
