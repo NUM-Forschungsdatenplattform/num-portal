@@ -11,11 +11,11 @@ import org.ehrbase.client.aql.query.Query;
 import org.ehrbase.client.aql.record.Record1;
 import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestClient;
+import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
+import org.ehrbase.response.openehr.TemplatesResponseData;
 import org.springframework.stereotype.Service;
 
-/**
- * Service using the EhrBaseSDK to talk to the EhrBaseAPI
- */
+/** Service using the EhrBaseSDK to talk to the EhrBaseAPI */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -46,5 +46,10 @@ public class EhrBaseService {
 
   public Set<String> getAllPatientIds() {
     return executeAql(ALL_PATIENTS_IDS);
+  }
+
+  public List<TemplateMetaDataDto> getAllTemplatesMetadata() {
+    TemplatesResponseData templateResponseData = restClient.templateEndpoint().findAllTemplates();
+    return templateResponseData.get();
   }
 }

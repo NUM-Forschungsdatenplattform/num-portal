@@ -7,7 +7,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import de.vitagroup.num.converter.CohortConverter;
+import de.vitagroup.num.mapper.CohortMapper;
 import de.vitagroup.num.domain.*;
 import de.vitagroup.num.service.PhenotypeService;
 import de.vitagroup.num.service.StudyService;
@@ -31,7 +31,7 @@ public class CohortDtoTest {
 
   @Spy private ModelMapper modelMapper;
 
-  @InjectMocks private CohortConverter converter;
+  @InjectMocks private CohortMapper cohortMapper;
 
   @Before
   public void setup() {
@@ -122,7 +122,7 @@ public class CohortDtoTest {
 
     Cohort cohort =
         Cohort.builder().name("Cohort name").study(study).cohortGroup(andCohort).build();
-    CohortDto cohortDto = converter.convertToDto(cohort);
+    CohortDto cohortDto = cohortMapper.convertToDto(cohort);
 
     assertThat(cohortDto.getName(), notNullValue());
     assertThat(cohortDto.getName(), is("Cohort name"));
@@ -159,7 +159,7 @@ public class CohortDtoTest {
 
     CohortDto cohortDto =
         CohortDto.builder().name("Cohort name").studyId(1L).cohortGroup(andCohort).build();
-    Cohort cohort = converter.convertToEntity(cohortDto);
+    Cohort cohort = cohortMapper.convertToEntity(cohortDto);
 
     assertThat(cohort, notNullValue());
     assertThat(cohort.getStudy(), notNullValue());
@@ -202,7 +202,7 @@ public class CohortDtoTest {
 
     CohortDto cohortDto =
         CohortDto.builder().name("Cohort name").studyId(1L).cohortGroup(andCohort).build();
-    Cohort cohort = converter.convertToEntity(cohortDto);
+    Cohort cohort = cohortMapper.convertToEntity(cohortDto);
 
     assertThat(cohort, notNullValue());
     assertThat(cohort.getStudy(), notNullValue());
@@ -255,7 +255,7 @@ public class CohortDtoTest {
     CohortDto cohortDto =
         CohortDto.builder().id(16L).name("Cohort name").studyId(1L).cohortGroup(andCohort).build();
 
-    Cohort cohort = converter.convertToEntity(cohortDto);
+    Cohort cohort = cohortMapper.convertToEntity(cohortDto);
 
     assertThat(cohort, notNullValue());
     assertThat(cohort.getId(), is(nullValue()));
@@ -282,7 +282,7 @@ public class CohortDtoTest {
 
     Cohort cohort =
         Cohort.builder().name("Cohort name").id(17L).study(null).cohortGroup(andCohort).build();
-    CohortDto cohortDto = converter.convertToDto(cohort);
+    CohortDto cohortDto = cohortMapper.convertToDto(cohort);
 
     assertThat(cohortDto, notNullValue());
     assertThat(cohortDto.getId(), is(cohort.getId()));

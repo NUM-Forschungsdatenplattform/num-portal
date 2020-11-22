@@ -1,7 +1,7 @@
 package de.vitagroup.num.web.controller;
 
 import com.fasterxml.jackson.databind.node.TextNode;
-import de.vitagroup.num.converter.UserDetailsConverter;
+import de.vitagroup.num.mapper.UserDetailsMapper;
 import de.vitagroup.num.domain.UserDetails;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
@@ -32,7 +32,7 @@ public class AdminController {
 
   private final UserService userService;
   private final UserDetailsService userDetailsService;
-  private final UserDetailsConverter converter;
+  private final UserDetailsMapper userDetailsMapper;
 
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
@@ -67,8 +67,8 @@ public class AdminController {
   public ResponseEntity<UserDetailsDto> addOrganization(
       @NotNull @Valid @RequestBody UserDetailsDto userDetailsDto) {
     UserDetails userDetails =
-        userDetailsService.createUserDetails(converter.convertToEntity(userDetailsDto));
-    return ResponseEntity.ok(converter.convertToDto(userDetails));
+        userDetailsService.createUserDetails(userDetailsMapper.convertToEntity(userDetailsDto));
+    return ResponseEntity.ok(userDetailsMapper.convertToDto(userDetails));
   }
 
   @GetMapping("/user")

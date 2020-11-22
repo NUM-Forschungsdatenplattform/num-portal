@@ -1,4 +1,4 @@
-package de.vitagroup.num.converter;
+package de.vitagroup.num.mapper;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortGroup;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Component
 @AllArgsConstructor
-public class CohortConverter {
+public class CohortMapper {
 
   private final ModelMapper modelMapper;
   private final PhenotypeService phenotypeService;
