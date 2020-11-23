@@ -4,7 +4,12 @@
 
 ### Test Stage
 
-TODO not implemented yet, but would contain jobs for testing, doing CVE scan and running the Solar for the branch.
+During test stage the application runs the unit tests and dependency-check and stores those as artifacts in CircleCI.
+In Artifacts tab in CricleCi you can find the code coverage report of JaCoCo and the dependency-check.html to visualize the 
+results of the dependency analysis.
+
+The final step is the sonarscan, which simply uses the CircleCi sonarcloud orb to send the service to analysis to Sonarcloud.
+
 
 ### Version Tag Stage
 
