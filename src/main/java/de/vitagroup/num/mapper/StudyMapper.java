@@ -21,14 +21,14 @@ public class StudyMapper {
 
   @PostConstruct
   public void setUp() {
-    PropertyMap<Study, StudyDto> studyDtoPropertyMap =
+    PropertyMap<Study, StudyDto> templatePropertyMap =
         new PropertyMap<>() {
           protected void configure() {
             map().setCohortId(source.getCohort().getId());
           }
         };
 
-    modelMapper.addMappings(studyDtoPropertyMap);
+    modelMapper.addMappings(templatePropertyMap);
   }
 
   public StudyDto convertToDto(Study study) {
@@ -44,7 +44,9 @@ public class StudyMapper {
     if (studyDto.getTemplates() != null) {
       Map<String, String> map =
           studyDto.getTemplates().stream()
-              .collect(Collectors.toMap(TemplateInfoDto::getId, TemplateInfoDto::getConcept));
+              .collect(
+                  Collectors.toMap(
+                      TemplateInfoDto::getId, TemplateInfoDto::getConcept, (t1, t2) -> t1));
 
       study.setTemplates(map);
     }

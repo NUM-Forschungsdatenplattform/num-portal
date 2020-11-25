@@ -5,8 +5,10 @@ import de.vitagroup.num.domain.dto.TemplateMetadataDto;
 import lombok.AllArgsConstructor;
 import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.PropertyMap;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,6 +18,18 @@ import java.util.stream.Collectors;
 public class TemplateMapper {
 
   private final ModelMapper modelMapper;
+
+  @PostConstruct
+  public void setUp() {
+    PropertyMap<TemplateMetaDataDto, TemplateMetadataDto> studyPropertyMap =
+        new PropertyMap<>() {
+          protected void configure() {
+            map().setName(source.getConcept());
+          }
+        };
+
+    modelMapper.addMappings(studyPropertyMap);
+  }
 
   public TemplateMetadataDto convertToTemplateMetadataDto(TemplateMetaDataDto metaDataDto) {
     return modelMapper.map(metaDataDto, TemplateMetadataDto.class);

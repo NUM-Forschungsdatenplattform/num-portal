@@ -18,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 public class StudyDto {
 
-  @ApiModelProperty @NotNull private Long id;
+  @ApiModelProperty private Long id;
 
   @ApiModelProperty @NotNull @NotEmpty private String name;
 

@@ -17,10 +17,10 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 public class TemplateMetadataDto {
 
-  @ApiModelProperty(value = "The ehrbase identifier of the template")
-  private String id;
+  @ApiModelProperty(value = "The ehrbase template id")
+  private String templateId;
 
-  @ApiModelProperty private String concept;
+  @ApiModelProperty private String name;
 
   @ApiModelProperty private String archetypeId;
 
