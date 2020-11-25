@@ -1,18 +1,12 @@
 package de.vitagroup.num.converter;
 
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.CohortGroup;
-import de.vitagroup.num.domain.UserDetails;
-import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.domain.dto.CohortGroupDto;
+import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
+import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 
 @Slf4j
 @Component
