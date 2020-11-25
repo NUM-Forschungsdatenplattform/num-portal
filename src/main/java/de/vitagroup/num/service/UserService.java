@@ -1,8 +1,8 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.UserDetails;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
@@ -137,7 +137,7 @@ public class UserService {
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
       throw new SystemException("An error has occurred, please try again later");
     } catch (FeignException.NotFound e) {
-      log.error("Error while fetching user from keycloak using id from userdetails.", e);
+      log.error("Error while fetching user from keycloak using the id from the user details.", e);
     }
     return null;
   }

@@ -1,7 +1,8 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.UserDetails;
+import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
+import de.vitagroup.num.web.exception.ResourceNotFound;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -35,5 +36,16 @@ public class UserDetailsService {
 
   public Optional<List<UserDetails>> getUsersByApproved(boolean approved) {
     return userDetailsRepository.findAllByApproved(approved);
+  }
+
+  public UserDetails approveUser(String userId) {
+    Optional<UserDetails> userDetails = userDetailsRepository.findByUserId(userId);
+    return userDetails
+        .map(
+            details -> {
+              details.setApproved(true);
+              return userDetailsRepository.save(details);
+            })
+        .orElseThrow(() -> new ResourceNotFound("User " + userId + " not created yet."));
   }
 }

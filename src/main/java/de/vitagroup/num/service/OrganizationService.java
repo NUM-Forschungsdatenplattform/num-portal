@@ -36,8 +36,8 @@ public class OrganizationService {
   /**
    * Retrieves an organization by external identifier
    *
-   * @param id
-   * @return
+   * @param id the id of the organization to fetch
+   * @return the found organization. If none is found, ResourceNotFound exception is thrown
    */
   public OrganizationDto getOrganizationById(String id) {
     Optional<OrganizationDto> organizationDto = findOrganizationById(id);
