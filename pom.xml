@@ -25,6 +25,7 @@
     <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
     <java.version>11</java.version>
     <openfeign.version>2.2.5.RELEASE</openfeign.version>
+    <jacoco.version>0.8.6</jacoco.version>
   </properties>
 
   <repositories>
@@ -167,6 +168,25 @@
           <source>${java.version}</source>
           <target>${java.version}</target>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

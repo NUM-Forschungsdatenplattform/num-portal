@@ -1,13 +1,12 @@
 package de.vitagroup.num.mapper;
 
-import de.vitagroup.num.domain.UserDetails;
+import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
+import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 
 @Slf4j
 @Component
