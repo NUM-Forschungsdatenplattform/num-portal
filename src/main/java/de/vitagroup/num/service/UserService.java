@@ -8,15 +8,13 @@ import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -102,43 +100,19 @@ public class UserService {
   }
 
   /**
-   * List all users with entry in userdetails table and with requested approved status. Ignores
-   * users that have entry in userdetails table but don't exist in keycloak to allow listing users
-   * even when there is an invalid entry in the userdetails table.
-   *
-   * @param approved Either "true" or "false" to get approved or unapproved users.
-   * @return List of users with given approval status.
+   * Retrieved a list of users that match the search criteria
+   * @param approved
+   * @param search A string contained in username, first or last name, or email
+   * @return
    */
-  public List<User> getUsersByApproved(boolean approved) {
-    Optional<List<UserDetails>> userDetails = userDetailsService.getUsersByApproved(approved);
-    return userDetails
-        .map(
-            userDetailsSet ->
-                userDetailsSet.stream()
-                    .map(this::getUserIfExists)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList()))
-        .orElse(new ArrayList<>());
-  }
+  public Set<User> searchUsers(Boolean approved, String search) {
+    Set<User> users = keycloakFeign.searchUsers(search);
+    users.stream().forEach(this::addUserDetails);
 
-  /**
-   * Get user from the user store and add the details info to it.
-   *
-   * @param userDetails the user details of the user to get
-   * @return the user with details, if user is not found, returns null to allow listing users even
-   *     with invalid entry in the user details table
-   */
-  private User getUserIfExists(UserDetails userDetails) {
-    try {
-      User user = keycloakFeign.getUser(userDetails.getUserId());
-      user.setExternalOrganizationId(userDetails.getOrganizationId());
-      user.setApproved(userDetails.getApproved());
-      return user;
-    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException("An error has occurred, please try again later");
-    } catch (FeignException.NotFound e) {
-      log.error("Error while fetching user from keycloak using the id from the user details.", e);
+    if (approved != null) {
+      users.removeIf(user -> approved ? user.isNotApproved() : user.isApproved());
     }
-    return null;
+
+    return users;
   }
 }

@@ -1,7 +1,7 @@
 package de.vitagroup.num.web.controller;
 
 import com.fasterxml.jackson.databind.node.TextNode;
-import de.vitagroup.num.converter.UserDetailsConverter;
+import de.vitagroup.num.mapper.UserDetailsMapper;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
@@ -11,7 +11,6 @@ import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import java.util.List;
 import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -32,7 +31,7 @@ public class AdminController {
 
   private final UserService userService;
   private final UserDetailsService userDetailsService;
-  private final UserDetailsConverter converter;
+  private final UserDetailsMapper userDetailsMapper;
 
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
@@ -67,8 +66,8 @@ public class AdminController {
   public ResponseEntity<UserDetailsDto> addOrganization(
       @NotNull @Valid @RequestBody UserDetailsDto userDetailsDto) {
     UserDetails userDetails =
-        userDetailsService.createUserDetails(converter.convertToEntity(userDetailsDto));
-    return ResponseEntity.ok(converter.convertToDto(userDetails));
+        userDetailsService.createUserDetails(userDetailsMapper.convertToEntity(userDetailsDto));
+    return ResponseEntity.ok(userDetailsMapper.convertToDto(userDetails));
   }
 
   @PostMapping("/user/{userId}/approve")
@@ -78,11 +77,15 @@ public class AdminController {
   }
 
   @GetMapping("/user")
-  @ApiOperation(value = "Retrieves the users that match the query parameters")
-  public ResponseEntity<List<User>> getUsersByApproved(
-      @ApiParam(value = "Switch to show only approved or unapproved users.", required = true)
-          @RequestParam
-          boolean approved) {
-    return ResponseEntity.ok(userService.getUsersByApproved(approved));
+  @ApiOperation(value = "Retrieves a set of users that match the search string")
+  public ResponseEntity<Set<User>> searchUsers(
+      @RequestParam(required = false)
+          Boolean approved,
+      @RequestParam(required = false)
+          @ApiParam(
+              value = "A string contained in username, first or last name, or email",
+              required = false)
+          String search) {
+    return ResponseEntity.ok(userService.searchUsers(approved, search));
   }
 }

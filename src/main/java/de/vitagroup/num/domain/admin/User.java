@@ -1,5 +1,6 @@
 package de.vitagroup.num.domain.admin;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Set;
 
@@ -50,4 +51,9 @@ public class User {
   @ApiModelProperty(value = "The external organization id from the terminology server")
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private String externalOrganizationId;
+
+  @JsonIgnore
+  public boolean isNotApproved() {
+    return !approved;
+  }
 }
