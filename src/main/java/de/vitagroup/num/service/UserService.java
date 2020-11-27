@@ -101,7 +101,7 @@ public class UserService {
 
   /**
    * Retrieved a list of users that match the search criteria
-   * @param approved
+   * @param approved Indicates that the user has been approved by the admin
    * @param search A string contained in username, first or last name, or email
    * @return
    */

@@ -55,11 +55,7 @@ public class StudyController {
   @ApiOperation(
       value = "Creates a study; the logged in user is assigned as coordinator of the study")
   public ResponseEntity<StudyDto> createStudy(
-      @AuthenticationPrincipal Jwt principal, @Valid @NotNull @RequestBody StudyDto studyDto) {
-
-    if (principal == null || StringUtils.isEmpty(principal.getSubject())) {
-      throw new NotAuthorizedException("Not authorized");
-    }
+      @AuthenticationPrincipal @NotNull Jwt principal, @Valid @NotNull @RequestBody StudyDto studyDto) {
 
     Study study =
         studyService.createStudy(studyMapper.convertToEntity(studyDto), principal.getSubject());
@@ -72,13 +68,9 @@ public class StudyController {
       value =
           "Updates a study; the logged in user is assigned as coordinator of the study at creation time")
   public ResponseEntity<StudyDto> updateStudy(
-      @AuthenticationPrincipal Jwt principal,
+      @AuthenticationPrincipal @NotNull Jwt principal,
       @PathVariable("id") Long studyId,
       @Valid @NotNull @RequestBody StudyDto studyDto) {
-
-    if (principal == null || StringUtils.isEmpty(principal.getSubject())) {
-      throw new NotAuthorizedException("Not authorized");
-    }
 
     Study study = studyService.updateStudy(studyMapper.convertToEntity(studyDto), studyId);
 
