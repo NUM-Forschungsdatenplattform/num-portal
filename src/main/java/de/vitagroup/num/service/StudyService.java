@@ -23,10 +23,6 @@ public class StudyService {
     return studyRepository.findAll();
   }
 
-  public List<Study> getAllStudies() {
-    return studyRepository.findAll();
-  }
-
   public Optional<Study> getStudyById(Long studyId) {
     return studyRepository.findById(studyId);
   }
