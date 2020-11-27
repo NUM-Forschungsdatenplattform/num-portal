@@ -26,21 +26,24 @@ jobs:
       - image: circleci/openjdk:stretch
     steps:
       - checkout
+      - cache-out-maven-dependencies
       - run:
-          name: Run unit tests
+          name: Run unit tests and CVE scan
+          command:  ./mvnw clean verify
+      - run:
+          name: Save test results
           command: |
-            echo 'Running unit tests'
-            ./mvnw clean test
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
       - store_artifacts:
-          path: target
-      - run:
-          name: Run CVE scan
-          command: |
-            echo 'CVE SCAN NOT IMPLEMENTED!'
-      - run:
-          name: Run Sonar
-          command: |
-            echo 'SONAR NOT IMPLEMENTED!'
+          path: target/site
+      - store_artifacts:
+          path: target/dependency-check-report.html
+      - store_test_results:
+          path: ~/test-results
+      - sonarcloud/scan
+      - cache-in-maven-dependencies
   tag-version:
     docker:
       - image: circleci/openjdk:stretch
@@ -75,6 +78,7 @@ jobs:
     steps:
       - checkout
       - configure-git-for-ci-bot
+      - cache-out-maven-dependencies
       - setup_remote_docker:
           version: 19.03.13
       - run:
@@ -91,6 +95,7 @@ jobs:
             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
             ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$DOCKER_USER/num-portal:$TAG -DskipTests -Djdk.tls.client.protocols=TLSv1.2
             docker push $DOCKER_USER/num-portal:$TAG
+      - cache-in-maven-dependencies
 
 commands:
   configure-git-for-ci-bot:
@@ -104,3 +109,23 @@ commands:
             git config --global user.email "50235421+ehrbase-tech-user@users.noreply.github.com"
             git config --global user.name "ci-bot"
             git remote -v
+
+
+  cache-out-maven-dependencies:
+    steps:
+      - run:
+          name: Generate Cache Checksum for Maven Dependencies
+          command: find /home/circleci/project -name 'pom.xml' | sort | xargs cat > /tmp/num-portal_maven_cache_seed
+      - restore_cache:
+          key: v1-num-portal-deps-
+
+  cache-in-maven-dependencies:
+    steps:
+      - save_cache:
+          key: v1-num-portal-deps-{{ checksum "/tmp/num-portal_maven_cache_seed" }}
+          paths:
+            - ~/.m2
+
+
+orbs:
+  sonarcloud: sonarsource/sonarcloud@1.0.2
