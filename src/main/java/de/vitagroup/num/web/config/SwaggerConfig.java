@@ -13,6 +13,26 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 public class SwaggerConfig {
 
   @Bean
+  public Docket studyApi() {
+    return new Docket(DocumentationType.SWAGGER_2)
+        .groupName("Study")
+        .select()
+        .apis(RequestHandlerSelectors.any())
+        .paths(PathSelectors.ant("/study/**"))
+        .build();
+  }
+
+  @Bean
+  public Docket templateApi() {
+    return new Docket(DocumentationType.SWAGGER_2)
+        .groupName("Template")
+        .select()
+        .apis(RequestHandlerSelectors.any())
+        .paths(PathSelectors.ant("/template/**"))
+        .build();
+  }
+
+  @Bean
   public Docket organizationApi() {
     return new Docket(DocumentationType.SWAGGER_2)
         .groupName("Organization")

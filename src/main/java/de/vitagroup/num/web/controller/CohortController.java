@@ -1,6 +1,6 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.converter.CohortConverter;
+import de.vitagroup.num.mapper.CohortMapper;
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.service.CohortService;
@@ -26,21 +26,21 @@ public class CohortController {
 
   private final CohortService cohortService;
 
-  private final CohortConverter converter;
+  private final CohortMapper cohortMapper;
 
   @GetMapping
   @ApiOperation(value = "Retrieves a list of cohorts")
   public ResponseEntity<List<CohortDto>> getAllCohorts() {
     List<Cohort> cohorts = cohortService.getAllCohorts();
     return ResponseEntity.ok(
-        cohorts.stream().map(converter::convertToDto).collect(Collectors.toList()));
+        cohorts.stream().map(cohortMapper::convertToDto).collect(Collectors.toList()));
   }
 
   @PostMapping
   @ApiOperation(value = "Stores a cohort")
   public ResponseEntity<CohortDto> createCohort(@Valid @NotNull @RequestBody CohortDto cohort) {
-    Cohort cohortEntity = cohortService.createCohort(converter.convertToEntity(cohort));
-    return ResponseEntity.ok(converter.convertToDto(cohortEntity));
+    Cohort cohortEntity = cohortService.createCohort(cohortMapper.convertToEntity(cohort));
+    return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
   @PostMapping("{cohortId}/execute")
