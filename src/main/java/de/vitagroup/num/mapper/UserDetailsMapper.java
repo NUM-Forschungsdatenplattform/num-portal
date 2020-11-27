@@ -16,7 +16,7 @@ public class UserDetailsMapper {
   private final ModelMapper modelMapper;
 
   @PostConstruct
-  public void setUp() {
+  public void initialize() {
     modelMapper.getConfiguration().setAmbiguityIgnored(true);
   }
 

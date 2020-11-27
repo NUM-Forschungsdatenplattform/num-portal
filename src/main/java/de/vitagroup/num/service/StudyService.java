@@ -23,13 +23,16 @@ public class StudyService {
     return studyRepository.findAll();
   }
 
+  public List<Study> getAllStudies() {
+    return studyRepository.findAll();
+  }
+
   public Optional<Study> getStudyById(Long studyId) {
     return studyRepository.findById(studyId);
   }
-
+  
   public Study createStudy(Study study, String userId) {
     Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(userId);
-
     // TODO: check role of the logged in coordinator -> need to defined available roles
 
     if (coordinator.isEmpty()) {

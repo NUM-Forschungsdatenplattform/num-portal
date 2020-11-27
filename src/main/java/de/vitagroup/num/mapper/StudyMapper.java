@@ -28,7 +28,7 @@ public class StudyMapper {
   private final UserDetailsService userDetailsService;
 
   @PostConstruct
-  public void setUp() {
+  public void initialize() {
     PropertyMap<Study, StudyDto> templatePropertyMap =
         new PropertyMap<>() {
           protected void configure() {

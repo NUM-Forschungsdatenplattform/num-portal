@@ -1,6 +1,6 @@
 package de.vitagroup.num.domain;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.MapConverter;
 import lombok.AllArgsConstructor;
@@ -8,8 +8,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
-import java.util.List;
+import javax.persistence.Entity;
+import javax.persistence.CascadeType;
+import javax.persistence.Convert;
+import javax.persistence.GeneratedValue;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import java.util.Map;
 
 @Entity
