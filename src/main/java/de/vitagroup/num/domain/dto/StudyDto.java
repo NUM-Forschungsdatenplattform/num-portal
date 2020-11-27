@@ -1,5 +1,8 @@
 package de.vitagroup.num.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import de.vitagroup.num.domain.StudyStatus;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -9,6 +12,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Data
@@ -16,11 +20,15 @@ import java.util.List;
 @ApiModel
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class StudyDto {
 
   @ApiModelProperty private Long id;
 
-  @ApiModelProperty @NotNull @NotEmpty private String name;
+  @ApiModelProperty
+  @NotNull(message = "Study name cannot be null")
+  @NotEmpty(message = "Study name cannot be empty")
+  private String name;
 
   @ApiModelProperty private String description;
 
@@ -31,4 +39,17 @@ public class StudyDto {
   @ApiModelProperty private UserDetailsDto coordinator;
 
   @ApiModelProperty private List<UserDetailsDto> researchers;
+
+  @ApiModelProperty
+  @NotNull(message = "Study first hypotheses cannot be null")
+  @NotEmpty(message = "Study first hypotheses cannot be empty")
+  private String firstHypotheses;
+
+  @ApiModelProperty private String secondHypotheses;
+
+  @ApiModelProperty private StudyStatus status;
+
+  @ApiModelProperty private OffsetDateTime createDate;
+
+  @ApiModelProperty private OffsetDateTime modifiedDate;
 }

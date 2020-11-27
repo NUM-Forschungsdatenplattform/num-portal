@@ -19,6 +19,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,16 @@ public class Study {
   private String name;
 
   private String description;
+
+  private String firstHypotheses;
+
+  private String secondHypotheses;
+
+  private StudyStatus status;
+
+  private OffsetDateTime createDate;
+
+  private OffsetDateTime modifiedDate;
 
   @Convert(converter = MapConverter.class)
   private Map<String, String> templates;
