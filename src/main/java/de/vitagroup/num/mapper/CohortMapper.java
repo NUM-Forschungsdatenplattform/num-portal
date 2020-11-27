@@ -28,7 +28,7 @@ public class CohortMapper {
   private final StudyService studyService;
 
   @PostConstruct
-  public void setUp() {
+  public void initialize() {
 
     PropertyMap<CohortGroup, CohortGroupDto> cohortGroupDtoMap =
         new PropertyMap<>() {

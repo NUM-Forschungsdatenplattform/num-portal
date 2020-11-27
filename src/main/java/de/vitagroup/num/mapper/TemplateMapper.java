@@ -20,7 +20,7 @@ public class TemplateMapper {
   private final ModelMapper modelMapper;
 
   @PostConstruct
-  public void setUp() {
+  public void initialize() {
     PropertyMap<TemplateMetaDataDto, TemplateMetadataDto> studyPropertyMap =
         new PropertyMap<>() {
           protected void configure() {
