@@ -20,5 +20,5 @@ public class TemplateInfoDto {
   @ApiModelProperty(value = "The ehrbase identifier of the template")
   private String id;
 
-  @ApiModelProperty private String concept;
+  @ApiModelProperty private String name;
 }

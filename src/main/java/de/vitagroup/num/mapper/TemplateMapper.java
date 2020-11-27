@@ -38,7 +38,7 @@ public class TemplateMapper {
   public List<TemplateInfoDto> convertToTemplateInfoDtoList(Map<String, String> templateInfoMap) {
     if (templateInfoMap != null) {
       return templateInfoMap.entrySet().stream()
-          .map(e -> TemplateInfoDto.builder().id(e.getKey()).concept(e.getValue()).build())
+          .map(e -> TemplateInfoDto.builder().id(e.getKey()).name(e.getValue()).build())
           .collect(Collectors.toList());
     } else {
       return List.of();

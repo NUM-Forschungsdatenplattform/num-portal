@@ -55,7 +55,7 @@ public class StudyMapper {
           studyDto.getTemplates().stream()
               .collect(
                   Collectors.toMap(
-                      TemplateInfoDto::getId, TemplateInfoDto::getConcept, (t1, t2) -> t1));
+                      TemplateInfoDto::getId, TemplateInfoDto::getName, (t1, t2) -> t1));
 
       study.setTemplates(map);
     }
