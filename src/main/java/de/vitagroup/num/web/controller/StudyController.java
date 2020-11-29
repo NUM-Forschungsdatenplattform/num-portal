@@ -4,11 +4,9 @@ import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.mapper.StudyMapper;
 import de.vitagroup.num.service.StudyService;
-import de.vitagroup.num.web.exception.NotAuthorizedException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -31,10 +29,11 @@ public class StudyController {
   private final StudyMapper studyMapper;
 
   @GetMapping()
-  @ApiOperation(value = "Retrieves a list of all studies in the portal")
-  public ResponseEntity<List<StudyDto>> getAllStudies() {
+  @ApiOperation(value = "Retrieves a list of studies")
+  public ResponseEntity<List<StudyDto>> searchStudies(
+      @RequestParam(required = false) @NotEmpty String userId) {
     return ResponseEntity.ok(
-        studyService.getAllStudies().stream()
+        studyService.searchStudies(userId).stream()
             .map(studyMapper::convertToDto)
             .collect(Collectors.toList()));
   }
@@ -55,7 +54,8 @@ public class StudyController {
   @ApiOperation(
       value = "Creates a study; the logged in user is assigned as coordinator of the study")
   public ResponseEntity<StudyDto> createStudy(
-      @AuthenticationPrincipal @NotNull Jwt principal, @Valid @NotNull @RequestBody StudyDto studyDto) {
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @Valid @NotNull @RequestBody StudyDto studyDto) {
 
     Study study =
         studyService.createStudy(studyMapper.convertToEntity(studyDto), principal.getSubject());
