@@ -11,7 +11,6 @@ import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import java.util.List;
 import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -78,11 +77,15 @@ public class AdminController {
   }
 
   @GetMapping("/user")
-  @ApiOperation(value = "Retrieves the users that match the query parameters")
-  public ResponseEntity<List<User>> getUsersByApproved(
-      @ApiParam(value = "Switch to show only approved or unapproved users.", required = true)
-          @RequestParam
-          boolean approved) {
-    return ResponseEntity.ok(userService.getUsersByApproved(approved));
+  @ApiOperation(value = "Retrieves a set of users that match the search string")
+  public ResponseEntity<Set<User>> searchUsers(
+      @RequestParam(required = false)
+          Boolean approved,
+      @RequestParam(required = false)
+          @ApiParam(
+              value = "A string contained in username, first or last name, or email",
+              required = false)
+          String search) {
+    return ResponseEntity.ok(userService.searchUsers(approved, search));
   }
 }

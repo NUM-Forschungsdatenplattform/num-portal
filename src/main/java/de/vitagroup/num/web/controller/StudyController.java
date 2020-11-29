@@ -4,10 +4,14 @@ import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.mapper.StudyMapper;
 import de.vitagroup.num.service.StudyService;
+import de.vitagroup.num.web.exception.NotAuthorizedException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -27,7 +31,7 @@ public class StudyController {
   private final StudyMapper studyMapper;
 
   @GetMapping()
-  @ApiOperation(value = "Retrieves a list of all studies")
+  @ApiOperation(value = "Retrieves a list of all studies in the portal")
   public ResponseEntity<List<StudyDto>> getAllStudies() {
     return ResponseEntity.ok(
         studyService.getAllStudies().stream()
@@ -43,13 +47,33 @@ public class StudyController {
     if (study.isEmpty()) {
       throw new ResourceNotFound("Study not found");
     }
+
     return ResponseEntity.ok(studyMapper.convertToDto(study.get()));
   }
 
   @PostMapping()
-  @ApiOperation(value = "Creates a study")
-  public ResponseEntity<StudyDto> createStudy(@Valid @NotNull @RequestBody StudyDto studyDto) {
-    Study study = studyService.createStudy(studyMapper.convertToEntity(studyDto));
+  @ApiOperation(
+      value = "Creates a study; the logged in user is assigned as coordinator of the study")
+  public ResponseEntity<StudyDto> createStudy(
+      @AuthenticationPrincipal @NotNull Jwt principal, @Valid @NotNull @RequestBody StudyDto studyDto) {
+
+    Study study =
+        studyService.createStudy(studyMapper.convertToEntity(studyDto), principal.getSubject());
+
+    return ResponseEntity.ok(studyMapper.convertToDto(study));
+  }
+
+  @PutMapping(value = "/{id}")
+  @ApiOperation(
+      value =
+          "Updates a study; the logged in user is assigned as coordinator of the study at creation time")
+  public ResponseEntity<StudyDto> updateStudy(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @PathVariable("id") Long studyId,
+      @Valid @NotNull @RequestBody StudyDto studyDto) {
+
+    Study study = studyService.updateStudy(studyMapper.convertToEntity(studyDto), studyId);
+
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
 }

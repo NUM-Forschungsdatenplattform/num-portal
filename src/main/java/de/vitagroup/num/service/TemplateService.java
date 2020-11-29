@@ -29,4 +29,13 @@ public class TemplateService {
         .map(templateMapper::convertToTemplateMetadataDto)
         .collect(Collectors.toList());
   }
+
+  /**
+   * Checks if template exists in ehr base
+   *
+   * @return
+   */
+  public boolean isExistingTemplate(String templateId) {
+    return ehrBaseService.isExistingTemplate(templateId);
+  }
 }

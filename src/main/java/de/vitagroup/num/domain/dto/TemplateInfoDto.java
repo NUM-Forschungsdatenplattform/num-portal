@@ -1,5 +1,6 @@
 package de.vitagroup.num.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -13,10 +14,11 @@ import lombok.NoArgsConstructor;
 @ApiModel
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TemplateInfoDto {
 
   @ApiModelProperty(value = "The ehrbase identifier of the template")
   private String id;
 
-  @ApiModelProperty private String concept;
+  @ApiModelProperty private String name;
 }

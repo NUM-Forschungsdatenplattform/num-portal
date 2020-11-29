@@ -22,27 +22,26 @@ import java.util.Set;
 @EqualsAndHashCode(exclude = "children")
 public class CohortGroup {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private Type type;
-    private Operator operator;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Convert(converter = MapConverter.class)
-    private Map<String, String> parameters;
+  private Type type;
+  private Operator operator;
 
-    @ManyToOne
-    @JsonBackReference
-    @JoinColumn(name = "parent_group_id")
-    private CohortGroup parent;
+  @Convert(converter = MapConverter.class)
+  private Map<String, String> parameters;
 
-    @JsonManagedReference
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
-    private Set<CohortGroup> children = new HashSet<>();
+  @ManyToOne
+  @JsonBackReference
+  @JoinColumn(name = "parent_group_id")
+  private CohortGroup parent;
 
-    @ManyToOne
-    @JoinColumn(name = "phenotype_id", referencedColumnName = "id")
-    private Phenotype phenotype;
+  @JsonManagedReference
+  @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
+  private Set<CohortGroup> children = new HashSet<>();
 
+  @ManyToOne
+  @JoinColumn(name = "phenotype_id", referencedColumnName = "id")
+  private Phenotype phenotype;
 }
-

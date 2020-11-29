@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.client.aql.query.Query;
 import org.ehrbase.client.aql.record.Record1;
+import org.ehrbase.client.exception.ClientException;
 import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestClient;
 import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
@@ -51,5 +52,15 @@ public class EhrBaseService {
   public List<TemplateMetaDataDto> getAllTemplatesMetadata() {
     TemplatesResponseData templateResponseData = restClient.templateEndpoint().findAllTemplates();
     return templateResponseData.get();
+  }
+
+  public boolean isExistingTemplate(String templateId) {
+    try{
+      restClient.templateEndpoint().ensureExistence(templateId);
+      return true;
+    } catch (ClientException e){
+      log.error("Template not found" + templateId);
+      return false;
+    }
   }
 }

@@ -2,12 +2,15 @@ package de.vitagroup.num.web.feign;
 
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
-import java.util.Set;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import java.util.Set;
 
 @FeignClient(name = "keycloak", url = "${userstore.url}")
 public interface KeycloakFeign {
@@ -25,4 +28,7 @@ public interface KeycloakFeign {
 
   @GetMapping("/roles/{role}")
   Role getRole(@PathVariable String role);
+
+  @GetMapping("/users")
+  Set<User> searchUsers(@RequestParam(required = false) String search);
 }

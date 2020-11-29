@@ -27,4 +27,8 @@ public class StudyDto {
   @ApiModelProperty private List<TemplateInfoDto> templates;
 
   @ApiModelProperty private Long cohortId;
+
+  @ApiModelProperty private UserDetailsDto coordinator;
+
+  @ApiModelProperty private List<UserDetailsDto> researchers;
 }
