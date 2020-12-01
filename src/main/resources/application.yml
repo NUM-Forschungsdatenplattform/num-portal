@@ -70,6 +70,10 @@ ehrbase:
   username: ehrbase-user
   password: SuperSecretPassword
 
+cors:
+  allowedOrigins:
+    - "*"
+
 ---
 spring:
   profiles: local
