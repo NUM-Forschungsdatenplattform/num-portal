@@ -46,7 +46,11 @@ public class ApplicationSecurity extends WebSecurityConfigurerAdapter {
 
   private CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration corsConfiguration = new CorsConfiguration();
+
     corsConfiguration.applyPermitDefaultValues();
+    corsConfiguration.setAllowCredentials(true);
+    corsConfiguration.addAllowedHeader(CorsConfiguration.ALL);
+    corsConfiguration.addAllowedMethod(CorsConfiguration.ALL);
     corsConfiguration.setAllowedOrigins(corsProperties.getAllowedOrigins());
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
