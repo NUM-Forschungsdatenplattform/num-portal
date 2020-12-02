@@ -70,7 +70,7 @@ public class StudyMapper {
           throw new BadRequestException("Researcher not found");
         }
 
-        if (researcher.get().isNotApproved()) {
+        if (!researcher.get().isApproved()) {
           throw new BadRequestException("Researcher not approved");
         }
 

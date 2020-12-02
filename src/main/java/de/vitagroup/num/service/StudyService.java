@@ -38,7 +38,7 @@ public class StudyService {
       throw new ResourceNotFound("Logged in coordinator not found in portal");
     }
 
-    if (coordinator.get().isNotApproved()) {
+    if (!coordinator.get().isApproved()) {
       throw new NotAuthorizedException("User not approved:" + userId);
     }
 

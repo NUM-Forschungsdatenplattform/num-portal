@@ -23,8 +23,4 @@ public class UserDetails {
   public boolean isApproved() {
     return approved;
   }
-
-  public boolean isNotApproved() {
-    return !approved;
-  }
 }

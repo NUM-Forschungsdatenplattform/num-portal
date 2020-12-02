@@ -6,13 +6,11 @@ import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
-import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import java.util.Set;
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -57,17 +55,15 @@ public class AdminController {
   @ApiOperation(value = "Adds the given organization to the user")
   public ResponseEntity<String> addOrganization(
       @NotNull @PathVariable String userId, @NotNull @RequestBody OrganizationDto organization) {
-    userDetailsService.createOrUpdateUserDetails(userId, organization.getId());
+    userDetailsService.setOrganization(userId, organization.getId());
     return ResponseEntity.ok("Success");
   }
 
-  @PostMapping("/user/details")
+  @PostMapping("/user/{userId}")
   @ApiOperation(value = "Creates user details")
-  public ResponseEntity<UserDetailsDto> addOrganization(
-      @NotNull @Valid @RequestBody UserDetailsDto userDetailsDto) {
-    UserDetails userDetails =
-        userDetailsService.createUserDetails(userDetailsMapper.convertToEntity(userDetailsDto));
-    return ResponseEntity.ok(userDetailsMapper.convertToDto(userDetails));
+  public ResponseEntity<String> createUser(@NotNull @PathVariable String userId) {
+    userDetailsService.createUserDetails(userId);
+    return ResponseEntity.ok("Success");
   }
 
   @PostMapping("/user/{userId}/approve")
