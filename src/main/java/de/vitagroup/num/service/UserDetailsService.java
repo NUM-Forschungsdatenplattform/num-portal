@@ -2,8 +2,9 @@ package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
+import de.vitagroup.num.web.exception.ConflictException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import java.util.List;
+import de.vitagroup.num.web.feign.KeycloakFeign;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,29 +14,30 @@ import org.springframework.stereotype.Service;
 public class UserDetailsService {
 
   private final UserDetailsRepository userDetailsRepository;
+  private final KeycloakFeign keycloakFeign;
 
   public Optional<UserDetails> getUserDetailsById(String userId) {
     return userDetailsRepository.findByUserId(userId);
   }
 
-  public UserDetails createUserDetails(UserDetails userDetails) {
-    return userDetailsRepository.save(userDetails);
+  public UserDetails createUserDetails(String userId) {
+    Optional<UserDetails> userDetails = userDetailsRepository.findByUserId(userId);
+    if (userDetails.isPresent()) {
+      throw new ConflictException("User " + userId + " already exists.");
+    } else {
+      UserDetails newUserDetails = UserDetails.builder().userId(userId).build();
+      return userDetailsRepository.save(newUserDetails);
+    }
   }
 
-  public UserDetails createOrUpdateUserDetails(String userId, String organizationId) {
+  public UserDetails setOrganization(String userId, String organizationId) {
     Optional<UserDetails> userDetails = userDetailsRepository.findByUserId(userId);
     if (userDetails.isPresent()) {
       userDetails.get().setOrganizationId(organizationId);
       return userDetailsRepository.save(userDetails.get());
     } else {
-      UserDetails newUserDetails =
-          UserDetails.builder().userId(userId).organizationId(organizationId).build();
-      return userDetailsRepository.save(newUserDetails);
+      throw new ResourceNotFound("User " + userId + " not created yet.");
     }
-  }
-
-  public Optional<List<UserDetails>> getUsersByApproved(boolean approved) {
-    return userDetailsRepository.findAllByApproved(approved);
   }
 
   public UserDetails approveUser(String userId) {
