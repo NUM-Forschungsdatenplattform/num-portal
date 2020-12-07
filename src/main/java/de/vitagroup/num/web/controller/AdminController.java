@@ -66,8 +66,9 @@ public class AdminController {
 
   @PostMapping("/user/{userId}/approve")
   @ApiOperation(value = "Adds the given organization to the user")
-  public ResponseEntity<UserDetails> approveUser(@NotNull @PathVariable String userId) {
-    return ResponseEntity.ok(userDetailsService.approveUser(userId));
+  public ResponseEntity<String> approveUser(@NotNull @PathVariable String userId) {
+    userDetailsService.approveUser(userId);
+    return ResponseEntity.ok("Success");
   }
 
   @GetMapping("/user")
