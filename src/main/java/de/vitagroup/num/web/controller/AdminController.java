@@ -3,7 +3,6 @@ package de.vitagroup.num.web.controller;
 import com.fasterxml.jackson.databind.node.TextNode;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
@@ -25,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin")
 @AllArgsConstructor
 public class AdminController {
+
+  private static final String SUCCESS_REPLY = "Success";
 
   private final UserService userService;
   private final UserDetailsService userDetailsService;
@@ -54,21 +55,21 @@ public class AdminController {
   public ResponseEntity<String> addOrganization(
       @NotNull @PathVariable String userId, @NotNull @RequestBody OrganizationDto organization) {
     userDetailsService.setOrganization(userId, organization.getId());
-    return ResponseEntity.ok("Success");
+    return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
   @PostMapping("/user/{userId}")
   @ApiOperation(value = "Creates user details")
   public ResponseEntity<String> createUser(@NotNull @PathVariable String userId) {
     userDetailsService.createUserDetails(userId);
-    return ResponseEntity.ok("Success");
+    return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
   @PostMapping("/user/{userId}/approve")
   @ApiOperation(value = "Adds the given organization to the user")
   public ResponseEntity<String> approveUser(@NotNull @PathVariable String userId) {
     userDetailsService.approveUser(userId);
-    return ResponseEntity.ok("Success");
+    return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
   @GetMapping("/user")
