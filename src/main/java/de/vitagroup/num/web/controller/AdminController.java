@@ -66,8 +66,7 @@ public class AdminController {
 
   @PostMapping("/user/{userId}")
   @ApiOperation(value = "Creates user details")
-  @PreAuthorize(Role.ADMIN)
-  public ResponseEntity<String> createUser(@NotNull @PathVariable String userId) {
+  public ResponseEntity<String> createUserOnFirstLogin(@NotNull @PathVariable String userId) {
     userDetailsService.createUserDetails(userId);
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
@@ -82,7 +81,7 @@ public class AdminController {
 
   @GetMapping("/user")
   @ApiOperation(value = "Retrieves a set of users that match the search string")
-  @PreAuthorize(Role.ADMIN)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_ADMIN)
   public ResponseEntity<Set<User>> searchUsers(
       @RequestParam(required = false) Boolean approved,
       @RequestParam(required = false)

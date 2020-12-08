@@ -19,7 +19,7 @@ public class AqlController {
 
   @GetMapping("/aql")
   @ApiOperation(value = "Retrieves a list of aql queries")
-  @PreAuthorize(Role.STUDY_COORDINATOR)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<List<Aql>> getAllAqls() {
     List<Aql> aqls = aqlService.getAllAqls();
     return ResponseEntity.ok(aqls);

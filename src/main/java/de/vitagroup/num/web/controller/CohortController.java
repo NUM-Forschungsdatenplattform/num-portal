@@ -49,14 +49,14 @@ public class CohortController {
 
   @PostMapping("{cohortId}/execute")
   @ApiOperation(value = "Executes the cohort")
-  @PreAuthorize(Role.STUDY_COORDINATOR_AND_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Set<String>> executeCohort(@PathVariable String cohortId) {
     return ResponseEntity.ok(cohortService.executeCohort(Long.parseLong(cohortId)));
   }
 
   @PostMapping("{cohortId}/size")
   @ApiOperation(value = "Retrieves the cohort size")
-  @PreAuthorize(Role.STUDY_COORDINATOR)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Long> retrieveCohortSize(@PathVariable String cohortId) {
     return ResponseEntity.ok(cohortService.getCohortSize(Long.parseLong(cohortId)));
   }

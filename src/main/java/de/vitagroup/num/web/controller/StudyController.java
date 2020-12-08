@@ -38,7 +38,7 @@ public class StudyController {
 
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of studies")
-  @PreAuthorize(Role.STUDY_COORDINATOR_AND_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<List<StudyDto>> searchStudies(
       @RequestParam(required = false) @NotEmpty String userId) {
     return ResponseEntity.ok(
@@ -49,7 +49,7 @@ public class StudyController {
 
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves a study by id")
-  @PreAuthorize(Role.STUDY_COORDINATOR_AND_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<StudyDto> getStudyById(@NotNull @NotEmpty @PathVariable Long id) {
     Optional<Study> study = studyService.getStudyById(id);
 
