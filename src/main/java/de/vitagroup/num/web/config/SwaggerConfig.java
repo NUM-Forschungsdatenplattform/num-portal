@@ -26,8 +26,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @AllArgsConstructor
 public class SwaggerConfig {
   private static final String SEC_CONFIG_NAME = "oauth_setting";
-  private static final String OAUTH_PATHS =
-      "/[study|template|organization|cohort|phenotype|aql|admin].*";
 
   private final SwaggerProperties swaggerProperties;
 
