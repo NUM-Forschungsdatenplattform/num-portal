@@ -47,9 +47,7 @@ public class StudyDto {
 
   @ApiModelProperty private String secondHypotheses;
 
-  @NotNull(message = "Study status is mandatory")
-  @ApiModelProperty
-  private StudyStatus status;
+  @ApiModelProperty private StudyStatus status;
 
   @ApiModelProperty private OffsetDateTime createDate;
 
