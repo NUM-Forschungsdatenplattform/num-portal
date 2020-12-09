@@ -1,7 +1,6 @@
 package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.Study;
-import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
@@ -45,7 +44,6 @@ public class StudyService {
     study.setCoordinator(coordinator.get());
     study.setCreateDate(OffsetDateTime.now());
     study.setModifiedDate(OffsetDateTime.now());
-    study.setStatus(StudyStatus.DRAFT);
 
     return studyRepository.save(study);
   }
