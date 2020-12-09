@@ -1,84 +1,125 @@
 package de.vitagroup.num.web.config;
 
+import de.vitagroup.num.properties.SwaggerProperties;
+import java.util.Arrays;
+import java.util.Collections;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import springfox.documentation.builders.AuthorizationCodeGrantBuilder;
+import springfox.documentation.builders.OAuthBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.service.AuthorizationScope;
+import springfox.documentation.service.GrantType;
+import springfox.documentation.service.SecurityReference;
+import springfox.documentation.service.SecurityScheme;
 import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spi.service.contexts.SecurityContext;
 import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.swagger.web.SecurityConfiguration;
+import springfox.documentation.swagger.web.SecurityConfigurationBuilder;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @Configuration
 @EnableSwagger2
+@AllArgsConstructor
 public class SwaggerConfig {
+  private static final String SEC_CONFIG_NAME = "oauth_setting";
+  private static final String OAUTH_PATHS =
+      "/[study|template|organization|cohort|phenotype|aql|admin].*";
+
+  private final SwaggerProperties swaggerProperties;
 
   @Bean
   public Docket studyApi() {
-    return new Docket(DocumentationType.SWAGGER_2)
-        .groupName("Study")
-        .select()
-        .apis(RequestHandlerSelectors.any())
-        .paths(PathSelectors.ant("/study/**"))
-        .build();
+    return getDocket("Study", "/study.*");
   }
 
   @Bean
   public Docket templateApi() {
-    return new Docket(DocumentationType.SWAGGER_2)
-        .groupName("Template")
-        .select()
-        .apis(RequestHandlerSelectors.any())
-        .paths(PathSelectors.ant("/template/**"))
-        .build();
+    return getDocket("Template", "/template.*");
   }
 
   @Bean
   public Docket organizationApi() {
-    return new Docket(DocumentationType.SWAGGER_2)
-        .groupName("Organization")
-        .select()
-        .apis(RequestHandlerSelectors.any())
-        .paths(PathSelectors.ant("/organization/**"))
-        .build();
+    return getDocket("Organization", "/organization.*");
   }
 
   @Bean
   public Docket cohortApi() {
-    return new Docket(DocumentationType.SWAGGER_2)
-        .groupName("Cohort")
-        .select()
-        .apis(RequestHandlerSelectors.any())
-        .paths(PathSelectors.ant("/cohort/**"))
-        .build();
+    return getDocket("Cohort", "/cohort.*");
   }
 
   @Bean
   public Docket phenotypeApi() {
-    return new Docket(DocumentationType.SWAGGER_2)
-        .groupName("Phenotype")
-        .select()
-        .apis(RequestHandlerSelectors.any())
-        .paths(PathSelectors.regex("/phenotype*"))
-        .build();
+    return getDocket("Phenotype", "/phenotype.*");
   }
 
   @Bean
   public Docket aqlApi() {
-    return new Docket(DocumentationType.SWAGGER_2)
-        .groupName("Aql")
-        .select()
-        .apis(RequestHandlerSelectors.any())
-        .paths(PathSelectors.regex("/aql*"))
-        .build();
+    return getDocket("Aql", "/aql.*");
   }
 
   @Bean
   public Docket adminApi() {
+    return getDocket("Admin", "/admin.*");
+  }
+
+  @Bean
+  public SecurityConfiguration security(SwaggerProperties properties) {
+    return SecurityConfigurationBuilder.builder()
+        .clientId(properties.getClientName())
+        .clientSecret(properties.getClientSecret())
+        .scopeSeparator(" ")
+        .useBasicAuthenticationWithAccessCodeGrant(true)
+        .build();
+  }
+
+  private Docket getDocket(String groupName, String pathRegexp) {
     return new Docket(DocumentationType.SWAGGER_2)
-        .groupName("Admin")
+        .groupName(groupName)
         .select()
         .apis(RequestHandlerSelectors.any())
-        .paths(PathSelectors.regex("/admin.*"))
+        .paths(PathSelectors.regex(pathRegexp))
+        .build()
+        .securitySchemes(Collections.singletonList(securityScheme()))
+        .securityContexts(Collections.singletonList(securityContext(pathRegexp)));
+  }
+
+  private SecurityScheme securityScheme() {
+    GrantType grantType =
+        new AuthorizationCodeGrantBuilder()
+            .tokenEndpoint(
+                tokenEndpointBuilder ->
+                    tokenEndpointBuilder
+                        .url(swaggerProperties.getTokenUri())
+                        .tokenName("oauthtoken"))
+            .tokenRequestEndpoint(
+                tokenRequestEndpointBuilder ->
+                    tokenRequestEndpointBuilder
+                        .url(swaggerProperties.getAuthUri())
+                        .clientIdName(swaggerProperties.getClientName())
+                        .clientSecretName(swaggerProperties.getClientSecret()))
+            .build();
+
+    return new OAuthBuilder()
+        .name(SEC_CONFIG_NAME)
+        .grantTypes(Collections.singletonList(grantType))
+        .scopes(Arrays.asList(scopes()))
+        .build();
+  }
+
+  private AuthorizationScope[] scopes() {
+    return new AuthorizationScope[] {};
+  }
+
+  private SecurityContext securityContext(String pathRegexp) {
+    return SecurityContext.builder()
+        .securityReferences(
+            Collections.singletonList(new SecurityReference(SEC_CONFIG_NAME, scopes())))
+        .operationSelector(
+            operationContext -> operationContext.requestMappingPattern().matches(pathRegexp))
         .build();
   }
 }
