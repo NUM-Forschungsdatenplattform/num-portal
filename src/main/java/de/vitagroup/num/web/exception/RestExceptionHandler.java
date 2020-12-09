@@ -9,6 +9,7 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -79,5 +80,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     ErrorResponse response =
         ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
     return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.CONFLICT);
+  }
+
+  @ExceptionHandler({AccessDeniedException.class})
+  public ResponseEntity<ErrorResponse> handleAccessDenied(Exception ex) {
+    log.debug(ex.getMessage(), ex);
+
+    ErrorResponse response =
+        ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
+    return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.UNAUTHORIZED);
   }
 }
