@@ -4,6 +4,7 @@ import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
+import de.vitagroup.num.web.exception.ResourceNotFound;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,6 +21,10 @@ public class CohortService {
 
   public List<Cohort> getAllCohorts() {
     return cohortRepository.findAll();
+  }
+
+  public Cohort getCohort(Long cohortId) {
+    return cohortRepository.findById(cohortId).orElseThrow(ResourceNotFound::new);
   }
 
   public Cohort createCohort(Cohort cohort) {

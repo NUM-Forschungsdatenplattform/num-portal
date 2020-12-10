@@ -39,6 +39,14 @@ public class CohortController {
         cohorts.stream().map(cohortMapper::convertToDto).collect(Collectors.toList()));
   }
 
+  @GetMapping("{cohortId}")
+  @ApiOperation(value = "Retrieves a single cohort.")
+  @PreAuthorize(Role.STUDY_COORDINATOR)
+  public ResponseEntity<CohortDto> getCohort(@PathVariable String cohortId) {
+    Cohort cohort = cohortService.getCohort(Long.parseLong(cohortId));
+    return ResponseEntity.ok(cohortMapper.convertToDto(cohort));
+  }
+
   @PostMapping
   @ApiOperation(value = "Stores a cohort")
   @PreAuthorize(Role.STUDY_COORDINATOR)
