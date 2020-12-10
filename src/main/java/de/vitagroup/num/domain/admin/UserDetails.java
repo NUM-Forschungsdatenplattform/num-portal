@@ -18,11 +18,7 @@ public class UserDetails {
 
   private String organizationId;
 
-  private Boolean approved = false;
-
-  public boolean isApproved() {
-    return approved;
-  }
+  private boolean approved = false;
 
   public boolean isNotApproved() {
     return !approved;
