@@ -52,8 +52,6 @@ public class StudyMapperTest {
     when(userDetailsService.getUserDetailsById("12345"))
         .thenReturn(Optional.of(UserDetails.builder().userId("12345").approved(true).build()));
 
-
-
     when(userDetailsService.getUserDetailsById("notApprovedResearcherId"))
         .thenReturn(
             Optional.of(

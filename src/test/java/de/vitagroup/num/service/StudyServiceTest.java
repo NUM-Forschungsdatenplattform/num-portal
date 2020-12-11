@@ -28,7 +28,6 @@ public class StudyServiceTest {
 
   @Before
   public void setup() {
-
     UserDetails notApprovedCoordinator =
         UserDetails.builder().userId("notApprovedCoordinatorId").approved(false).build();
 
@@ -41,7 +40,6 @@ public class StudyServiceTest {
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingCoordinator() {
-
     Study study =
         Study.builder()
             .name("Study")
@@ -53,7 +51,6 @@ public class StudyServiceTest {
 
   @Test(expected = NotAuthorizedException.class)
   public void shouldHandleNotApprovedCoordinator() {
-
     Study study =
         Study.builder()
             .name("Study")

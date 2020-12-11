@@ -44,7 +44,6 @@ public class TemplateMapperTest {
     TemplateMetadataDto numDto = templateMapper.convertToTemplateMetadataDto(ehrMetaDataDto);
 
     assertThat(numDto, notNullValue());
-
     assertThat(numDto.getTemplateId(), is(ehrMetaDataDto.getTemplateId()));
     assertThat(numDto.getCreatedOn(), is(ehrMetaDataDto.getCreatedOn()));
     assertThat(numDto.getArchetypeId(), is(ehrMetaDataDto.getArchetypeId()));
@@ -60,7 +59,6 @@ public class TemplateMapperTest {
     List<TemplateInfoDto> dtos = templateMapper.convertToTemplateInfoDtoList(templates);
 
     assertThat(dtos, notNullValue());
-
     assertThat(
         dtos.stream().anyMatch(templateInfoDto -> templateInfoDto.getTemplateId() == "t1"),
         is(true));
@@ -71,7 +69,6 @@ public class TemplateMapperTest {
 
   @Test
   public void shouldHandleNullMap() {
-
     List<TemplateInfoDto> dtos = templateMapper.convertToTemplateInfoDtoList(null);
 
     assertThat(dtos, notNullValue());

@@ -45,6 +45,7 @@ public class TemplateServiceTest {
   @Test
   public void shouldCorrectlyRetrieveTemplateMetadata() {
     List<TemplateMetadataDto> numTemplates = templateService.getAllTemplatesMetadata();
+    
     assertThat(numTemplates, notNullValue());
     assertThat(numTemplates.size(), is(1));
     assertThat(numTemplates.get(0).getName(), is("t1"));

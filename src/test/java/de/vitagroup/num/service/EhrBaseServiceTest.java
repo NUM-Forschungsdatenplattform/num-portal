@@ -63,7 +63,6 @@ public class EhrBaseServiceTest {
     assertThat(templates.size(), is(2));
     assertThat(templates.get(0).getTemplateId(), is("t1"));
     assertThat(templates.get(0).getConcept(), is("c1"));
-
     assertThat(templates.get(1).getTemplateId(), is("t2"));
     assertThat(templates.get(1).getConcept(), is("c2"));
   }
