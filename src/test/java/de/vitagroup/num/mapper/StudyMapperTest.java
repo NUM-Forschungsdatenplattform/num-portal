@@ -50,7 +50,9 @@ public class StudyMapperTest {
                 TemplateInfoDto.builder().templateId("param2").name("value2").build()));
 
     when(userDetailsService.getUserDetailsById("12345"))
-        .thenReturn(Optional.of(UserDetails.builder().userId("12345").build()));
+        .thenReturn(Optional.of(UserDetails.builder().userId("12345").approved(true).build()));
+
+
 
     when(userDetailsService.getUserDetailsById("notApprovedResearcherId"))
         .thenReturn(
