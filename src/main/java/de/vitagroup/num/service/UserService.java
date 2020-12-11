@@ -94,7 +94,7 @@ public class UserService {
     Optional<UserDetails> userDetails = userDetailsService.getUserDetailsById(user.getId());
 
     if (userDetails.isPresent()) {
-      user.setApproved(userDetails.get().getApproved());
+      user.setApproved(userDetails.get().isApproved());
       user.setExternalOrganizationId(userDetails.get().getOrganizationId());
     }
   }
