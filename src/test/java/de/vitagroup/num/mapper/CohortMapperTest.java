@@ -1,16 +1,17 @@
-package de.vitagroup.num.domain.dto;
+package de.vitagroup.num.mapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import de.vitagroup.num.mapper.CohortMapper;
+import de.vitagroup.num.domain.dto.CohortDto;
+import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.*;
 import de.vitagroup.num.service.PhenotypeService;
 import de.vitagroup.num.service.StudyService;
+import de.vitagroup.num.web.exception.BadRequestException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,7 +24,7 @@ import org.modelmapper.ModelMapper;
 import java.util.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CohortDtoTest {
+public class CohortMapperTest {
 
   @Mock private PhenotypeService phenotypeService;
 
@@ -35,6 +36,8 @@ public class CohortDtoTest {
 
   @Before
   public void setup() {
+    cohortMapper.initialize();
+
     Study study =
         Study.builder().id(1L).name("Study name").description("Study description").build();
 
@@ -69,7 +72,7 @@ public class CohortDtoTest {
             .query(aqlExpression2)
             .build();
 
-    when(studyService.getStudyById(any())).thenReturn(Optional.of(study));
+    when(studyService.getStudyById(1L)).thenReturn(Optional.of(study));
     when(phenotypeService.getPhenotypeById(1L)).thenReturn(Optional.of(phenotype1));
     when(phenotypeService.getPhenotypeById(2L)).thenReturn(Optional.of(phenotype2));
   }
@@ -180,6 +183,40 @@ public class CohortDtoTest {
         cohort.getCohortGroup().getChildren().stream()
             .allMatch(c -> c.getPhenotype().getQuery() instanceof AqlExpression),
         is(true));
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldCorrectlyHandleWrongPhenotypeId() {
+    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
+    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(3L).build();
+
+    CohortGroupDto andCohort =
+        CohortGroupDto.builder()
+            .type(Type.GROUP)
+            .operator(Operator.AND)
+            .children(List.of(first, second))
+            .build();
+
+    CohortDto cohortDto =
+        CohortDto.builder().name("Cohort name").studyId(1L).cohortGroup(andCohort).build();
+    cohortMapper.convertToEntity(cohortDto);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldCorrectlyHandleWrongStudyId() {
+    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
+    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
+
+    CohortGroupDto andCohort =
+        CohortGroupDto.builder()
+            .type(Type.GROUP)
+            .operator(Operator.AND)
+            .children(List.of(first, second))
+            .build();
+
+    CohortDto cohortDto =
+        CohortDto.builder().name("Cohort name").studyId(2L).cohortGroup(andCohort).build();
+    cohortMapper.convertToEntity(cohortDto);
   }
 
   @Test

@@ -54,13 +54,4 @@ public class EhrBaseService {
     return templateResponseData.get();
   }
 
-  public boolean isExistingTemplate(String templateId) {
-    try{
-      restClient.templateEndpoint().ensureExistence(templateId);
-      return true;
-    } catch (ClientException e){
-      log.error("Template not found" + templateId);
-      return false;
-    }
-  }
 }
