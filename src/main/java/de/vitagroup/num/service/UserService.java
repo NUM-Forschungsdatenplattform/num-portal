@@ -66,9 +66,9 @@ public class UserService {
   }
 
   /**
-   * Assigns a role to a particular user
+   * Assigns roles to a particular user
    *
-   * @param userId the user to add the role to
+   * @param userId the user to update roles of
    * @param roleNames The list of roles of the user
    */
   public List<String> setUserRoles(String userId, @NotNull List<String> roleNames) {
