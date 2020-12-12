@@ -15,7 +15,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Optional;
 
-import static org.mockito.Mockito.when;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StudyServiceTest {
@@ -58,5 +61,33 @@ public class StudyServiceTest {
             .build();
 
     studyService.createStudy(study, "notApprovedCoordinatorId");
+  }
+
+  @Test
+  public void shouldGetAllWhenSearchingStudiesWithoutCoordinator() {
+    studyService.searchStudies(null);
+    verify(studyRepository, times(1)).findAll();
+  }
+
+  @Test
+  public void shouldFilterWhenSearchingStudiesWithCoordinator() {
+    studyService.searchStudies("coordinatorId");
+
+    verify(studyRepository, times(1)).findByCoordinatorUserId("coordinatorId");
+    verify(studyRepository, times(0)).findAll();
+  }
+
+  @Test
+  public void shouldCallRepoWhenRetrievingAllStudies() {
+    studyService.getAllStudies();
+    verify(studyRepository, times(1)).findAll();
+  }
+
+  @Test
+  public void shouldHandleMissingStudy() {
+    Optional<Study> study = studyService.getStudyById(1L);
+
+    assertThat(study, notNullValue());
+    assertThat(study.isEmpty(), is(true));
   }
 }

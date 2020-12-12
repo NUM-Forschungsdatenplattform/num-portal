@@ -19,8 +19,6 @@ public class UserServiceTest {
 
   @Mock private KeycloakFeign keycloakFeign;
 
-  @Mock private UserDetailsService userDetailsService;
-
   @InjectMocks private UserService userService;
 
   @Before
