@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 
+import de.vitagroup.num.domain.Operator;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
 import org.apache.commons.collections4.SetUtils;
 import org.junit.Test;
@@ -134,5 +135,38 @@ public class SetOperationsServiceTest {
   @Test(expected = IllegalArgumentException.class)
   public void shouldHandleRelativeComplementNullValues() {
     setOperations.exclude(null, Set.of("1", "5"));
+  }
+
+  @Test
+  public void shouldCorrectlyApplyAndOperation() {
+
+    Set<String> results =
+        setOperations.apply(
+            Operator.AND, List.of(Set.of("1", "2", "3"), Set.of("1", "2", "4")), Set.of());
+
+    assertThat(results, notNullValue());
+    assertThat(results.equals(Set.of("1", "2")), is(true));
+  }
+
+  @Test
+  public void shouldCorrectlyApplyOrOperation() {
+    Set<String> results =
+        setOperations.apply(
+            Operator.OR,
+            List.of(Set.of("1abc", "2abc", "3abc"), Set.of("4abc", "5abc", "6abc", "7abc")),
+            Set.of());
+
+    assertThat(results, notNullValue());
+    assertThat(
+        results.equals(Set.of("1abc", "2abc", "3abc", "4abc", "5abc", "6abc", "7abc")), is(true));
+  }
+
+  @Test
+  public void shouldCorrectlyApplyNotOperation() {
+    Set<String> results =
+        setOperations.apply(Operator.NOT, List.of(Set.of("1abc", "2abc", "3abc")), Set.of("4abc"));
+
+    assertThat(results, notNullValue());
+    assertThat(results.equals(Set.of("4abc")), is(true));
   }
 }
