@@ -76,11 +76,11 @@ public class AqlMapperTest {
 
     assertThat(aql, notNullValue());
     assertThat(aql.getId(), nullValue());
-    assertThat(aql.getName(), is(aql.getName()));
-    assertThat(aql.getDescription(), is(aql.getDescription()));
-    assertThat(aql.getCreateDate(), is(aql.getCreateDate()));
-    assertThat(aql.getModifiedDate(), is(aql.getModifiedDate()));
-    assertThat(aql.isPublicAql(), is(aql.isPublicAql()));
+    assertThat(aql.getName(), is(dto.getName()));
+    assertThat(aql.getDescription(), is(dto.getDescription()));
+    assertThat(aql.getCreateDate(), is(dto.getCreateDate()));
+    assertThat(aql.getModifiedDate(), is(dto.getModifiedDate()));
+    assertThat(aql.isPublicAql(), is(dto.isPublicAql()));
     assertThat(aql.getOwner(), nullValue());
   }
 }
