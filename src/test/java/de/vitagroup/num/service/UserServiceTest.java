@@ -1,10 +1,20 @@
 package de.vitagroup.num.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
+import java.util.Collections;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,14 +22,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.mockito.Mockito.when;
-
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
 
   @Mock private KeycloakFeign keycloakFeign;
 
   @InjectMocks private UserService userService;
+
+  private Set<Role> roles =
+      Set.of(
+          new Role("R1", "ADMIN"),
+          new Role("R2", "RESEARCHER"),
+          new Role("R3", "ORGANIZATION_ADMIN"),
+          new Role("R4", "STUDY_COORDINATOR"));
 
   @Before
   public void setup() {
@@ -30,11 +45,9 @@ public class UserServiceTest {
     when(keycloakFeign.getRolesOfUser("1")).thenThrow(FeignException.BadRequest.class);
     when(keycloakFeign.getRolesOfUser("2")).thenThrow(FeignException.InternalServerError.class);
     when(keycloakFeign.getRolesOfUser("3")).thenThrow(FeignException.NotFound.class);
+    when(keycloakFeign.getRolesOfUser("4")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
 
-    when(keycloakFeign.getRole("non-existent role")).thenReturn(null);
-    when(keycloakFeign.getRole("handled non-existent role"))
-        .thenThrow(FeignException.NotFound.class);
-    when(keycloakFeign.getRole("error role")).thenThrow(FeignException.InternalServerError.class);
+    when(keycloakFeign.getRoles()).thenReturn(roles);
   }
 
   @Test(expected = SystemException.class)
@@ -68,17 +81,21 @@ public class UserServiceTest {
   }
 
   @Test(expected = BadRequestException.class)
-  public void shouldHandleSetNullRole() {
-    userService.setUserRole("1", "non-existent role");
+  public void shouldHandleSetInvalidRole() {
+    userService.setUserRoles("4", Collections.singletonList("non-existent role"));
   }
 
-  @Test(expected = SystemException.class)
-  public void shouldSetRoleError() {
-    userService.setUserRole("1", "error role");
+  @Test
+  public void succefullySetRoles() {
+    userService.setUserRoles("4", Collections.singletonList("ADMIN"));
+    verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
+    verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R1", "ADMIN")});
   }
 
-  @Test(expected = ResourceNotFound.class)
-  public void shouldSetRoleErrorHanddled() {
-    userService.setUserRole("1", "handled non-existent role");
+  @Test
+  public void succefullySetRoles2() {
+    userService.setUserRoles("4", Collections.singletonList("RESEARCHER"));
+    verify(keycloakFeign, never()).removeRoles(anyString(), any(Role[].class));
+    verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
   }
 }
