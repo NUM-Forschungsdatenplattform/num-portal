@@ -86,16 +86,24 @@ public class UserServiceTest {
   }
 
   @Test
-  public void succefullySetRoles() {
+  public void succefullyNewRole() {
     userService.setUserRoles("4", Collections.singletonList("ADMIN"));
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R1", "ADMIN")});
   }
 
   @Test
-  public void succefullySetRoles2() {
+  public void succefullySetExistingRole() {
     userService.setUserRoles("4", Collections.singletonList("RESEARCHER"));
     verify(keycloakFeign, never()).removeRoles(anyString(), any(Role[].class));
     verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
   }
+
+  @Test
+  public void succefullyUnsetRoles() {
+    userService.setUserRoles("4", Collections.emptyList());
+    verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
+    verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
+  }
+
 }
