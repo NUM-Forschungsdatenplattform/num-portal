@@ -74,15 +74,15 @@ public class UserService {
   public List<String> setUserRoles(String userId, @NotNull List<String> roleNames) {
     try {
       Set<Role> supportedRoles = keycloakFeign.getRoles();
-      List<String> invalidRolenames =
+      List<String> invalidRoleNames =
           roleNames.stream()
               .filter(
                   roleName ->
                       supportedRoles.stream()
                           .noneMatch(supportedRole -> supportedRole.getName().equals(roleName)))
               .collect(Collectors.toList());
-      if (!invalidRolenames.isEmpty()) {
-        throw new BadRequestException("Unknown Role(s): " + String.join(" ", invalidRolenames));
+      if (!invalidRoleNames.isEmpty()) {
+        throw new BadRequestException("Unknown Role(s): " + String.join(" ", invalidRoleNames));
       }
       Set<Role> existingRoles = keycloakFeign.getRolesOfUser(userId);
 
@@ -95,7 +95,7 @@ public class UserService {
       if (removeRoles.length > 0) {
         keycloakFeign.removeRoles(userId, removeRoles);
       }
-      Role[] addRoles = getRolesToAdd(roleNames, supportedRoles, existingRoles);
+      Role[] addRoles = getRolesToAdd(roleNames, supportedRoles);
       if (addRoles.length > 0) {
         keycloakFeign.addRoles(userId, addRoles);
       }
@@ -108,16 +108,8 @@ public class UserService {
   }
 
   @NotNull
-  private Role[] getRolesToAdd(
-      List<String> roleNames, Set<Role> supportedRoles, Set<Role> existingRoles) {
-    List<String> addRolesNames =
-        roleNames.stream()
-            .filter(
-                role ->
-                    existingRoles.stream()
-                        .noneMatch(existingRole -> existingRole.getName().equals(role)))
-            .collect(Collectors.toList());
-    return addRolesNames.stream()
+  private Role[] getRolesToAdd(List<String> roleNames, Set<Role> supportedRoles) {
+    return roleNames.stream()
         .map(
             addRole ->
                 supportedRoles.stream()
