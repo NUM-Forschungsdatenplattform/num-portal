@@ -9,6 +9,7 @@ import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -73,17 +74,17 @@ public class UserService {
    */
   public List<String> setUserRoles(String userId, @NotNull List<String> roleNames) {
     try {
-      Set<Role> supportedRoles = keycloakFeign.getRoles();
+      Map<String, Role> supportedRoles =
+          keycloakFeign.getRoles().stream().collect(Collectors.toMap(Role::getName, role -> role));
       List<String> invalidRoleNames =
           roleNames.stream()
-              .filter(
-                  roleName ->
-                      supportedRoles.stream()
-                          .noneMatch(supportedRole -> supportedRole.getName().equals(roleName)))
+              .filter(roleName -> supportedRoles.get(roleName) == null)
               .collect(Collectors.toList());
+
       if (!invalidRoleNames.isEmpty()) {
         throw new BadRequestException("Unknown Role(s): " + String.join(" ", invalidRoleNames));
       }
+
       Set<Role> existingRoles = keycloakFeign.getRolesOfUser(userId);
 
       Role[] removeRoles =
@@ -95,7 +96,13 @@ public class UserService {
       if (removeRoles.length > 0) {
         keycloakFeign.removeRoles(userId, removeRoles);
       }
-      Role[] addRoles = getRolesToAdd(roleNames, supportedRoles);
+
+      Role[] addRoles =
+          roleNames.stream()
+              .map(supportedRoles::get)
+              .collect(Collectors.toList())
+              .toArray(new Role[] {});
+
       if (addRoles.length > 0) {
         keycloakFeign.addRoles(userId, addRoles);
       }
@@ -105,22 +112,6 @@ public class UserService {
     } catch (FeignException.NotFound e) {
       throw new ResourceNotFound("Role or user not found");
     }
-  }
-
-  @NotNull
-  private Role[] getRolesToAdd(List<String> roleNames, Set<Role> supportedRoles) {
-    return roleNames.stream()
-        .map(
-            addRole ->
-                supportedRoles.stream()
-                    .filter(supportedRole -> supportedRole.getName().equals(addRole))
-                    .findAny())
-        .map(
-            optionalRole ->
-                optionalRole.orElseThrow( // should not happen, was already verified
-                    () -> new SystemException("An error has occurred, please try again later")))
-        .collect(Collectors.toList())
-        .toArray(new Role[] {});
   }
 
   private void addUserDetails(User user) {
