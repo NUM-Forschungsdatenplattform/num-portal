@@ -11,7 +11,6 @@ import de.vitagroup.num.service.UserService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.RestExceptionHandler;
 import java.util.Collections;
-import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +52,11 @@ class AdminControllerTest {
         .thenThrow(
             new BadRequestException(
                 "Unknown Role(s): " + String.join(" ", Collections.singletonList("test"))));
-    mvc.perform(post("/admin/user/1/role").contentType("application/json").content("[\"test\"]").accept("application/json"))
+    mvc.perform(
+            post("/admin/user/1/role")
+                .contentType("application/json")
+                .content("[\"test\"]")
+                .accept("application/json"))
         .andExpect(status().is4xxClientError());
   }
 
@@ -61,7 +64,11 @@ class AdminControllerTest {
   void updateRoles() throws Exception {
     when(userService.setUserRoles("1", Collections.singletonList("ADMIN")))
         .thenReturn(Collections.singletonList("ADMIN"));
-    mvc.perform(post("/admin/user/1/role").contentType("application/json").content("[\"ADMIN\"]").accept("application/json"))
+    mvc.perform(
+            post("/admin/user/1/role")
+                .contentType("application/json")
+                .content("[\"ADMIN\"]")
+                .accept("application/json"))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(content().string("[\"ADMIN\"]"));
