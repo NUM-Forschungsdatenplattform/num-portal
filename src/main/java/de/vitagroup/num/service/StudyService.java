@@ -31,7 +31,6 @@ public class StudyService {
 
   public Study createStudy(Study study, String userId) {
     Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(userId);
-    // TODO: check role of the logged in coordinator -> need to defined available roles
 
     if (coordinator.isEmpty()) {
       throw new ResourceNotFound("Logged in coordinator not found in portal");

@@ -1,41 +1,43 @@
 package de.vitagroup.num.domain;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import de.vitagroup.num.domain.admin.UserDetails;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.persistence.*;
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 
-@ApiModel
+@Entity
+@Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Aql implements Serializable {
 
-    @ApiModelProperty(
-            required = true,
-            value = "The unique identifier",
-            example = "1")
-    @NotNull(message = "Id is mandatory")
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ApiModelProperty(
-            required = true,
-            value = "The AQL query")
-    @NotBlank(message = "Query is mandatory")
-    @NotNull(message = "Query is mandatory")
-    private String query;
+  private String name;
 
-    @ApiModelProperty(
-            required = true,
-            value = "The name of the AQL query")
-    @NotNull(message = "Name is mandatory")
-    @NotBlank(message = "Name is mandatory")
-    private String name;
+  private String description;
+
+  private String query;
+
+  private boolean publicAql;
+
+  @ManyToOne
+  @JsonBackReference
+  @JoinColumn(name = "owner_id")
+  private UserDetails owner;
+
+  private String organizationId;
+
+  private OffsetDateTime createDate;
+
+  private OffsetDateTime modifiedDate;
 }
