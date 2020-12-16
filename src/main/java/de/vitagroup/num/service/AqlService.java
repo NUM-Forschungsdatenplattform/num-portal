@@ -1,44 +1,72 @@
 package de.vitagroup.num.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.repository.AqlRepository;
+import de.vitagroup.num.domain.repository.UserDetailsRepository;
+import de.vitagroup.num.web.exception.NotAuthorizedException;
+import de.vitagroup.num.web.exception.ResourceNotFound;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class AqlService {
 
-    private final ObjectMapper mapper;
+  private final AqlRepository aqlRepository;
 
-    public List<Aql> getAllAqls() {
-        return getMockedAqls();
+  private final UserDetailsRepository userDetailsRepository;
+
+  public Optional<Aql> getAqlById(Long id) {
+    return aqlRepository.findById(id);
+  }
+
+  public List<Aql> getAllAqls() {
+    return aqlRepository.findAll();
+  }
+
+  public Aql createAql(Aql aql, String loggedInUserId) {
+
+    Optional<UserDetails> owner = userDetailsRepository.findByUserId(loggedInUserId);
+
+    if (owner.isEmpty()) {
+      throw new NotAuthorizedException("Logged in owner not found in portal");
     }
 
-    private List<Aql> getMockedAqls() {
-        File firstFile = new File(getClass().getClassLoader().getResource("mock/aql/aql_1.json").getFile());
-        File secondFile = new File(getClass().getClassLoader().getResource("mock/aql/aql_2.json").getFile());
-
-        try {
-            String first = FileUtils.readFileToString(firstFile, StandardCharsets.UTF_8);
-            String second = FileUtils.readFileToString(secondFile, StandardCharsets.UTF_8);
-            Aql secondAql = mapper.readValue(second, Aql.class);
-            Aql firstAql = mapper.readValue(first, Aql.class);
-            return Arrays.asList(firstAql, secondAql);
-        } catch (IOException e) {
-           log.error("Error reading mock aqls from file");
-        }
-
-        return Collections.emptyList();
+    if (owner.get().isNotApproved()) {
+      throw new NotAuthorizedException("Logged in owner not approved:");
     }
+
+    aql.setOwner(owner.get());
+    aql.setCreateDate(OffsetDateTime.now());
+    aql.setModifiedDate(OffsetDateTime.now());
+
+    return aqlRepository.save(aql);
+  }
+
+  public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
+    Aql aqlToEdit = aqlRepository.findById(aqlId).orElseThrow(ResourceNotFound::new);
+
+    if (!aqlToEdit.getOwner().getUserId().equals(loggedInUserId)) {
+      throw new NotAuthorizedException(
+          String.format(
+              "%s: %s %s.",
+              "Aql edit for aql with id", aqlId, "not allowed. Aql has different owner"));
+    }
+
+    aqlToEdit.setName(aql.getName());
+    aqlToEdit.setDescription(aql.getDescription());
+    aqlToEdit.setModifiedDate(OffsetDateTime.now());
+    aqlToEdit.setQuery(aql.getQuery());
+    aqlToEdit.setOrganizationId(aql.getOrganizationId());
+    aqlToEdit.setPublicAql(aql.isPublicAql());
+
+    return aqlRepository.save(aqlToEdit);
+  }
 }

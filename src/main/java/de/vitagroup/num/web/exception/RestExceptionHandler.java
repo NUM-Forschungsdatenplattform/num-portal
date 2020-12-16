@@ -94,7 +94,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.CONFLICT);
   }
 
-  @ExceptionHandler({AccessDeniedException.class})
+  @ExceptionHandler({AccessDeniedException.class, NotAuthorizedException.class})
   public ResponseEntity<ErrorResponse> handleAccessDenied(Exception ex) {
     log.debug(ex.getMessage(), ex);
 
