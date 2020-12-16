@@ -75,7 +75,7 @@ public class AqlServiceTest {
     verify(aqlRepository, times(1)).findById(any());
   }
 
-  public Aql createAql() {
+  private Aql createAql() {
     return Aql.builder()
         .name("name")
         .description("description")
