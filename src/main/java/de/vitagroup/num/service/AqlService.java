@@ -51,26 +51,22 @@ public class AqlService {
   }
 
   public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
-    Optional<Aql> aqlToEdit = aqlRepository.findById(aqlId);
+    Aql aqlToEdit = aqlRepository.findById(aqlId).orElseThrow(ResourceNotFound::new);
 
-    if (aqlToEdit.isEmpty()) {
-      throw new ResourceNotFound(String.format("%s: %s", "Aql query not found", aqlId));
-    }
-
-    if (!aqlToEdit.get().getOwner().getUserId().equals(loggedInUserId)) {
+    if (!aqlToEdit.getOwner().getUserId().equals(loggedInUserId)) {
       throw new NotAuthorizedException(
           String.format(
               "%s: %s %s.",
               "Aql edit for aql with id", aqlId, "not allowed. Aql has different owner"));
     }
 
-    aqlToEdit.get().setName(aql.getName());
-    aqlToEdit.get().setDescription(aql.getDescription());
-    aqlToEdit.get().setModifiedDate(OffsetDateTime.now());
-    aqlToEdit.get().setQuery(aql.getQuery());
-    aqlToEdit.get().setOrganizationId(aql.getOrganizationId());
-    aqlToEdit.get().setPublicAql(aql.isPublicAql());
+    aqlToEdit.setName(aql.getName());
+    aqlToEdit.setDescription(aql.getDescription());
+    aqlToEdit.setModifiedDate(OffsetDateTime.now());
+    aqlToEdit.setQuery(aql.getQuery());
+    aqlToEdit.setOrganizationId(aql.getOrganizationId());
+    aqlToEdit.setPublicAql(aql.isPublicAql());
 
-    return aqlRepository.save(aqlToEdit.get());
+    return aqlRepository.save(aqlToEdit);
   }
 }
