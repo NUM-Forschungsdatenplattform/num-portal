@@ -8,6 +8,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
 /** Dto for template information linked to a study */
 @Data
 @Builder
@@ -17,8 +20,10 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TemplateInfoDto {
 
+  @NotNull
+  @NotEmpty
   @ApiModelProperty(value = "The ehrbase identifier of the template")
-  private String id;
+  private String templateId;
 
-  @ApiModelProperty private String name;
+  @NotNull @NotEmpty @ApiModelProperty private String name;
 }

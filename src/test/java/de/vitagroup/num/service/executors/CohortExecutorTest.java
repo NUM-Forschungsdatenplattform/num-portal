@@ -30,14 +30,10 @@ public class CohortExecutorTest {
   private final String PHENOTYPE_NAME = "Phenotype name";
   private final String AQL_NAME = "AQL query name";
   private final String AQL_QUERY = "SELECT A ... FROM E ... WHERE ...";
-  @Spy
-  private SetOperationsService setOperations;
-  @Mock
-  private EhrBaseService ehrBaseService;
-  @Mock
-  private PhenotypeExecutor phenotypeExecutor;
-  @InjectMocks
-  private CohortExecutor cohortExecutor;
+  @Spy private SetOperationsService setOperations;
+  @Mock private EhrBaseService ehrBaseService;
+  @Mock private PhenotypeExecutor phenotypeExecutor;
+  @InjectMocks private CohortExecutor cohortExecutor;
 
   @Before
   public void setup() {

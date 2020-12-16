@@ -29,12 +29,9 @@ public class PhenotypeExecutorTest {
   private final String PHENOTYPE_NAME = "Phenotype name";
   private final String AQL_NAME = "AQL query name";
   private final String AQL_QUERY = "SELECT A ... FROM E ... WHERE ...";
-  @Spy
-  private SetOperationsService setOperations;
-  @Mock
-  private EhrBaseService ehrBaseService;
-  @InjectMocks
-  private PhenotypeExecutor phenotypeExecutor;
+  @Spy private SetOperationsService setOperations;
+  @Mock private EhrBaseService ehrBaseService;
+  @InjectMocks private PhenotypeExecutor phenotypeExecutor;
 
   @Before
   public void setup() {
@@ -76,10 +73,10 @@ public class PhenotypeExecutorTest {
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
 
     GroupExpression query =
-            GroupExpression.builder()
-                    .operator(Operator.AND)
-                    .children(Arrays.asList(aqlExpression1))
-                    .build();
+        GroupExpression.builder()
+            .operator(Operator.AND)
+            .children(Arrays.asList(aqlExpression1))
+            .build();
 
     Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
 
