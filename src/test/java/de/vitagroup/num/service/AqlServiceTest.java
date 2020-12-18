@@ -1,24 +1,27 @@
 package de.vitagroup.num.service;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.NotAuthorizedException;
+import de.vitagroup.num.web.exception.ResourceNotFound;
+import java.time.OffsetDateTime;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.time.OffsetDateTime;
-import java.util.Optional;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AqlServiceTest {
@@ -31,14 +34,16 @@ public class AqlServiceTest {
 
   @Before
   public void setup() {
+    UserDetails approvedUser =
+        UserDetails.builder().userId("approvedUserId").approved(true).build();
+
     when(userDetailsRepository.findByUserId("notApprovedId"))
         .thenReturn(
             Optional.of(UserDetails.builder().userId("notApprovedId").approved(false).build()));
-
     when(userDetailsRepository.findByUserId("approvedUserId"))
-        .thenReturn(
-            Optional.of(UserDetails.builder().userId("approvedUserId").approved(true).build()));
-
+        .thenReturn(Optional.of(approvedUser));
+    when(aqlRepository.findById(1L))
+        .thenReturn(Optional.ofNullable(Aql.builder().owner(approvedUser).build()));
     when(aqlRepository.save(any())).thenReturn(createAql());
   }
 
@@ -73,6 +78,27 @@ public class AqlServiceTest {
   public void shouldCallRepoWhenSearchingAql() {
     aqlService.getAqlById(any());
     verify(aqlRepository, times(1)).findById(any());
+  }
+
+  @Test
+  public void shouldCallRepoWhenDeleting() {
+    aqlService.deleteById(1L, "approvedUserId");
+    verify(aqlRepository, times(1)).deleteById(1L);
+  }
+
+  @Test(expected = NotAuthorizedException.class)
+  public void shouldHandleNonExistingUser() {
+    aqlService.deleteById(1L, "nonExistingUser");
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void shouldHandleNonExistingAql() {
+    aqlService.deleteById(9L, "approvedUserId");
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void shouldCallRepoWhenSearching() {
+    aqlService.deleteById(9L, "approvedUserId");
   }
 
   private Aql createAql() {
