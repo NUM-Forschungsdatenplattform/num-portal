@@ -29,7 +29,7 @@ public class UserServiceTest {
 
   @InjectMocks private UserService userService;
 
-  private Set<Role> roles =
+  private final Set<Role> roles =
       Set.of(
           new Role("R1", "ADMIN"),
           new Role("R2", "RESEARCHER"),
@@ -86,24 +86,23 @@ public class UserServiceTest {
   }
 
   @Test
-  public void succefullyNewRole() {
+  public void shouldAddNewRole() {
     userService.setUserRoles("4", Collections.singletonList("ADMIN"));
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R1", "ADMIN")});
   }
 
   @Test
-  public void succefullySetExistingRole() {
+  public void shouldSetExistingRole() {
     userService.setUserRoles("4", Collections.singletonList("RESEARCHER"));
     verify(keycloakFeign, never()).removeRoles(anyString(), any(Role[].class));
     verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
   }
 
   @Test
-  public void succefullyUnsetRoles() {
+  public void shouldUnsetRoles() {
     userService.setUserRoles("4", Collections.emptyList());
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
   }
-
 }

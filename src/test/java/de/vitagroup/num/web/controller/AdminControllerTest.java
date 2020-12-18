@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -19,7 +18,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -29,8 +27,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 class AdminControllerTest {
 
   private MockMvc mvc;
-
-  @Autowired private ObjectMapper objectMapper;
 
   @Mock UserService userService;
 
@@ -47,7 +43,7 @@ class AdminControllerTest {
   }
 
   @Test
-  void updateFailInvalidRole() throws Exception {
+  void shouldFailUpdateInvalidRole() throws Exception {
     when(userService.setUserRoles("1", Collections.singletonList("test")))
         .thenThrow(
             new BadRequestException(
@@ -61,7 +57,7 @@ class AdminControllerTest {
   }
 
   @Test
-  void updateRoles() throws Exception {
+  void shouldUpdateRoles() throws Exception {
     when(userService.setUserRoles("1", Collections.singletonList("ADMIN")))
         .thenReturn(Collections.singletonList("ADMIN"));
     mvc.perform(
