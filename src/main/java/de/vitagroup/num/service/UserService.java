@@ -76,14 +76,6 @@ public class UserService {
     try {
       Map<String, Role> supportedRoles =
           keycloakFeign.getRoles().stream().collect(Collectors.toMap(Role::getName, role -> role));
-      List<String> invalidRoleNames =
-          roleNames.stream()
-              .filter(roleName -> supportedRoles.get(roleName) == null)
-              .collect(Collectors.toList());
-
-      if (!invalidRoleNames.isEmpty()) {
-        throw new BadRequestException("Unknown Role(s): " + String.join(" ", invalidRoleNames));
-      }
 
       Set<Role> existingRoles = keycloakFeign.getRolesOfUser(userId);
 
@@ -93,15 +85,21 @@ public class UserService {
               .collect(Collectors.toList())
               .toArray(new Role[] {});
 
-      if (removeRoles.length > 0) {
-        keycloakFeign.removeRoles(userId, removeRoles);
-      }
-
       Role[] addRoles =
           roleNames.stream()
               .map(supportedRoles::get)
+              .peek(
+                  role -> {
+                    if (role == null) {
+                      throw new BadRequestException("Unknown Role");
+                    }
+                  })
               .collect(Collectors.toList())
               .toArray(new Role[] {});
+
+      if (removeRoles.length > 0) {
+        keycloakFeign.removeRoles(userId, removeRoles);
+      }
 
       if (addRoles.length > 0) {
         keycloakFeign.addRoles(userId, addRoles);
