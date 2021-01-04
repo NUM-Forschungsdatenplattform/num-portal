@@ -55,9 +55,12 @@ public class AqlService {
   }
 
   public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
+
+    userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(NotAuthorizedException::new);
+
     Aql aqlToEdit = aqlRepository.findById(aqlId).orElseThrow(ResourceNotFound::new);
 
-    if (!aqlToEdit.getOwner().getUserId().equals(loggedInUserId)) {
+    if (aqlToEdit.hasEmptyOrDifferentOwner(loggedInUserId)) {
       throw new NotAuthorizedException(
           String.format(
               "%s: %s %s.",
@@ -76,11 +79,11 @@ public class AqlService {
 
   public void deleteById(Long id, String loggedInUserId) {
 
-    UserDetails owner =
-        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(NotAuthorizedException::new);
+    userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(NotAuthorizedException::new);
+
     Aql aql = aqlRepository.findById(id).orElseThrow(ResourceNotFound::new);
 
-    if (!aql.getOwner().getUserId().equals(owner.getUserId())) {
+    if (aql.hasEmptyOrDifferentOwner(loggedInUserId)) {
       throw new NotAuthorizedException("Cannot delete aql: " + id);
     }
 
