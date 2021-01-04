@@ -1,6 +1,5 @@
 package de.vitagroup.num.web.controller;
 
-import com.fasterxml.jackson.databind.node.TextNode;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.service.UserDetailsService;
@@ -8,6 +7,7 @@ import de.vitagroup.num.service.UserService;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -47,12 +47,11 @@ public class AdminController {
   }
 
   @PostMapping("/user/{userId}/role")
-  @ApiOperation(value = "Adds the given role to the user")
+  @ApiOperation(value = "Updates the users roles to the given set.")
   @PreAuthorize(Role.ADMIN)
-  public ResponseEntity<String> addRole(
-      @NotNull @PathVariable String userId, @NotNull @RequestBody TextNode roleName) {
-    userService.setUserRole(userId, roleName.asText());
-    return ResponseEntity.ok(roleName.asText());
+  public ResponseEntity<List<String>> updateRoles(
+      @NotNull @PathVariable String userId, @NotNull @RequestBody List<String> roles) {
+    return ResponseEntity.ok(userService.setUserRoles(userId, roles));
   }
 
   @PostMapping("/user/{userId}/organization")
@@ -85,9 +84,9 @@ public class AdminController {
   public ResponseEntity<Set<User>> searchUsers(
       @RequestParam(required = false) Boolean approved,
       @RequestParam(required = false)
-      @ApiParam(
-          value = "A string contained in username, first or last name, or email",
-          required = false)
+          @ApiParam(
+              value = "A string contained in username, first or last name, or email",
+              required = false)
           String search) {
     return ResponseEntity.ok(userService.searchUsers(approved, search));
   }

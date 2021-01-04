@@ -8,13 +8,15 @@ import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -65,20 +67,44 @@ public class UserService {
   }
 
   /**
-   * Assigns a role to a particular user
+   * Assigns roles to a particular user
    *
-   * @param userId the user to add the role to
-   * @param roleName The name of the role to add to the user
+   * @param userId the user to update roles of
+   * @param roleNames The list of roles of the user
    */
-  public void setUserRole(String userId, String roleName) {
+  public List<String> setUserRoles(String userId, @NotNull List<String> roleNames) {
     try {
-      Role role = keycloakFeign.getRole(roleName);
+      Map<String, Role> supportedRoles =
+          keycloakFeign.getRoles().stream().collect(Collectors.toMap(Role::getName, role -> role));
 
-      if (role == null) {
-        throw new BadRequestException("Invalid role");
+      Set<Role> existingRoles = keycloakFeign.getRolesOfUser(userId);
+
+      Role[] removeRoles =
+          existingRoles.stream()
+              .filter(role -> !roleNames.contains(role.getName()))
+              .collect(Collectors.toList())
+              .toArray(new Role[] {});
+
+      Role[] addRoles =
+          roleNames.stream()
+              .map(supportedRoles::get)
+              .peek(
+                  role -> {
+                    if (role == null) {
+                      throw new BadRequestException("Unknown Role");
+                    }
+                  })
+              .collect(Collectors.toList())
+              .toArray(new Role[] {});
+
+      if (removeRoles.length > 0) {
+        keycloakFeign.removeRoles(userId, removeRoles);
       }
 
-      keycloakFeign.addRole(userId, new Role[] {role});
+      if (addRoles.length > 0) {
+        keycloakFeign.addRoles(userId, addRoles);
+      }
+      return roleNames;
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
       throw new SystemException("An error has occurred, please try again later");
     } catch (FeignException.NotFound e) {
@@ -101,6 +127,7 @@ public class UserService {
 
   /**
    * Retrieved a list of users that match the search criteria
+   *
    * @param approved Indicates that the user has been approved by the admin
    * @param search A string contained in username, first or last name, or email
    * @return
