@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
+import org.apache.commons.lang3.ObjectUtils;
 
 @Entity
 @Builder
@@ -40,4 +41,8 @@ public class Aql implements Serializable {
   private OffsetDateTime createDate;
 
   private OffsetDateTime modifiedDate;
+
+  public boolean hasEmptyOrDifferentOwner(String userId) {
+    return ObjectUtils.isEmpty(owner) || !owner.getUserId().equals(userId);
+  }
 }
