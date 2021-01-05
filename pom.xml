@@ -27,9 +27,6 @@
         <openfeign.version>2.2.5.RELEASE</openfeign.version>
         <jacoco.version>0.8.6</jacoco.version>
         <dependency-check.version>6.0.3</dependency-check.version>
-        <sonar.exclusions>
-            src/main/java/de/vitagroup/num/NumPortalApplication.java,src/main/java/de/vitagroup/num/config/*
-        </sonar.exclusions>
     </properties>
 
     <repositories>
