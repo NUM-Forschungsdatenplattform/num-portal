@@ -50,7 +50,11 @@ public class User {
 
   @ApiModelProperty(value = "The external organization id from the terminology server")
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private String externalOrganizationId;
+  private String organizationId;
+
+  @ApiModelProperty(value = "The name of the organization")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private String organizationName;
 
   @JsonIgnore
   public boolean isNotApproved() {
