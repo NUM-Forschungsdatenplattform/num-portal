@@ -2,6 +2,7 @@ package de.vitagroup.num.domain.admin;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.vitagroup.num.domain.dto.OrganizationDto;
 import java.util.Set;
 
 import io.swagger.annotations.ApiModel;
@@ -48,13 +49,8 @@ public class User {
 
   @ApiModelProperty private boolean approved;
 
-  @ApiModelProperty(value = "The external organization id from the terminology server")
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  private String organizationId;
-
-  @ApiModelProperty(value = "The name of the organization")
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  private String organizationName;
+  @ApiModelProperty(value = "The organization")
+  private OrganizationDto organization;
 
   @JsonIgnore
   public boolean isNotApproved() {

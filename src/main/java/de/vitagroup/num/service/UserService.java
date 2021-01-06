@@ -131,8 +131,7 @@ public class UserService {
           OrganizationDto organization =
               organizationService.getOrganizationById(userDetails.get().getOrganizationId());
 
-          user.setOrganizationId(organization.getId());
-          user.setOrganizationName(organization.getName());
+          user.setOrganization(organization);
 
         } catch (ResourceNotFound e) {
           log.error(
