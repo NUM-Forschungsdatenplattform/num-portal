@@ -3,6 +3,7 @@ package de.vitagroup.num.service;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -25,6 +27,7 @@ public class UserService {
 
   private final KeycloakFeign keycloakFeign;
   private final UserDetailsService userDetailsService;
+  private final OrganizationService organizationService;
 
   /**
    * Retrieves user, portal user details and corresponding roles from identity provider
@@ -121,7 +124,23 @@ public class UserService {
 
     if (userDetails.isPresent()) {
       user.setApproved(userDetails.get().isApproved());
-      user.setExternalOrganizationId(userDetails.get().getOrganizationId());
+
+      if (StringUtils.isNotEmpty(userDetails.get().getOrganizationId())) {
+
+        try {
+          OrganizationDto organization =
+              organizationService.getOrganizationById(userDetails.get().getOrganizationId());
+
+          user.setOrganizationId(organization.getId());
+          user.setOrganizationName(organization.getName());
+
+        } catch (ResourceNotFound e) {
+          log.error(
+              "Invalid organization id {} for user {}",
+              userDetails.get().getOrganizationId(),
+              user.getId());
+        }
+      }
     }
   }
 
