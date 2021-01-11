@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.admin.Role;
+import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -118,7 +119,7 @@ public class UserServiceTest {
 
   @Test
   public void shouldReturnUserWithRoles() {
-    de.vitagroup.num.domain.admin.User user = new de.vitagroup.num.domain.admin.User();
+    User user = new User();
     user.setFirstName("john");
     user.setId("4");
     when(keycloakFeign.searchUsers(null)).thenReturn(Set.of(user));
@@ -129,7 +130,7 @@ public class UserServiceTest {
 
   @Test
   public void shouldReturnUserWithoutRoles() {
-    de.vitagroup.num.domain.admin.User user = new de.vitagroup.num.domain.admin.User();
+    User user = new User();
     user.setFirstName("john");
     user.setId("4");
     when(keycloakFeign.searchUsers(null)).thenReturn(Set.of(user));
