@@ -9,6 +9,7 @@ import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -157,8 +158,8 @@ public class UserService {
    */
   public Set<User> searchUsers(Boolean approved, String search, Boolean withRoles) {
     Set<User> users = keycloakFeign.searchUsers(search);
-    if(users == null){
-      return null;
+    if (users == null) {
+      return Collections.emptySet();
     }
     users.forEach(this::addUserDetails);
 
