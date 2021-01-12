@@ -14,8 +14,9 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.NotAuthorizedException;
+import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import org.junit.Before;
@@ -94,18 +95,18 @@ public class AqlServiceTest {
     assertThat(updatedAql.getOrganizationId(), is(toEdit.getOrganizationId()));
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = ForbiddenException.class)
   public void shouldHandleMissingAqlOwnerWhenEditing() {
     Aql toEdit = createAql(OffsetDateTime.now());
     aqlService.updateAql(toEdit, 2L, "approvedUserId");
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = SystemException.class)
   public void shouldHandleMissingOwner() {
     aqlService.createAql(Aql.builder().build(), "missingOwnerId");
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedOwner() {
     aqlService.createAql(Aql.builder().build(), "notApprovedId");
   }
@@ -128,7 +129,7 @@ public class AqlServiceTest {
     verify(aqlRepository, times(1)).deleteById(1L);
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = ForbiddenException.class)
   public void shouldHandleMissingOwnerWhenDeleting() {
     aqlService.deleteById(2L, "approvedUserId");
   }
@@ -138,7 +139,7 @@ public class AqlServiceTest {
     aqlService.deleteById(3L, "approvedUserId");
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = SystemException.class)
   public void shouldHandleNonExistingUser() {
     aqlService.deleteById(1L, "nonExistingUser");
   }

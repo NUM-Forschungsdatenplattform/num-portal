@@ -1,24 +1,25 @@
 package de.vitagroup.num.service;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
-import de.vitagroup.num.web.exception.NotAuthorizedException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.web.exception.ForbiddenException;
+import de.vitagroup.num.web.exception.SystemException;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Optional;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StudyServiceTest {
@@ -41,7 +42,7 @@ public class StudyServiceTest {
         .thenReturn(Optional.empty());
   }
 
-  @Test(expected = ResourceNotFound.class)
+  @Test(expected = SystemException.class)
   public void shouldHandleMissingCoordinator() {
     Study study =
         Study.builder()
@@ -52,7 +53,7 @@ public class StudyServiceTest {
     studyService.createStudy(study, "nonExistingCoordinatorId");
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedCoordinator() {
     Study study =
         Study.builder()

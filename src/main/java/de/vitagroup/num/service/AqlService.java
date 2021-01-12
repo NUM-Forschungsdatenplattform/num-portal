@@ -5,8 +5,9 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.NotAuthorizedException;
+import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -40,11 +41,11 @@ public class AqlService {
     Optional<UserDetails> owner = userDetailsRepository.findByUserId(loggedInUserId);
 
     if (owner.isEmpty()) {
-      throw new NotAuthorizedException("Logged in owner not found in portal");
+      throw new SystemException("Logged in owner not found in portal");
     }
 
     if (owner.get().isNotApproved()) {
-      throw new NotAuthorizedException("Logged in owner not approved:");
+      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
     }
 
     aql.setOwner(owner.get());
@@ -56,11 +57,12 @@ public class AqlService {
 
   public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
 
-    UserDetails owner = userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(NotAuthorizedException::new);
+    UserDetails owner =
+        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
     Aql aqlToEdit = aqlRepository.findById(aqlId).orElseThrow(ResourceNotFound::new);
 
     if (aqlToEdit.hasEmptyOrDifferentOwner(loggedInUserId)) {
-      throw new NotAuthorizedException(
+      throw new ForbiddenException(
           String.format(
               "%s: %s %s.",
               "Aql edit for aql with id", aqlId, "not allowed. Aql has different owner"));
@@ -78,11 +80,12 @@ public class AqlService {
 
   public void deleteById(Long id, String loggedInUserId) {
 
-    UserDetails owner = userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(NotAuthorizedException::new);
+    UserDetails owner =
+        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
     Aql aql = aqlRepository.findById(id).orElseThrow(ResourceNotFound::new);
 
     if (aql.hasEmptyOrDifferentOwner(loggedInUserId)) {
-      throw new NotAuthorizedException("Cannot delete aql: " + id);
+      throw new ForbiddenException("Cannot delete aql: " + id);
     }
 
     try {
@@ -105,7 +108,7 @@ public class AqlService {
       String name, Boolean owned, Boolean ownedBySameOrganization, String loggedInUserId) {
 
     UserDetails owner =
-        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(NotAuthorizedException::new);
+        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
 
     if (StringUtils.isEmpty(name)
         && ObjectUtils.isEmpty(owned)

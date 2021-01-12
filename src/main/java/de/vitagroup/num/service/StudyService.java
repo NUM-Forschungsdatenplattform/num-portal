@@ -4,15 +4,15 @@ import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
-import de.vitagroup.num.web.exception.NotAuthorizedException;
+import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-
+import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
@@ -33,11 +33,11 @@ public class StudyService {
     Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(userId);
 
     if (coordinator.isEmpty()) {
-      throw new ResourceNotFound("Logged in coordinator not found in portal");
+      throw new SystemException("Logged in coordinator not found in portal");
     }
 
     if (coordinator.get().isNotApproved()) {
-      throw new NotAuthorizedException("User not approved:" + userId);
+      throw new ForbiddenException("User not approved:" + userId);
     }
 
     study.setCoordinator(coordinator.get());
