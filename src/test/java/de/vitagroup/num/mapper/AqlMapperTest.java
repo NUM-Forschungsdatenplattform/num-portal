@@ -41,7 +41,8 @@ public class AqlMapperTest {
     Aql aql =
         Aql.builder()
             .name("name")
-            .description("description")
+            .use("use")
+            .purpose("purpose")
             .publicAql(false)
             .createDate(OffsetDateTime.now())
             .modifiedDate(OffsetDateTime.now())
@@ -53,7 +54,8 @@ public class AqlMapperTest {
     assertThat(dto, notNullValue());
 
     assertThat(dto.getName(), is(aql.getName()));
-    assertThat(dto.getDescription(), is(aql.getDescription()));
+    assertThat(dto.getUse(), is(aql.getUse()));
+    assertThat(dto.getPurpose(), is(aql.getPurpose()));
     assertThat(dto.getCreateDate(), is(aql.getCreateDate()));
     assertThat(dto.getModifiedDate(), is(aql.getModifiedDate()));
     assertThat(dto.isPublicAql(), is(aql.isPublicAql()));
@@ -64,7 +66,8 @@ public class AqlMapperTest {
     AqlDto dto =
         AqlDto.builder()
             .name("name")
-            .description("description")
+            .use("use")
+            .purpose("purpose")
             .publicAql(false)
             .ownerId("ownerId")
             .createDate(OffsetDateTime.now())
@@ -77,7 +80,8 @@ public class AqlMapperTest {
     assertThat(aql, notNullValue());
     assertThat(aql.getId(), nullValue());
     assertThat(aql.getName(), is(dto.getName()));
-    assertThat(aql.getDescription(), is(dto.getDescription()));
+    assertThat(aql.getUse(), is(dto.getUse()));
+    assertThat(aql.getPurpose(), is(dto.getPurpose()));
     assertThat(aql.getCreateDate(), is(dto.getCreateDate()));
     assertThat(aql.getModifiedDate(), is(dto.getModifiedDate()));
     assertThat(aql.isPublicAql(), is(dto.isPublicAql()));

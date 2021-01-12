@@ -67,7 +67,8 @@ public class AqlService {
     }
 
     aqlToEdit.setName(aql.getName());
-    aqlToEdit.setDescription(aql.getDescription());
+    aqlToEdit.setPurpose(aql.getPurpose());
+    aqlToEdit.setUse(aql.getUse());
     aqlToEdit.setModifiedDate(OffsetDateTime.now());
     aqlToEdit.setQuery(aql.getQuery());
     aqlToEdit.setOrganizationId(aql.getOrganizationId());
