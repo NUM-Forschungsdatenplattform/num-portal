@@ -25,7 +25,9 @@ public class Aql implements Serializable {
 
   private String name;
 
-  private String description;
+  private String use;
+
+  private String purpose;
 
   private String query;
 
