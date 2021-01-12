@@ -53,7 +53,8 @@ public class AqlServiceTest {
                 Aql.builder()
                     .id(1L)
                     .name("name to edit")
-                    .description("description to edit")
+                    .use("use to edit")
+                    .purpose("purpose to edit")
                     .createDate(OffsetDateTime.now().minusDays(4))
                     .createDate(OffsetDateTime.now())
                     .publicAql(true)
@@ -78,7 +79,8 @@ public class AqlServiceTest {
 
     assertThat(createdAql, notNullValue());
     assertThat(createdAql.getName(), is(toSave.getName()));
-    assertThat(createdAql.getDescription(), is(toSave.getDescription()));
+    assertThat(createdAql.getUse(), is(toSave.getUse()));
+    assertThat(createdAql.getPurpose(), is(toSave.getPurpose()));
     assertThat(createdAql.isPublicAql(), is(toSave.isPublicAql()));
   }
 
@@ -89,7 +91,8 @@ public class AqlServiceTest {
 
     assertThat(updatedAql, notNullValue());
     assertThat(updatedAql.getName(), is(toEdit.getName()));
-    assertThat(updatedAql.getDescription(), is(toEdit.getDescription()));
+    assertThat(updatedAql.getUse(), is(toEdit.getUse()));
+    assertThat(updatedAql.getPurpose(), is(toEdit.getPurpose()));
     assertThat(updatedAql.isPublicAql(), is(toEdit.isPublicAql()));
     assertThat(updatedAql.getOrganizationId(), is(toEdit.getOrganizationId()));
   }
@@ -169,7 +172,8 @@ public class AqlServiceTest {
     return Aql.builder()
         .id(10L)
         .name("name")
-        .description("description")
+        .use("use")
+        .purpose("purpose")
         .publicAql(false)
         .createDate(createdAndModifiedDate)
         .modifiedDate(createdAndModifiedDate)
