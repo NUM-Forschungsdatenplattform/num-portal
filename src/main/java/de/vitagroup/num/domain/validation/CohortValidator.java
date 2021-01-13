@@ -48,12 +48,6 @@ public class CohortValidator implements ConstraintValidator<ValidCohort, CohortG
             return true;
         }
 
-        // AND and OR cannot be applied to a single child
-        if ((cohortGroup.getOperator().equals(Operator.OR) || cohortGroup.getOperator().equals(Operator.AND))
-                && cohortGroup.getChildren().size() == 1) {
-            return true;
-        }
-
         return false;
     }
 
