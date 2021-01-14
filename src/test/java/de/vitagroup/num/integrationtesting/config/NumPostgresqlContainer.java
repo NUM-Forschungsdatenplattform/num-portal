@@ -27,6 +27,6 @@ public class NumPostgresqlContainer extends PostgreSQLContainer<NumPostgresqlCon
 
   @Override
   public void stop() {
-    //do nothing, JVM handles shut down
+    // do nothing, JVM handles shut down
   }
 }
