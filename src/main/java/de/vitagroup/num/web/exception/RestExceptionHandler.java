@@ -102,4 +102,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
     return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.UNAUTHORIZED);
   }
+
+  @ExceptionHandler({ForbiddenException.class})
+  public ResponseEntity<ErrorResponse> handleNotApprovedUser(Exception ex) {
+    log.debug(ex.getMessage(), ex);
+
+    ErrorResponse response =
+        ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
+    return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.FORBIDDEN);
+  }
 }
