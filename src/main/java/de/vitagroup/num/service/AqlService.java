@@ -37,18 +37,13 @@ public class AqlService {
   }
 
   public Aql createAql(Aql aql, String loggedInUserId) {
+    UserDetails owner = userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
 
-    Optional<UserDetails> owner = userDetailsRepository.findByUserId(loggedInUserId);
-
-    if (owner.isEmpty()) {
-      throw new SystemException("Logged in owner not found in portal");
-    }
-
-    if (owner.get().isNotApproved()) {
+    if (owner.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
     }
 
-    aql.setOwner(owner.get());
+    aql.setOwner(owner);
     aql.setCreateDate(OffsetDateTime.now());
     aql.setModifiedDate(OffsetDateTime.now());
 
@@ -56,9 +51,12 @@ public class AqlService {
   }
 
   public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
+    UserDetails owner = userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
 
-    UserDetails owner =
-        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+    if (owner.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+    }
+
     Aql aqlToEdit = aqlRepository.findById(aqlId).orElseThrow(ResourceNotFound::new);
 
     if (aqlToEdit.hasEmptyOrDifferentOwner(loggedInUserId)) {
@@ -79,9 +77,12 @@ public class AqlService {
   }
 
   public void deleteById(Long id, String loggedInUserId) {
+    UserDetails owner = userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
 
-    UserDetails owner =
-        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+    if (owner.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+    }
+
     Aql aql = aqlRepository.findById(id).orElseThrow(ResourceNotFound::new);
 
     if (aql.hasEmptyOrDifferentOwner(loggedInUserId)) {
