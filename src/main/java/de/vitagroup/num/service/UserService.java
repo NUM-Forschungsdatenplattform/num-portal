@@ -9,6 +9,7 @@ import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,8 +40,7 @@ public class UserService {
     try {
 
       User user = keycloakFeign.getUser(userId);
-      Set<Role> roles = getUserRoles(user.getId());
-      user.setRoles(roles.stream().map(Role::getName).collect(Collectors.toSet()));
+      addRoles(user);
       addUserDetails(user);
       return user;
 
@@ -143,19 +143,32 @@ public class UserService {
     }
   }
 
+  private void addRoles(User user) {
+    Set<Role> roles = getUserRoles(user.getId());
+    user.setRoles(roles.stream().map(Role::getName).collect(Collectors.toSet()));
+  }
+
   /**
    * Retrieved a list of users that match the search criteria
    *
    * @param approved Indicates that the user has been approved by the admin
    * @param search A string contained in username, first or last name, or email
-   * @return
+   * @param withRoles flag whether to add roles to the user structure, if present, or not
+   * @return the users that match the search parameters and with optional roles if indicated
    */
-  public Set<User> searchUsers(Boolean approved, String search) {
+  public Set<User> searchUsers(Boolean approved, String search, Boolean withRoles) {
     Set<User> users = keycloakFeign.searchUsers(search);
-    users.stream().forEach(this::addUserDetails);
+    if (users == null) {
+      return Collections.emptySet();
+    }
+    users.forEach(this::addUserDetails);
 
     if (approved != null) {
       users.removeIf(user -> approved ? user.isNotApproved() : user.isApproved());
+    }
+
+    if (withRoles != null && withRoles) {
+      users.forEach(this::addRoles);
     }
 
     return users;

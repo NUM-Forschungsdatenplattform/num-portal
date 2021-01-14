@@ -1,5 +1,8 @@
 package de.vitagroup.num.service;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -24,8 +27,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
@@ -57,8 +58,7 @@ public class UserServiceTest {
     when(keycloakFeign.getRoles()).thenReturn(roles);
 
     when(userDetailsService.getUserDetailsById("4"))
-            .thenReturn(Optional.of(UserDetails.builder().userId("4").approved(true).build()));
-
+        .thenReturn(Optional.of(UserDetails.builder().userId("4").approved(true).build()));
   }
 
   @Test(expected = SystemException.class)
@@ -116,6 +116,7 @@ public class UserServiceTest {
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
   }
+
   @Test
   public void shouldReturnUserWithTimestamp() {
     User user = new User();
@@ -123,9 +124,30 @@ public class UserServiceTest {
     user.setId("4");
     when(keycloakFeign.getUser("4")).thenReturn(user);
     de.vitagroup.num.domain.admin.User userReturn = userService.getUserById("4");
-    assertThat(userReturn.getCreatedTimestamp(), is(6234234234L) );
+    assertThat(userReturn.getCreatedTimestamp(), is(6234234234L));
     verify(keycloakFeign, times(1)).getRolesOfUser("4");
     verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
   }
 
+  @Test
+  public void shouldReturnUserWithRoles() {
+    User user = new User();
+    user.setFirstName("john");
+    user.setId("4");
+    when(keycloakFeign.searchUsers(null)).thenReturn(Set.of(user));
+    Set<de.vitagroup.num.domain.admin.User> userReturn = userService.searchUsers(null, null, true);
+    assertThat(userReturn.iterator().next().getRoles().iterator().next(), is("RESEARCHER"));
+    verify(keycloakFeign, times(1)).getRolesOfUser("4");
+  }
+
+  @Test
+  public void shouldReturnUserWithoutRoles() {
+    User user = new User();
+    user.setFirstName("john");
+    user.setId("4");
+    when(keycloakFeign.searchUsers(null)).thenReturn(Set.of(user));
+    Set<de.vitagroup.num.domain.admin.User> userReturn = userService.searchUsers(null, null, false);
+    assertNull(userReturn.iterator().next().getRoles());
+    verify(keycloakFeign, times(0)).getRolesOfUser("4");
+  }
 }

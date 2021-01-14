@@ -82,12 +82,19 @@ public class AdminController {
   @ApiOperation(value = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
   public ResponseEntity<Set<User>> searchUsers(
-      @RequestParam(required = false) Boolean approved,
       @RequestParam(required = false)
           @ApiParam(
-              value = "A string contained in username, first or last name, or email",
-              required = false)
-          String search) {
-    return ResponseEntity.ok(userService.searchUsers(approved, search));
+              value =
+                  "A flag for controlling whether to list approved or not approved users, omitting it returns both)")
+          Boolean approved,
+      @RequestParam(required = false)
+          @ApiParam(value = "A string contained in username, first or last name, or email")
+          String search,
+      @RequestParam(required = false)
+          @ApiParam(
+              value =
+                  "A flag for controlling whether to include user's roles in the response (a bit slower)")
+          Boolean withRoles) {
+    return ResponseEntity.ok(userService.searchUsers(approved, search, withRoles));
   }
 }
