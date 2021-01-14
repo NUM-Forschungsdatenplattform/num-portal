@@ -91,21 +91,19 @@ public class CohortValidatorTest {
   public void correctlyValidatesOrOperation() {
     CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
 
-    CohortGroupDto orCohort =
+    CohortGroupDto singlePhenotypeOrGroup =
         CohortGroupDto.builder()
             .type(Type.GROUP)
             .operator(Operator.OR)
             .children(List.of(first))
             .build();
+
     CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").studyId(1L).cohortGroup(orCohort).build();
+        CohortDto.builder().name("Cohort name").studyId(1L).cohortGroup(singlePhenotypeOrGroup).build();
 
     Set<ConstraintViolation<CohortDto>> violations = validator.validate(cohortDto);
 
-    assertThat(violations.isEmpty(), is(false));
-    assertThat(violations.size(), is(1));
-
-    assertThat(violations.iterator().next().getMessage(), is("Invalid cohort group"));
+    assertThat(violations.isEmpty(), is(true));
   }
 
   @Test
