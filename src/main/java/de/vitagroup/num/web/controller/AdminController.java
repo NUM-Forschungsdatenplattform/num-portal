@@ -35,7 +35,7 @@ public class AdminController {
   @ApiOperation(value = "Retrieves the information about the given user")
   @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<User> getUser(@NotNull @PathVariable String userId) {
-    return ResponseEntity.ok(userService.getUserById(userId));
+    return ResponseEntity.ok(userService.getUserById(userId, true));
   }
 
   @GetMapping("/user/{userId}/role")

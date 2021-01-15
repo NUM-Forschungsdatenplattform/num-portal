@@ -1,5 +1,6 @@
 package de.vitagroup.num.domain.dto;
 
+import de.vitagroup.num.domain.admin.User;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -26,11 +27,9 @@ public class AqlDto {
   @NotNull(message = "AQL name is mandatory")
   private String name;
 
-  @ApiModelProperty
-  private String use;
+  @ApiModelProperty private String use;
 
-  @ApiModelProperty
-  private String purpose;
+  @ApiModelProperty private String purpose;
 
   @ApiModelProperty(required = true, value = "The query string of the aql")
   @NotBlank(message = "AQL query should not be blank")
@@ -40,11 +39,8 @@ public class AqlDto {
   @ApiModelProperty(value = "Flag marking aql as being public")
   private boolean publicAql = true;
 
-  @ApiModelProperty(value = "The user id of the owner of the aql")
-  private String ownerId;
-
-  @ApiModelProperty(value = "The organization id of the owner of the aql")
-  private String organizationId;
+  @ApiModelProperty(value = "The owner of the aql")
+  private User owner;
 
   @ApiModelProperty private OffsetDateTime createDate;
 

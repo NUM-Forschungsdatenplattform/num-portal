@@ -63,17 +63,17 @@ public class UserServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleGetUserBadRequest() {
-    userService.getUserById("1");
+    userService.getUserById("1", true);
   }
 
   @Test(expected = SystemException.class)
   public void shouldHandleGetUserError() {
-    userService.getUserById("2");
+    userService.getUserById("2", true);
   }
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleUserNotFound() {
-    userService.getUserById("3");
+    userService.getUserById("3", true);
   }
 
   @Test(expected = SystemException.class)
@@ -123,7 +123,7 @@ public class UserServiceTest {
     user.setCreatedTimestamp(6234234234L);
     user.setId("4");
     when(keycloakFeign.getUser("4")).thenReturn(user);
-    de.vitagroup.num.domain.admin.User userReturn = userService.getUserById("4");
+    de.vitagroup.num.domain.admin.User userReturn = userService.getUserById("4", true);
     assertThat(userReturn.getCreatedTimestamp(), is(6234234234L));
     verify(keycloakFeign, times(1)).getRolesOfUser("4");
     verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
