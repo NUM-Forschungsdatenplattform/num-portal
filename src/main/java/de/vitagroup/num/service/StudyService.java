@@ -29,6 +29,10 @@ public class StudyService {
     return studyRepository.findById(studyId);
   }
 
+  public boolean exists(Long studyId) {
+    return studyRepository.existsById(studyId);
+  }
+
   public Study createStudy(Study study, String userId) {
     Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(userId);
 
