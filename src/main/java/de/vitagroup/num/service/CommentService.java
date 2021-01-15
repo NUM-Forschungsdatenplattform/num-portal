@@ -23,7 +23,10 @@ public class CommentService {
   private final StudyService studyService;
 
   public List<Comment> getComments(Long studyId) {
-    studyService.getStudyById(studyId).orElseThrow(ResourceNotFound::new);
+    if (!studyService.exists(studyId)) {
+      throw new ResourceNotFound("Study does not exist");
+    }
+
     return commentRepository.findByStudyId(studyId);
   }
 
@@ -48,7 +51,9 @@ public class CommentService {
 
     validateLoggedInUser(loggedInUserId);
 
-    studyService.getStudyById(studyId).orElseThrow(ResourceNotFound::new);
+    if (!studyService.exists(studyId)) {
+      throw new ResourceNotFound("Study does not exist");
+    }
 
     Comment commentToEdit =
         commentRepository.findById(commentId).orElseThrow(ResourceNotFound::new);
@@ -68,7 +73,11 @@ public class CommentService {
 
   public void deleteComment(Long commentId, Long studyId, String loggedInUserId) {
     validateLoggedInUser(loggedInUserId);
-    studyService.getStudyById(studyId).orElseThrow(ResourceNotFound::new);
+
+    if (!studyService.exists(studyId)) {
+      throw new ResourceNotFound("Study does not exist");
+    }
+
     Comment comment = commentRepository.findById(commentId).orElseThrow(ResourceNotFound::new);
 
     if (comment.hasEmptyOrDifferentAuthor(loggedInUserId)) {
