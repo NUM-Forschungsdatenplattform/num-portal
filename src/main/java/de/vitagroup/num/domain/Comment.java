@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 
 @Entity
 @Builder
@@ -39,4 +40,8 @@ public class Comment implements Serializable {
   private Study study;
 
   private OffsetDateTime createDate;
+
+  public boolean hasEmptyOrDifferentAuthor(String userId) {
+    return ObjectUtils.isEmpty(author) || !author.getUserId().equals(userId);
+  }
 }

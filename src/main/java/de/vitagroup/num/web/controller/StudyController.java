@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -118,5 +119,30 @@ public class StudyController {
             commentMapper.convertToEntity(commentDto), studyId, principal.getSubject());
 
     return ResponseEntity.ok(commentMapper.convertToDto(comment));
+  }
+
+  @PutMapping("/{studyId}/comment/{commentId}")
+  @ApiOperation(value = "Updates a comment")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  public ResponseEntity<CommentDto> updateComment(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @NotEmpty @PathVariable Long studyId,
+      @NotNull @NotEmpty @PathVariable Long commentId,
+      @Valid @NotNull @RequestBody CommentDto commentDto) {
+
+    Comment comment =
+        commentService.updateComment(
+            commentMapper.convertToEntity(commentDto), commentId, principal.getSubject(), studyId);
+
+    return ResponseEntity.ok(commentMapper.convertToDto(comment));
+  }
+
+  @DeleteMapping("/{studyId}/comment/{commentId}")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  void deleteAql(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @NotEmpty @PathVariable Long studyId,
+      @NotNull @NotEmpty @PathVariable Long commentId) {
+    commentService.deleteComment(commentId, studyId, principal.getSubject());
   }
 }
