@@ -356,7 +356,7 @@ public class StudyServiceTest {
     Study newStudy =
         Study.builder()
             .name("Study is edited")
-            .status(StudyStatus.CHANGE_REQUEST)
+            .status(StudyStatus.DENIED)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
