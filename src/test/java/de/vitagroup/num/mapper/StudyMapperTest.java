@@ -104,7 +104,7 @@ public class StudyMapperTest {
             .templates(templates)
             .firstHypotheses("h1")
             .secondHypotheses("h2")
-            .status(StudyStatus.APPROVED)
+            .status(StudyStatus.DRAFT)
             .researchers(researchers)
             .build();
 
@@ -132,7 +132,7 @@ public class StudyMapperTest {
         StudyDto.builder()
             .name("Name")
             .firstHypotheses("h1")
-            .status(StudyStatus.APPROVED)
+            .status(StudyStatus.DRAFT)
             .researchers(researchers)
             .build();
     studyMapper.convertToEntity(studyDto);
@@ -148,7 +148,7 @@ public class StudyMapperTest {
         StudyDto.builder()
             .name("Name")
             .firstHypotheses("h1")
-            .status(StudyStatus.APPROVED)
+            .status(StudyStatus.DRAFT)
             .researchers(researchers)
             .build();
     studyMapper.convertToEntity(studyDto);
