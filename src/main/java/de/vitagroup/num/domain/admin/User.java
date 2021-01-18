@@ -44,6 +44,11 @@ public class User {
   @ApiModelProperty(required = true, value = "The email address of the user")
   private String email;
 
+  @NotNull
+  @NotEmpty
+  @ApiModelProperty(required = true, value = "The timestamp of user registration")
+  private Long createdTimestamp;
+
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private Set<String> roles;
 

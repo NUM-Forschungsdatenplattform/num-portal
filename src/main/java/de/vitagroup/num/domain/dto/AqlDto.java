@@ -26,8 +26,11 @@ public class AqlDto {
   @NotNull(message = "AQL name is mandatory")
   private String name;
 
-  @ApiModelProperty(value = "The description of the aql")
-  private String description;
+  @ApiModelProperty
+  private String use;
+
+  @ApiModelProperty
+  private String purpose;
 
   @ApiModelProperty(required = true, value = "The query string of the aql")
   @NotBlank(message = "AQL query should not be blank")

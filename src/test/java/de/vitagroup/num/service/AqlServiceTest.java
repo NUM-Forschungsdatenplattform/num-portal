@@ -14,8 +14,9 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.NotAuthorizedException;
+import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import org.junit.Before;
@@ -53,7 +54,8 @@ public class AqlServiceTest {
                 Aql.builder()
                     .id(1L)
                     .name("name to edit")
-                    .description("description to edit")
+                    .use("use to edit")
+                    .purpose("purpose to edit")
                     .createDate(OffsetDateTime.now().minusDays(4))
                     .createDate(OffsetDateTime.now())
                     .publicAql(true)
@@ -78,7 +80,8 @@ public class AqlServiceTest {
 
     assertThat(createdAql, notNullValue());
     assertThat(createdAql.getName(), is(toSave.getName()));
-    assertThat(createdAql.getDescription(), is(toSave.getDescription()));
+    assertThat(createdAql.getUse(), is(toSave.getUse()));
+    assertThat(createdAql.getPurpose(), is(toSave.getPurpose()));
     assertThat(createdAql.isPublicAql(), is(toSave.isPublicAql()));
   }
 
@@ -89,23 +92,24 @@ public class AqlServiceTest {
 
     assertThat(updatedAql, notNullValue());
     assertThat(updatedAql.getName(), is(toEdit.getName()));
-    assertThat(updatedAql.getDescription(), is(toEdit.getDescription()));
+    assertThat(updatedAql.getUse(), is(toEdit.getUse()));
+    assertThat(updatedAql.getPurpose(), is(toEdit.getPurpose()));
     assertThat(updatedAql.isPublicAql(), is(toEdit.isPublicAql()));
     assertThat(updatedAql.getOrganizationId(), is(toEdit.getOrganizationId()));
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = ForbiddenException.class)
   public void shouldHandleMissingAqlOwnerWhenEditing() {
     Aql toEdit = createAql(OffsetDateTime.now());
     aqlService.updateAql(toEdit, 2L, "approvedUserId");
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = SystemException.class)
   public void shouldHandleMissingOwner() {
     aqlService.createAql(Aql.builder().build(), "missingOwnerId");
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedOwner() {
     aqlService.createAql(Aql.builder().build(), "notApprovedId");
   }
@@ -128,7 +132,7 @@ public class AqlServiceTest {
     verify(aqlRepository, times(1)).deleteById(1L);
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = ForbiddenException.class)
   public void shouldHandleMissingOwnerWhenDeleting() {
     aqlService.deleteById(2L, "approvedUserId");
   }
@@ -138,7 +142,7 @@ public class AqlServiceTest {
     aqlService.deleteById(3L, "approvedUserId");
   }
 
-  @Test(expected = NotAuthorizedException.class)
+  @Test(expected = SystemException.class)
   public void shouldHandleNonExistingUser() {
     aqlService.deleteById(1L, "nonExistingUser");
   }
@@ -169,7 +173,8 @@ public class AqlServiceTest {
     return Aql.builder()
         .id(10L)
         .name("name")
-        .description("description")
+        .use("use")
+        .purpose("purpose")
         .publicAql(false)
         .createDate(createdAndModifiedDate)
         .modifiedDate(createdAndModifiedDate)

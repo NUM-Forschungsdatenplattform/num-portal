@@ -33,14 +33,14 @@ public class AdminController {
 
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
-  @PreAuthorize(Role.ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<User> getUser(@NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserById(userId));
   }
 
   @GetMapping("/user/{userId}/role")
   @ApiOperation(value = "Retrieves the roles of the given user")
-  @PreAuthorize(Role.ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<Set<de.vitagroup.num.domain.admin.Role>> getRolesOfUser(
       @NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserRoles(userId));
@@ -48,7 +48,7 @@ public class AdminController {
 
   @PostMapping("/user/{userId}/role")
   @ApiOperation(value = "Updates the users roles to the given set.")
-  @PreAuthorize(Role.ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<List<String>> updateRoles(
       @NotNull @PathVariable String userId, @NotNull @RequestBody List<String> roles) {
     return ResponseEntity.ok(userService.setUserRoles(userId, roles));
@@ -56,7 +56,7 @@ public class AdminController {
 
   @PostMapping("/user/{userId}/organization")
   @ApiOperation(value = "Adds the given organization to the user")
-  @PreAuthorize(Role.ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<String> addOrganization(
       @NotNull @PathVariable String userId, @NotNull @RequestBody OrganizationDto organization) {
     userDetailsService.setOrganization(userId, organization.getId());
@@ -72,7 +72,7 @@ public class AdminController {
 
   @PostMapping("/user/{userId}/approve")
   @ApiOperation(value = "Adds the given organization to the user")
-  @PreAuthorize(Role.ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<String> approveUser(@NotNull @PathVariable String userId) {
     userDetailsService.approveUser(userId);
     return ResponseEntity.ok(SUCCESS_REPLY);
@@ -80,14 +80,21 @@ public class AdminController {
 
   @GetMapping("/user")
   @ApiOperation(value = "Retrieves a set of users that match the search string")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_ADMIN)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
   public ResponseEntity<Set<User>> searchUsers(
-      @RequestParam(required = false) Boolean approved,
       @RequestParam(required = false)
           @ApiParam(
-              value = "A string contained in username, first or last name, or email",
-              required = false)
-          String search) {
-    return ResponseEntity.ok(userService.searchUsers(approved, search));
+              value =
+                  "A flag for controlling whether to list approved or not approved users, omitting it returns both)")
+          Boolean approved,
+      @RequestParam(required = false)
+          @ApiParam(value = "A string contained in username, first or last name, or email")
+          String search,
+      @RequestParam(required = false)
+          @ApiParam(
+              value =
+                  "A flag for controlling whether to include user's roles in the response (a bit slower)")
+          Boolean withRoles) {
+    return ResponseEntity.ok(userService.searchUsers(approved, search, withRoles));
   }
 }
