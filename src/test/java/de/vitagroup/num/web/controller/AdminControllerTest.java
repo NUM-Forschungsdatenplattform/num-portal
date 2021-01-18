@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
+import de.vitagroup.num.web.controller.AdminController;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.RestExceptionHandler;
 import java.util.Collections;
@@ -32,7 +33,8 @@ class AdminControllerTest {
 
   @Mock UserDetailsService userDetailsService;
 
-  @InjectMocks AdminController adminController;
+  @InjectMocks
+  AdminController adminController;
 
   @BeforeEach
   public void setup() {

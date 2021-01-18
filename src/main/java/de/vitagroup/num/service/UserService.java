@@ -45,6 +45,7 @@ public class UserService {
       if (BooleanUtils.isTrue(withRole)) {
         addRoles(user);
       }
+      
       addUserDetails(user);
       return user;
 

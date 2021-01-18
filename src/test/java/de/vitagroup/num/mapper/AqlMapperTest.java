@@ -1,9 +1,20 @@
 package de.vitagroup.num.mapper;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
+import static org.mockito.Mockito.when;
+
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlDto;
+import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
+import de.vitagroup.num.service.UserService;
+import java.time.OffsetDateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,19 +24,14 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
 
-import java.time.OffsetDateTime;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.hamcrest.core.IsNull.nullValue;
-
 @RunWith(MockitoJUnitRunner.class)
 public class AqlMapperTest {
 
   @Mock private AqlRepository aqlRepository;
 
   @Mock private UserDetailsRepository userDetailsRepository;
+
+  @Mock private UserService userService;
 
   @Spy private ModelMapper modelMapper;
 
@@ -34,6 +40,14 @@ public class AqlMapperTest {
   @Before
   public void setup() {
     mapper.initialize();
+
+    User user =
+        User.builder()
+            .id("123456")
+            .organization(OrganizationDto.builder().name("organization a").id("12345a").build())
+            .build();
+
+    when(userService.getUserById("123456", false)).thenReturn(user);
   }
 
   @Test
@@ -44,6 +58,7 @@ public class AqlMapperTest {
             .use("use")
             .purpose("purpose")
             .publicAql(false)
+            .owner(UserDetails.builder().organizationId("12345a").userId("123456").build())
             .createDate(OffsetDateTime.now())
             .modifiedDate(OffsetDateTime.now())
             .organizationId("abcd")
@@ -52,6 +67,10 @@ public class AqlMapperTest {
     AqlDto dto = mapper.convertToDto(aql);
 
     assertThat(dto, notNullValue());
+    assertThat(dto.getOwner(), notNullValue());
+    assertThat(dto.getOwner().getId(), is(aql.getOwner().getUserId()));
+    assertThat(dto.getOwner().getOrganization(), notNullValue());
+    assertThat(dto.getOwner().getOrganization().getId(), is(aql.getOwner().getOrganizationId()));
 
     assertThat(dto.getName(), is(aql.getName()));
     assertThat(dto.getUse(), is(aql.getUse()));
@@ -69,10 +88,8 @@ public class AqlMapperTest {
             .use("use")
             .purpose("purpose")
             .publicAql(false)
-            .ownerId("ownerId")
             .createDate(OffsetDateTime.now())
             .modifiedDate(OffsetDateTime.now())
-            .organizationId("abcd")
             .build();
 
     Aql aql = mapper.convertToEntity(dto);
