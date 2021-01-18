@@ -69,19 +69,27 @@ public class Study {
   private List<UserDetails> researchers;
 
   public void setStatus(StudyStatus status) {
-    if (isValidStatus(status)) {
-      this.status = status;
-    } else {
+    validateStatus(status);
+    this.status = status;
+  }
+
+  private void validateStatus(StudyStatus status) {
+
+    if (status == null) {
+      throw new BadRequestException("Invalid study status");
+    }
+
+    if (this.status == null) {
+      if (!isValidInitialStatus(status)) {
+        throw new BadRequestException("Invalid study status: " + status);
+      }
+    } else if (!this.status.nextStates().contains(status)) {
       throw new BadRequestException(
           "Study status transition from " + this.status + " to " + status + " not allowed");
     }
   }
 
-  private boolean isValidStatus(StudyStatus state) {
-    // Initially any state is allowed
-    if (this.status == null) {
-      return true;
-    }
-    return this.status.nextStates().contains(state);
+  private boolean isValidInitialStatus(StudyStatus status) {
+    return status.equals(StudyStatus.DRAFT) || status.equals(StudyStatus.PENDING);
   }
 }

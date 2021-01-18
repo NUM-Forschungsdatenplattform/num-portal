@@ -31,7 +31,7 @@ public enum StudyStatus {
   CHANGE_REQUEST {
     @Override
     public List<StudyStatus> nextStates() {
-      return List.of(DRAFT);
+      return List.of(DRAFT, PENDING);
     }
   },
 

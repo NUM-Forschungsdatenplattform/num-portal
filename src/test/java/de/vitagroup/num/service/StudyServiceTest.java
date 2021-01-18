@@ -121,7 +121,9 @@ public class StudyServiceTest {
             .build();
 
     Exception exception =
-        assertThrows(BadRequestException.class, () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
+        assertThrows(
+            BadRequestException.class,
+            () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
 
     String expectedMessage = "Study status transition from DRAFT to APPROVED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -146,7 +148,9 @@ public class StudyServiceTest {
             .build();
 
     Exception exception =
-        assertThrows(BadRequestException.class, () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
+        assertThrows(
+            BadRequestException.class,
+            () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
 
     String expectedMessage = "Study status transition from DRAFT to PUBLISHED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -171,7 +175,9 @@ public class StudyServiceTest {
             .build();
 
     Exception exception =
-        assertThrows(BadRequestException.class, () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
+        assertThrows(
+            BadRequestException.class,
+            () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
 
     String expectedMessage = "Study status transition from DRAFT to CLOSED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -196,7 +202,9 @@ public class StudyServiceTest {
             .build();
 
     Exception exception =
-        assertThrows(BadRequestException.class, () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
+        assertThrows(
+            BadRequestException.class,
+            () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
 
     String expectedMessage = "Study status transition from CLOSED to APPROVED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -221,7 +229,9 @@ public class StudyServiceTest {
             .build();
 
     Exception exception =
-        assertThrows(BadRequestException.class, () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
+        assertThrows(
+            BadRequestException.class,
+            () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
 
     String expectedMessage = "Study status transition from CLOSED to DRAFT not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -268,7 +278,6 @@ public class StudyServiceTest {
 
     studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId");
   }
-
 
   @Test
   public void shouldAllowStudyPendingToReviewingTransition() {
@@ -352,5 +361,33 @@ public class StudyServiceTest {
             .build();
 
     studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId");
+  }
+
+  @Test
+  public void shouldRejectInitialApprovedStudyStatus() {
+    Study study = new Study();
+
+    Exception exception =
+        assertThrows(BadRequestException.class, () -> study.setStatus(StudyStatus.APPROVED));
+
+    String expectedMessage = "Invalid study status: APPROVED";
+    assertThat(exception.getMessage(), is(expectedMessage));
+  }
+
+  @Test
+  public void shouldRejectInitialClosedStudyStatus() {
+    Study study = new Study();
+
+    Exception exception =
+        assertThrows(BadRequestException.class, () -> study.setStatus(StudyStatus.CLOSED));
+
+    String expectedMessage = "Invalid study status: CLOSED";
+    assertThat(exception.getMessage(), is(expectedMessage));
+  }
+
+  @Test
+  public void shouldAllowInitialDraftStudyStatus() {
+    Study study = new Study();
+    study.setStatus(StudyStatus.DRAFT);
   }
 }
