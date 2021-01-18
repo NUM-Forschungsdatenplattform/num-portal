@@ -1,8 +1,12 @@
 package de.vitagroup.num.web.controller;
 
+import de.vitagroup.num.domain.Comment;
 import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.dto.CommentDto;
 import de.vitagroup.num.domain.dto.StudyDto;
+import de.vitagroup.num.mapper.CommentMapper;
 import de.vitagroup.num.mapper.StudyMapper;
+import de.vitagroup.num.service.CommentService;
 import de.vitagroup.num.service.StudyService;
 import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -18,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,8 +38,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class StudyController {
 
   private final StudyService studyService;
-
+  private final CommentService commentService;
   private final StudyMapper studyMapper;
+  private final CommentMapper commentMapper;
 
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of studies")
@@ -87,5 +93,56 @@ public class StudyController {
     Study study = studyService.updateStudy(studyMapper.convertToEntity(studyDto), studyId);
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
+  }
+
+  @GetMapping("/{studyId}/comment")
+  @ApiOperation(value = "Retrieves the list of attached comments to a particular study")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  public ResponseEntity<List<CommentDto>> getComments(
+      @NotNull @NotEmpty @PathVariable Long studyId) {
+    return ResponseEntity.ok(
+        commentService.getComments(studyId).stream()
+            .map(commentMapper::convertToDto)
+            .collect(Collectors.toList()));
+  }
+
+  @PostMapping("/{studyId}/comment")
+  @ApiOperation(value = "Adds a comment to a particular study")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  public ResponseEntity<CommentDto> addComment(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @NotEmpty @PathVariable Long studyId,
+      @Valid @NotNull @RequestBody CommentDto commentDto) {
+
+    Comment comment =
+        commentService.createComment(
+            commentMapper.convertToEntity(commentDto), studyId, principal.getSubject());
+
+    return ResponseEntity.ok(commentMapper.convertToDto(comment));
+  }
+
+  @PutMapping("/{studyId}/comment/{commentId}")
+  @ApiOperation(value = "Updates a comment")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  public ResponseEntity<CommentDto> updateComment(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @NotEmpty @PathVariable Long studyId,
+      @NotNull @NotEmpty @PathVariable Long commentId,
+      @Valid @NotNull @RequestBody CommentDto commentDto) {
+
+    Comment comment =
+        commentService.updateComment(
+            commentMapper.convertToEntity(commentDto), commentId, principal.getSubject(), studyId);
+
+    return ResponseEntity.ok(commentMapper.convertToDto(comment));
+  }
+
+  @DeleteMapping("/{studyId}/comment/{commentId}")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  void deleteComment(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @NotEmpty @PathVariable Long studyId,
+      @NotNull @NotEmpty @PathVariable Long commentId) {
+    commentService.deleteComment(commentId, studyId, principal.getSubject());
   }
 }
