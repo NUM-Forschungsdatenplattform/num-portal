@@ -56,7 +56,12 @@ public class SwaggerConfig {
 
   @Bean
   public Docket aqlApi() {
-    return getDocket("Aql", "/aql.*");
+    return getDocket("Aql", "/aql/*");
+  }
+
+  @Bean
+  public Docket aqlEditorApi() {
+    return getDocket("AqlEditor", "/aqleditor.*");
   }
 
   @Bean
