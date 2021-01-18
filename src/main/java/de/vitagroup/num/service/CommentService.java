@@ -64,7 +64,7 @@ public class CommentService {
               "%s: %s %s.",
               "Comment edit for comment with id",
               commentId,
-              "not allowed. Comment has different athor"));
+              "not allowed. Comment has different author"));
     }
 
     commentToEdit.setText(comment.getText());

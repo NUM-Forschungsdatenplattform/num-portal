@@ -139,7 +139,7 @@ public class StudyController {
 
   @DeleteMapping("/{studyId}/comment/{commentId}")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
-  void deleteAql(
+  void deleteComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @NotEmpty @PathVariable Long studyId,
       @NotNull @NotEmpty @PathVariable Long commentId) {
