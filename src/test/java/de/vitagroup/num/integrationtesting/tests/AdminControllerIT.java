@@ -1,8 +1,8 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static de.vitagroup.num.integrationtesting.Roles.ADMIN;
 import static de.vitagroup.num.integrationtesting.Roles.RESEARCHER;
 import static de.vitagroup.num.integrationtesting.Roles.STUDY_COORDINATOR;
+import static de.vitagroup.num.integrationtesting.Roles.SUPER_ADMIN;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -42,7 +42,7 @@ public class AdminControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(
       userId = USER_ID,
-      roles = {ADMIN, STUDY_COORDINATOR})
+      roles = {SUPER_ADMIN, STUDY_COORDINATOR})
   public void shouldCreateAndApproveUserSuccessfully() {
 
     mockMvc

@@ -1,7 +1,7 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static de.vitagroup.num.integrationtesting.Roles.ADMIN;
 import static de.vitagroup.num.integrationtesting.Roles.RESEARCHER;
+import static de.vitagroup.num.integrationtesting.Roles.SUPER_ADMIN;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,7 +29,7 @@ public class AqlControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
-  @WithMockNumUser(roles = {ADMIN})
+  @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldNotAccessAqlApiWithWrongRole() {
     mockMvc.perform(get(String.format("%s/%s", AQL_PATH, 1))).andExpect(status().isUnauthorized());
   }
@@ -59,13 +59,13 @@ public class AqlControllerIT extends IntegrationTest {
       roles = {RESEARCHER})
   public void shouldHandleNotApprovedUserWhenSavingAql() {
 
-    Aql aql = Aql.builder().name("t1").description("t2").query("t3").publicAql(true).build();
+    Aql aql = Aql.builder().name("t1").query("t3").publicAql(true).build();
     String aqlJson = mapper.writeValueAsString(aql);
 
     mockMvc
         .perform(
             post(AQL_PATH).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(aqlJson))
-        .andExpect(status().isUnauthorized());
+        .andExpect(status().isForbidden());
   }
 
   @Test
@@ -73,7 +73,7 @@ public class AqlControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {RESEARCHER})
   public void shouldSaveAndRetrieveAqlSuccessfully() {
 
-    Aql aql = Aql.builder().name("t1").description("t2").query("t3").publicAql(true).build();
+    Aql aql = Aql.builder().name("t1").query("t3").publicAql(true).build();
     String aqlJson = mapper.writeValueAsString(aql);
 
     MvcResult result =
@@ -86,7 +86,6 @@ public class AqlControllerIT extends IntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value(aql.getName()))
             .andExpect(jsonPath("$.query").value(aql.getQuery()))
-            .andExpect(jsonPath("$.description").value(aql.getDescription()))
             .andReturn();
 
     AqlDto dto = mapper.readValue(result.getResponse().getContentAsString(), AqlDto.class);
@@ -99,8 +98,7 @@ public class AqlControllerIT extends IntegrationTest {
                 .content(aqlJson))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value(aql.getName()))
-        .andExpect(jsonPath("$.query").value(aql.getQuery()))
-        .andExpect(jsonPath("$.description").value(aql.getDescription()));
+        .andExpect(jsonPath("$.query").value(aql.getQuery()));
   }
 
   @Test
@@ -108,7 +106,7 @@ public class AqlControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {RESEARCHER})
   public void shouldSaveAndDeleteAqlSuccessfully() {
 
-    Aql aql = Aql.builder().name("d1").description("d2").query("d3").publicAql(true).build();
+    Aql aql = Aql.builder().name("d1").query("d3").publicAql(true).build();
     String aqlJson = mapper.writeValueAsString(aql);
 
     MvcResult result =
@@ -121,7 +119,6 @@ public class AqlControllerIT extends IntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value(aql.getName()))
             .andExpect(jsonPath("$.query").value(aql.getQuery()))
-            .andExpect(jsonPath("$.description").value(aql.getDescription()))
             .andReturn();
 
     AqlDto dto = mapper.readValue(result.getResponse().getContentAsString(), AqlDto.class);
@@ -134,8 +131,7 @@ public class AqlControllerIT extends IntegrationTest {
                 .content(aqlJson))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value(aql.getName()))
-        .andExpect(jsonPath("$.query").value(aql.getQuery()))
-        .andExpect(jsonPath("$.description").value(aql.getDescription()));
+        .andExpect(jsonPath("$.query").value(aql.getQuery()));
 
     mockMvc
         .perform(
