@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -36,11 +37,15 @@ public class UserService {
    * @param userId External id of the user
    * @return User
    */
-  public User getUserById(String userId) {
+  public User getUserById(String userId, Boolean withRole) {
     try {
 
       User user = keycloakFeign.getUser(userId);
-      addRoles(user);
+
+      if (BooleanUtils.isTrue(withRole)) {
+        addRoles(user);
+      }
+
       addUserDetails(user);
       return user;
 

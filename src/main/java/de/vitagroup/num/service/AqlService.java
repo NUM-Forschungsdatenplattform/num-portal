@@ -37,13 +37,15 @@ public class AqlService {
   }
 
   public Aql createAql(Aql aql, String loggedInUserId) {
-    UserDetails owner = userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+    UserDetails owner =
+        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
 
     if (owner.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
     }
 
     aql.setOwner(owner);
+    aql.setOrganizationId(owner.getOrganizationId());
     aql.setCreateDate(OffsetDateTime.now());
     aql.setModifiedDate(OffsetDateTime.now());
 
@@ -51,7 +53,8 @@ public class AqlService {
   }
 
   public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
-    UserDetails owner = userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+    UserDetails owner =
+        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
 
     if (owner.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
@@ -71,14 +74,15 @@ public class AqlService {
     aqlToEdit.setUse(aql.getUse());
     aqlToEdit.setModifiedDate(OffsetDateTime.now());
     aqlToEdit.setQuery(aql.getQuery());
-    aqlToEdit.setOrganizationId(aql.getOrganizationId());
+    aqlToEdit.setOrganizationId(owner.getOrganizationId());
     aqlToEdit.setPublicAql(aql.isPublicAql());
 
     return aqlRepository.save(aqlToEdit);
   }
 
   public void deleteById(Long id, String loggedInUserId) {
-    UserDetails owner = userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+    UserDetails owner =
+        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
 
     if (owner.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
