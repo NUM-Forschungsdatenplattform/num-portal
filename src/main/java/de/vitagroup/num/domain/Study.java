@@ -3,6 +3,7 @@ package de.vitagroup.num.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.web.exception.BadRequestException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -66,4 +67,21 @@ public class Study {
       joinColumns = @JoinColumn(name = "study_id"),
       inverseJoinColumns = @JoinColumn(name = "user_details_id"))
   private List<UserDetails> researchers;
+
+  public void setStatus(StudyStatus status) {
+    if (isValidStatus(status)) {
+      this.status = status;
+    } else {
+      throw new BadRequestException(
+          "Study status transition from " + this.status + " to " + status + " not allowed");
+    }
+  }
+
+  private boolean isValidStatus(StudyStatus state) {
+    // Initially any state is allowed
+    if (this.status == null) {
+      return true;
+    }
+    return this.status.nextStates().contains(state);
+  }
 }
