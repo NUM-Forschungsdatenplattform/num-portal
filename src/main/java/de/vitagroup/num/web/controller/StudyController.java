@@ -90,7 +90,7 @@ public class StudyController {
       @PathVariable("id") Long studyId,
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
-    Study study = studyService.updateStudy(studyMapper.convertToEntity(studyDto), studyId);
+    Study study = studyService.updateStudy(studyMapper.convertToEntity(studyDto), studyId, principal.getSubject());
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }

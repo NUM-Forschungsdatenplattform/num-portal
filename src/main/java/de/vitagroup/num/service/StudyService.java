@@ -51,23 +51,30 @@ public class StudyService {
     return studyRepository.save(study);
   }
 
-  public Study updateStudy(Study study, Long id) {
-    Optional<Study> studyToEdit = studyRepository.findById(id);
+  public Study updateStudy(Study study, Long id, String loggedInUser) {
 
-    if (studyToEdit.isEmpty()) {
-      throw new ResourceNotFound("Study not found: " + id);
+    Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(loggedInUser);
+
+    if (coordinator.isEmpty()) {
+      throw new SystemException("Logged in coordinator not found in portal");
     }
 
-    studyToEdit.get().setTemplates(study.getTemplates());
-    studyToEdit.get().setName(study.getName());
-    studyToEdit.get().setDescription(study.getDescription());
-    studyToEdit.get().setResearchers(study.getResearchers());
-    studyToEdit.get().setModifiedDate(OffsetDateTime.now());
-    studyToEdit.get().setStatus(study.getStatus());
-    studyToEdit.get().setFirstHypotheses(study.getFirstHypotheses());
-    studyToEdit.get().setSecondHypotheses(study.getSecondHypotheses());
+    if (coordinator.get().isNotApproved()) {
+      throw new ForbiddenException("User not approved:" + loggedInUser);
+    }
 
-    return studyRepository.save(studyToEdit.get());
+    Study studyToEdit = studyRepository.findById(id).orElseThrow(ResourceNotFound::new);
+
+    studyToEdit.setTemplates(study.getTemplates());
+    studyToEdit.setName(study.getName());
+    studyToEdit.setDescription(study.getDescription());
+    studyToEdit.setResearchers(study.getResearchers());
+    studyToEdit.setModifiedDate(OffsetDateTime.now());
+    studyToEdit.setStatus(study.getStatus());
+    studyToEdit.setFirstHypotheses(study.getFirstHypotheses());
+    studyToEdit.setSecondHypotheses(study.getSecondHypotheses());
+
+    return studyRepository.save(studyToEdit);
   }
 
   public List<Study> searchStudies(String coordinatorUserId) {
