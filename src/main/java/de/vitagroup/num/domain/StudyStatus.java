@@ -7,7 +7,7 @@ public enum StudyStatus {
   DRAFT {
     @Override
     public List<StudyStatus> nextStates() {
-      return List.of(PENDING);
+      return List.of(DRAFT, PENDING);
     }
   },
 
@@ -15,7 +15,7 @@ public enum StudyStatus {
   PENDING {
     @Override
     public List<StudyStatus> nextStates() {
-      return List.of(REVIEWING, DRAFT);
+      return List.of(PENDING, REVIEWING, DRAFT);
     }
   },
 
@@ -23,7 +23,7 @@ public enum StudyStatus {
   REVIEWING {
     @Override
     public List<StudyStatus> nextStates() {
-      return List.of(APPROVED, CHANGE_REQUEST, DENIED);
+      return List.of(REVIEWING, APPROVED, CHANGE_REQUEST, DENIED);
     }
   },
 
@@ -31,7 +31,7 @@ public enum StudyStatus {
   CHANGE_REQUEST {
     @Override
     public List<StudyStatus> nextStates() {
-      return List.of(DRAFT, PENDING);
+      return List.of(CHANGE_REQUEST, DRAFT, PENDING);
     }
   },
 
@@ -39,7 +39,7 @@ public enum StudyStatus {
   DENIED {
     @Override
     public List<StudyStatus> nextStates() {
-      return List.of();
+      return List.of(DENIED);
     }
   },
 
@@ -47,7 +47,7 @@ public enum StudyStatus {
   APPROVED {
     @Override
     public List<StudyStatus> nextStates() {
-      return List.of(PUBLISHED);
+      return List.of(APPROVED, PUBLISHED);
     }
   },
 
@@ -55,7 +55,7 @@ public enum StudyStatus {
   PUBLISHED {
     @Override
     public List<StudyStatus> nextStates() {
-      return List.of(CLOSED);
+      return List.of(PUBLISHED, CLOSED);
     }
   },
 
@@ -63,7 +63,7 @@ public enum StudyStatus {
   CLOSED {
     @Override
     public List<StudyStatus> nextStates() {
-      return List.of();
+      return List.of(CLOSED);
     }
   };
 
