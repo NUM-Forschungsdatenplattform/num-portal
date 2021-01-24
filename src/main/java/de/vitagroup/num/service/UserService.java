@@ -5,7 +5,6 @@ import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
@@ -33,14 +32,14 @@ public class UserService {
   private final OrganizationService organizationService;
 
   public User getUserProfile(String loggedInUserId) {
-    UserDetails loggedInUser =
-        userDetailsService.getUserDetailsById(loggedInUserId).orElseThrow(SystemException::new);
+    Optional<UserDetails> loggedInUser =
+        userDetailsService.getUserDetailsById(loggedInUserId);
 
-    if (loggedInUser.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
+    if(loggedInUser.isEmpty()){
+      throw new SystemException("An error has occurred, user not present.");
     }
 
-    return getUserById(loggedInUser.getUserId(), true);
+    return getUserById(loggedInUser.get().getUserId(), true);
   }
 
   /**

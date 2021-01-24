@@ -23,7 +23,6 @@ public class ProfileController {
 
   @GetMapping()
   @ApiOperation(value = "Retrieves the user profile information")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<User> getUserProfile(@AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(userService.getUserProfile(principal.getSubject()));
   }
