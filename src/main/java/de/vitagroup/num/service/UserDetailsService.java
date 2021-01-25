@@ -4,7 +4,6 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.ConflictException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.feign.KeycloakFeign;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 public class UserDetailsService {
 
   private final UserDetailsRepository userDetailsRepository;
-  private final KeycloakFeign keycloakFeign;
 
   public Optional<UserDetails> getUserDetailsById(String userId) {
     return userDetailsRepository.findByUserId(userId);

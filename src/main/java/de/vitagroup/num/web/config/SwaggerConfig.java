@@ -32,6 +32,11 @@ public class SwaggerConfig {
   private final SwaggerProperties swaggerProperties;
 
   @Bean
+  public Docket profileApi() {
+    return getDocket("Profile", "/profile.*");
+  }
+
+  @Bean
   public Docket studyApi() {
     return getDocket("Study", "/study.*");
   }

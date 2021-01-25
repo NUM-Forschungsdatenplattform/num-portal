@@ -31,6 +31,17 @@ public class UserService {
   private final UserDetailsService userDetailsService;
   private final OrganizationService organizationService;
 
+  public User getUserProfile(String loggedInUserId) {
+    Optional<UserDetails> loggedInUser =
+        userDetailsService.getUserDetailsById(loggedInUserId);
+
+    if(loggedInUser.isEmpty()){
+      throw new SystemException("An error has occurred, user not present.");
+    }
+
+    return getUserById(loggedInUser.get().getUserId(), true);
+  }
+
   /**
    * Retrieves user, portal user details and corresponding roles from identity provider
    *
@@ -45,7 +56,7 @@ public class UserService {
       if (BooleanUtils.isTrue(withRole)) {
         addRoles(user);
       }
-      
+
       addUserDetails(user);
       return user;
 
