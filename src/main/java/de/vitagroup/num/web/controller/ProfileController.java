@@ -2,12 +2,10 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.service.UserService;
-import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
