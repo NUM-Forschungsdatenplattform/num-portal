@@ -102,4 +102,13 @@ public class AqlController {
             .map(mapper::convertToDto)
             .collect(Collectors.toList()));
   }
+
+  @PostMapping("{aqlId}/execute")
+  @ApiOperation(value = "Executes the aql")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  public ResponseEntity<String> executeAql(
+      @NotNull @NotEmpty @PathVariable Long aqlId,
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(aqlService.executeAql(aqlId, principal.getSubject()));
+  }
 }

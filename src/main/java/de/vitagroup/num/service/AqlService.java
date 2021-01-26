@@ -1,9 +1,12 @@
 package de.vitagroup.num.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -16,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +31,10 @@ public class AqlService {
   private final AqlRepository aqlRepository;
 
   private final UserDetailsRepository userDetailsRepository;
+
+  private final EhrBaseService ehrBaseService;
+
+  private final ObjectMapper mapper;
 
   public Optional<Aql> getAqlById(Long id) {
     return aqlRepository.findById(id);
@@ -128,6 +136,30 @@ public class AqlService {
           name,
           BooleanUtils.isTrue(ownedBySameOrganization) ? owner.getOrganizationId() : null,
           BooleanUtils.isTrue(owned) ? owner.getUserId() : null);
+    }
+  }
+
+  public String executeAql(Long aqlId, String userId) {
+    UserDetails owner =
+        userDetailsRepository.findByUserId(userId).orElseThrow(SystemException::new);
+
+    if (owner.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+    }
+
+    Aql aql = aqlRepository.findById(aqlId).orElseThrow(ResourceNotFound::new);
+
+    if (aql.isExecutable(userId)) {
+
+      try {
+        QueryResponseData response = ehrBaseService.executeAql(aql);
+        return mapper.writeValueAsString(response);
+      } catch (JsonProcessingException e) {
+        throw new SystemException("An issue has occurred, cannot execute aql.");
+      }
+
+    } else {
+      throw new ForbiddenException("Cannot access this resource.");
     }
   }
 }

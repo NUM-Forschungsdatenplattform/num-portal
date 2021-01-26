@@ -47,4 +47,8 @@ public class Aql implements Serializable {
   public boolean hasEmptyOrDifferentOwner(String userId) {
     return ObjectUtils.isEmpty(owner) || !owner.getUserId().equals(userId);
   }
+
+  public boolean isExecutable(String userId) {
+    return !ObjectUtils.isEmpty(owner) && (owner.getUserId().equals(userId) || isPublicAql());
+  }
 }
