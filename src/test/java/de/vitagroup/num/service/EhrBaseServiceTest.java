@@ -47,7 +47,8 @@ public class EhrBaseServiceTest {
     templatesResponseData.set(List.of(t1, t2));
 
     when(restClient.templateEndpoint().findAllTemplates()).thenReturn(templatesResponseData);
-
+    when(restClient.aqlEndpoint().execute(any(Query.class)))
+        .thenThrow(WrongStatusCodeException.class);
   }
 
   @Test(expected = WrongStatusCodeException.class)
@@ -66,5 +67,4 @@ public class EhrBaseServiceTest {
     assertThat(templates.get(1).getTemplateId(), is("t2"));
     assertThat(templates.get(1).getConcept(), is("c2"));
   }
-
 }
