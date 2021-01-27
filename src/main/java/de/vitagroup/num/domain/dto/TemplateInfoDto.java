@@ -20,10 +20,12 @@ import javax.validation.constraints.NotNull;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TemplateInfoDto {
 
-  @NotNull
-  @NotEmpty
+  @NotNull(message = "Template id cannot be null")
+  @NotEmpty(message = "Template id cannot be empty")
   @ApiModelProperty(value = "The ehrbase identifier of the template")
   private String templateId;
 
-  @NotNull @NotEmpty @ApiModelProperty private String name;
+  @NotNull(message = "Template name cannot be null")
+  @NotEmpty(message = "Template name cannot be empty")
+  @ApiModelProperty private String name;
 }

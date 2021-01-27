@@ -60,7 +60,7 @@ public class AdminControllerIT extends IntegrationTest {
         .andExpect(status().isOk());
 
     StudyDto validStudy =
-        StudyDto.builder().name("s1").firstHypotheses("fh1").status(StudyStatus.APPROVED).build();
+        StudyDto.builder().name("s1").firstHypotheses("fh1").status(StudyStatus.PENDING).build();
     String studyJson = mapper.writeValueAsString(validStudy);
 
     mockMvc

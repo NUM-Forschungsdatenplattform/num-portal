@@ -1,19 +1,18 @@
 package de.vitagroup.num.domain.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.vitagroup.num.domain.StudyStatus;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.time.OffsetDateTime;
+import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.time.OffsetDateTime;
-import java.util.List;
 
 @Data
 @Builder
@@ -32,7 +31,9 @@ public class StudyDto {
 
   @ApiModelProperty private String description;
 
-  @ApiModelProperty private List<TemplateInfoDto> templates;
+  @ApiModelProperty
+  @Valid
+  private List<TemplateInfoDto> templates;
 
   @ApiModelProperty private Long cohortId;
 
