@@ -45,7 +45,7 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {RESEARCHER})
   public void shouldNotAccessStudyApiWithWrongRole() {
     StudyDto validStudy =
-        StudyDto.builder().name("s1").firstHypotheses("fh1").status(StudyStatus.APPROVED).build();
+        StudyDto.builder().name("s1").firstHypotheses("fh1").status(StudyStatus.DRAFT).build();
     String studyJson = mapper.writeValueAsString(validStudy);
 
     mockMvc
@@ -62,7 +62,7 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {STUDY_COORDINATOR})
   public void shouldCreateStudy() {
     StudyDto validStudy =
-        StudyDto.builder().name("s1").firstHypotheses("fh1").status(StudyStatus.APPROVED).build();
+        StudyDto.builder().name("s1").firstHypotheses("fh1").status(StudyStatus.DRAFT).build();
     String studyJson = mapper.writeValueAsString(validStudy);
 
     mockMvc

@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.StudyDto;
+import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -53,11 +55,11 @@ public class StudyServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleMissingCoordinator() {
-    Study study =
-        Study.builder()
+    StudyDto study =
+        StudyDto.builder()
             .name("Study")
             .status(StudyStatus.APPROVED)
-            .coordinator(UserDetails.builder().userId("someCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("someCoordinatorId").build())
             .build();
 
     studyService.createStudy(study, "nonExistingCoordinatorId");
@@ -65,13 +67,13 @@ public class StudyServiceTest {
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedCoordinator() {
-    Study study =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study")
-            .coordinator(UserDetails.builder().userId("someCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("someCoordinatorId").build())
             .build();
 
-    studyService.createStudy(study, "notApprovedCoordinatorId");
+    studyService.createStudy(studyDto, "notApprovedCoordinatorId");
   }
 
   @Test
@@ -113,17 +115,17 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.APPROVED)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
         assertThrows(
             BadRequestException.class,
-            () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
+            () -> studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId"));
 
     String expectedMessage = "Study status transition from DRAFT to APPROVED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -140,17 +142,17 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.PUBLISHED)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
         assertThrows(
             BadRequestException.class,
-            () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
+            () -> studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId"));
 
     String expectedMessage = "Study status transition from DRAFT to PUBLISHED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -167,17 +169,17 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.CLOSED)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
         assertThrows(
             BadRequestException.class,
-            () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
+            () -> studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId"));
 
     String expectedMessage = "Study status transition from DRAFT to CLOSED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -194,17 +196,17 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.APPROVED)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
         assertThrows(
             BadRequestException.class,
-            () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
+            () -> studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId"));
 
     String expectedMessage = "Study status transition from CLOSED to APPROVED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -221,17 +223,17 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.DRAFT)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
         assertThrows(
             BadRequestException.class,
-            () -> studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId"));
+            () -> studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId"));
 
     String expectedMessage = "Study status transition from CLOSED to DRAFT not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -248,14 +250,14 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.PENDING)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId");
+    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId");
   }
 
   @Test
@@ -269,14 +271,14 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.DRAFT)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId");
+    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId");
   }
 
   @Test
@@ -290,14 +292,14 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.REVIEWING)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId");
+    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId");
   }
 
   @Test
@@ -311,14 +313,14 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.APPROVED)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId");
+    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId");
   }
 
   @Test
@@ -332,14 +334,14 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.CHANGE_REQUEST)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId");
+    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId");
   }
 
   @Test
@@ -353,14 +355,14 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
-    Study newStudy =
-        Study.builder()
+    StudyDto studyDto =
+        StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.DENIED)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    studyService.updateStudy(newStudy, 1L, "approvedCoordinatorId");
+    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId");
   }
 
   @Test
