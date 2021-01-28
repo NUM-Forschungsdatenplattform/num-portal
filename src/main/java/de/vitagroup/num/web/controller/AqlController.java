@@ -5,11 +5,9 @@ import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.web.config.Role;
-import de.vitagroup.num.web.exception.ResourceNotFound;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
@@ -38,20 +36,16 @@ public class AqlController {
   private final AqlMapper mapper;
 
   @GetMapping("/{id}")
-  @ApiOperation(value = "Retrieves an aql query by id")
+  @ApiOperation(value = "Retrieves public or owned aql query by id.")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
-  public ResponseEntity<AqlDto> getAqlById(@NotNull @NotEmpty @PathVariable Long id) {
-    Optional<Aql> aql = aqlService.getAqlById(id);
-
-    if (aql.isEmpty()) {
-      throw new ResourceNotFound("Aql not found");
-    }
-
-    return ResponseEntity.ok(mapper.convertToDto(aql.get()));
+  public ResponseEntity<AqlDto> getAqlById(
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @NotEmpty @PathVariable Long id) {
+    return ResponseEntity.ok(
+        mapper.convertToDto(aqlService.getAqlById(id, principal.getSubject())));
   }
 
   @PostMapping()
-  @ApiOperation(value = "Creates an aql; the logged in user is assigned as owner of the aql")
+  @ApiOperation(value = "Creates an aql; the logged in user is assigned as owner of the aql.")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<AqlDto> createAql(
       @AuthenticationPrincipal @NotNull Jwt principal, @Valid @NotNull @RequestBody AqlDto aqlDto) {

@@ -40,6 +40,23 @@ public class AqlService {
     return aqlRepository.findById(id);
   }
 
+  public Aql getAqlById(Long id, String loggedInUserId) {
+    UserDetails owner =
+        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+
+    if (owner.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+    }
+
+    Aql aql = aqlRepository.findById(id).orElseThrow(ResourceNotFound::new);
+
+    if (aql.isViewable(loggedInUserId)) {
+      return aql;
+    } else {
+      throw new ForbiddenException("Cannot access this aql.");
+    }
+  }
+
   public List<Aql> getAllAqls() {
     return aqlRepository.findAll();
   }
