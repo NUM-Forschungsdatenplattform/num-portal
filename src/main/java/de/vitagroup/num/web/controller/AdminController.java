@@ -33,7 +33,7 @@ public class AdminController {
 
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
   public ResponseEntity<User> getUser(@NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserById(userId, true));
   }
