@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.web.exception.SystemException;
 import org.ehrbase.client.aql.query.Query;
 import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestClient;
@@ -52,7 +53,7 @@ public class EhrBaseServiceTest {
 
   @Test(expected = WrongStatusCodeException.class)
   public void shouldHandleBadAqlQuery() {
-    ehr.executeAql(Aql.builder().build());
+    ehr.retrieveEligiblePatientIds(Aql.builder().build());
   }
 
   @Test

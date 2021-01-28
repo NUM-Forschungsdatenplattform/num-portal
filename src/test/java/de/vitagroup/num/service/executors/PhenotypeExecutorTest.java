@@ -44,8 +44,8 @@ public class PhenotypeExecutorTest {
     Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-    when(ehrBaseService.executeAql(aql1)).thenReturn(Set.of("1", "5", "10"));
-    when(ehrBaseService.executeAql(aql2)).thenReturn(Set.of("1", "4", "5", "6", "10"));
+    when(ehrBaseService.retrieveEligiblePatientIds(aql1)).thenReturn(Set.of("1", "5", "10"));
+    when(ehrBaseService.retrieveEligiblePatientIds(aql2)).thenReturn(Set.of("1", "4", "5", "6", "10"));
 
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
     AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
@@ -68,7 +68,7 @@ public class PhenotypeExecutorTest {
   public void shouldCorrectlyExecuteSingleAqlAndOperation() {
     Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
 
-    when(ehrBaseService.executeAql(aql1)).thenReturn(Set.of("1", "5", "10"));
+    when(ehrBaseService.retrieveEligiblePatientIds(aql1)).thenReturn(Set.of("1", "5", "10"));
 
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
 
@@ -91,8 +91,8 @@ public class PhenotypeExecutorTest {
     Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-    when(ehrBaseService.executeAql(aql1)).thenReturn(Set.of("1", "2", "3"));
-    when(ehrBaseService.executeAql(aql2)).thenReturn(Set.of("3", "4", "5", "6", "7"));
+    when(ehrBaseService.retrieveEligiblePatientIds(aql1)).thenReturn(Set.of("1", "2", "3"));
+    when(ehrBaseService.retrieveEligiblePatientIds(aql2)).thenReturn(Set.of("3", "4", "5", "6", "7"));
 
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
     AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
@@ -116,8 +116,8 @@ public class PhenotypeExecutorTest {
     Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-    when(ehrBaseService.executeAql(aql1)).thenReturn(Set.of("1", "4"));
-    when(ehrBaseService.executeAql(aql2)).thenReturn(Set.of("1", "2", "3"));
+    when(ehrBaseService.retrieveEligiblePatientIds(aql1)).thenReturn(Set.of("1", "4"));
+    when(ehrBaseService.retrieveEligiblePatientIds(aql2)).thenReturn(Set.of("1", "2", "3"));
 
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
     AqlExpression notAql = AqlExpression.builder().aql(aql2).build();
@@ -146,8 +146,8 @@ public class PhenotypeExecutorTest {
     Aql aql1 = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     Aql aql2 = Aql.builder().id(2L).name(AQL_NAME).query(AQL_QUERY).build();
 
-    when(ehrBaseService.executeAql(aql1)).thenReturn(Set.of("1", "4"));
-    when(ehrBaseService.executeAql(aql2)).thenReturn(Set.of("1", "2", "3"));
+    when(ehrBaseService.retrieveEligiblePatientIds(aql1)).thenReturn(Set.of("1", "4"));
+    when(ehrBaseService.retrieveEligiblePatientIds(aql2)).thenReturn(Set.of("1", "2", "3"));
 
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
     AqlExpression notAql = AqlExpression.builder().aql(aql2).build();

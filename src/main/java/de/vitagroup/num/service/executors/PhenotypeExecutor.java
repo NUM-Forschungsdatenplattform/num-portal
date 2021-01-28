@@ -45,7 +45,7 @@ public class PhenotypeExecutor {
 
       AqlExpression aqlExpression = (AqlExpression) expression;
 
-      return ehrBaseService.executeAql(aqlExpression.getAql());
+      return ehrBaseService.retrieveEligiblePatientIds(aqlExpression.getAql());
     }
     return SetUtils.emptySet();
   }
