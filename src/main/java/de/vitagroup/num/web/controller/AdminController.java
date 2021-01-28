@@ -33,14 +33,14 @@ public class AdminController {
 
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
-  @PreAuthorize(Role.SUPER_ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
   public ResponseEntity<User> getUser(@NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserById(userId, true));
   }
 
   @GetMapping("/user/{userId}/role")
   @ApiOperation(value = "Retrieves the roles of the given user")
-  @PreAuthorize(Role.SUPER_ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<Set<de.vitagroup.num.domain.admin.Role>> getRolesOfUser(
       @NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserRoles(userId));
@@ -48,7 +48,7 @@ public class AdminController {
 
   @PostMapping("/user/{userId}/role")
   @ApiOperation(value = "Updates the users roles to the given set.")
-  @PreAuthorize(Role.SUPER_ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<List<String>> updateRoles(
       @NotNull @PathVariable String userId, @NotNull @RequestBody List<String> roles) {
     return ResponseEntity.ok(userService.setUserRoles(userId, roles));
@@ -72,7 +72,7 @@ public class AdminController {
 
   @PostMapping("/user/{userId}/approve")
   @ApiOperation(value = "Adds the given organization to the user")
-  @PreAuthorize(Role.SUPER_ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<String> approveUser(@NotNull @PathVariable String userId) {
     userDetailsService.approveUser(userId);
     return ResponseEntity.ok(SUCCESS_REPLY);
@@ -80,7 +80,7 @@ public class AdminController {
 
   @GetMapping("/user")
   @ApiOperation(value = "Retrieves a set of users that match the search string")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
   public ResponseEntity<Set<User>> searchUsers(
       @RequestParam(required = false)
           @ApiParam(
