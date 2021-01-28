@@ -56,7 +56,7 @@ public class AdminController {
 
   @PostMapping("/user/{userId}/organization")
   @ApiOperation(value = "Adds the given organization to the user")
-  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<String> addOrganization(
       @NotNull @PathVariable String userId, @NotNull @RequestBody OrganizationDto organization) {
     userDetailsService.setOrganization(userId, organization.getId());
