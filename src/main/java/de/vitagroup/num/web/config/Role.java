@@ -1,8 +1,5 @@
 package de.vitagroup.num.web.config;
 
-import java.util.Arrays;
-import javax.annotation.security.RolesAllowed;
-
 public class Role {
   public static final String SUPER_ADMIN = "hasRole('SUPER_ADMIN')";
   public static final String ORGANIZATION_ADMIN = "hasRole('ORGANIZATION_ADMIN')";
