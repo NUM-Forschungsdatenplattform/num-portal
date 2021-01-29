@@ -31,15 +31,6 @@ public class AdminControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
-  @WithMockNumUser(roles = {RESEARCHER})
-  public void shouldNotAccessAqlApiWithWrongRole() {
-    mockMvc
-        .perform(get(String.format("%s/%s", ADMIN_PATH, "someuser")))
-        .andExpect(status().isUnauthorized());
-  }
-
-  @Test
-  @SneakyThrows
   @WithMockNumUser(
       userId = USER_ID,
       roles = {SUPER_ADMIN, STUDY_COORDINATOR})
