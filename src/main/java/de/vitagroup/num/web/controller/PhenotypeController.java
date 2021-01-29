@@ -39,7 +39,7 @@ public class PhenotypeController {
 
   @PostMapping("/phenotype")
   @ApiOperation(value = "Stores a phenotype")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR)
   public ResponseEntity<PhenotypeDto> createPhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @Valid @RequestBody PhenotypeDto phenotypeDto) {
