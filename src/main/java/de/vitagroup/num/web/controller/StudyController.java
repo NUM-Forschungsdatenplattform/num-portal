@@ -1,7 +1,9 @@
 package de.vitagroup.num.web.controller;
 
+import com.nimbusds.openid.connect.sdk.claims.ClaimsSet;
 import de.vitagroup.num.domain.Comment;
 import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.dto.CommentDto;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.mapper.CommentMapper;
@@ -12,6 +14,7 @@ import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -43,12 +46,17 @@ public class StudyController {
   private final CommentMapper commentMapper;
 
   @GetMapping()
-  @ApiOperation(value = "Retrieves a list of studies")
+  @ApiOperation(
+      value =
+          "Retrieves a list of studies the user is allowed to see with optional filtering based on study status")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<List<StudyDto>> searchStudies(
-      @RequestParam(required = false) @NotEmpty String userId) {
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @RequestParam(required = false) StudyStatus status) {
+    Map<String, Object> access = principal.getClaimAsMap("realm_access");
+    List<String> roles = (List<String>) access.get("roles");
     return ResponseEntity.ok(
-        studyService.searchStudies(userId).stream()
+        studyService.searchStudies(principal.getSubject(), roles, status).stream()
             .map(studyMapper::convertToDto)
             .collect(Collectors.toList()));
   }

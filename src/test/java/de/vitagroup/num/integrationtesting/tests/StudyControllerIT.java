@@ -1,9 +1,10 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static de.vitagroup.num.integrationtesting.Roles.RESEARCHER;
-import static de.vitagroup.num.integrationtesting.Roles.STUDY_COORDINATOR;
+import static de.vitagroup.num.domain.Roles.RESEARCHER;
+import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -76,5 +77,16 @@ public class StudyControllerIT extends IntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value(validStudy.getName()))
         .andExpect(jsonPath("$.firstHypotheses").value(validStudy.getFirstHypotheses()));
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {STUDY_COORDINATOR})
+  public void shouldListStudies() {
+
+    mockMvc
+        .perform(get(STUDY_PATH + "?status=DRAFT").with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(content().string("[]"));
   }
 }

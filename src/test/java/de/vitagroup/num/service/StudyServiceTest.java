@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
@@ -18,6 +19,8 @@ import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.SystemException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -77,16 +80,23 @@ public class StudyServiceTest {
   }
 
   @Test
-  public void shouldGetAllWhenSearchingStudiesWithoutCoordinator() {
-    studyService.searchStudies(null);
-    verify(studyRepository, times(1)).findAll();
+  public void shouldFilterWhenSearchingStudiesWithCoordinatorAndNoStatus() {
+    List<String> roles = new ArrayList<>();
+    roles.add(Roles.STUDY_COORDINATOR);
+    studyService.searchStudies("coordinatorId", roles, null);
+
+    verify(studyRepository, times(1)).findByCoordinatorUserId("coordinatorId");
+    verify(studyRepository, times(0)).findAll();
   }
 
   @Test
-  public void shouldFilterWhenSearchingStudiesWithCoordinator() {
-    studyService.searchStudies("coordinatorId");
+  public void shouldFilterWhenSearchingStudiesWithCoordinatorAndStatus() {
+    List<String> roles = new ArrayList<>();
+    roles.add(Roles.STUDY_COORDINATOR);
+    studyService.searchStudies("coordinatorId", roles, StudyStatus.DRAFT);
 
-    verify(studyRepository, times(1)).findByCoordinatorUserId("coordinatorId");
+    verify(studyRepository, times(1))
+        .findByCoordinatorUserIdAndStatus("coordinatorId", StudyStatus.DRAFT);
     verify(studyRepository, times(0)).findAll();
   }
 
