@@ -109,12 +109,20 @@ public class StudyService {
       if (roles.contains(Roles.RESEARCHER)) {
         studiesList.addAll(studyRepository.findByResearchers_UserId(userId));
       }
+      if (roles.contains(Roles.STUDY_APPROVER)) {
+        studiesList.addAll(studyRepository.findByStatus(StudyStatus.PENDING));
+        studiesList.addAll(studyRepository.findByStatus(StudyStatus.REVIEWING));
+      }
     } else {
       if (roles.contains(Roles.STUDY_COORDINATOR)) {
         studiesList.addAll(studyRepository.findByCoordinatorUserIdAndStatus(userId, status));
       }
       if (roles.contains(Roles.RESEARCHER)) {
         studiesList.addAll(studyRepository.findByResearchers_UserIdAndStatus(userId, status));
+      }
+      if (roles.contains(Roles.STUDY_APPROVER)
+          && (status == StudyStatus.PENDING || status == StudyStatus.REVIEWING)) {
+        studiesList.addAll(studyRepository.findByStatus(status));
       }
     }
 

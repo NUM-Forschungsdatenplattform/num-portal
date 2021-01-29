@@ -49,7 +49,7 @@ public class StudyController {
   @ApiOperation(
       value =
           "Retrieves a list of studies the user is allowed to see with optional filtering based on study status")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<StudyDto>> searchStudies(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestParam(required = false) StudyStatus status) {
