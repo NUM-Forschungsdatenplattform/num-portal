@@ -6,4 +6,6 @@ public class Roles {
   public static final String STUDY_COORDINATOR = "STUDY_COORDINATOR";
   public static final String STUDY_APPROVER = "STUDY_APPROVER";
   public static final String RESEARCHER = "RESEARCHER";
+
+  private Roles() {}
 }

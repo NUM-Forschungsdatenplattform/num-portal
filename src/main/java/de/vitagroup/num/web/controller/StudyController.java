@@ -1,6 +1,5 @@
 package de.vitagroup.num.web.controller;
 
-import com.nimbusds.openid.connect.sdk.claims.ClaimsSet;
 import de.vitagroup.num.domain.Comment;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
