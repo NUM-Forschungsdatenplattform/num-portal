@@ -43,7 +43,6 @@ public class StudyService {
     return studyRepository.existsById(studyId);
   }
 
-
   public Study createStudy(StudyDto studyDto, String userId) {
     Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(userId);
 
@@ -107,7 +106,7 @@ public class StudyService {
     return studyRepository.findByCoordinatorUserId(coordinatorUserId);
   }
 
-  private void setTemplates(Study study, StudyDto studyDto){
+  private void setTemplates(Study study, StudyDto studyDto) {
     if (studyDto.getTemplates() != null) {
       Map<String, String> map =
           studyDto.getTemplates().stream()
@@ -119,7 +118,7 @@ public class StudyService {
     }
   }
 
-  private void setResearchers(Study study, StudyDto studyDto){
+  private void setResearchers(Study study, StudyDto studyDto) {
     List<UserDetails> newResearchersList = new LinkedList<>();
 
     if (studyDto.getResearchers() != null) {

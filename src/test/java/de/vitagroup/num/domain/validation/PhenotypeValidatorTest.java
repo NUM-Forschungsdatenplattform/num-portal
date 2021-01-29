@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.dto.PhenotypeDto;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,15 +32,15 @@ public class PhenotypeValidatorTest {
   public void supportsSingleAqlQuery() {
     Aql aql = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     AqlExpression aqlExpression = AqlExpression.builder().aql(aql).build();
-    Phenotype phenotype =
-        Phenotype.builder()
+    PhenotypeDto phenotypeDto =
+        PhenotypeDto.builder()
             .id(1L)
             .name("Phenotype name")
             .description("Single AQL valid phenotype")
             .query(aqlExpression)
             .build();
 
-    Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
+    Set<ConstraintViolation<PhenotypeDto>> violations = validator.validate(phenotypeDto);
     assertThat(violations.isEmpty(), is(true));
   }
 
@@ -57,15 +58,15 @@ public class PhenotypeValidatorTest {
             .children(Arrays.asList(aqlExpression1, aqlExpression2))
             .build();
 
-    Phenotype phenotype =
-        Phenotype.builder()
+    PhenotypeDto phenotypeDto =
+        PhenotypeDto.builder()
             .id(1L)
             .name("Phenotype name")
             .description("Two AQLs valid phenotype")
             .query(query)
             .build();
 
-    Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
+    Set<ConstraintViolation<PhenotypeDto>> violations = validator.validate(phenotypeDto);
     assertThat(violations.isEmpty(), is(true));
   }
 
@@ -83,15 +84,15 @@ public class PhenotypeValidatorTest {
             .children(Arrays.asList(aqlExpression1, aqlExpression2))
             .build();
 
-    Phenotype phenotype =
-        Phenotype.builder()
+    PhenotypeDto phenotypeDto =
+        PhenotypeDto.builder()
             .id(1L)
             .name("Phenotype name")
             .description("Two AQLs valid phenotype")
             .query(query)
             .build();
 
-    Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
+    Set<ConstraintViolation<PhenotypeDto>> violations = validator.validate(phenotypeDto);
     assertThat(violations.isEmpty(), is(true));
   }
 
@@ -106,15 +107,15 @@ public class PhenotypeValidatorTest {
             .children(Arrays.asList(aqlExpression))
             .build();
 
-    Phenotype phenotype =
-        Phenotype.builder()
+    PhenotypeDto phenotypeDto =
+        PhenotypeDto.builder()
             .id(1L)
             .name("Phenotype name")
             .description("One AQL valid phenotype")
             .query(notAql)
             .build();
 
-    Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
+    Set<ConstraintViolation<PhenotypeDto>> violations = validator.validate(phenotypeDto);
     assertThat(violations.isEmpty(), is(true));
   }
 
@@ -132,15 +133,15 @@ public class PhenotypeValidatorTest {
             .children(Arrays.asList(aqlExpression1, aqlExpression2))
             .build();
 
-    Phenotype phenotype =
-        Phenotype.builder()
+    PhenotypeDto phenotypeDto =
+        PhenotypeDto.builder()
             .id(1L)
             .name("Phenotype name")
             .description("NOT operation can be applied to single AQL query")
             .query(query)
             .build();
 
-    Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
+    Set<ConstraintViolation<PhenotypeDto>> violations = validator.validate(phenotypeDto);
     assertThat(violations.isEmpty(), is(false));
     assertThat(violations.size(), is(1));
     assertThat(violations.iterator().next().getMessage(), is("Invalid phenotype definition"));
@@ -157,15 +158,15 @@ public class PhenotypeValidatorTest {
             .children(Arrays.asList(aqlExpression))
             .build();
 
-    Phenotype phenotype =
-        Phenotype.builder()
+    PhenotypeDto phenotypeDto =
+        PhenotypeDto.builder()
             .id(1L)
             .name("Phenotype name")
             .description("OR operation cannot be applied to a single AQL query")
             .query(query)
             .build();
 
-    Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
+    Set<ConstraintViolation<PhenotypeDto>> violations = validator.validate(phenotypeDto);
     assertThat(violations.isEmpty(), is(true));
   }
 
@@ -173,16 +174,16 @@ public class PhenotypeValidatorTest {
   public void correctlyValidatesPhenotypeNameAndDescription() {
     Aql aql = Aql.builder().id(1L).name(AQL_NAME).query(AQL_QUERY).build();
     AqlExpression query = AqlExpression.builder().aql(aql).build();
-    Phenotype noNameNoDescriptionPhenotype = Phenotype.builder().id(1L).query(query).build();
+    PhenotypeDto noNameNoDescriptionPhenotype = PhenotypeDto.builder().id(1L).query(query).build();
 
-    Set<ConstraintViolation<Phenotype>> violations =
+    Set<ConstraintViolation<PhenotypeDto>> violations =
         validator.validate(noNameNoDescriptionPhenotype);
     assertThat(violations.isEmpty(), is(false));
-    assertThat(violations.size(), is(2));
+    assertThat(violations.size(), is(3));
 
     assertThat(
         violations.stream()
-            .anyMatch(v -> v.getMessage().equals("Phenotype description is mandatory")),
+            .anyMatch(v -> v.getMessage().equals("Phenotype description cannot be blank")),
         is(true));
     assertThat(
         violations.stream().anyMatch(v -> v.getMessage().equals("Phenotype name is mandatory")),
@@ -192,15 +193,15 @@ public class PhenotypeValidatorTest {
   @Test
   public void correctlyValidatesMissingAql() {
     AqlExpression query = AqlExpression.builder().build();
-    Phenotype phenotype =
-        Phenotype.builder()
+    PhenotypeDto phenotypeDto =
+        PhenotypeDto.builder()
             .id(1L)
             .name("Phenotype name")
             .description("Missing aql query")
             .query(query)
             .build();
 
-    Set<ConstraintViolation<Phenotype>> violations = validator.validate(phenotype);
+    Set<ConstraintViolation<PhenotypeDto>> violations = validator.validate(phenotypeDto);
     assertThat(violations.isEmpty(), is(false));
     assertThat(violations.size(), is(1));
     assertThat(violations.iterator().next().getMessage(), is("Invalid phenotype definition"));

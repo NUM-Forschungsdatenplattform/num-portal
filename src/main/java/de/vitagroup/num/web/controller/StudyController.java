@@ -55,7 +55,7 @@ public class StudyController {
 
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves a study by id")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<StudyDto> getStudyById(@NotNull @NotEmpty @PathVariable Long id) {
     Optional<Study> study = studyService.getStudyById(id);
 
@@ -74,8 +74,7 @@ public class StudyController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
-    Study study =
-        studyService.createStudy(studyDto, principal.getSubject());
+    Study study = studyService.createStudy(studyDto, principal.getSubject());
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
@@ -97,7 +96,7 @@ public class StudyController {
 
   @GetMapping("/{studyId}/comment")
   @ApiOperation(value = "Retrieves the list of attached comments to a particular study")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<CommentDto>> getComments(
       @NotNull @NotEmpty @PathVariable Long studyId) {
     return ResponseEntity.ok(
@@ -108,7 +107,7 @@ public class StudyController {
 
   @PostMapping("/{studyId}/comment")
   @ApiOperation(value = "Adds a comment to a particular study")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<CommentDto> addComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @NotEmpty @PathVariable Long studyId,
@@ -123,7 +122,7 @@ public class StudyController {
 
   @PutMapping("/{studyId}/comment/{commentId}")
   @ApiOperation(value = "Updates a comment")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<CommentDto> updateComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @NotEmpty @PathVariable Long studyId,
@@ -138,7 +137,7 @@ public class StudyController {
   }
 
   @DeleteMapping("/{studyId}/comment/{commentId}")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   void deleteComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @NotEmpty @PathVariable Long studyId,
