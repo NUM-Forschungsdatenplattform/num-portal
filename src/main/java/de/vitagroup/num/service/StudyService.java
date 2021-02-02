@@ -107,7 +107,8 @@ public class StudyService {
         studiesList.addAll(studyRepository.findByCoordinatorUserId(userId));
       }
       if (roles.contains(Roles.RESEARCHER)) {
-        studiesList.addAll(studyRepository.findByResearchers_UserId(userId));
+        studiesList.addAll(studyRepository.findByResearchers_UserIdAndStatus(userId, StudyStatus.PUBLISHED));
+        studiesList.addAll(studyRepository.findByResearchers_UserIdAndStatus(userId, StudyStatus.CLOSED));
       }
       if (roles.contains(Roles.STUDY_APPROVER)) {
         studiesList.addAll(studyRepository.findByStatus(StudyStatus.PENDING));
@@ -117,7 +118,8 @@ public class StudyService {
       if (roles.contains(Roles.STUDY_COORDINATOR)) {
         studiesList.addAll(studyRepository.findByCoordinatorUserIdAndStatus(userId, status));
       }
-      if (roles.contains(Roles.RESEARCHER)) {
+      if (roles.contains(Roles.RESEARCHER)
+          && (status == StudyStatus.PUBLISHED || status == StudyStatus.CLOSED)) {
         studiesList.addAll(studyRepository.findByResearchers_UserIdAndStatus(userId, status));
       }
       if (roles.contains(Roles.STUDY_APPROVER)
