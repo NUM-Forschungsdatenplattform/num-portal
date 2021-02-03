@@ -47,7 +47,7 @@ public class StudyController {
   @GetMapping()
   @ApiOperation(
       value =
-          "Retrieves a list of studies the user is allowed to see with optional filtering based on study status")
+          "Retrieves a list of studies the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<StudyDto>> searchStudies(
       @AuthenticationPrincipal @NotNull Jwt principal) {
