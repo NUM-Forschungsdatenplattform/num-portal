@@ -2,7 +2,6 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Comment;
 import de.vitagroup.num.domain.Study;
-import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.dto.CommentDto;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.mapper.CommentMapper;
@@ -31,7 +30,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -45,9 +43,7 @@ public class StudyController {
   private final CommentMapper commentMapper;
 
   @GetMapping()
-  @ApiOperation(
-      value =
-          "Retrieves a list of studies the user is allowed to see")
+  @ApiOperation(value = "Retrieves a list of studies the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<StudyDto>> searchStudies(
       @AuthenticationPrincipal @NotNull Jwt principal) {
