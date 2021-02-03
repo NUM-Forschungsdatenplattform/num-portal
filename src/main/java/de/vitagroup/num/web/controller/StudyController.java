@@ -45,12 +45,12 @@ public class StudyController {
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of studies the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<List<StudyDto>> searchStudies(
+  public ResponseEntity<List<StudyDto>> getStudies(
       @AuthenticationPrincipal @NotNull Jwt principal) {
     Map<String, Object> access = principal.getClaimAsMap("realm_access");
     List<String> roles = (List<String>) access.get("roles");
     return ResponseEntity.ok(
-        studyService.searchStudies(principal.getSubject(), roles).stream()
+        studyService.getStudies(principal.getSubject(), roles).stream()
             .map(studyMapper::convertToDto)
             .collect(Collectors.toList()));
   }

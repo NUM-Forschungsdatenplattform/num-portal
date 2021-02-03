@@ -83,7 +83,7 @@ public class StudyServiceTest {
   public void shouldFilterWhenSearchingStudiesWithCoordinator() {
     List<String> roles = new ArrayList<>();
     roles.add(Roles.STUDY_COORDINATOR);
-    studyService.searchStudies("coordinatorId", roles);
+    studyService.getStudies("coordinatorId", roles);
 
     verify(studyRepository, times(1)).findByCoordinatorUserId("coordinatorId");
     verify(studyRepository, times(0)).findAll();

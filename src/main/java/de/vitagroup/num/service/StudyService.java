@@ -99,7 +99,7 @@ public class StudyService {
     return studyRepository.save(studyToEdit);
   }
 
-  public List<Study> searchStudies(String userId, List<String> roles) {
+  public List<Study> getStudies(String userId, List<String> roles) {
 
     List<Study> studiesList = new ArrayList<>();
 
@@ -108,13 +108,13 @@ public class StudyService {
     }
     if (roles.contains(Roles.RESEARCHER)) {
       studiesList.addAll(
-          studyRepository.findByResearchers_UserIdAndStatus(userId, StudyStatus.PUBLISHED));
-      studiesList.addAll(
-          studyRepository.findByResearchers_UserIdAndStatus(userId, StudyStatus.CLOSED));
+          studyRepository.findByResearchers_UserIdAndStatusIn(
+              userId, new StudyStatus[] {StudyStatus.PUBLISHED, StudyStatus.CLOSED}));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
-      studiesList.addAll(studyRepository.findByStatus(StudyStatus.PENDING));
-      studiesList.addAll(studyRepository.findByStatus(StudyStatus.REVIEWING));
+      studiesList.addAll(
+          studyRepository.findByStatusIn(
+              new StudyStatus[] {StudyStatus.PENDING, StudyStatus.REVIEWING}));
     }
 
     return studiesList.stream().distinct().collect(Collectors.toList());
