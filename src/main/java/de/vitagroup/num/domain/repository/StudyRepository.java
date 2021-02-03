@@ -18,5 +18,4 @@ public interface StudyRepository extends JpaRepository<Study, Long> {
 
   List<Study> findByResearchers_UserIdAndStatus(String userId, StudyStatus status);
 
-  List<Study> findByResearchers_UserId(String userId);
 }

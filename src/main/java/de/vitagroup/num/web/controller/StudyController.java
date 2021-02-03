@@ -50,12 +50,11 @@ public class StudyController {
           "Retrieves a list of studies the user is allowed to see with optional filtering based on study status")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<StudyDto>> searchStudies(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @RequestParam(required = false) StudyStatus status) {
+      @AuthenticationPrincipal @NotNull Jwt principal) {
     Map<String, Object> access = principal.getClaimAsMap("realm_access");
     List<String> roles = (List<String>) access.get("roles");
     return ResponseEntity.ok(
-        studyService.searchStudies(principal.getSubject(), roles, status).stream()
+        studyService.searchStudies(principal.getSubject(), roles).stream()
             .map(studyMapper::convertToDto)
             .collect(Collectors.toList()));
   }

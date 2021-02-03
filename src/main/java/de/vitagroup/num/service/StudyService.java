@@ -99,33 +99,22 @@ public class StudyService {
     return studyRepository.save(studyToEdit);
   }
 
-  public List<Study> searchStudies(String userId, List<String> roles, StudyStatus status) {
+  public List<Study> searchStudies(String userId, List<String> roles) {
 
     List<Study> studiesList = new ArrayList<>();
-    if (status == null) {
-      if (roles.contains(Roles.STUDY_COORDINATOR)) {
-        studiesList.addAll(studyRepository.findByCoordinatorUserId(userId));
-      }
-      if (roles.contains(Roles.RESEARCHER)) {
-        studiesList.addAll(studyRepository.findByResearchers_UserIdAndStatus(userId, StudyStatus.PUBLISHED));
-        studiesList.addAll(studyRepository.findByResearchers_UserIdAndStatus(userId, StudyStatus.CLOSED));
-      }
-      if (roles.contains(Roles.STUDY_APPROVER)) {
-        studiesList.addAll(studyRepository.findByStatus(StudyStatus.PENDING));
-        studiesList.addAll(studyRepository.findByStatus(StudyStatus.REVIEWING));
-      }
-    } else {
-      if (roles.contains(Roles.STUDY_COORDINATOR)) {
-        studiesList.addAll(studyRepository.findByCoordinatorUserIdAndStatus(userId, status));
-      }
-      if (roles.contains(Roles.RESEARCHER)
-          && (status == StudyStatus.PUBLISHED || status == StudyStatus.CLOSED)) {
-        studiesList.addAll(studyRepository.findByResearchers_UserIdAndStatus(userId, status));
-      }
-      if (roles.contains(Roles.STUDY_APPROVER)
-          && (status == StudyStatus.PENDING || status == StudyStatus.REVIEWING)) {
-        studiesList.addAll(studyRepository.findByStatus(status));
-      }
+
+    if (roles.contains(Roles.STUDY_COORDINATOR)) {
+      studiesList.addAll(studyRepository.findByCoordinatorUserId(userId));
+    }
+    if (roles.contains(Roles.RESEARCHER)) {
+      studiesList.addAll(
+          studyRepository.findByResearchers_UserIdAndStatus(userId, StudyStatus.PUBLISHED));
+      studiesList.addAll(
+          studyRepository.findByResearchers_UserIdAndStatus(userId, StudyStatus.CLOSED));
+    }
+    if (roles.contains(Roles.STUDY_APPROVER)) {
+      studiesList.addAll(studyRepository.findByStatus(StudyStatus.PENDING));
+      studiesList.addAll(studyRepository.findByStatus(StudyStatus.REVIEWING));
     }
 
     return studiesList.stream().distinct().collect(Collectors.toList());

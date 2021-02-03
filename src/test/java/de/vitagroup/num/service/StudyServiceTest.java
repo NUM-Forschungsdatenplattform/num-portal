@@ -80,23 +80,12 @@ public class StudyServiceTest {
   }
 
   @Test
-  public void shouldFilterWhenSearchingStudiesWithCoordinatorAndNoStatus() {
+  public void shouldFilterWhenSearchingStudiesWithCoordinator() {
     List<String> roles = new ArrayList<>();
     roles.add(Roles.STUDY_COORDINATOR);
-    studyService.searchStudies("coordinatorId", roles, null);
+    studyService.searchStudies("coordinatorId", roles);
 
     verify(studyRepository, times(1)).findByCoordinatorUserId("coordinatorId");
-    verify(studyRepository, times(0)).findAll();
-  }
-
-  @Test
-  public void shouldFilterWhenSearchingStudiesWithCoordinatorAndStatus() {
-    List<String> roles = new ArrayList<>();
-    roles.add(Roles.STUDY_COORDINATOR);
-    studyService.searchStudies("coordinatorId", roles, StudyStatus.DRAFT);
-
-    verify(studyRepository, times(1))
-        .findByCoordinatorUserIdAndStatus("coordinatorId", StudyStatus.DRAFT);
     verify(studyRepository, times(0)).findAll();
   }
 
