@@ -113,12 +113,6 @@ public class AqlServiceTest {
   }
 
   @Test
-  public void shouldCallRepoWhenRetrievingAllAqls() {
-    aqlService.getAllAqls();
-    verify(aqlRepository, times(1)).findAll();
-  }
-
-  @Test
   public void shouldCallRepoWhenSearchingAql() {
     aqlService.getAqlById(1L, "approvedUserId");
     verify(aqlRepository, times(1)).findById(any());

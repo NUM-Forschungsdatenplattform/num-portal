@@ -65,10 +65,6 @@ public class AqlService {
     return aqlRepository.findAllOwnedOrPublic(owner.getUserId());
   }
 
-  public List<Aql> getAllAqls() {
-    return aqlRepository.findAll();
-  }
-
   public Aql createAql(Aql aql, String loggedInUserId) {
     UserDetails owner =
         userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
