@@ -1,6 +1,8 @@
 package de.vitagroup.num.service;
 
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
@@ -12,13 +14,13 @@ import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -97,13 +99,25 @@ public class StudyService {
     return studyRepository.save(studyToEdit);
   }
 
-  public List<Study> searchStudies(String coordinatorUserId) {
+  public List<Study> getStudies(String userId, List<String> roles) {
 
-    if (StringUtils.isEmpty(coordinatorUserId)) {
-      return studyRepository.findAll();
+    List<Study> studiesList = new ArrayList<>();
+
+    if (roles.contains(Roles.STUDY_COORDINATOR)) {
+      studiesList.addAll(studyRepository.findByCoordinatorUserId(userId));
+    }
+    if (roles.contains(Roles.RESEARCHER)) {
+      studiesList.addAll(
+          studyRepository.findByResearchers_UserIdAndStatusIn(
+              userId, new StudyStatus[] {StudyStatus.PUBLISHED, StudyStatus.CLOSED}));
+    }
+    if (roles.contains(Roles.STUDY_APPROVER)) {
+      studiesList.addAll(
+          studyRepository.findByStatusIn(
+              new StudyStatus[] {StudyStatus.PENDING, StudyStatus.REVIEWING}));
     }
 
-    return studyRepository.findByCoordinatorUserId(coordinatorUserId);
+    return studiesList.stream().distinct().collect(Collectors.toList());
   }
 
   private void setTemplates(Study study, StudyDto studyDto) {

@@ -12,6 +12,7 @@ import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -29,7 +30,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -43,12 +43,14 @@ public class StudyController {
   private final CommentMapper commentMapper;
 
   @GetMapping()
-  @ApiOperation(value = "Retrieves a list of studies")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
-  public ResponseEntity<List<StudyDto>> searchStudies(
-      @RequestParam(required = false) @NotEmpty String userId) {
+  @ApiOperation(value = "Retrieves a list of studies the user is allowed to see")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
+  public ResponseEntity<List<StudyDto>> getStudies(
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    Map<String, Object> access = principal.getClaimAsMap("realm_access");
+    List<String> roles = (List<String>) access.get("roles");
     return ResponseEntity.ok(
-        studyService.searchStudies(userId).stream()
+        studyService.getStudies(principal.getSubject(), roles).stream()
             .map(studyMapper::convertToDto)
             .collect(Collectors.toList()));
   }

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.web.exception.BadRequestException;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,6 +45,7 @@ public class Study {
 
   private String secondHypotheses;
 
+  @Enumerated(EnumType.STRING)
   private StudyStatus status;
 
   private OffsetDateTime createDate;

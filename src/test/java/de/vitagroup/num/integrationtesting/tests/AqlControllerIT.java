@@ -1,7 +1,7 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static de.vitagroup.num.integrationtesting.Roles.RESEARCHER;
-import static de.vitagroup.num.integrationtesting.Roles.SUPER_ADMIN;
+import static de.vitagroup.num.domain.Roles.RESEARCHER;
+import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
