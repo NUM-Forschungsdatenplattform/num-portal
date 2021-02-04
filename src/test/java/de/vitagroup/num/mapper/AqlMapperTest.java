@@ -61,7 +61,6 @@ public class AqlMapperTest {
             .owner(UserDetails.builder().organizationId("12345a").userId("123456").build())
             .createDate(OffsetDateTime.now())
             .modifiedDate(OffsetDateTime.now())
-            .organizationId("abcd")
             .build();
 
     AqlDto dto = mapper.convertToDto(aql);
