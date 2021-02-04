@@ -2,6 +2,7 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.dto.AqlDto;
+import de.vitagroup.num.domain.dto.AqlSearchFilter;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.web.config.Role;
@@ -74,25 +75,32 @@ public class AqlController {
     aqlService.deleteById(id, principal.getSubject());
   }
 
-  @GetMapping()
-  @ApiOperation(
-      value =
-          "Retrieves a list of aqls based on a search string and flags, if no parameters are specified retrieves all the aqls")
+  @GetMapping("/search")
+  @ApiOperation(value = "Retrieves a list of aqls based on a search string and search type")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<List<AqlDto>> searchAqls(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @ApiParam(value = "Flag for filtering aqls based on ownership", required = false)
-          @RequestParam(required = false)
-          Boolean owned,
-      @ApiParam(value = "Flag for filtering aqls based on organization", required = false)
-          @RequestParam(required = false)
-          Boolean ownedBySameOrganization,
       @ApiParam(value = "A string contained in the name of the aqls", required = false)
           @RequestParam(required = false)
-          String name) {
-
+          String name,
+      @ApiParam(value = "Type of the search", required = true)
+          @RequestParam(required = true)
+          @Valid
+          @NotNull
+          AqlSearchFilter filter) {
     return ResponseEntity.ok(
-        aqlService.searchAqls(name, owned, ownedBySameOrganization, principal.getSubject()).stream()
+        aqlService.searchAqls(name, filter, principal.getSubject()).stream()
+            .map(mapper::convertToDto)
+            .collect(Collectors.toList()));
+  }
+
+  @GetMapping()
+  @ApiOperation(
+      value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  public ResponseEntity<List<AqlDto>> getAqls(@AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(
+        aqlService.getVisibleAqls(principal.getSubject()).stream()
             .map(mapper::convertToDto)
             .collect(Collectors.toList()));
   }

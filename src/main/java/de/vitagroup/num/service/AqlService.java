@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.AqlSearchFilter;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
@@ -16,9 +17,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
@@ -57,6 +55,16 @@ public class AqlService {
     }
   }
 
+  public List<Aql> getVisibleAqls(String loggedInUserId) {
+    UserDetails owner =
+        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+
+    if (owner.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+    }
+    return aqlRepository.findAllOwnedOrPublic(owner.getUserId());
+  }
+
   public List<Aql> getAllAqls() {
     return aqlRepository.findAll();
   }
@@ -70,7 +78,6 @@ public class AqlService {
     }
 
     aql.setOwner(owner);
-    aql.setOrganizationId(owner.getOrganizationId());
     aql.setCreateDate(OffsetDateTime.now());
     aql.setModifiedDate(OffsetDateTime.now());
 
@@ -99,7 +106,6 @@ public class AqlService {
     aqlToEdit.setUse(aql.getUse());
     aqlToEdit.setModifiedDate(OffsetDateTime.now());
     aqlToEdit.setQuery(aql.getQuery());
-    aqlToEdit.setOrganizationId(owner.getOrganizationId());
     aqlToEdit.setPublicAql(aql.isPublicAql());
 
     return aqlRepository.save(aqlToEdit);
@@ -127,32 +133,33 @@ public class AqlService {
   }
 
   /**
-   * Retrieves a list of AQLs. If no parameter is specified retrieves all the aqls
+   * Searches among a list of visible AQLs.
    *
    * @param name A string contained in the name of the aqls
-   * @param owned Flag filtering aqls by owner
-   * @param ownedBySameOrganization Flag filtering aqls by owner organization
+   * @param filter Type of the search. Search all owned or public, searched owned only or search
+   *     among own organization
    * @param loggedInUserId
    * @return
    */
-  public List<Aql> searchAqls(
-      String name, Boolean owned, Boolean ownedBySameOrganization, String loggedInUserId) {
+  public List<Aql> searchAqls(String name, AqlSearchFilter filter, String loggedInUserId) {
 
     UserDetails owner =
         userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
 
-    if (StringUtils.isEmpty(name)
-        && ObjectUtils.isEmpty(owned)
-        && ObjectUtils.isEmpty(ownedBySameOrganization)) {
+    if (owner.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+    }
 
-      return aqlRepository.findAll();
-
-    } else {
-
-      return aqlRepository.findAqlByNameAndOrganizationAndOwner(
-          name,
-          BooleanUtils.isTrue(ownedBySameOrganization) ? owner.getOrganizationId() : null,
-          BooleanUtils.isTrue(owned) ? owner.getUserId() : null);
+    switch (filter) {
+      case ALL:
+        return aqlRepository.findAllOwnedOrPublicByName(owner.getUserId(), name);
+      case OWNED:
+        return aqlRepository.findAllOwnedByName(owner.getUserId(), name);
+      case ORGANIZATION:
+        return aqlRepository.findAllOrganizationOwnedByName(
+            owner.getOrganizationId(), owner.getUserId(), name);
+      default:
+        return List.of();
     }
   }
 

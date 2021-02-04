@@ -59,7 +59,6 @@ public class AqlServiceTest {
                     .createDate(OffsetDateTime.now().minusDays(4))
                     .createDate(OffsetDateTime.now())
                     .publicAql(true)
-                    .organizationId("1234")
                     .owner(approvedUser)
                     .build()));
 
@@ -95,7 +94,6 @@ public class AqlServiceTest {
     assertThat(updatedAql.getUse(), is(toEdit.getUse()));
     assertThat(updatedAql.getPurpose(), is(toEdit.getPurpose()));
     assertThat(updatedAql.isPublicAql(), is(toEdit.isPublicAql()));
-    assertThat(updatedAql.getOrganizationId(), is(toEdit.getOrganizationId()));
   }
 
   @Test(expected = ForbiddenException.class)
@@ -157,18 +155,6 @@ public class AqlServiceTest {
     aqlService.deleteById(9L, "approvedUserId");
   }
 
-  @Test
-  public void shouldSearchAllWhenNoSearchParameters() {
-    aqlService.searchAqls(null, null, null, "approvedUserId");
-    verify(aqlRepository, times(1)).findAll();
-  }
-
-  @Test
-  public void shouldCriteriaSearchAllAtLeastOneSearchParameterPresent() {
-    aqlService.searchAqls("for name", null, null, "approvedUserId");
-    verify(aqlRepository, times(1)).findAqlByNameAndOrganizationAndOwner("for name", null, null);
-  }
-
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {
     return Aql.builder()
         .id(10L)
@@ -178,7 +164,6 @@ public class AqlServiceTest {
         .publicAql(false)
         .createDate(createdAndModifiedDate)
         .modifiedDate(createdAndModifiedDate)
-        .organizationId("abc")
         .build();
   }
 

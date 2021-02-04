@@ -38,8 +38,6 @@ public class Aql implements Serializable {
   @JoinColumn(name = "owner_id")
   private UserDetails owner;
 
-  private String organizationId;
-
   private OffsetDateTime createDate;
 
   private OffsetDateTime modifiedDate;

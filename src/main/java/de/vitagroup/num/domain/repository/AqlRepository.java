@@ -11,13 +11,29 @@ import java.util.List;
 @Repository
 public interface AqlRepository extends JpaRepository<Aql, Long> {
 
+  @Query("SELECT aql FROM Aql aql WHERE aql.owner.userId = :ownerId OR aql.publicAql = true")
+  List<Aql> findAllOwnedOrPublic(@Param("ownerId") String ownerId);
+
   @Query(
       "SELECT aql FROM Aql aql "
-          + "WHERE (cast(:name as string) is null or aql.name like %:name% ) "
-          + "and (cast(:organizationId as string) is null or aql.organizationId = :organizationId) "
-          + "and (cast(:ownerId as string) is null or aql.owner.userId = :ownerId) ")
-  List<Aql> findAqlByNameAndOrganizationAndOwner(
-      @Param("name") String name,
+          + "WHERE (cast(:name as string) is null OR aql.name like %:name% ) "
+          + "AND (aql.owner.userId = :ownerId OR aql.publicAql = true) ")
+  List<Aql> findAllOwnedOrPublicByName(
+      @Param("ownerId") String ownerId, @Param("name") String name);
+
+  @Query(
+      "SELECT aql FROM Aql aql "
+          + "WHERE (cast(:name as string) is null OR aql.name like %:name% ) "
+          + "AND aql.owner.userId = :ownerId")
+  List<Aql> findAllOwnedByName(@Param("ownerId") String ownerId, @Param("name") String name);
+
+  @Query(
+      "SELECT aql FROM Aql aql "
+          + "WHERE (cast(:name as string) is null OR aql.name like %:name% ) "
+          + "AND ((aql.owner.organizationId = :organizationId AND aql.publicAql = true) OR aql.owner.userId = :ownerId) ")
+  List<Aql> findAllOrganizationOwnedByName(
       @Param("organizationId") String organizationId,
-      @Param("ownerId") String ownerId);
+      @Param("ownerId") String ownerId,
+      @Param("name") String name);
+
 }
