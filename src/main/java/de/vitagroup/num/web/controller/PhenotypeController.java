@@ -7,6 +7,7 @@ import de.vitagroup.num.service.PhenotypeService;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -18,32 +19,48 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/phenotype")
 @AllArgsConstructor
 public class PhenotypeController {
 
   private final PhenotypeService phenotypeService;
   private final PhenotypeMapper mapper;
 
-  @GetMapping("/phenotype")
+  @GetMapping
   @ApiOperation(value = "Retrieves a list of phenotypes")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
-  public ResponseEntity<List<PhenotypeDto>> getAllPhenotypes(@AuthenticationPrincipal @NotNull Jwt principal) {
+  public ResponseEntity<List<PhenotypeDto>> getAllPhenotypes(
+      @AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(
         phenotypeService.getAllPhenotypes(principal.getSubject()).stream()
             .map(mapper::convertToDto)
             .collect(Collectors.toList()));
   }
 
-  @PostMapping("/phenotype")
+  @PostMapping
   @ApiOperation(value = "Stores a phenotype")
   @PreAuthorize(Role.STUDY_COORDINATOR)
   public ResponseEntity<PhenotypeDto> createPhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @Valid @RequestBody PhenotypeDto phenotypeDto) {
-    Phenotype phenotype = phenotypeService.createPhenotypes(mapper.convertToEntity(phenotypeDto), principal.getSubject());
+    Phenotype phenotype =
+        phenotypeService.createPhenotypes(
+            mapper.convertToEntity(phenotypeDto), principal.getSubject());
     return ResponseEntity.ok(mapper.convertToDto(phenotype));
+  }
+
+  @PostMapping("/execute")
+  @ApiOperation(value = "Executes a phenotype and returns the list of ehr ids in the phenotype")
+  @PreAuthorize(Role.STUDY_COORDINATOR)
+  public ResponseEntity<Set<String>> executePhenotype(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @Valid @RequestBody PhenotypeDto phenotypeDto) {
+    return ResponseEntity.ok(
+        phenotypeService.executePhenotype(
+            mapper.convertToEntity(phenotypeDto), principal.getSubject()));
   }
 }
