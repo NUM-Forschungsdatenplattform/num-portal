@@ -19,9 +19,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,7 +31,7 @@ public class StudyService {
   private final StudyRepository studyRepository;
   private final UserDetailsRepository userDetailsRepository;
   private final UserDetailsService userDetailsService;
-  private final ModelMapper modelMapper;
+  private final UserService userService;
 
   public List<Study> getAllStudies() {
     return studyRepository.findAll();
@@ -45,7 +45,8 @@ public class StudyService {
     return studyRepository.existsById(studyId);
   }
 
-  public Study createStudy(StudyDto studyDto, String userId) {
+  public Study createStudy(StudyDto studyDto, String userId, List<String> roles) {
+
     Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(userId);
 
     if (coordinator.isEmpty()) {
@@ -61,27 +62,29 @@ public class StudyService {
     setTemplates(study, studyDto);
     setResearchers(study, studyDto);
 
+    validateStatus(null, studyDto.getStatus(), roles);
+    study.setStatus(studyDto.getStatus());
+
     study.setName(studyDto.getName());
     study.setDescription(studyDto.getDescription());
     study.setFirstHypotheses(studyDto.getFirstHypotheses());
     study.setSecondHypotheses(studyDto.getSecondHypotheses());
-    study.setStatus(studyDto.getStatus());
     study.setCoordinator(coordinator.get());
     study.setCreateDate(OffsetDateTime.now());
     study.setModifiedDate(OffsetDateTime.now());
     return studyRepository.save(study);
   }
 
-  public Study updateStudy(StudyDto studyDto, Long id, String loggedInUser) {
+  public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
 
-    Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(loggedInUser);
+    Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(userId);
 
     if (coordinator.isEmpty()) {
       throw new SystemException("Logged in coordinator not found in portal");
     }
 
     if (coordinator.get().isNotApproved()) {
-      throw new ForbiddenException("User not approved:" + loggedInUser);
+      throw new ForbiddenException("User not approved:" + userId);
     }
 
     Study studyToEdit = studyRepository.findById(id).orElseThrow(ResourceNotFound::new);
@@ -89,10 +92,12 @@ public class StudyService {
     setTemplates(studyToEdit, studyDto);
     setResearchers(studyToEdit, studyDto);
 
+    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
+    studyToEdit.setStatus(studyDto.getStatus());
+
     studyToEdit.setName(studyDto.getName());
     studyToEdit.setDescription(studyDto.getDescription());
     studyToEdit.setModifiedDate(OffsetDateTime.now());
-    studyToEdit.setStatus(studyDto.getStatus());
     studyToEdit.setFirstHypotheses(studyDto.getFirstHypotheses());
     studyToEdit.setSecondHypotheses(studyDto.getSecondHypotheses());
 
@@ -151,5 +156,36 @@ public class StudyService {
       }
     }
     study.setResearchers(newResearchersList);
+  }
+
+  private void validateStatus(
+      StudyStatus initialStatus, StudyStatus nextStatus, List<String> roles) {
+
+    if (nextStatus == null) {
+      throw new BadRequestException("Invalid study status");
+    }
+
+    if (initialStatus == null) {
+      if (!isValidInitialStatus(nextStatus)) {
+        throw new BadRequestException("Invalid study status: " + nextStatus);
+      }
+    } else if (initialStatus.nextStatusesAndRoles().containsKey(nextStatus)) {
+      List<String> allowedRoles = initialStatus.nextStatusesAndRoles().get(nextStatus);
+
+      Set<String> intersectionSet =
+          roles.stream().distinct().filter(allowedRoles::contains).collect(Collectors.toSet());
+
+      if (intersectionSet.isEmpty()) {
+        throw new ForbiddenException(
+            "Study status transition from " + initialStatus + " to " + nextStatus + " not allowed");
+      }
+    } else {
+      throw new BadRequestException(
+          "Study status transition from " + initialStatus + " to " + nextStatus + " not allowed");
+    }
+  }
+
+  private boolean isValidInitialStatus(StudyStatus status) {
+    return status.equals(StudyStatus.DRAFT) || status.equals(StudyStatus.PENDING);
   }
 }
