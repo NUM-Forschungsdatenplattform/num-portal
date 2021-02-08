@@ -31,7 +31,6 @@ public class StudyService {
   private final StudyRepository studyRepository;
   private final UserDetailsRepository userDetailsRepository;
   private final UserDetailsService userDetailsService;
-  private final UserService userService;
 
   public List<Study> getAllStudies() {
     return studyRepository.findAll();
