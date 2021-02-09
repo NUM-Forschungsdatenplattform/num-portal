@@ -42,15 +42,17 @@ public class StudyController {
   private final StudyMapper studyMapper;
   private final CommentMapper commentMapper;
 
+  private static final String REALM_ACCESS_CLAIM = "realm_access";
+  private static final String ROLES_CLAIM = "roles";
+
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of studies the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<StudyDto>> getStudies(
       @AuthenticationPrincipal @NotNull Jwt principal) {
-    Map<String, Object> access = principal.getClaimAsMap("realm_access");
-    List<String> roles = (List<String>) access.get("roles");
+
     return ResponseEntity.ok(
-        studyService.getStudies(principal.getSubject(), roles).stream()
+        studyService.getStudies(principal.getSubject(), extractRoles(principal)).stream()
             .map(studyMapper::convertToDto)
             .collect(Collectors.toList()));
   }
@@ -76,7 +78,7 @@ public class StudyController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
-    Study study = studyService.createStudy(studyDto, principal.getSubject());
+    Study study = studyService.createStudy(studyDto, principal.getSubject(), extractRoles(principal));
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
@@ -85,13 +87,13 @@ public class StudyController {
   @ApiOperation(
       value =
           "Updates a study; the logged in user is assigned as coordinator of the study at creation time")
-  @PreAuthorize(Role.STUDY_COORDINATOR)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
   public ResponseEntity<StudyDto> updateStudy(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @PathVariable("id") Long studyId,
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
-    Study study = studyService.updateStudy(studyDto, studyId, principal.getSubject());
+    Study study = studyService.updateStudy(studyDto, studyId, principal.getSubject(), extractRoles(principal));
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
@@ -145,5 +147,10 @@ public class StudyController {
       @NotNull @NotEmpty @PathVariable Long studyId,
       @NotNull @NotEmpty @PathVariable Long commentId) {
     commentService.deleteComment(commentId, studyId, principal.getSubject());
+  }
+
+  private List<String> extractRoles(Jwt principal){
+    Map<String, Object> access = principal.getClaimAsMap(REALM_ACCESS_CLAIM);
+    return (List<String>) access.get(ROLES_CLAIM);
   }
 }
