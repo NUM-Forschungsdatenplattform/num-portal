@@ -56,7 +56,7 @@ public enum StudyStatus {
   DENIED {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
-      return Map.of(DENIED, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER));
+      return Map.of(DENIED, Arrays.asList(STUDY_COORDINATOR));
     }
   },
 
@@ -65,8 +65,8 @@ public enum StudyStatus {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          APPROVED, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER),
-          PUBLISHED, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER));
+          APPROVED, Arrays.asList(STUDY_COORDINATOR),
+          PUBLISHED, Arrays.asList(STUDY_COORDINATOR));
     }
   },
 
