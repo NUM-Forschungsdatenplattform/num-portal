@@ -14,7 +14,6 @@ import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
@@ -43,8 +42,8 @@ public class StudyController {
   private final StudyMapper studyMapper;
   private final CommentMapper commentMapper;
 
-  private final static String REALM_ACCESS_CLAIM = "realm_access";
-  private final static String ROLES_CLAIM = "roles";
+  private static final String REALM_ACCESS_CLAIM = "realm_access";
+  private static final String ROLES_CLAIM = "roles";
 
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of studies the user is allowed to see")
@@ -88,7 +87,7 @@ public class StudyController {
   @ApiOperation(
       value =
           "Updates a study; the logged in user is assigned as coordinator of the study at creation time")
-  @PreAuthorize(Role.STUDY_COORDINATOR)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
   public ResponseEntity<StudyDto> updateStudy(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @PathVariable("id") Long studyId,
@@ -152,7 +151,6 @@ public class StudyController {
 
   private List<String> extractRoles(Jwt principal){
     Map<String, Object> access = principal.getClaimAsMap(REALM_ACCESS_CLAIM);
-    List<String> roles = (List<String>) access.get(ROLES_CLAIM);
-    return roles;
+    return (List<String>) access.get(ROLES_CLAIM);
   }
 }

@@ -1,6 +1,5 @@
 package de.vitagroup.num.domain;
 
-import static de.vitagroup.num.domain.Roles.RESEARCHER;
 import static de.vitagroup.num.domain.Roles.STUDY_APPROVER;
 import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
 
@@ -14,8 +13,8 @@ public enum StudyStatus {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          DRAFT, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER),
-          PENDING, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER));
+          DRAFT, Arrays.asList(STUDY_COORDINATOR),
+          PENDING, Arrays.asList(STUDY_COORDINATOR));
     }
   },
 
@@ -24,7 +23,7 @@ public enum StudyStatus {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          PENDING, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER),
+          PENDING, Arrays.asList(STUDY_COORDINATOR),
           REVIEWING, Arrays.asList(STUDY_APPROVER),
           DRAFT, Arrays.asList(STUDY_COORDINATOR));
     }
@@ -35,7 +34,7 @@ public enum StudyStatus {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          REVIEWING, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER),
+          REVIEWING, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER),
           APPROVED, Arrays.asList(STUDY_APPROVER),
           CHANGE_REQUEST, Arrays.asList(STUDY_APPROVER),
           DENIED, Arrays.asList(STUDY_APPROVER));
@@ -47,9 +46,9 @@ public enum StudyStatus {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          CHANGE_REQUEST, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER),
-          DRAFT, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER),
-          PENDING, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER));
+          CHANGE_REQUEST, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER),
+          DRAFT, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER),
+          PENDING, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER));
     }
   },
 
@@ -57,7 +56,7 @@ public enum StudyStatus {
   DENIED {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
-      return Map.of(DENIED, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER));
+      return Map.of(DENIED, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER));
     }
   },
 
@@ -66,8 +65,8 @@ public enum StudyStatus {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          APPROVED, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER),
-          PUBLISHED, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER));
+          APPROVED, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER),
+          PUBLISHED, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER));
     }
   },
 
@@ -76,8 +75,8 @@ public enum StudyStatus {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          PUBLISHED, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER),
-          CLOSED, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER));
+          PUBLISHED, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER),
+          CLOSED, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER));
     }
   },
 
@@ -85,7 +84,7 @@ public enum StudyStatus {
   CLOSED {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
-      return Map.of(CLOSED, Arrays.asList(STUDY_COORDINATOR, RESEARCHER, STUDY_APPROVER));
+      return Map.of(CLOSED, Arrays.asList(STUDY_COORDINATOR, STUDY_APPROVER));
     }
   };
 
