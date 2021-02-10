@@ -53,11 +53,8 @@ public class CohortValidator implements ConstraintValidator<ValidCohort, CohortG
   }
 
   private boolean isInvalidPhenotype(CohortGroupDto cohortGroup) {
-    if (CollectionUtils.isNotEmpty(cohortGroup.getChildren())
+    return (CollectionUtils.isNotEmpty(cohortGroup.getChildren())
         || cohortGroup.getPhenotypeId() == null
-        || cohortGroup.getPhenotypeId() == 0) {
-      return true;
-    }
-    return false;
+        || cohortGroup.getPhenotypeId() == 0);
   }
 }
