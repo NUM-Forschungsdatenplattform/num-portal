@@ -1,21 +1,22 @@
 package de.vitagroup.num.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Optional;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CohortServiceTest {
@@ -60,9 +61,4 @@ public class CohortServiceTest {
     verify(cohortRepository, times(1)).findAll();
   }
 
-  @Test
-  public void shouldCallRepoWhenCreatingCohort() {
-    cohortService.createCohort(Cohort.builder().build());
-    verify(cohortRepository, times(1)).save(any());
-  }
 }

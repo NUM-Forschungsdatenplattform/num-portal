@@ -1,17 +1,21 @@
 package de.vitagroup.num.mapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.Mockito.when;
 
+import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.AqlExpression;
+import de.vitagroup.num.domain.Cohort;
+import de.vitagroup.num.domain.CohortGroup;
+import de.vitagroup.num.domain.Operator;
+import de.vitagroup.num.domain.Phenotype;
+import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.domain.dto.CohortGroupDto;
-import de.vitagroup.num.domain.*;
 import de.vitagroup.num.service.PhenotypeService;
 import de.vitagroup.num.service.StudyService;
-import de.vitagroup.num.web.exception.BadRequestException;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,8 +24,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
-
-import java.util.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CohortMapperTest {
@@ -71,10 +73,6 @@ public class CohortMapperTest {
             .description("Phenotype description")
             .query(aqlExpression2)
             .build();
-
-    when(studyService.getStudyById(1L)).thenReturn(Optional.of(study));
-    when(phenotypeService.getPhenotypeById(1L)).thenReturn(Optional.of(phenotype1));
-    when(phenotypeService.getPhenotypeById(2L)).thenReturn(Optional.of(phenotype2));
   }
 
   @Test
@@ -146,161 +144,6 @@ public class CohortMapperTest {
     assertThat(
         cohortDto.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotypeId() == 2),
         is(true));
-  }
-
-  @Test
-  public void shouldCorrectlyConvertCohortDtoToCohort() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
-
-    CohortGroupDto andCohort =
-        CohortGroupDto.builder()
-            .type(Type.GROUP)
-            .operator(Operator.AND)
-            .children(List.of(first, second))
-            .build();
-
-    CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").studyId(1L).cohortGroup(andCohort).build();
-    Cohort cohort = cohortMapper.convertToEntity(cohortDto);
-
-    assertThat(cohort, notNullValue());
-    assertThat(cohort.getStudy(), notNullValue());
-    assertThat(cohort.getStudy().getId(), is(1L));
-    assertThat(cohort.getStudy().getName(), is("Study name"));
-    assertThat(cohort.getCohortGroup().getOperator(), is(Operator.AND));
-    assertThat(cohort.getCohortGroup().getType(), is(Type.GROUP));
-    assertThat(cohort.getCohortGroup().getChildren().size(), is(2));
-
-    assertThat(
-        cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotype().getId() == 1),
-        is(true));
-    assertThat(
-        cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotype().getId() == 2),
-        is(true));
-
-    assertThat(
-        cohort.getCohortGroup().getChildren().stream()
-            .allMatch(c -> c.getPhenotype().getQuery() instanceof AqlExpression),
-        is(true));
-  }
-
-  @Test(expected = BadRequestException.class)
-  public void shouldCorrectlyHandleWrongPhenotypeId() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(3L).build();
-
-    CohortGroupDto andCohort =
-        CohortGroupDto.builder()
-            .type(Type.GROUP)
-            .operator(Operator.AND)
-            .children(List.of(first, second))
-            .build();
-
-    CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").studyId(1L).cohortGroup(andCohort).build();
-    cohortMapper.convertToEntity(cohortDto);
-  }
-
-  @Test(expected = BadRequestException.class)
-  public void shouldCorrectlyHandleWrongStudyId() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
-
-    CohortGroupDto andCohort =
-        CohortGroupDto.builder()
-            .type(Type.GROUP)
-            .operator(Operator.AND)
-            .children(List.of(first, second))
-            .build();
-
-    CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").studyId(2L).cohortGroup(andCohort).build();
-    cohortMapper.convertToEntity(cohortDto);
-  }
-
-  @Test
-  public void shouldCorrectlyConvertCohortDtoParameters() {
-
-    CohortGroupDto first =
-        CohortGroupDto.builder()
-            .type(Type.PHENOTYPE)
-            .phenotypeId(1L)
-            .parameters(Map.of("param1", "value1", "param2", "value2"))
-            .build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
-
-    CohortGroupDto andCohort =
-        CohortGroupDto.builder()
-            .type(Type.GROUP)
-            .operator(Operator.AND)
-            .children(List.of(first, second))
-            .build();
-
-    CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").studyId(1L).cohortGroup(andCohort).build();
-    Cohort cohort = cohortMapper.convertToEntity(cohortDto);
-
-    assertThat(cohort, notNullValue());
-    assertThat(cohort.getStudy(), notNullValue());
-    assertThat(cohort.getStudy().getId(), is(1L));
-    assertThat(cohort.getStudy().getName(), is("Study name"));
-    assertThat(cohort.getCohortGroup().getOperator(), is(Operator.AND));
-    assertThat(cohort.getCohortGroup().getType(), is(Type.GROUP));
-
-    assertThat(cohort.getCohortGroup().getParameters(), nullValue());
-
-    assertThat(cohort.getCohortGroup().getChildren().size(), is(2));
-
-    assertThat(
-        cohort.getCohortGroup().getChildren().stream()
-            .anyMatch(
-                c ->
-                    c.getParameters() != null
-                        && c.getParameters().containsKey("param1")
-                        && c.getParameters().containsKey("param2")),
-        is(true));
-
-    assertThat(
-        cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotype().getId() == 1),
-        is(true));
-    assertThat(
-        cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotype().getId() == 2),
-        is(true));
-
-    assertThat(
-        cohort.getCohortGroup().getChildren().stream()
-            .allMatch(c -> c.getPhenotype().getQuery() instanceof AqlExpression),
-        is(true));
-  }
-
-  @Test
-  public void shouldNotCopyIdsFromCohortDtoToCohort() {
-    CohortGroupDto first =
-        CohortGroupDto.builder().id(1L).type(Type.PHENOTYPE).phenotypeId(1L).build();
-    CohortGroupDto second =
-        CohortGroupDto.builder().id(2L).type(Type.PHENOTYPE).phenotypeId(2L).build();
-
-    CohortGroupDto andCohort =
-        CohortGroupDto.builder()
-            .id(12L)
-            .type(Type.GROUP)
-            .operator(Operator.AND)
-            .children(List.of(first, second))
-            .build();
-
-    CohortDto cohortDto =
-        CohortDto.builder().id(16L).name("Cohort name").studyId(1L).cohortGroup(andCohort).build();
-
-    Cohort cohort = cohortMapper.convertToEntity(cohortDto);
-
-    assertThat(cohort, notNullValue());
-    assertThat(cohort.getId(), is(nullValue()));
-    assertThat(cohort.getCohortGroup().getId(), is(nullValue()));
-    assertThat(
-        cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == null), is(true));
-    assertThat(
-        cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == null), is(true));
   }
 
   @Test
