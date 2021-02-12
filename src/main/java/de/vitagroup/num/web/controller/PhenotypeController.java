@@ -7,7 +7,6 @@ import de.vitagroup.num.service.PhenotypeService;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
