@@ -53,14 +53,14 @@ public class PhenotypeController {
     return ResponseEntity.ok(mapper.convertToDto(phenotype));
   }
 
-  @PostMapping("/execute")
+  @PostMapping("/size")
   @ApiOperation(value = "Executes a phenotype and returns the list of ehr ids in the phenotype")
   @PreAuthorize(Role.STUDY_COORDINATOR)
-  public ResponseEntity<Set<String>> executePhenotype(
+  public ResponseEntity<Long> executePhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @Valid @RequestBody PhenotypeDto phenotypeDto) {
     return ResponseEntity.ok(
-        phenotypeService.executePhenotype(
+        phenotypeService.getPhenotypeSize(
             mapper.convertToEntity(phenotypeDto), principal.getSubject()));
   }
 }
