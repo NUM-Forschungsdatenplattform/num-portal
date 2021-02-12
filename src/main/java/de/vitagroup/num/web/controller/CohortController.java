@@ -12,9 +12,12 @@ import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,8 +42,21 @@ public class CohortController {
   @PostMapping
   @ApiOperation(value = "Stores a cohort")
   @PreAuthorize(Role.STUDY_COORDINATOR)
-  public ResponseEntity<CohortDto> createCohort(@Valid @NotNull @RequestBody CohortDto cohort) {
-    Cohort cohortEntity = cohortService.createCohort(cohortMapper.convertToEntity(cohort));
+  public ResponseEntity<CohortDto> createCohort(
+      @Valid @NotNull @RequestBody CohortDto cohortDto,
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    Cohort cohortEntity = cohortService.createCohort(cohortDto, principal.getSubject());
+    return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
+  }
+
+  @PutMapping(value = "/{id}")
+  @ApiOperation(value = "Updates a cohort")
+  @PreAuthorize(Role.STUDY_COORDINATOR)
+  public ResponseEntity<CohortDto> updateCohort(
+      @Valid @NotNull @RequestBody CohortDto cohortDto,
+      @PathVariable("id") Long cohortId,
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    Cohort cohortEntity = cohortService.updateCohort(cohortDto, cohortId, principal.getSubject());
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 

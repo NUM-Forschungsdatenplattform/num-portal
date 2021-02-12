@@ -25,6 +25,7 @@ import javax.persistence.ManyToOne;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.ObjectUtils;
 
 @Entity
 @Data
@@ -71,4 +72,8 @@ public class Study {
       joinColumns = @JoinColumn(name = "study_id"),
       inverseJoinColumns = @JoinColumn(name = "user_details_id"))
   private List<UserDetails> researchers;
+
+  public boolean hasEmptyOrDifferentOwner(String userId) {
+    return ObjectUtils.isEmpty(coordinator) || !coordinator.getUserId().equals(userId);
+  }
 }

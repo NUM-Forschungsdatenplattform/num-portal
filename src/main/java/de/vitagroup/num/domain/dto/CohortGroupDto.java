@@ -1,5 +1,6 @@
 package de.vitagroup.num.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.vitagroup.num.domain.Operator;
 import de.vitagroup.num.domain.Type;
 import io.swagger.annotations.ApiModel;
@@ -20,34 +21,38 @@ import java.util.Map;
 @NoArgsConstructor
 public class CohortGroupDto {
 
-    @ApiModelProperty(
-            value = "The unique identifier",
-            example = "1")
-    private Long id;
+  @ApiModelProperty(value = "The unique identifier", example = "1")
+  private Long id;
 
-    @ApiModelProperty(
-            value = "Cohort group operation to be applied to the children",
-            example = "AND")
-    private Operator operator;
+  @ApiModelProperty(value = "Cohort group operation to be applied to the children", example = "AND")
+  private Operator operator;
 
-    @ApiModelProperty(
-            value = "Cohort group parameter map representing the name of the aql parameter and the corresponding value")
-    private Map<String, String> parameters;
+  @ApiModelProperty(
+      value =
+          "Cohort group parameter map representing the name of the aql parameter and the corresponding value")
+  private Map<String, String> parameters;
 
-    @ApiModelProperty(
-            required = true,
-            value = "Type of the cohort group",
-            example = "PHENOTYPE")
-    @NotNull(message = "Type cannot be null")
-    private Type type;
+  @ApiModelProperty(required = true, value = "Type of the cohort group", example = "PHENOTYPE")
+  @NotNull(message = "Type cannot be null")
+  private Type type;
 
-    @ApiModelProperty(
-            value = "Children of the cohort group in case the type of the group is: GROUP; can be other groups or phenotypes")
-    private List<CohortGroupDto> children;
+  @ApiModelProperty(
+      value =
+          "Children of the cohort group in case the type of the group is: GROUP; can be other groups or phenotypes")
+  private List<CohortGroupDto> children;
 
-    @ApiModelProperty(
-            value = "Reference to phenotype in case the type of the group is: PHENOTYPE",
-            example = "2")
-    private Long phenotypeId;
+  @ApiModelProperty(
+      value = "Reference to phenotype in case the type of the group is: PHENOTYPE",
+      example = "2")
+  private Long phenotypeId;
 
+  @JsonIgnore
+  public boolean isPhenotype() {
+    return Type.PHENOTYPE == type;
+  }
+
+  @JsonIgnore
+  public boolean isGroup() {
+    return Type.GROUP == type;
+  }
 }
