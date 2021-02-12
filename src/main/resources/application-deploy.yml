@@ -35,4 +35,4 @@ ehrbase:
   password: ${EHRBASE_PASSWORD}
 
 privacy:
-  minHits: 2
+  minHits: ${PRIVACY_MIN_HITS}
