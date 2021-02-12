@@ -6,6 +6,8 @@ import de.vitagroup.num.mapper.PhenotypeMapper;
 import de.vitagroup.num.service.PhenotypeService;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
