@@ -58,7 +58,7 @@ public class SwaggerConfig {
 
   @Bean
   public Docket phenotypeApi() {
-    return getDocket("Phenotype", "/phenotype.*");
+    return getDocket("Phenotype", "/phenotype.*").useDefaultResponseMessages(false);
   }
 
   @Bean

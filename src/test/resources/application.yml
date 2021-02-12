@@ -75,3 +75,6 @@ ehrbase:
 cors:
   allowedOrigins:
     - "*"
+
+privacy:
+  minHits: 0
