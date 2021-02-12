@@ -40,4 +40,8 @@ public class Phenotype {
   @JsonBackReference
   @JoinColumn(name = "owner_id")
   private UserDetails owner;
+
+  public boolean hasEmptyOrDifferentOwner(String userId) {
+    return ObjectUtils.isEmpty(owner) || !owner.getUserId().equals(userId);
+  }
 }
