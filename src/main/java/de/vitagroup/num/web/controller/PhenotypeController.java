@@ -7,7 +7,6 @@ import de.vitagroup.num.service.PhenotypeService;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -53,14 +52,15 @@ public class PhenotypeController {
     return ResponseEntity.ok(mapper.convertToDto(phenotype));
   }
 
-  @PostMapping("/execute")
-  @ApiOperation(value = "Executes a phenotype and returns the list of ehr ids in the phenotype")
+  @PostMapping("/size")
+  @ApiOperation(
+      value = "Executes a phenotype and returns the count of matching ehr ids in the phenotype")
   @PreAuthorize(Role.STUDY_COORDINATOR)
-  public ResponseEntity<Set<String>> executePhenotype(
+  public ResponseEntity<Long> executePhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @Valid @RequestBody PhenotypeDto phenotypeDto) {
     return ResponseEntity.ok(
-        phenotypeService.executePhenotype(
+        phenotypeService.getPhenotypeSize(
             mapper.convertToEntity(phenotypeDto), principal.getSubject()));
   }
 }

@@ -4,12 +4,20 @@ import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+import org.ehrbase.aql.binder.AqlBinder;
+import org.ehrbase.aql.dto.AqlDto;
+import org.ehrbase.aql.dto.condition.ParameterValue;
+import org.ehrbase.aql.dto.select.SelectDto;
+import org.ehrbase.aql.dto.select.SelectFieldDto;
+import org.ehrbase.aql.parser.AqlToDtoParser;
+import org.ehrbase.client.aql.field.EhrFields;
+import org.ehrbase.client.aql.query.EntityQuery;
 import org.ehrbase.client.aql.query.Query;
-import org.ehrbase.client.aql.record.Record1;
+import org.ehrbase.client.aql.record.Record;
 import org.ehrbase.client.exception.ClientException;
 import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestClient;
@@ -37,10 +45,18 @@ public class EhrBaseService {
    * @throws WrongStatusCodeException in case if a malformed aql
    */
   public Set<String> retrieveEligiblePatientIds(Aql aql) {
-    Query<Record1<UUID>> query = Query.buildNativeQuery(aql.getQuery(), UUID.class);
+    AqlDto dto = new AqlToDtoParser().parse(aql.getQuery());
+    SelectFieldDto selectStatementDto = new SelectFieldDto();
+    selectStatementDto.setAqlPath(EhrFields.EHR_ID().getPath());
+    selectStatementDto.setContainmentId(dto.getEhr().getContainmentId());
+    SelectDto selectDto = new SelectDto();
+    selectDto.setStatement(List.of(selectStatementDto));
+    dto.setSelect(selectDto);
+    Pair<EntityQuery<Record>, List<ParameterValue>> pair = new AqlBinder().bind(dto);
+
     try {
-      List<Record1<UUID>> results = restClient.aqlEndpoint().execute(query);
-      return results.stream().map(result -> result.value1().toString()).collect(Collectors.toSet());
+      List<Record> results = restClient.aqlEndpoint().execute(pair.getLeft());
+      return results.stream().map(result -> result.value(0).toString()).collect(Collectors.toSet());
     } catch (WrongStatusCodeException e) {
       log.error("Malformed query exception", e);
       throw e;

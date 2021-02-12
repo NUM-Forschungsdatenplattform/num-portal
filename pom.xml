@@ -108,6 +108,11 @@
       <version>${ehr-sdk.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.github.ehrbase.openEHR_SDK</groupId>
+      <artifactId>aql</artifactId>
+      <version>${ehr-sdk.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.github.ehrbase</groupId>
       <artifactId>aql-editor-backend-spring-boot-starter</artifactId>
       <version>${aql-editor-backend-starter.version}</version>

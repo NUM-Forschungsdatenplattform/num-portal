@@ -96,4 +96,8 @@ public class PhenotypeService {
 
     return phenotypeExecutor.execute(phenotype);
   }
+
+  public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
+    return executePhenotype(phenotype, loggedInUserId).size();
+  }
 }
