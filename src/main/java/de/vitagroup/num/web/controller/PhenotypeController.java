@@ -54,7 +54,8 @@ public class PhenotypeController {
   }
 
   @PostMapping("/size")
-  @ApiOperation(value = "Executes a phenotype and returns the list of ehr ids in the phenotype")
+  @ApiOperation(
+      value = "Executes a phenotype and returns the count of matching ehr ids in the phenotype")
   @PreAuthorize(Role.STUDY_COORDINATOR)
   public ResponseEntity<Long> executePhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,
