@@ -34,8 +34,8 @@ public class PhenotypeController {
   @GetMapping
   @ApiOperation(value = "Retrieves a list of phenotypes")
   @ApiResponses({
-    @ApiResponse(code = 401, message = "Unauthrorized"),
-    @ApiResponse(code = 404, message = "Forbidden"),
+    @ApiResponse(code = 401, message = "Unauthorized"),
+    @ApiResponse(code = 403, message = "Forbidden"),
     @ApiResponse(code = 404, message = "Not found"),
     @ApiResponse(code = 500, message = "Internal server error")
   })
@@ -51,8 +51,8 @@ public class PhenotypeController {
   @PostMapping
   @ApiOperation(value = "Stores a phenotype")
   @ApiResponses({
-    @ApiResponse(code = 401, message = "Unauthrorized"),
-    @ApiResponse(code = 404, message = "Forbidden"),
+    @ApiResponse(code = 401, message = "Unauthorized"),
+    @ApiResponse(code = 403, message = "Forbidden"),
     @ApiResponse(code = 404, message = "Not found"),
     @ApiResponse(code = 500, message = "Internal server error")
   })
@@ -70,8 +70,8 @@ public class PhenotypeController {
   @ApiOperation(
       value = "Executes a phenotype and returns the count of matching ehr ids in the phenotype")
   @ApiResponses({
-    @ApiResponse(code = 401, message = "Unauthrorized"),
-    @ApiResponse(code = 404, message = "Forbidden"),
+    @ApiResponse(code = 401, message = "Unauthorized"),
+    @ApiResponse(code = 403, message = "Forbidden"),
     @ApiResponse(code = 404, message = "Not found"),
     @ApiResponse(code = 451, message = "Too few matchers, withheld for privacy reasons"),
     @ApiResponse(code = 500, message = "Internal server error")
