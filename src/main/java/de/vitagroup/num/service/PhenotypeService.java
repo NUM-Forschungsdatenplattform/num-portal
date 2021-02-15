@@ -7,9 +7,11 @@ import de.vitagroup.num.domain.GroupExpression;
 import de.vitagroup.num.domain.Phenotype;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.PhenotypeRepository;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.PhenotypeExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
+import de.vitagroup.num.web.exception.PrivacyException;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.ArrayDeque;
 import java.util.List;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class PhenotypeService {
 
+  private final PrivacyProperties privacyProperties;
   private final PhenotypeRepository phenotypeRepository;
   private final UserDetailsService userDetailsService;
   private final AqlService aqlService;
@@ -94,7 +97,12 @@ public class PhenotypeService {
       throw new ForbiddenException("Logged in owner not approved.");
     }
 
-    return phenotypeExecutor.execute(phenotype);
+    Set<String> ehrIds = phenotypeExecutor.execute(phenotype);
+    if (ehrIds.size() < privacyProperties.getMinHits()) {
+      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
+    }
+
+    return ehrIds;
   }
 
   public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {

@@ -33,3 +33,6 @@ ehrbase:
   rest-api-url: ${EHRBASE_ENDPOINT}/ehrbase/rest/openehr/v1/
   username: ${EHRBASE_USER}
   password: ${EHRBASE_PASSWORD}
+
+privacy:
+  minHits: ${PRIVACY_MIN_HITS}

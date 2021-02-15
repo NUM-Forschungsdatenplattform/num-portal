@@ -111,4 +111,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
     return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.FORBIDDEN);
   }
+
+  @ExceptionHandler({PrivacyException.class})
+  public ResponseEntity<ErrorResponse> handlePrivacyException(PrivacyException ex) {
+    log.debug(ex.getMessage(), ex);
+
+    ErrorResponse response =
+        ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
+    return new ResponseEntity<>(
+        response, new HttpHeaders(), HttpStatus.UNAVAILABLE_FOR_LEGAL_REASONS);
+  }
 }

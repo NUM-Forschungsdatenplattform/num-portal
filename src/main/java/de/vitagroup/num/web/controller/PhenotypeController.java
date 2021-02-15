@@ -6,6 +6,8 @@ import de.vitagroup.num.mapper.PhenotypeMapper;
 import de.vitagroup.num.service.PhenotypeService;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -31,6 +33,12 @@ public class PhenotypeController {
 
   @GetMapping
   @ApiOperation(value = "Retrieves a list of phenotypes")
+  @ApiResponses({
+    @ApiResponse(code = 401, message = "Unauthorized"),
+    @ApiResponse(code = 403, message = "Forbidden"),
+    @ApiResponse(code = 404, message = "Not found"),
+    @ApiResponse(code = 500, message = "Internal server error")
+  })
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<List<PhenotypeDto>> getAllPhenotypes(
       @AuthenticationPrincipal @NotNull Jwt principal) {
@@ -42,6 +50,12 @@ public class PhenotypeController {
 
   @PostMapping
   @ApiOperation(value = "Stores a phenotype")
+  @ApiResponses({
+    @ApiResponse(code = 401, message = "Unauthorized"),
+    @ApiResponse(code = 403, message = "Forbidden"),
+    @ApiResponse(code = 404, message = "Not found"),
+    @ApiResponse(code = 500, message = "Internal server error")
+  })
   @PreAuthorize(Role.STUDY_COORDINATOR)
   public ResponseEntity<PhenotypeDto> createPhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -55,6 +69,13 @@ public class PhenotypeController {
   @PostMapping("/size")
   @ApiOperation(
       value = "Executes a phenotype and returns the count of matching ehr ids in the phenotype")
+  @ApiResponses({
+    @ApiResponse(code = 401, message = "Unauthorized"),
+    @ApiResponse(code = 403, message = "Forbidden"),
+    @ApiResponse(code = 404, message = "Not found"),
+    @ApiResponse(code = 451, message = "Too few matchers, withheld for privacy reasons"),
+    @ApiResponse(code = 500, message = "Internal server error")
+  })
   @PreAuthorize(Role.STUDY_COORDINATOR)
   public ResponseEntity<Long> executePhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,

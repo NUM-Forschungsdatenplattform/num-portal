@@ -80,7 +80,8 @@ ehrbase:
 cors:
   allowedOrigins:
     - "*"
-
+privacy:
+  minHits: 20
 ---
 spring:
   profiles: local
