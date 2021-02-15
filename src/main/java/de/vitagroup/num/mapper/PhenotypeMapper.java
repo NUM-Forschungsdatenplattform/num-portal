@@ -20,6 +20,7 @@ public class PhenotypeMapper {
 
   public PhenotypeDto convertToDto(Phenotype phenotype) {
     PhenotypeDto phenotypeDto = modelMapper.map(phenotype, PhenotypeDto.class);
+    phenotypeDto.setOwnerId(phenotype.getOwner().getUserId());
     return phenotypeDto;
   }
 

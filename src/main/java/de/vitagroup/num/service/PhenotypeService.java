@@ -78,7 +78,7 @@ public class PhenotypeService {
 
         Optional<Aql> aql = aqlService.getAqlById(((AqlExpression) current).getAql().getId());
 
-        if (aql.isEmpty() || aql.get().hasEmptyOrDifferentOwner(loggedInUserId)) {
+        if (aql.isEmpty() || (!aql.get().isViewable(loggedInUserId)))  {
           throw new BadRequestException(
               "One of the phenotype aqls cannot be found in the num portal or access to it is forbidden");
         }

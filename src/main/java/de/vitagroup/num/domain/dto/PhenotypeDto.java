@@ -35,5 +35,5 @@ public class PhenotypeDto {
   @ApiModelProperty(required = true, value = "The aql query tree defining the phenotype")
   private Expression query;
 
-  @ApiModelProperty private Long ownerId;
+  @ApiModelProperty private String ownerId;
 }
