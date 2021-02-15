@@ -103,6 +103,7 @@ public class PhenotypeServiceTest {
   public void shouldFailWhenWhenGettingPhenotypeSizeUnapproved() {
     phenotypeService.getPhenotypeSize(null, "notApprovedUserId");
   }
+
   @Test
   public void shouldCorrectlyCreatePhenotype() {
     AqlExpression aqlExpression = AqlExpression.builder().aql(Aql.builder().id(1L).build()).build();
