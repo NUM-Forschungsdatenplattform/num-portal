@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import org.ehrbase.aql.parser.AqlParseException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -78,7 +79,7 @@ public class PhenotypeService {
 
         Optional<Aql> aql = aqlService.getAqlById(((AqlExpression) current).getAql().getId());
 
-        if (aql.isEmpty() || (!aql.get().isViewable(loggedInUserId)))  {
+        if (aql.isEmpty() || (!aql.get().isViewable(loggedInUserId))) {
           throw new BadRequestException(
               "One of the phenotype aqls cannot be found in the num portal or access to it is forbidden");
         }
@@ -106,6 +107,10 @@ public class PhenotypeService {
   }
 
   public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
-    return executePhenotype(phenotype, loggedInUserId).size();
+    try {
+      return executePhenotype(phenotype, loggedInUserId).size();
+    } catch (AqlParseException e) {
+      throw new BadRequestException(e.getMessage());
+    }
   }
 }
