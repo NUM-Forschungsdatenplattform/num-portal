@@ -52,6 +52,7 @@ public class PhenotypeController {
   @PostMapping
   @ApiOperation(value = "Stores a phenotype")
   @ApiResponses({
+    @ApiResponse(code = 400, message = "Bad request"),
     @ApiResponse(code = 401, message = "Unauthorized"),
     @ApiResponse(code = 403, message = "Forbidden"),
     @ApiResponse(code = 404, message = "Not found"),
@@ -71,6 +72,7 @@ public class PhenotypeController {
   @ApiOperation(
       value = "Executes a phenotype and returns the count of matching ehr ids in the phenotype")
   @ApiResponses({
+    @ApiResponse(code = 400, message = "Bad request"),
     @ApiResponse(code = 401, message = "Unauthorized"),
     @ApiResponse(code = 403, message = "Forbidden"),
     @ApiResponse(code = 404, message = "Not found"),
