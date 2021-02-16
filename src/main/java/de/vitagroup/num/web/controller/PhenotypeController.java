@@ -1,6 +1,7 @@
 package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Phenotype;
+import de.vitagroup.num.domain.dto.ExpressionDto;
 import de.vitagroup.num.domain.dto.PhenotypeDto;
 import de.vitagroup.num.mapper.PhenotypeMapper;
 import de.vitagroup.num.service.PhenotypeService;
@@ -79,9 +80,9 @@ public class PhenotypeController {
   @PreAuthorize(Role.STUDY_COORDINATOR)
   public ResponseEntity<Long> executePhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @Valid @RequestBody PhenotypeDto phenotypeDto) {
+      @NotNull @Valid @RequestBody ExpressionDto expressionDto) {
     return ResponseEntity.ok(
         phenotypeService.getPhenotypeSize(
-            mapper.convertToEntity(phenotypeDto), principal.getSubject()));
+            mapper.convertToEntity(expressionDto), principal.getSubject()));
   }
 }

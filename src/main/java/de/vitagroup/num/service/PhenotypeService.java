@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import org.ehrbase.aql.parser.AqlParseException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -78,7 +79,7 @@ public class PhenotypeService {
 
         Optional<Aql> aql = aqlService.getAqlById(((AqlExpression) current).getAql().getId());
 
-        if (aql.isEmpty() || (!aql.get().isViewable(loggedInUserId)))  {
+        if (aql.isEmpty() || (!aql.get().isViewable(loggedInUserId))) {
           throw new BadRequestException(
               "One of the phenotype aqls cannot be found in the num portal or access to it is forbidden");
         }
@@ -89,23 +90,24 @@ public class PhenotypeService {
     }
   }
 
-  public Set<String> executePhenotype(Phenotype phenotype, String loggedInUserId) {
+  public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
     UserDetails owner =
         userDetailsService.getUserDetailsById(loggedInUserId).orElseThrow(SystemException::new);
 
     if (owner.isNotApproved()) {
-      throw new ForbiddenException("Logged in owner not approved.");
+      throw new ForbiddenException("Logged in user is not approved.");
     }
 
-    Set<String> ehrIds = phenotypeExecutor.execute(phenotype);
+    Set<String> ehrIds;
+    try {
+      ehrIds = phenotypeExecutor.execute(phenotype);
+    } catch (AqlParseException e) {
+      throw new BadRequestException(e.getMessage());
+    }
+
     if (ehrIds.size() < privacyProperties.getMinHits()) {
       throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
     }
-
-    return ehrIds;
-  }
-
-  public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
-    return executePhenotype(phenotype, loggedInUserId).size();
+    return ehrIds.size();
   }
 }
