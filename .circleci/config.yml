@@ -27,6 +27,8 @@ jobs:
     steps:
       - checkout
       - cache-out-maven-dependencies
+      - setup_remote_docker:
+          version: 19.03.13
       - run:
           name: Run unit tests
           command:  ./mvnw clean test
