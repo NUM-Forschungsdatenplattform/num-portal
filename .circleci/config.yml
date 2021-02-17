@@ -34,7 +34,7 @@ jobs:
           command:  ./mvnw clean test
       - run:
           name: Run integration tests
-          command: ./mvnw failsafe:integration-test
+          command: ./mvnw failsafe:integration-test failsafe:verify
       - run:
           name: Run CVE scan
           command: ./mvnw dependency-check:check
