@@ -30,6 +30,9 @@ jobs:
       - setup_remote_docker:
           version: 19.03.13
       - run:
+          name: disable ruyk
+          command: TESTCONTAINERS_RYUK_DISABLED=true
+      - run:
           name: Run unit tests
           command:  ./mvnw clean test
       - run:
