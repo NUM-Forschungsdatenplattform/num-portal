@@ -22,13 +22,11 @@ workflows:
                 - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop)$/
 jobs:
   test:
-    docker:
-      - image: circleci/openjdk:stretch
+    machine:
+      image: ubuntu-2004:202010-01
     steps:
       - checkout
       - cache-out-maven-dependencies
-      - setup_remote_docker:
-          version: 19.03.13
       - run:
           name: Run unit tests
           command:  ./mvnw clean test
