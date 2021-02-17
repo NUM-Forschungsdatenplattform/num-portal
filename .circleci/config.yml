@@ -30,14 +30,14 @@ jobs:
       - setup_remote_docker:
           version: 19.03.13
       - run:
-          name: disable ruyk
-          command: TESTCONTAINERS_RYUK_DISABLED=true
-      - run:
           name: Run unit tests
           command:  ./mvnw clean test
       - run:
           name: Run integration tests
-          command: ./mvnw failsafe:integration-test failsafe:verify
+          command: |
+            TESTCONTAINERS_RYUK_DISABLED=true
+            echo "Ruyk disabled: ${TESTCONTAINERS_RYUK_DISABLED}"
+            ./mvnw failsafe:integration-test failsafe:verify
       - run:
           name: Run CVE scan
           command: ./mvnw dependency-check:check
