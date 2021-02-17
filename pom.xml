@@ -27,7 +27,8 @@
     <java.version>11</java.version>
     <openfeign.version>2.2.5.RELEASE</openfeign.version>
     <jacoco.version>0.8.6</jacoco.version>
-    <dependency-check.version>6.0.3</dependency-check.version>
+    <dependency-check.version>6.1.1</dependency-check.version>
+    <failsafe.version>2.22.2</failsafe.version>
   </properties>
 
   <repositories>
@@ -91,10 +92,10 @@
     <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
-            <version>1.10.6</version>
+            <version>1.15.2</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
+    </dependency>
+    <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
     </dependency>
@@ -232,6 +233,36 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${failsafe.version}</version>
+        <configuration>
+          <excludes>
+            <exclude>**/*IT</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>failsafe</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>${failsafe.version}</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

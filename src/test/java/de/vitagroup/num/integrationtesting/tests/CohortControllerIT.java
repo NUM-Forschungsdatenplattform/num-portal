@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-public class CohortController extends IntegrationTest {
+public class CohortControllerIT extends IntegrationTest {
 
   @Autowired public MockMvc mockMvc;
   @Autowired private ObjectMapper mapper;

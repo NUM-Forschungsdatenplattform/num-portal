@@ -28,13 +28,20 @@ jobs:
       - checkout
       - cache-out-maven-dependencies
       - run:
-          name: Run unit tests and CVE scan
-          command:  ./mvnw clean verify
+          name: Run unit tests
+          command:  ./mvnw clean test
+      - run:
+          name: Run integration tests
+          command: ./mvnw failsafe:integration-test
+      - run:
+          name: Run CVE scan
+          command: ./mvnw dependency-check:check
       - run:
           name: Save test results
           command: |
             mkdir -p ~/test-results/junit/
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
           when: always
       - store_artifacts:
           path: target/site
