@@ -76,4 +76,8 @@ public class Study {
   public boolean hasEmptyOrDifferentOwner(String userId) {
     return ObjectUtils.isEmpty(coordinator) || !coordinator.getUserId().equals(userId);
   }
+
+  public boolean isStudyResearcher(String userId) {
+    return researchers.stream().anyMatch(r -> userId.equals(r.getUserId()));
+  }
 }
