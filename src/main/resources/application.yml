@@ -143,5 +143,5 @@ ehrbase:
   password: SuperSecretPassword
 
 privacy:
-  minHits: 2
+  minHits: 1
 

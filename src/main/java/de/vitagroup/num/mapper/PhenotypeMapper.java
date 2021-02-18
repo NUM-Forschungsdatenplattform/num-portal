@@ -1,6 +1,7 @@
 package de.vitagroup.num.mapper;
 
 import de.vitagroup.num.domain.Phenotype;
+import de.vitagroup.num.domain.dto.ExpressionDto;
 import de.vitagroup.num.domain.dto.PhenotypeDto;
 import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
@@ -29,4 +30,8 @@ public class PhenotypeMapper {
     phenotype.setId(null);
     return phenotype;
   }
+  public Phenotype convertToEntity(ExpressionDto expressionDto) {
+    return modelMapper.map(expressionDto, Phenotype.class);
+  }
+
 }
