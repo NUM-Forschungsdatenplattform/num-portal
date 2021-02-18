@@ -31,9 +31,7 @@ public class PhenotypeMapper {
     return phenotype;
   }
   public Phenotype convertToEntity(ExpressionDto expressionDto) {
-    Phenotype phenotype = modelMapper.map(expressionDto, Phenotype.class);
-    phenotype.setId(null);
-    return phenotype;
+    return modelMapper.map(expressionDto, Phenotype.class);
   }
 
 }

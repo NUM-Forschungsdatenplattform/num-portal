@@ -62,6 +62,27 @@ public class PhenotypeService {
     return phenotypeRepository.save(phenotype);
   }
 
+  public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
+    UserDetails owner =
+        userDetailsService.getUserDetailsById(loggedInUserId).orElseThrow(SystemException::new);
+
+    if (owner.isNotApproved()) {
+      throw new ForbiddenException("Logged in user is not approved.");
+    }
+
+    Set<String> ehrIds;
+    try {
+      ehrIds = phenotypeExecutor.execute(phenotype);
+    } catch (AqlParseException e) {
+      throw new BadRequestException(e.getMessage());
+    }
+
+    if (ehrIds.size() < privacyProperties.getMinHits()) {
+      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
+    }
+    return ehrIds.size();
+  }
+
   private void validatePhenotypeAqls(Phenotype phenotype, String loggedInUserId) {
     Expression aqlExpression = phenotype.getQuery();
 
@@ -88,26 +109,5 @@ public class PhenotypeService {
         queue.addAll(((GroupExpression) current).getChildren());
       }
     }
-  }
-
-  public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
-    UserDetails owner =
-        userDetailsService.getUserDetailsById(loggedInUserId).orElseThrow(SystemException::new);
-
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Logged in user is not approved.");
-    }
-
-    Set<String> ehrIds;
-    try {
-      ehrIds = phenotypeExecutor.execute(phenotype);
-    } catch (AqlParseException e) {
-      throw new BadRequestException(e.getMessage());
-    }
-
-    if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
-    }
-    return ehrIds.size();
   }
 }

@@ -1,10 +1,8 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static de.vitagroup.num.domain.Roles.RESEARCHER;
 import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
 import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;

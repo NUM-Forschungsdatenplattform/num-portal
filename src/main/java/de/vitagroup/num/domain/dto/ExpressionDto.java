@@ -4,7 +4,6 @@ import de.vitagroup.num.domain.Expression;
 import de.vitagroup.num.domain.validation.ValidExpression;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
