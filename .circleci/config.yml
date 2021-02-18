@@ -32,10 +32,7 @@ jobs:
           command:  ./mvnw clean test
       - run:
           name: Run integration tests
-          command: |
-            TESTCONTAINERS_RYUK_DISABLED=true
-            echo "Ruyk disabled: ${TESTCONTAINERS_RYUK_DISABLED}"
-            ./mvnw failsafe:integration-test failsafe:verify
+          command: ./mvnw verify -P integration-tests
       - run:
           name: Run CVE scan
           command: ./mvnw dependency-check:check
@@ -47,7 +44,7 @@ jobs:
             find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
           when: always
       - store_artifacts:
-          path: target/site
+          path: target/site/jacoco-merged-test-coverage-report
       - store_artifacts:
           path: target/dependency-check-report.html
       - store_test_results:
