@@ -2,7 +2,6 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.mapper.CohortMapper;
 import de.vitagroup.num.service.CohortService;
 import de.vitagroup.num.web.config.Role;
@@ -73,13 +72,5 @@ public class CohortController {
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Long> retrieveCohortSize(@PathVariable String cohortId) {
     return ResponseEntity.ok(cohortService.getCohortSize(Long.parseLong(cohortId)));
-  }
-
-  @PostMapping("size")
-  @ApiOperation(value = "Retrieves the cohort group size without saving")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
-  public ResponseEntity<Long> getCohortGroupSize(
-      @NotNull @RequestBody CohortGroupDto cohortGroupDto) {
-    return ResponseEntity.ok(cohortService.getCohortGroupSize(cohortGroupDto));
   }
 }

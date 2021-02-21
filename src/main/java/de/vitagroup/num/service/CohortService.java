@@ -63,7 +63,7 @@ public class CohortService {
             .name(cohortDto.getName())
             .description(cohortDto.getDescription())
             .study(study)
-            .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId, true))
+            .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId))
             .build();
 
     study.setCohort(cohort);
@@ -77,11 +77,6 @@ public class CohortService {
 
   public long getCohortSize(long cohortId) {
     return executeCohort(cohortId).size();
-  }
-
-  public long getCohortGroupSize(CohortGroupDto cohortGroupDto) {
-    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto, null, false);
-    return cohortExecutor.executeGroup(cohortGroup).size();
   }
 
   public Cohort updateCohort(CohortDto cohortDto, Long cohortId, String userId) {
@@ -101,15 +96,13 @@ public class CohortService {
       throw new ForbiddenException("Not allowed");
     }
 
-    cohortToEdit.setCohortGroup(
-        convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId, true));
+    cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId));
     cohortToEdit.setDescription(cohortDto.getDescription());
     cohortToEdit.setName(cohortDto.getName());
     return cohortRepository.save(cohortToEdit);
   }
 
-  public CohortGroup convertToCohortGroupEntity(
-      CohortGroupDto cohortGroupDto, String userId, boolean checkUser) {
+  private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto, String userId) {
     if (cohortGroupDto == null) {
       throw new BadRequestException("Cohort groups cannot be empty");
     }
@@ -122,7 +115,7 @@ public class CohortService {
 
       if (phenotype.isPresent()) {
 
-        if (checkUser && phenotype.get().hasEmptyOrDifferentOwner(userId)) {
+        if (phenotype.get().hasEmptyOrDifferentOwner(userId)) {
           throw new ForbiddenException(
               "Cannot access phenotype: "
                   + phenotype.get().getName()
@@ -141,8 +134,7 @@ public class CohortService {
           cohortGroupDto.getChildren().stream()
               .map(
                   child -> {
-                    CohortGroup cohortGroupChild =
-                        convertToCohortGroupEntity(child, userId, checkUser);
+                    CohortGroup cohortGroupChild = convertToCohortGroupEntity(child, userId);
                     cohortGroupChild.setParent(cohortGroup);
                     return cohortGroupChild;
                   })
