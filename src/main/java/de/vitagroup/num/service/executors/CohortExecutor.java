@@ -28,14 +28,14 @@ public class CohortExecutor {
       throw new IllegalArgumentException("Cannot execute an empty cohort");
     }
 
-    return execute(cohort.getCohortGroup());
+    return executeGroup(cohort.getCohortGroup());
   }
 
-  private Set<String> execute(CohortGroup cohortGroup) {
+  public Set<String> executeGroup(CohortGroup cohortGroup) {
     if (cohortGroup.getType() == Type.GROUP) {
 
       List<Set<String>> sets =
-          cohortGroup.getChildren().stream().map(this::execute).collect(Collectors.toList());
+          cohortGroup.getChildren().stream().map(this::executeGroup).collect(Collectors.toList());
 
       return setOperations.apply(
           cohortGroup.getOperator(), sets, ehrBaseService.getAllPatientIds());
