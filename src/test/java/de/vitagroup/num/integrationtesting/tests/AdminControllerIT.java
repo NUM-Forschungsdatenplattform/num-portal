@@ -12,11 +12,13 @@ import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import lombok.SneakyThrows;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+@Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
 public class AdminControllerIT extends IntegrationTest {
 
   @Autowired public MockMvc mockMvc;
