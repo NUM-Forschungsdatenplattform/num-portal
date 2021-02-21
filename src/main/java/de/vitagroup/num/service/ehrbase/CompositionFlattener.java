@@ -30,7 +30,7 @@ public class CompositionFlattener {
               .buildFlatJson(FlatFormat.SIM_SDT, templateId);
       return mapper.readValue(flattener.marshal(composition), Map.class);
     } catch (JsonProcessingException e) {
-      throw new UnsupportedOperationException("Cannot parse results");
+      throw new de.vitagroup.num.web.exception.UnsupportedOperationException("Cannot parse results");
     } catch (SdkException e){
       throw new SystemException(e.getMessage());
     }
