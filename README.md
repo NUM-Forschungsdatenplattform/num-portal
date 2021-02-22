@@ -24,7 +24,7 @@ http://localhost:8090/swagger-ui/
 
 ### License
 
-Copyright 2020 vitagroup AG
+Copyright 2021 vitagroup AG
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

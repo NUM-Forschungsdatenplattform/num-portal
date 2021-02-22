@@ -5,6 +5,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.nedap.archie.rm.composition.Composition;
+import de.vitagroup.num.web.exception.SystemException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -60,7 +61,7 @@ public class CompositionFlattenerTest {
             "bericht/risikogebiet/reisefall:0/beliebiges_intervallereignis:0/bestimmte_reise:0/bestimmtes_reiseziel:0/bundesland_region"));
   }
 
-  @Test(expected = UnsupportedOperationException.class)
+  @Test(expected = SystemException.class)
   @SneakyThrows
   public void shouldHandleMissingTemplateId() {
     Composition composition =
