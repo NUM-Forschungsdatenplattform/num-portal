@@ -2,6 +2,7 @@ package de.vitagroup.num.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.vitagroup.num.domain.StudyStatus;
+import de.vitagroup.num.domain.admin.User;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.OffsetDateTime;
@@ -37,7 +38,7 @@ public class StudyDto {
 
   @ApiModelProperty private Long cohortId;
 
-  @ApiModelProperty private UserDetailsDto coordinator;
+  @ApiModelProperty private User coordinator;
 
   @ApiModelProperty private List<UserDetailsDto> researchers;
 

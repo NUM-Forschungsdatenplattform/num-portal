@@ -66,7 +66,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study")
             .status(StudyStatus.APPROVED)
-            .coordinator(UserDetailsDto.builder().userId("someCoordinatorId").build())
             .build();
 
     studyService.createStudy(study, "nonExistingCoordinatorId", List.of());
@@ -77,7 +76,6 @@ public class StudyServiceTest {
     StudyDto studyDto =
         StudyDto.builder()
             .name("Study")
-            .coordinator(UserDetailsDto.builder().userId("someCoordinatorId").build())
             .build();
 
     studyService.createStudy(studyDto, "notApprovedCoordinatorId", List.of());
@@ -122,7 +120,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.APPROVED)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
@@ -154,7 +151,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.PUBLISHED)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
@@ -183,7 +179,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.CLOSED)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
@@ -212,7 +207,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.APPROVED)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
@@ -241,7 +235,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.DRAFT)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
@@ -273,7 +266,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.PENDING)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
@@ -294,7 +286,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.DRAFT)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
@@ -315,7 +306,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.REVIEWING)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
@@ -336,7 +326,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.REVIEWING)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
@@ -365,7 +354,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.APPROVED)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
@@ -386,7 +374,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.APPROVED)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
@@ -415,7 +402,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.CHANGE_REQUEST)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
@@ -436,7 +422,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.DENIED)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
@@ -457,7 +442,6 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.DENIED)
-            .coordinator(UserDetailsDto.builder().userId("approvedCoordinatorId").build())
             .build();
 
     Exception exception =
