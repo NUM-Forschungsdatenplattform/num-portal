@@ -1,0 +1,35 @@
+{
+  "q" : null,
+  "columns" : [ {
+    "path" : "c1/k4",
+    "name" : "c1/k4"
+  }, {
+    "path" : "c1/k5",
+    "name" : "c1/k5"
+  }, {
+    "path" : "c1/k2",
+    "name" : "c1/k2"
+  }, {
+    "path" : "c1/k3",
+    "name" : "c1/k3"
+  }, {
+    "path" : "c1/k6",
+    "name" : "c1/k6"
+  }, {
+    "path" : "c1/only/in/composition/3",
+    "name" : "c1/only/in/composition/3"
+  }, {
+    "path" : "c1/only/in/composition/1",
+    "name" : "c1/only/in/composition/1"
+  }, {
+    "path" : "c1/only/in/composition/2",
+    "name" : "c1/only/in/composition/2"
+  }, {
+    "path" : "c1/k1",
+    "name" : "c1/k1"
+  }, {
+    "path" : "c1/only/in/composition/2/and/3",
+    "name" : "c1/only/in/composition/2/and/3"
+  } ],
+  "rows" : [ [ "c1v4", "c1v5", "c1v2", "c1v3", "c1v6", null, "only in composition one", null, "c1v1", null ], [ "c2v4", "c2v5", "c2v2", "c2v3", "c2v6", null, null, "only in composition two", "c2v1", "only in composition two and three" ], [ "c3v4", "c3v5", "c3v2", "c3v3", "c3v6", "only in composition three", null, null, "c3v1", "only in composition two and three" ] ]
+}

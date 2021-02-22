@@ -8,18 +8,25 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.service.ehrbase.CompositionResponseDataBuilder;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.web.exception.BadRequestException;
+import de.vitagroup.num.web.exception.SystemException;
 import java.util.List;
+import java.util.Map;
 import org.assertj.core.util.Lists;
 import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.client.aql.field.AqlFieldImp;
 import org.ehrbase.client.aql.query.EntityQuery;
 import org.ehrbase.client.aql.query.Query;
 import org.ehrbase.client.aql.record.Record;
+import org.ehrbase.client.exception.ClientException;
 import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestClient;
 import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
+import org.ehrbase.response.openehr.QueryResponseData;
 import org.ehrbase.response.openehr.TemplatesResponseData;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,24 +43,17 @@ public class EhrBaseServiceTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private DefaultRestClient restClient;
 
+  @Mock public ObjectMapper mapper;
+
+  @Mock public CompositionResponseDataBuilder compositionResponseDataBuilder;
+
   @InjectMocks private EhrBaseService ehr;
 
-  @Before
-  public void setup() {
-    TemplatesResponseData templatesResponseData = new TemplatesResponseData();
+  private static final String GOOD_QUERY =
+      "Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
 
-    TemplateMetaDataDto t1 = new TemplateMetaDataDto();
-    t1.setTemplateId("t1");
-    t1.setConcept("c1");
-
-    TemplateMetaDataDto t2 = new TemplateMetaDataDto();
-    t2.setTemplateId("t2");
-    t2.setConcept("c2");
-
-    templatesResponseData.set(List.of(t1, t2));
-
-    when(restClient.templateEndpoint().findAllTemplates()).thenReturn(templatesResponseData);
-  }
+  private static final String BAD_QUERY =
+      "Select c0 as test contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
 
   @Test(expected = WrongStatusCodeException.class)
   public void shouldHandleBadAqlQuery() {
@@ -90,5 +90,70 @@ public class EhrBaseServiceTest {
     assertThat(templates.get(0).getConcept(), is("c1"));
     assertThat(templates.get(1).getTemplateId(), is("t2"));
     assertThat(templates.get(1).getConcept(), is("c2"));
+  }
+
+  @Test
+  public void shouldFlattenResultsWhenContainsComposition() {
+    QueryResponseData compositionsQueryResponseData = new QueryResponseData();
+    List<Map<String, String>> columns = List.of(Map.of("uuid", "c/uuid"));
+    List<List<Object>> rows =
+        List.of(
+            List.of(Map.of("_type", "COMPOSITION", "uuid", "12345")),
+            List.of(Map.of("_type", "COMPOSITION", "uuid", "bla")));
+    compositionsQueryResponseData.setColumns(columns);
+    compositionsQueryResponseData.setRows(rows);
+
+    when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
+        .thenReturn(compositionsQueryResponseData);
+
+    when(compositionResponseDataBuilder.build(any())).thenReturn(compositionsQueryResponseData);
+
+    ehr.executeRawQuery(GOOD_QUERY);
+    verify(compositionResponseDataBuilder, times(1)).build(any());
+  }
+
+  @Test
+  public void shouldNotFlattenResults() {
+    QueryResponseData response = new QueryResponseData();
+
+    response.setColumns(List.of(Map.of("uuid", "c/uuid")));
+    response.setRows(  List.of(
+        List.of(Map.of("_type", "OBSERVATION", "uuid", "12345")),
+        List.of(Map.of("_type", "SECTION", "uuid", "bla"))));
+
+    when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
+        .thenReturn(response);
+
+    ehr.executeRawQuery(GOOD_QUERY);
+    verify(compositionResponseDataBuilder, times(0)).build(any());
+  }
+
+  @Test(expected = SystemException.class)
+  public void shouldHandleClientExceptionWhenExecutingAql(){
+    when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
+        .thenThrow(ClientException.class);
+    ehr.executeRawQuery(GOOD_QUERY);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldValidateQueryWhenExecuting(){
+    ehr.executeRawQuery(BAD_QUERY);
+  }
+
+  @Before
+  public void setup() {
+    TemplatesResponseData templatesResponseData = new TemplatesResponseData();
+
+    TemplateMetaDataDto t1 = new TemplateMetaDataDto();
+    t1.setTemplateId("t1");
+    t1.setConcept("c1");
+
+    TemplateMetaDataDto t2 = new TemplateMetaDataDto();
+    t2.setTemplateId("t2");
+    t2.setConcept("c2");
+
+    templatesResponseData.set(List.of(t1, t2));
+
+    when(restClient.templateEndpoint().findAllTemplates()).thenReturn(templatesResponseData);
   }
 }
