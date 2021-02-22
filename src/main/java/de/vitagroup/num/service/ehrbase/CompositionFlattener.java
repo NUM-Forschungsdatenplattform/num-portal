@@ -30,7 +30,7 @@ public class CompositionFlattener {
               .buildFlatJson(FlatFormat.SIM_SDT, templateId);
       return mapper.readValue(flattener.marshal(composition), Map.class);
     } catch (JsonProcessingException e) {
-      throw new de.vitagroup.num.web.exception.UnsupportedOperationException("Cannot parse results");
+      throw new SystemException("Cannot parse results", e);
     } catch (SdkException e){
       throw new SystemException(e.getMessage());
     }
@@ -40,7 +40,7 @@ public class CompositionFlattener {
     if (composition.getArchetypeDetails() == null
         || composition.getArchetypeDetails().getTemplateId() == null
         || composition.getArchetypeDetails().getTemplateId().getValue() == null) {
-      throw new UnsupportedOperationException(
+      throw new SystemException(
           "Cannot parse results, composition missing template id");
     }
   }
