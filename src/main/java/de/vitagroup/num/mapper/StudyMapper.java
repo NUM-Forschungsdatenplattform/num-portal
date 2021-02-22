@@ -8,6 +8,7 @@ import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
+import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,19 +21,15 @@ public class StudyMapper {
 
   @PostConstruct
   public void initialize() {
+    modelMapper.getConfiguration().setAmbiguityIgnored(true);
     PropertyMap<Study, StudyDto> templatePropertyMap =
         new PropertyMap<>() {
           protected void configure() {
             map().setCohortId(source.getCohort().getId());
           }
         };
+
     modelMapper.addMappings(templatePropertyMap);
-    modelMapper.addMappings(
-        new PropertyMap<Study, StudyDto>() {
-          protected void configure() {
-            skip().setCoordinator(null);
-          }
-        });
   }
 
   public StudyDto convertToDto(Study study) {
