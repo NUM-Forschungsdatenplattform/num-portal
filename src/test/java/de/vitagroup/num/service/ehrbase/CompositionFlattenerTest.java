@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nedap.archie.rm.composition.Composition;
 import de.vitagroup.num.web.exception.SystemException;
 import java.nio.charset.StandardCharsets;
@@ -13,17 +12,17 @@ import lombok.SneakyThrows;
 import org.ehrbase.serialisation.jsonencoding.CanonicalJson;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringRunner.class)
+@Import(CompositionFlattener.class)
 public class CompositionFlattenerTest {
 
-  @Spy public ObjectMapper mapper;
-
-  @InjectMocks private CompositionFlattener flattener;
+  @Autowired
+  private CompositionFlattener flattener;
 
   private final String CORONA_PATH = "/testdata/corona.json";
 
