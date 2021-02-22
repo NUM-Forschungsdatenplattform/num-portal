@@ -1,5 +1,7 @@
 package de.vitagroup.num.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
@@ -9,6 +11,7 @@ import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -22,6 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,6 +35,26 @@ public class StudyService {
   private final StudyRepository studyRepository;
   private final UserDetailsRepository userDetailsRepository;
   private final UserDetailsService userDetailsService;
+  private final EhrBaseService ehrBaseService;
+  private final ObjectMapper mapper;
+
+  public String executeAql(String query, Long studyId, String userId) {
+
+    validateLoggedInUser(userId);
+
+    Study study = studyRepository.findById(studyId).orElseThrow(ResourceNotFound::new);
+
+    if(!study.isStudyResearcher(userId)){
+      throw new ForbiddenException("Cannot access this study");
+    }
+
+    try {
+      QueryResponseData response = ehrBaseService.executeRawQuery(query);
+      return mapper.writeValueAsString(response);
+    } catch (JsonProcessingException e) {
+      throw new SystemException("An issue has occurred, cannot execute aql.");
+    }
+  }
 
   public List<Study> getAllStudies() {
     return studyRepository.findAll();
@@ -76,15 +100,7 @@ public class StudyService {
 
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
 
-    Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(userId);
-
-    if (coordinator.isEmpty()) {
-      throw new SystemException("Logged in coordinator not found in portal");
-    }
-
-    if (coordinator.get().isNotApproved()) {
-      throw new ForbiddenException("User not approved:" + userId);
-    }
+    validateLoggedInUser(userId);
 
     Study studyToEdit = studyRepository.findById(id).orElseThrow(ResourceNotFound::new);
 
@@ -186,5 +202,17 @@ public class StudyService {
 
   private boolean isValidInitialStatus(StudyStatus status) {
     return status.equals(StudyStatus.DRAFT) || status.equals(StudyStatus.PENDING);
+  }
+
+  private void validateLoggedInUser(String userId){
+    Optional<UserDetails> user = userDetailsRepository.findByUserId(userId);
+
+    if (user.isEmpty()) {
+      throw new SystemException("Logged in coordinator not found in portal");
+    }
+
+    if (user.get().isNotApproved()) {
+      throw new ForbiddenException("User not approved:" + userId);
+    }
   }
 }

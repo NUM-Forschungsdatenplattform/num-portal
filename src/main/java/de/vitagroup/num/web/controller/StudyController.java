@@ -3,6 +3,7 @@ package de.vitagroup.num.web.controller;
 import de.vitagroup.num.domain.Comment;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.dto.CommentDto;
+import de.vitagroup.num.domain.dto.RawQueryDto;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.mapper.CommentMapper;
 import de.vitagroup.num.mapper.StudyMapper;
@@ -78,7 +79,8 @@ public class StudyController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
-    Study study = studyService.createStudy(studyDto, principal.getSubject(), extractRoles(principal));
+    Study study =
+        studyService.createStudy(studyDto, principal.getSubject(), extractRoles(principal));
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
@@ -93,9 +95,22 @@ public class StudyController {
       @PathVariable("id") Long studyId,
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
-    Study study = studyService.updateStudy(studyDto, studyId, principal.getSubject(), extractRoles(principal));
+    Study study =
+        studyService.updateStudy(
+            studyDto, studyId, principal.getSubject(), extractRoles(principal));
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
+  }
+
+  @PostMapping("/{studyId}/execute")
+  @ApiOperation(value = "Executes the aql")
+  @PreAuthorize(Role.RESEARCHER)
+  public ResponseEntity<String> executeAql(
+      @RequestBody @Valid RawQueryDto query,
+      @NotNull @NotEmpty @PathVariable Long studyId,
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(
+        studyService.executeAql(query.getQuery(), studyId, principal.getSubject()));
   }
 
   @GetMapping("/{studyId}/comment")
@@ -149,7 +164,7 @@ public class StudyController {
     commentService.deleteComment(commentId, studyId, principal.getSubject());
   }
 
-  private List<String> extractRoles(Jwt principal){
+  private List<String> extractRoles(Jwt principal) {
     Map<String, Object> access = principal.getClaimAsMap(REALM_ACCESS_CLAIM);
     return (List<String>) access.get(ROLES_CLAIM);
   }
