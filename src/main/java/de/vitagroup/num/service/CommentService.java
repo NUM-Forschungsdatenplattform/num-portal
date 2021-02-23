@@ -32,15 +32,18 @@ public class CommentService {
 
   public Comment createComment(Comment comment, Long studyId, String loggedInUserId) {
     UserDetails author =
-        userDetailsService.getUserDetailsById(loggedInUserId)
+        userDetailsService
+            .getUserDetailsById(loggedInUserId)
             .orElseThrow(() -> new SystemException("Logged in user not found"));
 
     if (author.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
     }
 
-    Study study = studyService.getStudyById(studyId)
-        .orElseThrow(() -> new SystemException("Study not found "+ studyId));
+    Study study =
+        studyService
+            .getStudyById(studyId)
+            .orElseThrow(() -> new SystemException("Study not found " + studyId));
 
     comment.setStudy(study);
     comment.setAuthor(author);
@@ -54,12 +57,13 @@ public class CommentService {
     validateLoggedInUser(loggedInUserId);
 
     if (!studyService.exists(studyId)) {
-      throw new ResourceNotFound("Study not found: "+ studyId);
+      throw new ResourceNotFound("Study not found: " + studyId);
     }
 
     Comment commentToEdit =
-        commentRepository.findById(commentId)
-            .orElseThrow(() -> new ResourceNotFound("Comment not found "+ commentId));
+        commentRepository
+            .findById(commentId)
+            .orElseThrow(() -> new ResourceNotFound("Comment not found " + commentId));
 
     if (commentToEdit.hasEmptyOrDifferentAuthor(loggedInUserId)) {
       throw new ForbiddenException(
@@ -81,7 +85,10 @@ public class CommentService {
       throw new ResourceNotFound("Study does not exist");
     }
 
-    Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new ResourceNotFound("Comment not found "+ commentId));
+    Comment comment =
+        commentRepository
+            .findById(commentId)
+            .orElseThrow(() -> new ResourceNotFound("Comment not found " + commentId));
 
     if (comment.hasEmptyOrDifferentAuthor(loggedInUserId)) {
       throw new ForbiddenException("Cannot delete comment: " + commentId);
@@ -96,7 +103,9 @@ public class CommentService {
 
   private void validateLoggedInUser(String loggedInUserId) {
     UserDetails author =
-        userDetailsService.getUserDetailsById(loggedInUserId).orElseThrow(() -> new SystemException("Logged in user not found"));
+        userDetailsService
+            .getUserDetailsById(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
 
     if (author.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
