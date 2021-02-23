@@ -64,6 +64,8 @@ public class CohortServiceTest {
 
   @Captor ArgumentCaptor<CohortGroup> cohortGroupCaptor;
 
+  UserDetails approvedUser = UserDetails.builder().userId("approvedUserId").approved(true).build();
+
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingCohortWhenRetrieving() {
     cohortService.getCohort(1L);
@@ -226,7 +228,7 @@ public class CohortServiceTest {
             .children(List.of(first, second))
             .build();
 
-    long size = cohortService.getCohortGroupSize(orCohort);
+    long size = cohortService.getCohortGroupSize(orCohort, approvedUser.getUserId());
     Mockito.verify(cohortExecutor, times(1)).executeGroup(cohortGroupCaptor.capture());
 
     assertEquals(2, size);
@@ -268,9 +270,6 @@ public class CohortServiceTest {
 
     UserDetails notApprovedUser =
         UserDetails.builder().userId("notApprovedUserId").approved(false).build();
-
-    UserDetails approvedUser =
-        UserDetails.builder().userId("approvedUserId").approved(true).build();
 
     when(userDetailsService.getUserDetailsById("approvedUserId"))
         .thenReturn(Optional.of(approvedUser));

@@ -79,7 +79,8 @@ public class CohortController {
   @ApiOperation(value = "Retrieves the cohort group size without saving")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Long> getCohortGroupSize(
-      @NotNull @RequestBody CohortGroupDto cohortGroupDto) {
-    return ResponseEntity.ok(cohortService.getCohortGroupSize(cohortGroupDto));
+      @NotNull @RequestBody CohortGroupDto cohortGroupDto,
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(cohortService.getCohortGroupSize(cohortGroupDto, principal.getSubject()));
   }
 }

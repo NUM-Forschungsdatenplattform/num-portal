@@ -63,7 +63,7 @@ public class CohortService {
             .name(cohortDto.getName())
             .description(cohortDto.getDescription())
             .study(study)
-            .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId, true))
+            .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId))
             .build();
 
     study.setCohort(cohort);
@@ -79,8 +79,18 @@ public class CohortService {
     return executeCohort(cohortId).size();
   }
 
-  public long getCohortGroupSize(CohortGroupDto cohortGroupDto) {
-    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto, null, false);
+  public long getCohortGroupSize(CohortGroupDto cohortGroupDto, String userId) {
+    Optional<UserDetails> coordinator = userDetailsService.getUserDetailsById(userId);
+
+    if (coordinator.isEmpty()) {
+      throw new SystemException("Logged in coordinator not found in portal");
+    }
+
+    if (coordinator.get().isNotApproved()) {
+      throw new ForbiddenException("Logged in coordinator not approved:" + userId);
+    }
+
+    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto, coordinator.get().getUserId());
     return cohortExecutor.executeGroup(cohortGroup).size();
   }
 
@@ -102,14 +112,14 @@ public class CohortService {
     }
 
     cohortToEdit.setCohortGroup(
-        convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId, true));
+        convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId));
     cohortToEdit.setDescription(cohortDto.getDescription());
     cohortToEdit.setName(cohortDto.getName());
     return cohortRepository.save(cohortToEdit);
   }
 
   public CohortGroup convertToCohortGroupEntity(
-      CohortGroupDto cohortGroupDto, String userId, boolean checkUser) {
+      CohortGroupDto cohortGroupDto, String userId) {
     if (cohortGroupDto == null) {
       throw new BadRequestException("Cohort groups cannot be empty");
     }
@@ -122,7 +132,7 @@ public class CohortService {
 
       if (phenotype.isPresent()) {
 
-        if (checkUser && phenotype.get().hasEmptyOrDifferentOwner(userId)) {
+        if (phenotype.get().hasEmptyOrDifferentOwner(userId)) {
           throw new ForbiddenException(
               "Cannot access phenotype: "
                   + phenotype.get().getName()
@@ -142,7 +152,7 @@ public class CohortService {
               .map(
                   child -> {
                     CohortGroup cohortGroupChild =
-                        convertToCohortGroupEntity(child, userId, checkUser);
+                        convertToCohortGroupEntity(child, userId);
                     cohortGroupChild.setParent(cohortGroup);
                     return cohortGroupChild;
                   })
