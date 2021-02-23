@@ -133,7 +133,7 @@ public class AqlService {
             .orElseThrow(() -> new SystemException("Logged in user not found"));
 
     if (user.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
     }
 
     switch (filter) {
@@ -177,7 +177,7 @@ public class AqlService {
             .orElseThrow(() -> new SystemException("Logged in user not found"));
 
     if (user.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
     }
   }
 }
