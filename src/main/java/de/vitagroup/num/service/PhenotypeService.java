@@ -37,44 +37,30 @@ public class PhenotypeService {
   }
 
   public List<Phenotype> getAllPhenotypes(String loggedInUserId) {
-    UserDetails owner =
-        userDetailsService
-            .getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Logged in owner not approved.");
-    }
+    validateLoggedInUser(loggedInUserId);
 
     return phenotypeRepository.findByOwnerUserId(loggedInUserId);
   }
 
   public Phenotype createPhenotypes(Phenotype phenotype, String loggedInUserId) {
 
-    UserDetails owner =
+    UserDetails user =
         userDetailsService
             .getUserDetailsById(loggedInUserId)
             .orElseThrow(() -> new SystemException("Logged in user not found"));
 
-    if (owner.isNotApproved()) {
+    if (user.isNotApproved()) {
       throw new ForbiddenException("Logged in owner not approved.");
     }
 
     validatePhenotypeAqls(phenotype, loggedInUserId);
 
-    phenotype.setOwner(owner);
+    phenotype.setOwner(user);
     return phenotypeRepository.save(phenotype);
   }
 
   public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
-    UserDetails owner =
-        userDetailsService
-            .getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Logged in user is not approved.");
-    }
+    validateLoggedInUser(loggedInUserId);
 
     Set<String> ehrIds;
     try {
@@ -114,6 +100,17 @@ public class PhenotypeService {
       } else if (current instanceof GroupExpression) {
         queue.addAll(((GroupExpression) current).getChildren());
       }
+    }
+  }
+
+  public void validateLoggedInUser(String userId) {
+    UserDetails user =
+        userDetailsService
+            .getUserDetailsById(userId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
+
+    if (user.isNotApproved()) {
+      throw new ForbiddenException("Logged in user is not approved.");
     }
   }
 }

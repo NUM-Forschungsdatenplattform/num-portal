@@ -56,16 +56,16 @@ public class AqlService {
   }
 
   public Aql createAql(Aql aql, String loggedInUserId) {
-    UserDetails owner =
+    UserDetails user =
         userDetailsRepository
             .findByUserId(loggedInUserId)
             .orElseThrow(() -> new SystemException("Logged in user not found"));
 
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+    if (user.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
     }
 
-    aql.setOwner(owner);
+    aql.setOwner(user);
     aql.setCreateDate(OffsetDateTime.now());
     aql.setModifiedDate(OffsetDateTime.now());
 
@@ -127,23 +127,23 @@ public class AqlService {
    */
   public List<Aql> searchAqls(String name, AqlSearchFilter filter, String loggedInUserId) {
 
-    UserDetails owner =
+    UserDetails user =
         userDetailsRepository
             .findByUserId(loggedInUserId)
             .orElseThrow(() -> new SystemException("Logged in user not found"));
 
-    if (owner.isNotApproved()) {
+    if (user.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
     }
 
     switch (filter) {
       case ALL:
-        return aqlRepository.findAllOwnedOrPublicByName(owner.getUserId(), name);
+        return aqlRepository.findAllOwnedOrPublicByName(user.getUserId(), name);
       case OWNED:
-        return aqlRepository.findAllOwnedByName(owner.getUserId(), name);
+        return aqlRepository.findAllOwnedByName(user.getUserId(), name);
       case ORGANIZATION:
         return aqlRepository.findAllOrganizationOwnedByName(
-            owner.getOrganizationId(), owner.getUserId(), name);
+            user.getOrganizationId(), user.getUserId(), name);
       default:
         return List.of();
     }
@@ -171,12 +171,12 @@ public class AqlService {
   }
 
   public void validateLoggedInUser(String userId) {
-    UserDetails owner =
+    UserDetails user =
         userDetailsRepository
             .findByUserId(userId)
             .orElseThrow(() -> new SystemException("Logged in user not found"));
 
-    if (owner.isNotApproved()) {
+    if (user.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
     }
   }
