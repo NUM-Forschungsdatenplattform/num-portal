@@ -88,12 +88,6 @@ public class CohortServiceTest {
     verify(cohortExecutor, times(1)).execute(any());
   }
 
-  @Test
-  public void shouldCallRepoWhenRetrievingAllCohorts() {
-    cohortService.getAllCohorts();
-    verify(cohortRepository, times(1)).findAll();
-  }
-
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedUserId() {
     CohortDto cohortDto = CohortDto.builder().build();

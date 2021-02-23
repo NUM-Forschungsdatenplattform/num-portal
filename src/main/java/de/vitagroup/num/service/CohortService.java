@@ -32,24 +32,12 @@ public class CohortService {
   private final PhenotypeService phenotypeService;
   private final StudyService studyService;
 
-  public List<Cohort> getAllCohorts() {
-    return cohortRepository.findAll();
-  }
-
   public Cohort getCohort(Long cohortId) {
     return cohortRepository.findById(cohortId).orElseThrow(ResourceNotFound::new);
   }
 
   public Cohort createCohort(CohortDto cohortDto, String userId) {
-    Optional<UserDetails> coordinator = userDetailsService.getUserDetailsById(userId);
-
-    if (coordinator.isEmpty()) {
-      throw new SystemException("Logged in coordinator not found in portal");
-    }
-
-    if (coordinator.get().isNotApproved()) {
-      throw new ForbiddenException("Logged in coordinator not approved:" + userId);
-    }
+    verifyUserAndGetUserDetails(userId);
 
     Study study =
         studyService
@@ -74,7 +62,8 @@ public class CohortService {
 
   public Set<String> executeCohort(long cohortId) {
     Optional<Cohort> cohort = cohortRepository.findById(cohortId);
-    return cohortExecutor.execute(cohort.orElseThrow(() -> new BadRequestException("Cohort not found: " + cohortId)));
+    return cohortExecutor.execute(
+        cohort.orElseThrow(() -> new BadRequestException("Cohort not found: " + cohortId)));
   }
 
   public long getCohortSize(long cohortId) {
@@ -82,46 +71,31 @@ public class CohortService {
   }
 
   public long getCohortGroupSize(CohortGroupDto cohortGroupDto, String userId) {
-    Optional<UserDetails> coordinator = userDetailsService.getUserDetailsById(userId);
+    UserDetails coordinator = verifyUserAndGetUserDetails(userId);
 
-    if (coordinator.isEmpty()) {
-      throw new SystemException("Logged in coordinator not found in portal");
-    }
-
-    if (coordinator.get().isNotApproved()) {
-      throw new ForbiddenException("Logged in coordinator not approved:" + userId);
-    }
-
-    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto, coordinator.get().getUserId());
+    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto, coordinator.getUserId());
     return cohortExecutor.executeGroup(cohortGroup).size();
   }
 
   public Cohort updateCohort(CohortDto cohortDto, Long cohortId, String userId) {
-    Optional<UserDetails> coordinator = userDetailsService.getUserDetailsById(userId);
+    verifyUserAndGetUserDetails(userId);
 
-    if (coordinator.isEmpty()) {
-      throw new SystemException("Logged in coordinator not found in portal");
-    }
-
-    if (coordinator.get().isNotApproved()) {
-      throw new ForbiddenException("Logged in coordinator not approved:" + userId);
-    }
-
-    Cohort cohortToEdit = cohortRepository.findById(cohortId).orElseThrow(() -> new ResourceNotFound("Cohort not found: " + cohortId));
+    Cohort cohortToEdit =
+        cohortRepository
+            .findById(cohortId)
+            .orElseThrow(() -> new ResourceNotFound("Cohort not found: " + cohortId));
 
     if (cohortToEdit.getStudy().hasEmptyOrDifferentOwner(userId)) {
       throw new ForbiddenException("Not allowed");
     }
 
-    cohortToEdit.setCohortGroup(
-        convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId));
+    cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId));
     cohortToEdit.setDescription(cohortDto.getDescription());
     cohortToEdit.setName(cohortDto.getName());
     return cohortRepository.save(cohortToEdit);
   }
 
-  public CohortGroup convertToCohortGroupEntity(
-      CohortGroupDto cohortGroupDto, String userId) {
+  private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto, String userId) {
     if (cohortGroupDto == null) {
       throw new BadRequestException("Cohort groups cannot be empty");
     }
@@ -153,8 +127,7 @@ public class CohortService {
           cohortGroupDto.getChildren().stream()
               .map(
                   child -> {
-                    CohortGroup cohortGroupChild =
-                        convertToCohortGroupEntity(child, userId);
+                    CohortGroup cohortGroupChild = convertToCohortGroupEntity(child, userId);
                     cohortGroupChild.setParent(cohortGroup);
                     return cohortGroupChild;
                   })
@@ -162,5 +135,18 @@ public class CohortService {
     }
 
     return cohortGroup;
+  }
+
+  private UserDetails verifyUserAndGetUserDetails(String userId) {
+    Optional<UserDetails> userDetails = userDetailsService.getUserDetailsById(userId);
+
+    if (userDetails.isEmpty()) {
+      throw new SystemException("Logged in user not found in portal");
+    }
+
+    if (userDetails.get().isNotApproved()) {
+      throw new ForbiddenException("Logged in user not approved:" + userId);
+    }
+    return userDetails.get();
   }
 }
