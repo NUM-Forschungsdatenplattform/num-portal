@@ -52,7 +52,9 @@ public class CohortService {
     }
 
     Study study =
-        studyService.getStudyById(cohortDto.getStudyId()).orElseThrow(ResourceNotFound::new);
+        studyService
+            .getStudyById(cohortDto.getStudyId())
+            .orElseThrow(() -> new ResourceNotFound("Study not found: " + cohortDto.getStudyId()));
 
     if (study.hasEmptyOrDifferentOwner(userId)) {
       throw new ForbiddenException("Not allowed");
@@ -72,7 +74,7 @@ public class CohortService {
 
   public Set<String> executeCohort(long cohortId) {
     Optional<Cohort> cohort = cohortRepository.findById(cohortId);
-    return cohortExecutor.execute(cohort.orElseThrow(BadRequestException::new));
+    return cohortExecutor.execute(cohort.orElseThrow(() -> new ResourceNotFound("Cohort not found: " + cohortId)));
   }
 
   public long getCohortSize(long cohortId) {
@@ -90,7 +92,7 @@ public class CohortService {
       throw new ForbiddenException("Logged in coordinator not approved:" + userId);
     }
 
-    Cohort cohortToEdit = cohortRepository.findById(cohortId).orElseThrow(ResourceNotFound::new);
+    Cohort cohortToEdit = cohortRepository.findById(cohortId).orElseThrow(() -> new ResourceNotFound("Cohort not found: " + cohortId));
 
     if (cohortToEdit.getStudy().hasEmptyOrDifferentOwner(userId)) {
       throw new ForbiddenException("Not allowed");

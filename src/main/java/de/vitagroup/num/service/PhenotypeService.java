@@ -38,7 +38,9 @@ public class PhenotypeService {
 
   public List<Phenotype> getAllPhenotypes(String loggedInUserId) {
     UserDetails owner =
-        userDetailsService.getUserDetailsById(loggedInUserId).orElseThrow(SystemException::new);
+        userDetailsService
+            .getUserDetailsById(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
 
     if (owner.isNotApproved()) {
       throw new ForbiddenException("Logged in owner not approved.");
@@ -50,7 +52,9 @@ public class PhenotypeService {
   public Phenotype createPhenotypes(Phenotype phenotype, String loggedInUserId) {
 
     UserDetails owner =
-        userDetailsService.getUserDetailsById(loggedInUserId).orElseThrow(SystemException::new);
+        userDetailsService
+            .getUserDetailsById(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
 
     if (owner.isNotApproved()) {
       throw new ForbiddenException("Logged in owner not approved.");
@@ -64,7 +68,9 @@ public class PhenotypeService {
 
   public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
     UserDetails owner =
-        userDetailsService.getUserDetailsById(loggedInUserId).orElseThrow(SystemException::new);
+        userDetailsService
+            .getUserDetailsById(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
 
     if (owner.isNotApproved()) {
       throw new ForbiddenException("Logged in user is not approved.");
