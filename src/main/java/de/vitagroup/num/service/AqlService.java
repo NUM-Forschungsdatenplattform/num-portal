@@ -39,12 +39,7 @@ public class AqlService {
   }
 
   public Aql getAqlById(Long id, String loggedInUserId) {
-    UserDetails owner =
-        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
-
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
-    }
+    validateLoggedInUser(loggedInUserId);
 
     Aql aql = aqlRepository.findById(id).orElseThrow(ResourceNotFound::new);
 
@@ -56,24 +51,21 @@ public class AqlService {
   }
 
   public List<Aql> getVisibleAqls(String loggedInUserId) {
-    UserDetails owner =
-        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
-
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
-    }
-    return aqlRepository.findAllOwnedOrPublic(owner.getUserId());
+    validateLoggedInUser(loggedInUserId);
+    return aqlRepository.findAllOwnedOrPublic(loggedInUserId);
   }
 
   public Aql createAql(Aql aql, String loggedInUserId) {
-    UserDetails owner =
-        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+    UserDetails user =
+        userDetailsRepository
+            .findByUserId(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
 
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+    if (user.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
     }
 
-    aql.setOwner(owner);
+    aql.setOwner(user);
     aql.setCreateDate(OffsetDateTime.now());
     aql.setModifiedDate(OffsetDateTime.now());
 
@@ -81,14 +73,12 @@ public class AqlService {
   }
 
   public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
-    UserDetails owner =
-        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+    validateLoggedInUser(loggedInUserId);
 
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
-    }
-
-    Aql aqlToEdit = aqlRepository.findById(aqlId).orElseThrow(ResourceNotFound::new);
+    Aql aqlToEdit =
+        aqlRepository
+            .findById(aqlId)
+            .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + aqlId));
 
     if (aqlToEdit.hasEmptyOrDifferentOwner(loggedInUserId)) {
       throw new ForbiddenException(
@@ -108,14 +98,12 @@ public class AqlService {
   }
 
   public void deleteById(Long id, String loggedInUserId) {
-    UserDetails owner =
-        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+    validateLoggedInUser(loggedInUserId);
 
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
-    }
-
-    Aql aql = aqlRepository.findById(id).orElseThrow(ResourceNotFound::new);
+    Aql aql =
+        aqlRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + id));
 
     if (aql.hasEmptyOrDifferentOwner(loggedInUserId)) {
       throw new ForbiddenException("Cannot delete aql: " + id);
@@ -139,35 +127,34 @@ public class AqlService {
    */
   public List<Aql> searchAqls(String name, AqlSearchFilter filter, String loggedInUserId) {
 
-    UserDetails owner =
-        userDetailsRepository.findByUserId(loggedInUserId).orElseThrow(SystemException::new);
+    UserDetails user =
+        userDetailsRepository
+            .findByUserId(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
 
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
+    if (user.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
     }
 
     switch (filter) {
       case ALL:
-        return aqlRepository.findAllOwnedOrPublicByName(owner.getUserId(), name);
+        return aqlRepository.findAllOwnedOrPublicByName(user.getUserId(), name);
       case OWNED:
-        return aqlRepository.findAllOwnedByName(owner.getUserId(), name);
+        return aqlRepository.findAllOwnedByName(user.getUserId(), name);
       case ORGANIZATION:
         return aqlRepository.findAllOrganizationOwnedByName(
-            owner.getOrganizationId(), owner.getUserId(), name);
+            user.getOrganizationId(), user.getUserId(), name);
       default:
         return List.of();
     }
   }
 
   public String executeAql(Long aqlId, String userId) {
-    UserDetails owner =
-        userDetailsRepository.findByUserId(userId).orElseThrow(SystemException::new);
-
-    if (owner.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in owner not approved.");
-    }
-
-    Aql aql = aqlRepository.findById(aqlId).orElseThrow(ResourceNotFound::new);
+    validateLoggedInUser(userId);
+    Aql aql =
+        aqlRepository
+            .findById(aqlId)
+            .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + aqlId));
 
     if (aql.isExecutable(userId)) {
 
@@ -180,6 +167,17 @@ public class AqlService {
 
     } else {
       throw new ForbiddenException("Cannot access this resource.");
+    }
+  }
+
+  public void validateLoggedInUser(String userId) {
+    UserDetails user =
+        userDetailsRepository
+            .findByUserId(userId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
+
+    if (user.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
     }
   }
 }

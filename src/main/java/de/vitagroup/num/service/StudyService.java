@@ -42,9 +42,12 @@ public class StudyService {
 
     validateLoggedInUser(userId);
 
-    Study study = studyRepository.findById(studyId).orElseThrow(ResourceNotFound::new);
+    Study study =
+        studyRepository
+            .findById(studyId)
+            .orElseThrow(() -> new ResourceNotFound("Study not found: " + studyId));
 
-    if(!study.isStudyResearcher(userId)){
+    if (!study.isStudyResearcher(userId)) {
       throw new ForbiddenException("Cannot access this study");
     }
 
@@ -102,7 +105,10 @@ public class StudyService {
 
     validateLoggedInUser(userId);
 
-    Study studyToEdit = studyRepository.findById(id).orElseThrow(ResourceNotFound::new);
+    Study studyToEdit =
+        studyRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFound("Study not found: " + id));
 
     setTemplates(studyToEdit, studyDto);
     setResearchers(studyToEdit, studyDto);
@@ -204,7 +210,7 @@ public class StudyService {
     return status.equals(StudyStatus.DRAFT) || status.equals(StudyStatus.PENDING);
   }
 
-  private void validateLoggedInUser(String userId){
+  private void validateLoggedInUser(String userId) {
     Optional<UserDetails> user = userDetailsRepository.findByUserId(userId);
 
     if (user.isEmpty()) {
