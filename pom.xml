@@ -165,6 +165,11 @@
       <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.openehealth.ipf.commons</groupId>
+      <artifactId>ipf-commons-audit</artifactId>
+      <version>4.0.0</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
