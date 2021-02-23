@@ -74,7 +74,7 @@ public class CohortService {
 
   public Set<String> executeCohort(long cohortId) {
     Optional<Cohort> cohort = cohortRepository.findById(cohortId);
-    return cohortExecutor.execute(cohort.orElseThrow(() -> new ResourceNotFound("Cohort not found: " + cohortId)));
+    return cohortExecutor.execute(cohort.orElseThrow(() -> new BadRequestException("Cohort not found: " + cohortId)));
   }
 
   public long getCohortSize(long cohortId) {
