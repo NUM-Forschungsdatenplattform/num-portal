@@ -19,7 +19,7 @@ workflows:
           filters:
             branches:
               only:
-                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop)$/
+                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop|feature\/NUM-1269_release_candidate_numbers)$/
 jobs:
   test:
     machine:
@@ -97,7 +97,7 @@ jobs:
             elif [ $CIRCLE_BRANCH = "develop" ]; then
                 TAG=$CIRCLE_BRANCH
             else
-                TAG="$(echo $CIRCLE_BRANCH | awk -F'/' '{print $2;}')-rc"
+                TAG="$(echo $CIRCLE_BRANCH | awk -F'/' '{print $2;}')-rc$CIRCLE_BUILD_NUM"
             fi
             echo "Publishing Docker image with following tag: ${TAG}"
             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
