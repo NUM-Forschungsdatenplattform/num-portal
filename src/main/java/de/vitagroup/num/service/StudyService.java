@@ -16,15 +16,21 @@ import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +46,16 @@ public class StudyService {
 
   public String executeAql(String query, Long studyId, String userId) {
 
+    QueryResponseData response = getAqlExecutionResponse(query, studyId, userId);
+    try {
+      return mapper.writeValueAsString(response);
+    } catch (JsonProcessingException e) {
+      throw new SystemException("An issue has occurred, cannot execute aql.");
+    }
+  }
+
+  public QueryResponseData getAqlExecutionResponse(String query, Long studyId, String userId) {
+
     validateLoggedInUser(userId);
 
     Study study =
@@ -51,16 +67,37 @@ public class StudyService {
       throw new ForbiddenException("Cannot access this study");
     }
 
-    try {
-      QueryResponseData response = ehrBaseService.executeRawQuery(query);
-      return mapper.writeValueAsString(response);
-    } catch (JsonProcessingException e) {
-      throw new SystemException("An issue has occurred, cannot execute aql.");
-    }
+    return ehrBaseService.executeRawQuery(query);
   }
 
-  public List<Study> getAllStudies() {
-    return studyRepository.findAll();
+  public void printResponseCsvToStream(
+      QueryResponseData queryResponseData, OutputStream outputStream) {
+    CSVPrinter printer = null;
+    try {
+      List<String> paths = new ArrayList<>();
+
+      for (Map<String, String> column : queryResponseData.getColumns()) {
+        paths.add(column.get("path"));
+      }
+      printer =
+          CSVFormat.EXCEL
+              .withHeader(paths.toArray(new String[] {}))
+              .print(new OutputStreamWriter(outputStream));
+
+      for (List<Object> row : queryResponseData.getRows()) {
+        printer.printRecord(row);
+      }
+    } catch (IOException e) {
+      throw new SystemException("Error while creating the CSV file");
+    } finally {
+      if (printer != null) {
+        try {
+          printer.flush();
+          printer.close();
+        } catch (IOException ignored) {
+        }
+      }
+    }
   }
 
   public Optional<Study> getStudyById(Long studyId) {

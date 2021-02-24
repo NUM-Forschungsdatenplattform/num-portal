@@ -14,7 +14,7 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.spi.CachingProvider;
-import org.ehrbase.aqleditor.service.TestDataTemplateProvider;
+import lombok.RequiredArgsConstructor;
 import org.ehrbase.serialisation.flatencoding.FlatFormat;
 import org.ehrbase.serialisation.flatencoding.FlatJasonProvider;
 import org.ehrbase.serialisation.flatencoding.FlatJson;
@@ -25,11 +25,13 @@ import org.openehr.schemas.v1.OPERATIONALTEMPLATE;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class CompositionFlattener {
 
   private final ObjectMapper mapper = new ObjectMapper();
 
   private CachedTemplateProvider cachedTemplateProvider;
+  private final RemoteEhrBaseTemplateProvider remoteEhrBaseTemplateProvider;
 
   private Cache<String, FlatJson> flatJsonCache;
 
@@ -99,7 +101,7 @@ public class CompositionFlattener {
         cacheManager.createCache(WEB_TEMPLATE_CACHE, introspectCacheConfig);
 
     cachedTemplateProvider =
-        new CachedTemplateProvider(new TestDataTemplateProvider(), templateCache, introspectCache);
+        new CachedTemplateProvider(remoteEhrBaseTemplateProvider, templateCache, introspectCache);
 
     MutableConfiguration<String, FlatJson> flatJsonCacheConfig =
         new MutableConfiguration<String, FlatJson>()

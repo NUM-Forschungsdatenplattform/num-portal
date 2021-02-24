@@ -26,6 +26,7 @@
     <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
     <java.version>11</java.version>
     <openfeign.version>2.2.5.RELEASE</openfeign.version>
+    <commons-csv.version>1.4</commons-csv.version>
     <jacoco.version>0.8.6</jacoco.version>
     <dependency-check.version>6.1.1</dependency-check.version>
     <failsafe.version>2.22.2</failsafe.version>
@@ -36,6 +37,14 @@
   </properties>
 
   <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>central</id>
+      <name>Maven Repository Switchboard</name>
+      <url>https://repo1.maven.org/maven2</url>
+    </repository>
     <repository>
       <id>jitpack.io</id>
       <url>https://jitpack.io</url>
@@ -163,6 +172,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
+      <version>${commons-csv.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
