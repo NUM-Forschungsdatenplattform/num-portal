@@ -4,6 +4,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -60,6 +62,10 @@ public class CohortServiceTest {
 
   @Captor ArgumentCaptor<Cohort> cohortCaptor;
 
+  @Captor ArgumentCaptor<CohortGroup> cohortGroupCaptor;
+
+  UserDetails approvedUser = UserDetails.builder().userId("approvedUserId").approved(true).build();
+
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingCohortWhenRetrieving() {
     cohortService.getCohort(1L);
@@ -80,12 +86,6 @@ public class CohortServiceTest {
   public void shouldExecuteCohortExactlyOnceWhenRetrievingSize() {
     cohortService.getCohortSize(2L);
     verify(cohortExecutor, times(1)).execute(any());
-  }
-
-  @Test
-  public void shouldCallRepoWhenRetrievingAllCohorts() {
-    cohortService.getAllCohorts();
-    verify(cohortRepository, times(1)).findAll();
   }
 
   @Test(expected = ForbiddenException.class)
@@ -183,13 +183,15 @@ public class CohortServiceTest {
   @Test
   public void shouldCorrectlyEditCohort() {
     CohortGroupDto simpleCohort =
-        CohortGroupDto.builder()
-            .type(Type.PHENOTYPE)
-            .phenotypeId(4L)
-            .build();
+        CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(4L).build();
 
     CohortDto cohortDto =
-        CohortDto.builder().name("New cohort name").description("New cohort description").studyId(4L).cohortGroup(simpleCohort).build();
+        CohortDto.builder()
+            .name("New cohort name")
+            .description("New cohort description")
+            .studyId(4L)
+            .cohortGroup(simpleCohort)
+            .build();
 
     cohortService.updateCohort(cohortDto, 4L, "approvedUserId");
     Mockito.verify(cohortRepository).save(cohortCaptor.capture());
@@ -208,14 +210,60 @@ public class CohortServiceTest {
     assertThat(editedCohort.getCohortGroup().getChildren(), nullValue());
   }
 
+  @Test
+  public void shouldCorrectlyExecuteCohort() {
+    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
+    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
+
+    CohortGroupDto orCohort =
+        CohortGroupDto.builder()
+            .type(Type.GROUP)
+            .operator(Operator.OR)
+            .children(List.of(first, second))
+            .build();
+
+    long size = cohortService.getCohortGroupSize(orCohort, approvedUser.getUserId());
+    Mockito.verify(cohortExecutor, times(1)).executeGroup(cohortGroupCaptor.capture());
+
+    assertEquals(2, size);
+    CohortGroup executedCohortGroup = cohortGroupCaptor.getValue();
+    assertEquals(executedCohortGroup.getOperator(), Operator.OR);
+    assertEquals(2, executedCohortGroup.getChildren().size());
+    assertEquals(
+        1,
+        executedCohortGroup.getChildren().stream()
+            .filter(cohortGroup -> cohortGroup.getPhenotype().getId() == 1L)
+            .count());
+    assertEquals(
+        1,
+        executedCohortGroup.getChildren().stream()
+            .filter(cohortGroup -> cohortGroup.getPhenotype().getId() == 2L)
+            .count());
+    AqlExpression aqlExpression1 =
+        (AqlExpression)
+            executedCohortGroup.getChildren().stream()
+                .filter(cohortGroup -> cohortGroup.getPhenotype().getId() == 1L)
+                .findFirst()
+                .get()
+                .getPhenotype()
+                .getQuery();
+    AqlExpression aqlExpression2 =
+        (AqlExpression)
+            executedCohortGroup.getChildren().stream()
+                .filter(cohortGroup -> cohortGroup.getPhenotype().getId() == 2L)
+                .findFirst()
+                .get()
+                .getPhenotype()
+                .getQuery();
+    assertTrue(aqlExpression1.getAql().getQuery().startsWith("SELECT A1"));
+    assertTrue(aqlExpression2.getAql().getQuery().startsWith("SELECT A2"));
+  }
+
   @Before
   public void setup() {
 
     UserDetails notApprovedUser =
         UserDetails.builder().userId("notApprovedUserId").approved(false).build();
-
-    UserDetails approvedUser =
-        UserDetails.builder().userId("approvedUserId").approved(true).build();
 
     when(userDetailsService.getUserDetailsById("approvedUserId"))
         .thenReturn(Optional.of(approvedUser));
@@ -318,5 +366,6 @@ public class CohortServiceTest {
     when(cohortRepository.findById(4L)).thenReturn(Optional.of(cohortToEdit));
     when(cohortRepository.findById(1L)).thenReturn(Optional.empty());
     when(cohortRepository.findById(2L)).thenReturn(Optional.of(Cohort.builder().id(2L).build()));
+    when(cohortExecutor.executeGroup(any())).thenReturn(Set.of("test1", "test2"));
   }
 }
