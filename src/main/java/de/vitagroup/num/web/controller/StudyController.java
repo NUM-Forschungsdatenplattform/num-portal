@@ -1,6 +1,7 @@
 package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Comment;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.dto.CommentDto;
 import de.vitagroup.num.domain.dto.RawQueryDto;
@@ -13,7 +14,6 @@ import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -43,9 +43,6 @@ public class StudyController {
   private final StudyMapper studyMapper;
   private final CommentMapper commentMapper;
 
-  private static final String REALM_ACCESS_CLAIM = "realm_access";
-  private static final String ROLES_CLAIM = "roles";
-
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of studies the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -53,7 +50,7 @@ public class StudyController {
       @AuthenticationPrincipal @NotNull Jwt principal) {
 
     return ResponseEntity.ok(
-        studyService.getStudies(principal.getSubject(), extractRoles(principal)).stream()
+        studyService.getStudies(principal.getSubject(), Roles.extractRoles(principal)).stream()
             .map(studyMapper::convertToDto)
             .collect(Collectors.toList()));
   }
@@ -80,7 +77,7 @@ public class StudyController {
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
     Study study =
-        studyService.createStudy(studyDto, principal.getSubject(), extractRoles(principal));
+        studyService.createStudy(studyDto, principal.getSubject(), Roles.extractRoles(principal));
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
@@ -97,7 +94,7 @@ public class StudyController {
 
     Study study =
         studyService.updateStudy(
-            studyDto, studyId, principal.getSubject(), extractRoles(principal));
+            studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
@@ -162,10 +159,5 @@ public class StudyController {
       @NotNull @NotEmpty @PathVariable Long studyId,
       @NotNull @NotEmpty @PathVariable Long commentId) {
     commentService.deleteComment(commentId, studyId, principal.getSubject());
-  }
-
-  private List<String> extractRoles(Jwt principal) {
-    Map<String, Object> access = principal.getClaimAsMap(REALM_ACCESS_CLAIM);
-    return (List<String>) access.get(ROLES_CLAIM);
   }
 }
