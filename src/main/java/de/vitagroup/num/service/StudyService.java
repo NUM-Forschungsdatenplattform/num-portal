@@ -23,7 +23,6 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -72,31 +71,21 @@ public class StudyService {
 
   public void printResponseCsvToStream(
       QueryResponseData queryResponseData, OutputStream outputStream) {
-    CSVPrinter printer = null;
-    try {
-      List<String> paths = new ArrayList<>();
+    List<String> paths = new ArrayList<>();
 
-      for (Map<String, String> column : queryResponseData.getColumns()) {
-        paths.add(column.get("path"));
-      }
-      printer =
-          CSVFormat.EXCEL
-              .withHeader(paths.toArray(new String[] {}))
-              .print(new OutputStreamWriter(outputStream));
+    for (Map<String, String> column : queryResponseData.getColumns()) {
+      paths.add(column.get("path"));
+    }
+    try (CSVPrinter printer =
+        CSVFormat.EXCEL
+            .withHeader(paths.toArray(new String[] {}))
+            .print(new OutputStreamWriter(outputStream))) {
 
       for (List<Object> row : queryResponseData.getRows()) {
         printer.printRecord(row);
       }
     } catch (IOException e) {
       throw new SystemException("Error while creating the CSV file");
-    } finally {
-      if (printer != null) {
-        try {
-          printer.flush();
-          printer.close();
-        } catch (IOException ignored) {
-        }
-      }
     }
   }
 
