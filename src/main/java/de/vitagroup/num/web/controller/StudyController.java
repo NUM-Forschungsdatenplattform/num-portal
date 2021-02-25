@@ -12,9 +12,6 @@ import de.vitagroup.num.service.StudyService;
 import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import io.swagger.annotations.ApiOperation;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -136,13 +133,7 @@ public class StudyController {
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add(
         HttpHeaders.CONTENT_DISPOSITION,
-        "attachment; filename=Study_"
-            + studyId
-            + "_"
-            + LocalDateTime.now()
-                .truncatedTo(ChronoUnit.MINUTES)
-                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            + ".csv");
+        "attachment; filename=" + studyService.getCsvFilename(studyId));
     headers.add(HttpHeaders.CONTENT_TYPE, "text/csv");
 
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);

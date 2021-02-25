@@ -7,6 +7,7 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
@@ -72,13 +73,12 @@ public class CompositionFlattener {
     if (composition.getArchetypeDetails() == null
         || composition.getArchetypeDetails().getTemplateId() == null
         || composition.getArchetypeDetails().getTemplateId().getValue() == null) {
-      throw new SystemException(
-          "Cannot parse results, composition missing template id");
+      throw new SystemException("Cannot parse results, composition missing template id");
     }
   }
 
   @PostConstruct
-  private void initializeTemplateCache() {
+  public void initializeTemplateCache() {
     CachingProvider provider = Caching.getCachingProvider();
     CacheManager cacheManager = provider.getCacheManager();
 
@@ -110,5 +110,14 @@ public class CompositionFlattener {
             .setStoreByValue(false);
 
     flatJsonCache = cacheManager.createCache(FLAT_JSON_CACHE, flatJsonCacheConfig);
+  }
+
+  @PreDestroy
+  public void clearCaches() {
+    CachingProvider provider = Caching.getCachingProvider();
+    CacheManager cacheManager = provider.getCacheManager();
+    cacheManager.destroyCache(FLAT_JSON_CACHE);
+    cacheManager.destroyCache(WEB_TEMPLATE_CACHE);
+    cacheManager.destroyCache(OPERATIONAL_TEMPLATE_CACHE);
   }
 }

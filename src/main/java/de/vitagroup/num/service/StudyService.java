@@ -19,7 +19,10 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -170,6 +173,15 @@ public class StudyService {
     }
 
     return studiesList.stream().distinct().collect(Collectors.toList());
+  }
+
+  public String getCsvFilename(Long studyId) {
+    return String.format(
+        "Study_%d_%s.csv",
+        studyId,
+        LocalDateTime.now()
+            .truncatedTo(ChronoUnit.MINUTES)
+            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
   }
 
   private void setTemplates(Study study, StudyDto studyDto) {
