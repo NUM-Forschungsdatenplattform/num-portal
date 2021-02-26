@@ -46,9 +46,9 @@ public class StudyService {
   private final EhrBaseService ehrBaseService;
   private final ObjectMapper mapper;
 
-  public String executeAql(String query, Long studyId, String userId) {
+  public String executeAqlAndJsonify(String query, Long studyId, String userId) {
 
-    QueryResponseData response = getAqlExecutionResponse(query, studyId, userId);
+    QueryResponseData response = executeAql(query, studyId, userId);
     try {
       return mapper.writeValueAsString(response);
     } catch (JsonProcessingException e) {
@@ -56,7 +56,7 @@ public class StudyService {
     }
   }
 
-  public QueryResponseData getAqlExecutionResponse(String query, Long studyId, String userId) {
+  public QueryResponseData executeAql(String query, Long studyId, String userId) {
 
     validateLoggedInUser(userId);
 
@@ -72,7 +72,7 @@ public class StudyService {
     return ehrBaseService.executeRawQuery(query);
   }
 
-  public void printResponseCsvToStream(
+  public void streamResponseAsCsv(
       QueryResponseData queryResponseData, OutputStream outputStream) {
     List<String> paths = new ArrayList<>();
 

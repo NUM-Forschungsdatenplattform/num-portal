@@ -116,20 +116,20 @@ public class StudyController {
       @NotNull @NotEmpty @PathVariable Long studyId,
       @AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(
-        studyService.executeAql(query.getQuery(), studyId, principal.getSubject()));
+        studyService.executeAqlAndJsonify(query.getQuery(), studyId, principal.getSubject()));
   }
 
   @PostMapping(value = "/{studyId}/export", produces = "text/csv")
-  @ApiOperation(value = "Executes the aql")
+  @ApiOperation(value = "Executes the aql and returns the result as a csv file attachment")
   @PreAuthorize(Role.RESEARCHER)
   public ResponseEntity<StreamingResponseBody> exportResults(
       @RequestBody @Valid RawQueryDto query,
       @NotNull @NotEmpty @PathVariable Long studyId,
       @AuthenticationPrincipal @NotNull Jwt principal) {
     QueryResponseData queryResponseData =
-        studyService.getAqlExecutionResponse(query.getQuery(), studyId, principal.getSubject());
+        studyService.executeAql(query.getQuery(), studyId, principal.getSubject());
     StreamingResponseBody streamingResponseBody =
-        outputStream -> studyService.printResponseCsvToStream(queryResponseData, outputStream);
+        outputStream -> studyService.streamResponseAsCsv(queryResponseData, outputStream);
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add(
         HttpHeaders.CONTENT_DISPOSITION,
@@ -190,6 +190,7 @@ public class StudyController {
     commentService.deleteComment(commentId, studyId, principal.getSubject());
   }
 
+  @SuppressWarnings("unchecked")
   private List<String> extractRoles(Jwt principal) {
     Map<String, Object> access = principal.getClaimAsMap(REALM_ACCESS_CLAIM);
     return (List<String>) access.get(ROLES_CLAIM);
