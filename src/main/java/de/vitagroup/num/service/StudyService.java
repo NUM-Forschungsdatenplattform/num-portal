@@ -16,7 +16,13 @@ import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,6 +31,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +46,17 @@ public class StudyService {
   private final EhrBaseService ehrBaseService;
   private final ObjectMapper mapper;
 
-  public String executeAql(String query, Long studyId, String userId) {
+  public String executeAqlAndJsonify(String query, Long studyId, String userId) {
+
+    QueryResponseData response = executeAql(query, studyId, userId);
+    try {
+      return mapper.writeValueAsString(response);
+    } catch (JsonProcessingException e) {
+      throw new SystemException("An issue has occurred, cannot execute aql.");
+    }
+  }
+
+  public QueryResponseData executeAql(String query, Long studyId, String userId) {
 
     validateLoggedInUser(userId);
 
@@ -51,16 +69,27 @@ public class StudyService {
       throw new ForbiddenException("Cannot access this study");
     }
 
-    try {
-      QueryResponseData response = ehrBaseService.executeRawQuery(query);
-      return mapper.writeValueAsString(response);
-    } catch (JsonProcessingException e) {
-      throw new SystemException("An issue has occurred, cannot execute aql.");
-    }
+    return ehrBaseService.executeRawQuery(query);
   }
 
-  public List<Study> getAllStudies() {
-    return studyRepository.findAll();
+  public void streamResponseAsCsv(
+      QueryResponseData queryResponseData, OutputStream outputStream) {
+    List<String> paths = new ArrayList<>();
+
+    for (Map<String, String> column : queryResponseData.getColumns()) {
+      paths.add(column.get("path"));
+    }
+    try (CSVPrinter printer =
+        CSVFormat.EXCEL
+            .withHeader(paths.toArray(new String[] {}))
+            .print(new OutputStreamWriter(outputStream))) {
+
+      for (List<Object> row : queryResponseData.getRows()) {
+        printer.printRecord(row);
+      }
+    } catch (IOException e) {
+      throw new SystemException("Error while creating the CSV file");
+    }
   }
 
   public Optional<Study> getStudyById(Long studyId) {
@@ -144,6 +173,15 @@ public class StudyService {
     }
 
     return studiesList.stream().distinct().collect(Collectors.toList());
+  }
+
+  public String getCsvFilename(Long studyId) {
+    return String.format(
+        "Study_%d_%s.csv",
+        studyId,
+        LocalDateTime.now()
+            .truncatedTo(ChronoUnit.MINUTES)
+            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
   }
 
   private void setTemplates(Study study, StudyDto studyDto) {

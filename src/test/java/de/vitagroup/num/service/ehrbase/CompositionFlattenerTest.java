@@ -3,28 +3,52 @@ package de.vitagroup.num.service.ehrbase;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
 
 import com.nedap.archie.rm.composition.Composition;
 import de.vitagroup.num.web.exception.SystemException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import lombok.SneakyThrows;
+import org.ehrbase.aqleditor.service.TestDataTemplateProvider;
 import org.ehrbase.serialisation.jsonencoding.CanonicalJson;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.Spy;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
-@RunWith(SpringRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 @Import(CompositionFlattener.class)
 public class CompositionFlattenerTest {
 
-  @Autowired
-  private CompositionFlattener flattener;
+  @Mock RemoteEhrBaseTemplateProvider remoteEhrBaseTemplateProvider;
+
+  @Spy private TestDataTemplateProvider testDataTemplateProvider;
+
+  @InjectMocks private CompositionFlattener flattener;
 
   private final String CORONA_PATH = "/testdata/corona.json";
+
+  @Before
+  public void setup() {
+    flattener.clearCaches();
+    flattener.initializeTemplateCache();
+    Mockito.when(remoteEhrBaseTemplateProvider.find(anyString()))
+        .thenAnswer(
+            invocation -> testDataTemplateProvider.find(invocation.getArgument(0, String.class)));
+  }
+
+  @After
+  public void clear() {
+    flattener.clearCaches();
+  }
 
   @Test
   @SneakyThrows

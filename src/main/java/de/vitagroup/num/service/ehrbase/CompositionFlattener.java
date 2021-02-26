@@ -7,6 +7,7 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
@@ -14,7 +15,7 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.spi.CachingProvider;
-import org.ehrbase.aqleditor.service.TestDataTemplateProvider;
+import lombok.RequiredArgsConstructor;
 import org.ehrbase.serialisation.flatencoding.FlatFormat;
 import org.ehrbase.serialisation.flatencoding.FlatJasonProvider;
 import org.ehrbase.serialisation.flatencoding.FlatJson;
@@ -25,11 +26,13 @@ import org.openehr.schemas.v1.OPERATIONALTEMPLATE;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class CompositionFlattener {
 
   private final ObjectMapper mapper = new ObjectMapper();
 
   private CachedTemplateProvider cachedTemplateProvider;
+  private final RemoteEhrBaseTemplateProvider remoteEhrBaseTemplateProvider;
 
   private Cache<String, FlatJson> flatJsonCache;
 
@@ -70,13 +73,12 @@ public class CompositionFlattener {
     if (composition.getArchetypeDetails() == null
         || composition.getArchetypeDetails().getTemplateId() == null
         || composition.getArchetypeDetails().getTemplateId().getValue() == null) {
-      throw new SystemException(
-          "Cannot parse results, composition missing template id");
+      throw new SystemException("Cannot parse results, composition missing template id");
     }
   }
 
   @PostConstruct
-  private void initializeTemplateCache() {
+  public void initializeTemplateCache() {
     CachingProvider provider = Caching.getCachingProvider();
     CacheManager cacheManager = provider.getCacheManager();
 
@@ -99,7 +101,7 @@ public class CompositionFlattener {
         cacheManager.createCache(WEB_TEMPLATE_CACHE, introspectCacheConfig);
 
     cachedTemplateProvider =
-        new CachedTemplateProvider(new TestDataTemplateProvider(), templateCache, introspectCache);
+        new CachedTemplateProvider(remoteEhrBaseTemplateProvider, templateCache, introspectCache);
 
     MutableConfiguration<String, FlatJson> flatJsonCacheConfig =
         new MutableConfiguration<String, FlatJson>()
@@ -108,5 +110,14 @@ public class CompositionFlattener {
             .setStoreByValue(false);
 
     flatJsonCache = cacheManager.createCache(FLAT_JSON_CACHE, flatJsonCacheConfig);
+  }
+
+  @PreDestroy
+  public void clearCaches() {
+    CachingProvider provider = Caching.getCachingProvider();
+    CacheManager cacheManager = provider.getCacheManager();
+    cacheManager.destroyCache(FLAT_JSON_CACHE);
+    cacheManager.destroyCache(WEB_TEMPLATE_CACHE);
+    cacheManager.destroyCache(OPERATIONAL_TEMPLATE_CACHE);
   }
 }
