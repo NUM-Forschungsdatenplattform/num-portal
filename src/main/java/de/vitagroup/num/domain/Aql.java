@@ -2,14 +2,18 @@ package de.vitagroup.num.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.vitagroup.num.domain.admin.UserDetails;
+import java.io.Serializable;
+import java.time.OffsetDateTime;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.persistence.*;
-import java.io.Serializable;
-import java.time.OffsetDateTime;
 import org.apache.commons.lang3.ObjectUtils;
 
 @Entity
@@ -45,11 +49,11 @@ public class Aql implements Serializable {
   public boolean hasEmptyOrDifferentOwner(String userId) {
     return ObjectUtils.isEmpty(owner) || !owner.getUserId().equals(userId);
   }
-  
+
   public boolean isExecutable(String userId) {
     return !ObjectUtils.isEmpty(owner) && (owner.getUserId().equals(userId) || isPublicAql());
   }
-  
+
   public boolean isViewable(String userId) {
     return !ObjectUtils.isEmpty(owner) && (owner.getUserId().equals(userId) || isPublicAql());
   }
