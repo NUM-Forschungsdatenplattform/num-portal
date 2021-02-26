@@ -1,0 +1,38 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DATABASE_SERVER}/${DATABASE_NAME}?currentSchema=num
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  flyway:
+    user: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_ENDPOINT}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
+      client:
+        registration:
+          userStoreClient:
+            client-id: ${KEYCLOAK_CLIENT_ID}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+        provider:
+          userStoreClient:
+            token-uri: ${KEYCLOAK_ENDPOINT}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
+userstore:
+  url: ${KEYCLOAK_ENDPOINT}/auth/admin/realms/${KEYCLOAK_REALM}
+
+swagger:
+  oauth2:
+    token-uri: ${KEYCLOAK_CANONICAL_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
+    auth-uri: ${KEYCLOAK_CANONICAL_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth
+    client-name: ${SWAGGER_OAUTH2_CLIENT-NAME}
+    client-secret: ${SWAGGER_OAUTH2_CLIENT-NAME}
+
+ehrbase:
+  rest-api-url: ${EHRBASE_ENDPOINT}/ehrbase/rest/openehr/v1/
+  username: ${EHRBASE_USER}
+  password: ${EHRBASE_PASSWORD}
+
+privacy:
+  minHits: ${PRIVACY_MIN_HITS}

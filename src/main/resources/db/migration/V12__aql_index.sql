@@ -1,0 +1,1 @@
+CREATE INDEX ON aql (name, organization_id, owner_id);

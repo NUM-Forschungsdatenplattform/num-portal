@@ -1,0 +1,147 @@
+server:
+  port: 8090
+spring:
+  application:
+    name: num-portal
+  datasource:
+    hikari:
+      data-source-properties:
+        stringtype: unspecified
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=num
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+  flyway:
+    enabled: true
+    user: postgres
+    password: postgres
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/certs
+      client:
+        registration:
+          userStoreClient:
+            authorization-grant-type: client_credentials
+            client-id: numPortal
+            client-secret: bc1843c0-3c57-4c2c-9b40-ac38e6dd545e
+        provider:
+          userStoreClient:
+            token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+
+swagger:
+  oauth2:
+    token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/auth
+    client-name: numPortalWebapp
+    client-secret: numPortalWebapp
+
+userstore:
+  url: ${keycloak.url}/auth/admin/realms/Num
+
+keycloak:
+  url: https://temp-keycloak.10.214.4.21.xip.io
+
+hapi:
+  fhir:
+    version: r4
+    rest:
+      server-name: num-portal
+      default-response-encoding: json
+      default-pretty-print: true
+    validation:
+      enabled: false
+      request-only: true
+
+feign:
+  client:
+    config:
+      numPortal:
+        connectTimeout: 1000
+        readTimeout: 1200
+        loggerLevel: FULL
+
+logging:
+  level:
+    de.vitasystems: trace
+    org.springframework.web: trace
+
+# use local ehrbase until we get central one
+ehrbase:
+  rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
+  username: ehrbase-user
+  password: SuperSecretPassword
+
+cors:
+  allowedOrigins:
+    - "*"
+privacy:
+  minHits: 20
+---
+spring:
+  profiles: local
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=num
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+  flyway:
+    enabled: true
+    user: postgres
+    password: postgres
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/certs
+      client:
+        registration:
+          userStoreClient:
+            authorization-grant-type: client_credentials
+            client-id: numPortal
+            client-secret: 3c18c1dc-ba8d-4ab7-9a91-0178130f74ba
+        provider:
+          userStoreClient:
+            token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+  mvc:
+    log-request-details: false
+
+swagger:
+  oauth2:
+    token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/auth
+    client-name: numPortalWebapp
+    client-secret: numPortalWebapp
+
+userstore:
+  url: ${keycloak.url}/auth/admin/realms/Num
+
+keycloak:
+  url: http://localhost:8180
+
+feign:
+  client:
+    config:
+      numPortal:
+        connectTimeout: 1000
+        readTimeout: 1200
+        loggerLevel: FULL
+
+logging:
+  level:
+    de.vitasystems: trace
+    org.springframework.web: trace
+
+ehrbase:
+  rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
+  username: ehrbase-user
+  password: SuperSecretPassword
+
+privacy:
+  minHits: 1
+
