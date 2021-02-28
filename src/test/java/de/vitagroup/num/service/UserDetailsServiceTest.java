@@ -50,11 +50,11 @@ public class UserDetailsServiceTest {
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingUserWhenSettingOrganization() {
-    userDetailsService.setOrganization("nonExistingUserId", any());
+    userDetailsService.setOrganization("existingUserId", "nonExistingUserId", any());
   }
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingUserWhenApproving() {
-    userDetailsService.approveUser("nonExistingUserId");
+    userDetailsService.approveUser("existingUserId", "nonExistingUserId");
   }
 }

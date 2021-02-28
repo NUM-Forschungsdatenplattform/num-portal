@@ -22,7 +22,7 @@
     <ehr-sdk.version>develop-SNAPSHOT</ehr-sdk.version>
     <aql-editor-backend-starter.version>1.0-SNAPSHOT</aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>6.1</logstash-logback-encoder.version>
-    <modelmapper.version>2.3.5</modelmapper.version>
+    <modelmapper.version>2.3.9</modelmapper.version>
     <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
     <java.version>11</java.version>
     <openfeign.version>2.2.5.RELEASE</openfeign.version>

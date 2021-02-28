@@ -2,6 +2,8 @@ package de.vitagroup.num.domain.dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.Set;
+import javax.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,10 +18,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrganizationDto {
 
-  @NotNull
-  @ApiModelProperty(required = true, value = "The organization external identifier", example = "1a")
-  private String id;
+  @ApiModelProperty(required = true, value = "The organization id", example = "1")
+  private Long id;
 
   @ApiModelProperty(value = "The name of the organization")
+  @NotEmpty(message = "Organization name cannot be empty")
+  @NotNull(message = "Organization name cannot be null")
   private String name;
+
+  @ApiModelProperty(value = "The list of mail domains attached to this organization")
+  private Set<String> mailDomains;
 }

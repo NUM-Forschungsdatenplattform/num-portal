@@ -1,20 +1,25 @@
 package de.vitagroup.num.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.domain.MailDomain;
+import de.vitagroup.num.domain.Organization;
+import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
+import de.vitagroup.num.domain.repository.MailDomainRepository;
+import de.vitagroup.num.domain.repository.OrganizationRepository;
+import de.vitagroup.num.web.exception.BadRequestException;
+import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.springframework.stereotype.Service;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import de.vitagroup.num.web.exception.SystemException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 /** Service responsible for retrieving organization information from the terminology server */
 @Slf4j
@@ -22,15 +27,31 @@ import java.util.Optional;
 @AllArgsConstructor
 public class OrganizationService {
 
-  private final ObjectMapper mapper;
+  private final OrganizationRepository organizationRepository;
+  private final MailDomainRepository mailDomainRepository;
+  private final UserDetailsService userDetailsService;
 
   /**
    * Retrieves a list with available organizations
    *
    * @return List with available organizations
    */
-  public List<OrganizationDto> getAllOrganizations() {
-    return getOrganizations();
+  public List<Organization> getAllOrganizations(List<String> roles, String loggedInUserId) {
+    UserDetails user =
+        userDetailsService
+            .getUserDetailsById(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
+
+    if (user.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
+    }
+
+    if (roles.contains(Roles.SUPER_ADMIN)) {
+      return organizationRepository.findAll();
+    } else if (roles.contains(Roles.ORGANIZATION_ADMIN)) {
+      return List.of(user.getOrganization());
+    }
+    return List.of();
   }
 
   /**
@@ -39,39 +60,128 @@ public class OrganizationService {
    * @param id the id of the organization to fetch
    * @return the found organization. If none is found, ResourceNotFound exception is thrown
    */
-  public OrganizationDto getOrganizationById(String id) {
-    Optional<OrganizationDto> organizationDto = findOrganizationById(id);
+  public Organization getOrganizationById(Long id) {
 
-    if (organizationDto.isEmpty()) {
-      throw new ResourceNotFound("Organization not found");
-    }
-    return organizationDto.get();
+    return organizationRepository
+        .findById(id)
+        .orElseThrow(() -> new ResourceNotFound("Organization not found:" + id));
   }
 
-  // TODO: Implement call to the terminology server responsible with organization data
-  private Optional<OrganizationDto> findOrganizationById(String id) {
-    return getOrganizations().stream()
-        .filter(organizationDto -> organizationDto.getId().equals(id))
-        .findFirst();
+  @Transactional
+  public Organization createOrganization(String loggedInUserId, OrganizationDto organizationDto) {
+    UserDetails user =
+        userDetailsService
+            .getUserDetailsById(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
+
+    if (user.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
+    }
+
+    organizationRepository
+        .findByName(organizationDto.getName())
+        .ifPresent(
+            d -> {
+              throw new BadRequestException(
+                  "Organization name must be unique: " + organizationDto.getName());
+            });
+
+    organizationDto
+        .getMailDomains()
+        .forEach(
+            domain -> {
+              Optional<MailDomain> mailDomain = mailDomainRepository.findByName(domain);
+              if (mailDomain.isPresent()) {
+                throw new BadRequestException("Organization mail domain already exists: " + domain);
+              }
+            });
+
+    Organization organization = Organization.builder().name(organizationDto.getName()).build();
+
+    organization.setDomains(
+        organizationDto.getMailDomains().stream()
+            .map(domain -> MailDomain.builder().name(domain).organization(organization).build())
+            .collect(Collectors.toSet()));
+
+    return organizationRepository.save(organization);
   }
 
-  // TODO: Implement call to the terminology server responsible with organization data
-  private List<OrganizationDto> getOrganizations() {
-    File organizationFile =
-        new File(
-            getClass()
-                .getClassLoader()
-                .getResource("mock/organization/organizations.json")
-                .getFile());
-    try {
+  @Transactional
+  public Organization update(
+      Long organizationId,
+      OrganizationDto organizationDto,
+      List<String> roles,
+      String loggedInUserId) {
 
-      String content = FileUtils.readFileToString(organizationFile, StandardCharsets.UTF_8);
+    UserDetails user =
+        userDetailsService
+            .getUserDetailsById(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
 
-      return mapper.readValue(content, new TypeReference<List<OrganizationDto>>() {});
-
-    } catch (IOException e) {
-      log.error("Error reading mock organization from file");
+    if (user.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
     }
-    return Collections.emptyList();
+
+    Organization organizationToEdit =
+        organizationRepository
+            .findById(organizationId)
+            .orElseThrow(() -> new ResourceNotFound("Organization not found: " + organizationId));
+
+    organizationRepository
+        .findByName(organizationDto.getName())
+        .ifPresent(
+            d -> {
+              if (d.getId() != organizationToEdit.getId()) {
+                throw new BadRequestException(
+                    "Organization name must be unique: " + organizationDto.getName());
+              }
+            });
+
+    organizationDto
+        .getMailDomains()
+        .forEach(
+            domain -> {
+              Optional<MailDomain> mailDomain = mailDomainRepository.findByName(domain);
+              if (mailDomain.isPresent()
+                  && mailDomain.get().getOrganization().getId() != organizationToEdit.getId()) {
+                throw new BadRequestException("Organization mail domain already exists: " + domain);
+              }
+            });
+
+    if (roles.contains(Roles.SUPER_ADMIN)) {
+      updateOrganization(organizationDto, organizationToEdit);
+
+    } else if (roles.contains(Roles.ORGANIZATION_ADMIN)) {
+      if (user.getOrganization().getId() == organizationId) {
+        updateOrganization(organizationDto, organizationToEdit);
+      } else {
+        throw new ForbiddenException("Cannot update organization:" + organizationId);
+      }
+    } else {
+      throw new ForbiddenException("Cannot access this resource");
+    }
+
+    return organizationRepository.save(organizationToEdit);
+  }
+
+  private void updateOrganization(OrganizationDto dto, Organization organization) {
+    organization.setName(dto.getName());
+
+    Set<MailDomain> newDomains = new HashSet<>();
+
+    dto.getMailDomains()
+        .forEach(
+            domainName -> {
+              Optional<MailDomain> mailDomain = mailDomainRepository.findByName(domainName);
+              if (mailDomain.isEmpty()) {
+                newDomains.add(
+                    mailDomainRepository.save(
+                        MailDomain.builder().name(domainName).organization(organization).build()));
+              } else {
+                newDomains.add(mailDomain.get());
+              }
+            });
+    organization.getDomains().clear();
+    organization.getDomains().addAll(newDomains);
   }
 }

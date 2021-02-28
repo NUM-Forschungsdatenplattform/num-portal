@@ -30,9 +30,9 @@ public interface AqlRepository extends JpaRepository<Aql, Long> {
   @Query(
       "SELECT aql FROM Aql aql "
           + "WHERE (cast(:name as string) is null OR aql.name like %:name% ) "
-          + "AND ((aql.owner.organizationId = :organizationId AND aql.publicAql = true) OR aql.owner.userId = :ownerId) ")
+          + "AND ((aql.owner.organization.id = :organizationId AND aql.publicAql = true) OR aql.owner.userId = :ownerId) ")
   List<Aql> findAllOrganizationOwnedByName(
-      @Param("organizationId") String organizationId,
+      @Param("organizationId") Long organizationId,
       @Param("ownerId") String ownerId,
       @Param("name") String name);
 
