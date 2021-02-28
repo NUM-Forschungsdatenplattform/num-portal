@@ -68,7 +68,7 @@ public class OrganizationService {
   }
 
   @Transactional
-  public Organization createOrganization(String loggedInUserId, OrganizationDto organizationDto) {
+  public Organization create(String loggedInUserId, OrganizationDto organizationDto) {
     UserDetails user =
         userDetailsService
             .getUserDetailsById(loggedInUserId)
@@ -181,7 +181,12 @@ public class OrganizationService {
                 newDomains.add(mailDomain.get());
               }
             });
-    organization.getDomains().clear();
-    organization.getDomains().addAll(newDomains);
+
+    if (organization.getDomains() != null) {
+      organization.getDomains().clear();
+      organization.getDomains().addAll(newDomains);
+    } else {
+      organization.setDomains(newDomains);
+    }
   }
 }

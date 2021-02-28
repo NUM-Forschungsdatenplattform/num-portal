@@ -60,7 +60,7 @@ public class OrganizationController {
       @AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(
         mapper.convertToDto(
-            organizationService.createOrganization(principal.getSubject(), organizationDto)));
+            organizationService.create(principal.getSubject(), organizationDto)));
   }
 
   @PutMapping(value = "/{id}")
