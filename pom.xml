@@ -19,8 +19,8 @@
   <properties>
     <commons-collections4.version>4.1</commons-collections4.version>
     <commons-io.version>2.5</commons-io.version>
-    <ehr-sdk.version>develop-SNAPSHOT</ehr-sdk.version>
-    <aql-editor-backend-starter.version>1.0-SNAPSHOT</aql-editor-backend-starter.version>
+    <ehr-sdk.version>1.2.0</ehr-sdk.version>
+    <aql-editor-backend-starter.version>0.2.0</aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>6.1</logstash-logback-encoder.version>
     <modelmapper.version>2.3.9</modelmapper.version>
     <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
