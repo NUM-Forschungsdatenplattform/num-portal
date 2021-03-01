@@ -37,14 +37,7 @@ public class OrganizationService {
    * @return List with available organizations
    */
   public List<Organization> getAllOrganizations(List<String> roles, String loggedInUserId) {
-    UserDetails user =
-        userDetailsService
-            .getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (user.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
-    }
+    UserDetails user = validateLoggedInUser(loggedInUserId);
 
     if (roles.contains(Roles.SUPER_ADMIN)) {
       return organizationRepository.findAll();
@@ -69,14 +62,7 @@ public class OrganizationService {
 
   @Transactional
   public Organization create(String loggedInUserId, OrganizationDto organizationDto) {
-    UserDetails user =
-        userDetailsService
-            .getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (user.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
-    }
+    validateLoggedInUser(loggedInUserId);
 
     organizationRepository
         .findByName(organizationDto.getName())
@@ -113,14 +99,7 @@ public class OrganizationService {
       List<String> roles,
       String loggedInUserId) {
 
-    UserDetails user =
-        userDetailsService
-            .getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (user.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
-    }
+    UserDetails user = validateLoggedInUser(loggedInUserId);
 
     Organization organizationToEdit =
         organizationRepository
@@ -192,5 +171,18 @@ public class OrganizationService {
     } else {
       organization.setDomains(newDomains);
     }
+  }
+
+  private UserDetails validateLoggedInUser(String loggedInUserId) {
+    UserDetails user =
+        userDetailsService
+            .getUserDetailsById(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
+
+    if (user.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
+    }
+
+    return user;
   }
 }

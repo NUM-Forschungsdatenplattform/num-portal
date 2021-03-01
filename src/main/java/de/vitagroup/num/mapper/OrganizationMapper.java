@@ -1,5 +1,6 @@
 package de.vitagroup.num.mapper;
 
+import de.vitagroup.num.domain.MailDomain;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import java.util.stream.Collectors;
@@ -17,7 +18,7 @@ public class OrganizationMapper {
     OrganizationDto organizationDto = modelMapper.map(organization, OrganizationDto.class);
     organizationDto.setMailDomains(
         organization.getDomains().stream()
-            .map(domain -> domain.getName())
+            .map(MailDomain::getName)
             .collect(Collectors.toSet()));
 
     return organizationDto;
