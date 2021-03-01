@@ -23,6 +23,7 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -59,6 +60,8 @@ public class CohortServiceTest {
   @Mock private PhenotypeService phenotypeService;
 
   @Spy private ModelMapper modelMapper;
+
+  @Mock private PrivacyProperties privacyProperties;
 
   @Captor ArgumentCaptor<Cohort> cohortCaptor;
 
@@ -367,5 +370,6 @@ public class CohortServiceTest {
     when(cohortRepository.findById(1L)).thenReturn(Optional.empty());
     when(cohortRepository.findById(2L)).thenReturn(Optional.of(Cohort.builder().id(2L).build()));
     when(cohortExecutor.executeGroup(any())).thenReturn(Set.of("test1", "test2"));
+    when(privacyProperties.getMinHits()).thenReturn(2);
   }
 }
