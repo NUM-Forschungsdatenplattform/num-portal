@@ -28,7 +28,7 @@ public class UserDetailsServiceTest {
   @Before
   public void setup() {
     when(userDetailsRepository.findByUserId("existingUserId"))
-        .thenReturn(Optional.of(UserDetails.builder().userId("existingUserId").build()));
+        .thenReturn(Optional.of(UserDetails.builder().userId("existingUserId").approved(true).build()));
   }
 
   @Test(expected = ConflictException.class)
