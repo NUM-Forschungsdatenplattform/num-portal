@@ -16,7 +16,7 @@ spring:
     user: postgres
     password: postgres
   jpa:
-    show-sql: false
+    show-sql: true
     hibernate:
       ddl-auto: none
   security:
@@ -71,6 +71,11 @@ logging:
     de.vitasystems: trace
     org.springframework.web: trace
 
+atna:
+  enabled: false
+  host: 151.80.206.33
+  port: 3001
+
 # use local ehrbase until we get central one
 ehrbase:
   rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
@@ -82,6 +87,7 @@ cors:
     - "*"
 privacy:
   minHits: 20
+
 ---
 spring:
   profiles: local
@@ -145,3 +151,7 @@ ehrbase:
 privacy:
   minHits: 1
 
+atna:
+  enabled: false
+  host: 151.80.206.33
+  port: 3001
