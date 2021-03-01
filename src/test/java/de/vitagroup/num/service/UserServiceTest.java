@@ -2,7 +2,10 @@ package de.vitagroup.num.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -10,22 +13,27 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.web.exception.BadRequestException;
+import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -39,10 +47,12 @@ public class UserServiceTest {
 
   private final Set<Role> roles =
       Set.of(
-          new Role("R1", "ADMIN"),
+          new Role("R1", "SUPER_ADMIN"),
           new Role("R2", "RESEARCHER"),
           new Role("R3", "ORGANIZATION_ADMIN"),
-          new Role("R4", "STUDY_COORDINATOR"));
+          new Role("R4", "STUDY_COORDINATOR"),
+          new Role("R5", "CONTENT_ADMIN"),
+          new Role("R6", "STUDY_APPROVER"));
 
   @Before
   public void setup() {
@@ -54,6 +64,8 @@ public class UserServiceTest {
     when(keycloakFeign.getRolesOfUser("2")).thenThrow(FeignException.InternalServerError.class);
     when(keycloakFeign.getRolesOfUser("3")).thenThrow(FeignException.NotFound.class);
     when(keycloakFeign.getRolesOfUser("4")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
+    when(keycloakFeign.getRolesOfUser("5")).thenReturn(Collections.emptySet());
+    when(keycloakFeign.getRolesOfUser("6")).thenReturn(roles);
 
     when(keycloakFeign.getRoles()).thenReturn(roles);
 
@@ -93,26 +105,34 @@ public class UserServiceTest {
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleSetInvalidRole() {
-    userService.setUserRoles("4", Collections.singletonList("non-existent role"));
+    userService.setUserRoles(
+        "4",
+        Collections.singletonList("non-existent role"),
+        Collections.singletonList(Roles.SUPER_ADMIN));
   }
 
   @Test
   public void shouldAddNewRole() {
-    userService.setUserRoles("4", Collections.singletonList("ADMIN"));
+    userService.setUserRoles(
+        "4",
+        Collections.singletonList("SUPER_ADMIN"),
+        Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
-    verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R1", "ADMIN")});
+    verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R1", "SUPER_ADMIN")});
   }
 
   @Test
-  public void shouldSetExistingRole() {
-    userService.setUserRoles("4", Collections.singletonList("RESEARCHER"));
+  public void shouldNotSetExistingRole() {
+    userService.setUserRoles(
+        "4", Collections.singletonList("RESEARCHER"), Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, never()).removeRoles(anyString(), any(Role[].class));
-    verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
+    verify(keycloakFeign, never()).addRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
   }
 
   @Test
   public void shouldUnsetRoles() {
-    userService.setUserRoles("4", Collections.emptyList());
+    userService.setUserRoles(
+        "4", Collections.emptyList(), Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
   }
@@ -149,5 +169,102 @@ public class UserServiceTest {
     Set<de.vitagroup.num.domain.admin.User> userReturn = userService.searchUsers(null, null, false);
     assertNull(userReturn.iterator().next().getRoles());
     verify(keycloakFeign, times(0)).getRolesOfUser("4");
+  }
+
+  @Test
+  public void testAddRoleMatrix() {
+    for (Role userRole : roles) {
+      for (Role role : roles) {
+        boolean success = testAddRole(role, userRole.getName());
+        if (userRole.getName().equals("SUPER_ADMIN")
+            || (userRole.getName().equals("ORGANIZATION_ADMIN")
+                && !role.getName().equals("SUPER_ADMIN")
+                && !role.getName().equals("CONTENT_ADMIN"))) {
+          assertTrue(
+              success,
+              "User " + userRole.getName() + " should be allowed to add role " + role.getName());
+        } else {
+          assertFalse(
+              success,
+              "User "
+                  + userRole.getName()
+                  + " should not be allowed to add role "
+                  + role.getName());
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testRemoveRoleMatrix() {
+    for (Role userRole : roles) {
+      for (Role role : roles) {
+        boolean success = testRemoveRole(role, userRole.getName());
+        if (userRole.getName().equals("SUPER_ADMIN")
+            || (userRole.getName().equals("ORGANIZATION_ADMIN")
+                && !role.getName().equals("SUPER_ADMIN")
+                && !role.getName().equals("CONTENT_ADMIN"))) {
+          assertTrue(
+              success,
+              "User " + userRole.getName() + " should be allowed to remove role " + role.getName());
+        } else {
+          assertFalse(
+              success,
+              "User "
+                  + userRole.getName()
+                  + " should not be allowed to remove role "
+                  + role.getName());
+        }
+      }
+    }
+  }
+
+  private boolean testAddRole(Role role, String userRole) {
+    try {
+      userService.setUserRoles(
+          "5", Collections.singletonList(role.getName()), Collections.singletonList(userRole));
+      if (userRole.equals("SUPER_ADMIN")
+          || (userRole.equals("ORGANIZATION_ADMIN")
+              && !"SUPER_ADMIN".equals(role.getName())
+              && !"CONTENT_ADMIN".equals(role.getName()))) {
+        verify(keycloakFeign, times(1)).addRoles("5", new Role[] {role});
+        Mockito.clearInvocations(keycloakFeign);
+        return true;
+      } else {
+        fail(
+            "User "
+                + userRole
+                + " trying to set role "
+                + role.getName()
+                + " should throw forbidden exception");
+        return false;
+      }
+    } catch (ForbiddenException e) {
+      return false;
+    }
+  }
+
+  private boolean testRemoveRole(Role role, String userRole) {
+    try {
+      List<String> allButWantedToRemoveRoles =
+          roles.stream()
+              .map(Role::getName)
+              .filter(name -> !name.equals(role.getName()))
+              .collect(Collectors.toList());
+      userService.setUserRoles("6", allButWantedToRemoveRoles, Collections.singletonList(userRole));
+      if (userRole.equals("SUPER_ADMIN")
+          || (userRole.equals("ORGANIZATION_ADMIN")
+              && !"SUPER_ADMIN".equals(role.getName())
+              && !"CONTENT_ADMIN".equals(role.getName()))) {
+        verify(keycloakFeign, times(1)).removeRoles("6", new Role[] {role});
+        Mockito.clearInvocations(keycloakFeign);
+        return true;
+      } else {
+        fail("Role setting should throw forbidden exception");
+        return false;
+      }
+    } catch (ForbiddenException e) {
+      return false;
+    }
   }
 }

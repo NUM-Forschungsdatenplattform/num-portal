@@ -133,10 +133,10 @@ public class EhrBaseService {
   private QueryResponseData flattenIfCompositionPresent(QueryResponseData response) {
     List<Map<String, String>> compositions = new ArrayList<>();
 
-    for (List<Object> rows : response.getRows()) {
-      for(Object row: rows){
-        if(isComposition(row)){
-          compositions.add((Map<String, String>) row);
+    for (List<Object> row : response.getRows()) {
+      for(Object cell: row){
+        if(isComposition(cell)){
+          compositions.add((Map<String, String>) cell);
         }else{
           log.debug("Executing query containing mixed data types. Returning raw ehr response");
           return response;

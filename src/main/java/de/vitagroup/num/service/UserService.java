@@ -1,14 +1,17 @@
 package de.vitagroup.num.service;
 
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.OrganizationDto;
+import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.web.exception.BadRequestException;
+import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +22,6 @@ import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -29,13 +31,12 @@ public class UserService {
 
   private final KeycloakFeign keycloakFeign;
   private final UserDetailsService userDetailsService;
-  private final OrganizationService organizationService;
+  private final OrganizationMapper organizationMapper;
 
   public User getUserProfile(String loggedInUserId) {
-    Optional<UserDetails> loggedInUser =
-        userDetailsService.getUserDetailsById(loggedInUserId);
+    Optional<UserDetails> loggedInUser = userDetailsService.getUserDetailsById(loggedInUserId);
 
-    if(loggedInUser.isEmpty()){
+    if (loggedInUser.isEmpty()) {
       throw new SystemException("An error has occurred, user not present.");
     }
 
@@ -91,7 +92,8 @@ public class UserService {
    * @param userId the user to update roles of
    * @param roleNames The list of roles of the user
    */
-  public List<String> setUserRoles(String userId, @NotNull List<String> roleNames) {
+  public List<String> setUserRoles(
+      String userId, @NotNull List<String> roleNames, List<String> callerRoles) {
     try {
       Map<String, Role> supportedRoles =
           keycloakFeign.getRoles().stream().collect(Collectors.toMap(Role::getName, role -> role));
@@ -106,6 +108,8 @@ public class UserService {
 
       Role[] addRoles =
           roleNames.stream()
+              .filter(
+                  role -> existingRoles.stream().noneMatch(role1 -> role1.getName().equals(role)))
               .map(supportedRoles::get)
               .peek(
                   role -> {
@@ -116,6 +120,14 @@ public class UserService {
               .collect(Collectors.toList())
               .toArray(new Role[] {});
 
+      if (Arrays.stream(removeRoles)
+          .anyMatch(role -> !Roles.isAllowedToSet(role.getName(), callerRoles))) {
+        throw new ForbiddenException("Not allowed to remove that role");
+      }
+      if (Arrays.stream(addRoles)
+          .anyMatch(role -> !Roles.isAllowedToSet(role.getName(), callerRoles))) {
+        throw new ForbiddenException("Not allowed to set that role");
+      }
       if (removeRoles.length > 0) {
         keycloakFeign.removeRoles(userId, removeRoles);
       }
@@ -141,20 +153,8 @@ public class UserService {
     if (userDetails.isPresent()) {
       user.setApproved(userDetails.get().isApproved());
 
-      if (StringUtils.isNotEmpty(userDetails.get().getOrganizationId())) {
-
-        try {
-          OrganizationDto organization =
-              organizationService.getOrganizationById(userDetails.get().getOrganizationId());
-
-          user.setOrganization(organization);
-
-        } catch (ResourceNotFound e) {
-          log.error(
-              "Invalid organization id {} for user {}",
-              userDetails.get().getOrganizationId(),
-              user.getId());
-        }
+      if (userDetails.get().getOrganization() != null) {
+        user.setOrganization(organizationMapper.convertToDto(userDetails.get().getOrganization()));
       }
     }
   }

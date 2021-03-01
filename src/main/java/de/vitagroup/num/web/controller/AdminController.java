@@ -1,5 +1,6 @@
 package de.vitagroup.num.web.controller;
 
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.service.UserDetailsService;
@@ -13,6 +14,8 @@ import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,6 +36,7 @@ public class AdminController {
 
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<User> getUser(@NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserById(userId, true));
   }
@@ -49,16 +53,21 @@ public class AdminController {
   @ApiOperation(value = "Updates the users roles to the given set.")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<List<String>> updateRoles(
-      @NotNull @PathVariable String userId, @NotNull @RequestBody List<String> roles) {
-    return ResponseEntity.ok(userService.setUserRoles(userId, roles));
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @PathVariable String userId,
+      @NotNull @RequestBody List<String> roles) {
+    return ResponseEntity.ok(
+        userService.setUserRoles(userId, roles, Roles.extractRoles(principal)));
   }
 
   @PostMapping("/user/{userId}/organization")
   @ApiOperation(value = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<String> addOrganization(
-      @NotNull @PathVariable String userId, @NotNull @RequestBody OrganizationDto organization) {
-    userDetailsService.setOrganization(userId, organization.getId());
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @PathVariable String userId,
+      @NotNull @RequestBody OrganizationDto organization) {
+    userDetailsService.setOrganization(principal.getSubject(), userId, organization.getId());
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
@@ -72,8 +81,9 @@ public class AdminController {
   @PostMapping("/user/{userId}/approve")
   @ApiOperation(value = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
-  public ResponseEntity<String> approveUser(@NotNull @PathVariable String userId) {
-    userDetailsService.approveUser(userId);
+  public ResponseEntity<String> approveUser(
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
+    userDetailsService.approveUser(principal.getSubject(), userId);
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 

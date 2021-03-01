@@ -7,6 +7,7 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlDto;
@@ -44,7 +45,7 @@ public class AqlMapperTest {
     User user =
         User.builder()
             .id("123456")
-            .organization(OrganizationDto.builder().name("organization a").id("12345a").build())
+            .organization(OrganizationDto.builder().name("organization a").id(1L).build())
             .build();
 
     when(userService.getUserById("123456", false)).thenReturn(user);
@@ -58,7 +59,11 @@ public class AqlMapperTest {
             .use("use")
             .purpose("purpose")
             .publicAql(false)
-            .owner(UserDetails.builder().organizationId("12345a").userId("123456").build())
+            .owner(
+                UserDetails.builder()
+                    .organization(Organization.builder().id(1L).build())
+                    .userId("123456")
+                    .build())
             .createDate(OffsetDateTime.now())
             .modifiedDate(OffsetDateTime.now())
             .build();
@@ -69,7 +74,7 @@ public class AqlMapperTest {
     assertThat(dto.getOwner(), notNullValue());
     assertThat(dto.getOwner().getId(), is(aql.getOwner().getUserId()));
     assertThat(dto.getOwner().getOrganization(), notNullValue());
-    assertThat(dto.getOwner().getOrganization().getId(), is(aql.getOwner().getOrganizationId()));
+    assertThat(dto.getOwner().getOrganization().getId(), is(aql.getOwner().getOrganization().getId()));
 
     assertThat(dto.getName(), is(aql.getName()));
     assertThat(dto.getUse(), is(aql.getUse()));
