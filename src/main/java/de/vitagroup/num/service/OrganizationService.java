@@ -131,7 +131,7 @@ public class OrganizationService {
         .findByName(organizationDto.getName())
         .ifPresent(
             d -> {
-              if (d.getId() != organizationToEdit.getId()) {
+              if (!d.getId().equals(organizationToEdit.getId())) {
                 throw new BadRequestException(
                     "Organization name must be unique: " + organizationDto.getName());
               }
@@ -143,7 +143,11 @@ public class OrganizationService {
             domain -> {
               Optional<MailDomain> mailDomain = mailDomainRepository.findByName(domain);
               if (mailDomain.isPresent()
-                  && mailDomain.get().getOrganization().getId() != organizationToEdit.getId()) {
+                  && !mailDomain
+                      .get()
+                      .getOrganization()
+                      .getId()
+                      .equals(organizationToEdit.getId())) {
                 throw new BadRequestException("Organization mail domain already exists: " + domain);
               }
             });
@@ -152,7 +156,7 @@ public class OrganizationService {
       updateOrganization(organizationDto, organizationToEdit);
 
     } else if (roles.contains(Roles.ORGANIZATION_ADMIN)) {
-      if (user.getOrganization().getId() == organizationId) {
+      if (user.getOrganization().getId().equals(organizationId)) {
         updateOrganization(organizationDto, organizationToEdit);
       } else {
         throw new ForbiddenException("Cannot update organization:" + organizationId);
