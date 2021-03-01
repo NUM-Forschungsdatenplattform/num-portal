@@ -1,5 +1,6 @@
 package de.vitagroup.num.integrationtesting.tests;
 
+import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -14,21 +15,21 @@ public class OrganizationControllerIT extends IntegrationTest {
 
   @Autowired public MockMvc mockMvc;
 
-  public static final String VALID_ORGANIZATION_ID = "12345a";
-  public static final String INVALID_ORGANIZATION_ID = "wrong";
+  public static final Long VALID_ORGANIZATION_ID = 1L;
+  public static final Long INVALID_ORGANIZATION_ID = 12L;
 
   private static final String ORGANIZATION_PATH = "/organization";
 
   @Test
   @SneakyThrows
-  @WithMockNumUser
+  @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldGetAllOrganizationsSuccessfully() {
     mockMvc.perform(get(ORGANIZATION_PATH)).andExpect(status().isOk());
   }
 
   @Test
   @SneakyThrows
-  @WithMockNumUser
+  @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldHandleOrganizationNotFound() {
     mockMvc
         .perform(get(String.format("%s/%s", ORGANIZATION_PATH, INVALID_ORGANIZATION_ID)))
@@ -37,7 +38,7 @@ public class OrganizationControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
-  @WithMockNumUser
+  @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldGetAllOrganizationByIdSuccessfully() {
     mockMvc
         .perform(get(String.format("%s/%s", ORGANIZATION_PATH, VALID_ORGANIZATION_ID)))
