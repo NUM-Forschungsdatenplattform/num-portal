@@ -16,6 +16,7 @@ import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.spi.CachingProvider;
 import lombok.RequiredArgsConstructor;
+import org.ehrbase.client.templateprovider.ClientTemplateProvider;
 import org.ehrbase.serialisation.flatencoding.FlatFormat;
 import org.ehrbase.serialisation.flatencoding.FlatJasonProvider;
 import org.ehrbase.serialisation.flatencoding.FlatJson;
@@ -32,7 +33,7 @@ public class CompositionFlattener {
   private final ObjectMapper mapper = new ObjectMapper();
 
   private CachedTemplateProvider cachedTemplateProvider;
-  private final RemoteEhrBaseTemplateProvider remoteEhrBaseTemplateProvider;
+  private final ClientTemplateProvider clientTemplateProvider;
 
   private Cache<String, FlatJson> flatJsonCache;
 
@@ -101,7 +102,7 @@ public class CompositionFlattener {
         cacheManager.createCache(WEB_TEMPLATE_CACHE, introspectCacheConfig);
 
     cachedTemplateProvider =
-        new CachedTemplateProvider(remoteEhrBaseTemplateProvider, templateCache, introspectCache);
+        new CachedTemplateProvider(clientTemplateProvider, templateCache, introspectCache);
 
     MutableConfiguration<String, FlatJson> flatJsonCacheConfig =
         new MutableConfiguration<String, FlatJson>()

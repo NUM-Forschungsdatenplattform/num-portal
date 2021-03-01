@@ -4,13 +4,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 import com.nedap.archie.rm.composition.Composition;
+import de.vitagroup.num.config.EhrBaseConfig;
+import de.vitagroup.num.config.ClientTemplateProviderConfig;
+import de.vitagroup.num.properties.EhrBaseProperties;
 import de.vitagroup.num.web.exception.SystemException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.ehrbase.aqleditor.service.TestDataTemplateProvider;
+import org.ehrbase.client.templateprovider.ClientTemplateProvider;
 import org.ehrbase.serialisation.jsonencoding.CanonicalJson;
 import org.junit.After;
 import org.junit.Before;
@@ -18,17 +23,21 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.annotation.Import;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
 @RunWith(MockitoJUnitRunner.class)
-@Import(CompositionFlattener.class)
+@Import({
+  EhrBaseProperties.class,
+  ClientTemplateProviderConfig.class,
+  CompositionFlattener.class,
+  EhrBaseConfig.class
+})
 public class CompositionFlattenerTest {
 
-  @Mock RemoteEhrBaseTemplateProvider remoteEhrBaseTemplateProvider;
+  @Mock ClientTemplateProvider clientTemplateProvider;
 
   @Spy private TestDataTemplateProvider testDataTemplateProvider;
 
@@ -40,7 +49,8 @@ public class CompositionFlattenerTest {
   public void setup() {
     flattener.clearCaches();
     flattener.initializeTemplateCache();
-    Mockito.when(remoteEhrBaseTemplateProvider.find(anyString()))
+
+    when(clientTemplateProvider.find(anyString()))
         .thenAnswer(
             invocation -> testDataTemplateProvider.find(invocation.getArgument(0, String.class)));
   }
