@@ -6,7 +6,6 @@ ALTER TABLE user_details
                    WHEN organization_id = '12345c' THEN 3
                    WHEN organization_id = '12345d' THEN 4
                    WHEN organization_id = '12345e' THEN 5
-                   ELSE 6
         END);
 
 INSERT INTO organization (id, name)
