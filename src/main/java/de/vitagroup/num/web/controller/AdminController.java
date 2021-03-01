@@ -36,6 +36,7 @@ public class AdminController {
 
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<User> getUser(@NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserById(userId, true));
   }
@@ -63,8 +64,10 @@ public class AdminController {
   @ApiOperation(value = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<String> addOrganization(
-      @NotNull @PathVariable String userId, @NotNull @RequestBody OrganizationDto organization) {
-    userDetailsService.setOrganization(userId, organization.getId());
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @PathVariable String userId,
+      @NotNull @RequestBody OrganizationDto organization) {
+    userDetailsService.setOrganization(principal.getSubject(), userId, organization.getId());
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
@@ -78,8 +81,9 @@ public class AdminController {
   @PostMapping("/user/{userId}/approve")
   @ApiOperation(value = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
-  public ResponseEntity<String> approveUser(@NotNull @PathVariable String userId) {
-    userDetailsService.approveUser(userId);
+  public ResponseEntity<String> approveUser(
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
+    userDetailsService.approveUser(principal.getSubject(), userId);
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 

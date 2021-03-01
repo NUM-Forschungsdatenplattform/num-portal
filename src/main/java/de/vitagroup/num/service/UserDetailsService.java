@@ -1,9 +1,13 @@
 package de.vitagroup.num.service;
 
+import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.ConflictException;
+import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.web.exception.SystemException;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,6 +17,7 @@ import org.springframework.stereotype.Service;
 public class UserDetailsService {
 
   private final UserDetailsRepository userDetailsRepository;
+  private final OrganizationRepository organizationRepository;
 
   public Optional<UserDetails> getUserDetailsById(String userId) {
     return userDetailsRepository.findByUserId(userId);
@@ -28,17 +33,27 @@ public class UserDetailsService {
     }
   }
 
-  public UserDetails setOrganization(String userId, String organizationId) {
-    Optional<UserDetails> userDetails = userDetailsRepository.findByUserId(userId);
-    if (userDetails.isPresent()) {
-      userDetails.get().setOrganizationId(organizationId);
-      return userDetailsRepository.save(userDetails.get());
-    } else {
-      throw new ResourceNotFound("User " + userId + " not created yet.");
-    }
+  public UserDetails setOrganization(String loggedInUserId, String userId, Long organizationId) {
+    validateLoggedInUser(loggedInUserId);
+
+    UserDetails userDetails =
+        userDetailsRepository
+            .findByUserId(userId)
+            .orElseThrow(() -> new ResourceNotFound("User not found:" + userId));
+
+    Organization organization =
+        organizationRepository
+            .findById(organizationId)
+            .orElseThrow(() -> new ResourceNotFound("Organization not found:" + organizationId));
+
+    userDetails.setOrganization(organization);
+    return userDetailsRepository.save(userDetails);
   }
 
-  public UserDetails approveUser(String userId) {
+  public UserDetails approveUser(String loggedInUserId, String userId) {
+
+    validateLoggedInUser(loggedInUserId);
+
     Optional<UserDetails> userDetails = userDetailsRepository.findByUserId(userId);
     return userDetails
         .map(
@@ -47,5 +62,15 @@ public class UserDetailsService {
               return userDetailsRepository.save(details);
             })
         .orElseThrow(() -> new ResourceNotFound("User " + userId + " not created yet."));
+  }
+
+  private void validateLoggedInUser(String loggedInUserId) {
+    UserDetails user =
+        getUserDetailsById(loggedInUserId)
+            .orElseThrow(() -> new SystemException("Logged in user not found"));
+
+    if (user.isNotApproved()) {
+      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
+    }
   }
 }

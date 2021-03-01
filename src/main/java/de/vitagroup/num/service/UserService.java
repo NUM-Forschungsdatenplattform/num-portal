@@ -4,7 +4,7 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.OrganizationDto;
+import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -22,7 +22,6 @@ import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -32,7 +31,7 @@ public class UserService {
 
   private final KeycloakFeign keycloakFeign;
   private final UserDetailsService userDetailsService;
-  private final OrganizationService organizationService;
+  private final OrganizationMapper organizationMapper;
 
   public User getUserProfile(String loggedInUserId) {
     Optional<UserDetails> loggedInUser = userDetailsService.getUserDetailsById(loggedInUserId);
@@ -154,20 +153,8 @@ public class UserService {
     if (userDetails.isPresent()) {
       user.setApproved(userDetails.get().isApproved());
 
-      if (StringUtils.isNotEmpty(userDetails.get().getOrganizationId())) {
-
-        try {
-          OrganizationDto organization =
-              organizationService.getOrganizationById(userDetails.get().getOrganizationId());
-
-          user.setOrganization(organization);
-
-        } catch (ResourceNotFound e) {
-          log.error(
-              "Invalid organization id {} for user {}",
-              userDetails.get().getOrganizationId(),
-              user.getId());
-        }
+      if (userDetails.get().getOrganization() != null) {
+        user.setOrganization(organizationMapper.convertToDto(userDetails.get().getOrganization()));
       }
     }
   }
