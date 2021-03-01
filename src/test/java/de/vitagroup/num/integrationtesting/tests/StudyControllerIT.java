@@ -33,7 +33,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-@Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
 public class StudyControllerIT extends IntegrationTest {
 
   @Autowired public MockMvc mockMvc;
@@ -156,6 +155,7 @@ public class StudyControllerIT extends IntegrationTest {
         .andExpect(status().isUnauthorized());
   }
 
+  @Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_COORDINATOR})
@@ -175,6 +175,7 @@ public class StudyControllerIT extends IntegrationTest {
         .andExpect(jsonPath("$.firstHypotheses").value(validStudy.getFirstHypotheses()));
   }
 
+  @Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -189,6 +190,7 @@ public class StudyControllerIT extends IntegrationTest {
     assertEquals(8, studies.length);
   }
 
+  @Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -227,6 +229,7 @@ public class StudyControllerIT extends IntegrationTest {
     assertEquals(0, studies.length);
   }
 
+  @Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
   @Test
   @SneakyThrows
   @WithMockNumUser(

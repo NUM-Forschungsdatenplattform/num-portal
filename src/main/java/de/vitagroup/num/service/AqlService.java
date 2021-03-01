@@ -143,7 +143,7 @@ public class AqlService {
         return aqlRepository.findAllOwnedByName(user.getUserId(), name);
       case ORGANIZATION:
         return aqlRepository.findAllOrganizationOwnedByName(
-            user.getOrganizationId(), user.getUserId(), name);
+            user.getOrganization().getId(), user.getUserId(), name);
       default:
         return List.of();
     }

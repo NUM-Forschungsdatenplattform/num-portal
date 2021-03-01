@@ -7,7 +7,7 @@
 
   <groupId>de.vitagroup.num-portal</groupId>
   <artifactId>num-portal</artifactId>
-  <version>v0.1.0</version>
+  <version>v0.2.0</version>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
@@ -19,13 +19,14 @@
   <properties>
     <commons-collections4.version>4.1</commons-collections4.version>
     <commons-io.version>2.5</commons-io.version>
-    <ehr-sdk.version>v1.1.0</ehr-sdk.version>
-    <aql-editor-backend-starter.version>v0.1.0</aql-editor-backend-starter.version>
+    <ehr-sdk.version>1.2.0</ehr-sdk.version>
+    <aql-editor-backend-starter.version>0.2.0</aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>6.1</logstash-logback-encoder.version>
-    <modelmapper.version>2.3.5</modelmapper.version>
+    <modelmapper.version>2.3.9</modelmapper.version>
     <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
     <java.version>11</java.version>
     <openfeign.version>2.2.5.RELEASE</openfeign.version>
+    <commons-csv.version>1.4</commons-csv.version>
     <jacoco.version>0.8.6</jacoco.version>
     <dependency-check.version>6.1.1</dependency-check.version>
     <failsafe.version>2.22.2</failsafe.version>
@@ -36,6 +37,14 @@
   </properties>
 
   <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>central</id>
+      <name>Maven Repository Switchboard</name>
+      <url>https://repo1.maven.org/maven2</url>
+    </repository>
     <repository>
       <id>jitpack.io</id>
       <url>https://jitpack.io</url>
@@ -163,6 +172,16 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.openehealth.ipf.commons</groupId>
+      <artifactId>ipf-commons-audit</artifactId>
+      <version>4.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
+      <version>${commons-csv.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

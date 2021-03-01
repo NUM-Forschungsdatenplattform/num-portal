@@ -92,12 +92,6 @@ public class StudyServiceTest {
   }
 
   @Test
-  public void shouldCallRepoWhenRetrievingAllStudies() {
-    studyService.getAllStudies();
-    verify(studyRepository, times(1)).findAll();
-  }
-
-  @Test
   public void shouldHandleMissingStudy() {
     Optional<Study> study = studyService.getStudyById(1L);
 
