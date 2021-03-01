@@ -13,7 +13,7 @@ public class ClientTemplateProviderConfig {
   private final DefaultRestClient defaultRestClient;
 
   @Bean
-  public ClientTemplateProvider createClietTemplateProvider() {
+  public ClientTemplateProvider createClientTemplateProvider() {
     return new ClientTemplateProvider(defaultRestClient);
   }
 }
