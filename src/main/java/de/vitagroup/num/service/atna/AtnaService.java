@@ -6,6 +6,7 @@ import de.vitagroup.num.domain.Study;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.openehealth.ipf.commons.audit.AuditException;
 import org.openehealth.ipf.commons.audit.DefaultAuditContext;
 import org.openehealth.ipf.commons.audit.codes.EventOutcomeIndicator;
@@ -22,14 +23,13 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class AtnaService {
 
-  private DefaultAuditContext auditContext;
-
-  @Autowired private AtnaProperties properties;
-
-  @Autowired private ObjectMapper mapper;
-
   private static final String EVENT_CODE_DATA_EXPORT = "110106";
   private static final String SYSTEM_NAME = "Num portal";
+  private DefaultAuditContext auditContext;
+  @Autowired
+  private AtnaProperties properties;
+  @Autowired
+  private ObjectMapper mapper;
 
   @PostConstruct
   private void initialize() {
@@ -55,13 +55,15 @@ public class AtnaService {
 
   private List<TypeValuePairType> getStudyDetails(Study study) {
     try {
+      Long organizationId = study.getCoordinator().getOrganization().getId();
       return List.of(
           new TypeValuePairType("Name", study.getName()),
           new TypeValuePairType("First hypothesis", study.getFirstHypotheses()),
           new TypeValuePairType("Second hypothesis", study.getSecondHypotheses()),
           new TypeValuePairType("Coordinator user id", study.getCoordinator().getUserId()),
           new TypeValuePairType(
-              "Coordinator organization id", study.getCoordinator().getOrganizationId()),
+              "Coordinator organization id",
+              organizationId != null ? organizationId.toString() : StringUtils.EMPTY),
           new TypeValuePairType("Status", study.getStatus().name()),
           new TypeValuePairType("Create date", study.getCreateDate().toString()));
     } catch (Exception e) {
@@ -76,7 +78,8 @@ public class AtnaService {
       auditMessage.validate();
     } catch (AuditException e) {
       try {
-        log.debug("Failed to log atna message", mapper.writeValueAsString(auditMessage), e);
+        log.debug("Failed to log atna message {} with cause",
+            mapper.writeValueAsString(auditMessage), e);
       } catch (JsonProcessingException ex) {
         log.debug("Failed to log message", ex);
       }
