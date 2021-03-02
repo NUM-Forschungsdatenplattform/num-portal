@@ -8,9 +8,11 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
+import de.vitagroup.num.web.exception.PrivacyException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.Optional;
@@ -30,6 +32,7 @@ public class CohortService {
   private final ModelMapper modelMapper;
   private final PhenotypeService phenotypeService;
   private final StudyService studyService;
+  private final PrivacyProperties privacyProperties;
 
   public Cohort getCohort(Long cohortId) {
     return cohortRepository.findById(cohortId).orElseThrow(ResourceNotFound::new);
@@ -73,7 +76,11 @@ public class CohortService {
     UserDetails coordinator = verifyUserAndGetUserDetails(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto, coordinator.getUserId());
-    return cohortExecutor.executeGroup(cohortGroup).size();
+    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup);
+    if (ehrIds.size() < privacyProperties.getMinHits()) {
+      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
+    }
+    return ehrIds.size();
   }
 
   public Cohort updateCohort(CohortDto cohortDto, Long cohortId, String userId) {
