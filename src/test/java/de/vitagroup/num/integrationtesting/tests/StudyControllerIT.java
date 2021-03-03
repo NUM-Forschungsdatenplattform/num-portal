@@ -152,7 +152,7 @@ public class StudyControllerIT extends IntegrationTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(studyJson))
-        .andExpect(status().isUnauthorized());
+        .andExpect(status().isForbidden());
   }
 
   @Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container

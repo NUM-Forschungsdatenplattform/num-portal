@@ -31,7 +31,7 @@ public class CohortControllerIT extends IntegrationTest {
   public void shouldNotAccessCohortApiWithWrongRole() {
     mockMvc
         .perform(get(String.format("%s/%s", COHORT_PATH, 1)))
-        .andExpect(status().isUnauthorized());
+        .andExpect(status().isForbidden());
   }
 
   @Test
