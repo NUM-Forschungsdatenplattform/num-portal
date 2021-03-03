@@ -3,6 +3,11 @@ package de.vitagroup.num.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.domain.admin.UserDetails;
+import java.time.LocalDate;
+import java.util.Set;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import lombok.AllArgsConstructor;
@@ -47,12 +52,31 @@ public class Study {
 
   private String secondHypotheses;
 
+  private String goal;
+
   @Enumerated(EnumType.STRING)
   private StudyStatus status;
+
+  @ElementCollection(targetClass = StudyCategories.class)
+  @CollectionTable(name = "study_categories", joinColumns = @JoinColumn(name = "study_id"))
+  @Column(name = "category", nullable = false)
+  @Enumerated(EnumType.STRING)
+  private Set<StudyCategories> categories;
+
+  @ElementCollection(targetClass = String.class)
+  @CollectionTable(name = "study_keywords", joinColumns = @JoinColumn(name = "study_id"))
+  @Column(name = "keyword", nullable = false)
+  private Set<String> keywords;
 
   private OffsetDateTime createDate;
 
   private OffsetDateTime modifiedDate;
+
+  private LocalDate startDate;
+
+  private LocalDate endDate;
+
+  private boolean financed;
 
   @Convert(converter = MapConverter.class)
   private Map<String, String> templates;

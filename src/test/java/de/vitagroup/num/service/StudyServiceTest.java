@@ -17,7 +17,6 @@ import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
-import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -62,21 +61,14 @@ public class StudyServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleMissingCoordinator() {
-    StudyDto study =
-        StudyDto.builder()
-            .name("Study")
-            .status(StudyStatus.APPROVED)
-            .build();
+    StudyDto study = StudyDto.builder().name("Study").status(StudyStatus.APPROVED).build();
 
     studyService.createStudy(study, "nonExistingCoordinatorId", List.of());
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedCoordinator() {
-    StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study")
-            .build();
+    StudyDto studyDto = StudyDto.builder().name("Study").build();
 
     studyService.createStudy(studyDto, "notApprovedCoordinatorId", List.of());
   }
@@ -111,10 +103,7 @@ public class StudyServiceTest {
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
     StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
-            .status(StudyStatus.APPROVED)
-            .build();
+        StudyDto.builder().name("Study is edited").status(StudyStatus.APPROVED).build();
 
     Exception exception =
         assertThrows(
@@ -142,10 +131,7 @@ public class StudyServiceTest {
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
     StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
-            .status(StudyStatus.PUBLISHED)
-            .build();
+        StudyDto.builder().name("Study is edited").status(StudyStatus.PUBLISHED).build();
 
     Exception exception =
         assertThrows(
@@ -170,10 +156,7 @@ public class StudyServiceTest {
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
     StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
-            .status(StudyStatus.CLOSED)
-            .build();
+        StudyDto.builder().name("Study is edited").status(StudyStatus.CLOSED).build();
 
     Exception exception =
         assertThrows(
@@ -198,10 +181,7 @@ public class StudyServiceTest {
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
     StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
-            .status(StudyStatus.APPROVED)
-            .build();
+        StudyDto.builder().name("Study is edited").status(StudyStatus.APPROVED).build();
 
     Exception exception =
         assertThrows(
@@ -226,10 +206,7 @@ public class StudyServiceTest {
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
     StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
-            .status(StudyStatus.DRAFT)
-            .build();
+        StudyDto.builder().name("Study is edited").status(StudyStatus.DRAFT).build();
 
     Exception exception =
         assertThrows(
@@ -257,10 +234,7 @@ public class StudyServiceTest {
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
     StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
-            .status(StudyStatus.PENDING)
-            .build();
+        StudyDto.builder().name("Study is edited").status(StudyStatus.PENDING).build();
 
     studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
   }
@@ -277,10 +251,7 @@ public class StudyServiceTest {
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
     StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
-            .status(StudyStatus.DRAFT)
-            .build();
+        StudyDto.builder().name("Study is edited").status(StudyStatus.DRAFT).build();
 
     studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
   }
@@ -297,10 +268,7 @@ public class StudyServiceTest {
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
     StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
-            .status(StudyStatus.REVIEWING)
-            .build();
+        StudyDto.builder().name("Study is edited").status(StudyStatus.REVIEWING).build();
 
     studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
   }
@@ -317,10 +285,7 @@ public class StudyServiceTest {
     when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
 
     StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
-            .status(StudyStatus.REVIEWING)
-            .build();
+        StudyDto.builder().name("Study is edited").status(StudyStatus.REVIEWING).build();
 
     Exception exception =
         assertThrows(
@@ -348,6 +313,7 @@ public class StudyServiceTest {
         StudyDto.builder()
             .name("Study is edited")
             .status(StudyStatus.APPROVED)
+            .financed(false)
             .build();
 
     studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
@@ -367,6 +333,7 @@ public class StudyServiceTest {
     StudyDto studyDto =
         StudyDto.builder()
             .name("Study is edited")
+            .financed(false)
             .status(StudyStatus.APPROVED)
             .build();
 
@@ -395,6 +362,7 @@ public class StudyServiceTest {
     StudyDto studyDto =
         StudyDto.builder()
             .name("Study is edited")
+            .financed(false)
             .status(StudyStatus.CHANGE_REQUEST)
             .build();
 
@@ -415,6 +383,7 @@ public class StudyServiceTest {
     StudyDto studyDto =
         StudyDto.builder()
             .name("Study is edited")
+            .financed(false)
             .status(StudyStatus.DENIED)
             .build();
 
@@ -435,6 +404,7 @@ public class StudyServiceTest {
     StudyDto studyDto =
         StudyDto.builder()
             .name("Study is edited")
+            .financed(false)
             .status(StudyStatus.DENIED)
             .build();
 
@@ -451,7 +421,8 @@ public class StudyServiceTest {
 
   @Test
   public void shouldRejectInitialClosedStudyStatus() {
-    StudyDto newStudy = StudyDto.builder().name("new study").status(StudyStatus.CLOSED).build();
+    StudyDto newStudy =
+        StudyDto.builder().name("new study").financed(false).status(StudyStatus.CLOSED).build();
 
     Exception exception =
         assertThrows(
@@ -464,7 +435,8 @@ public class StudyServiceTest {
 
   @Test
   public void shouldRejectInitialApprovedStudyStatus() {
-    StudyDto newStudy = StudyDto.builder().name("new study").status(StudyStatus.APPROVED).build();
+    StudyDto newStudy =
+        StudyDto.builder().name("new study").financed(false).status(StudyStatus.APPROVED).build();
 
     Exception exception =
         assertThrows(
@@ -477,14 +449,16 @@ public class StudyServiceTest {
 
   @Test
   public void shouldAllowInitialDraftStudyStatus() {
-    StudyDto newStudy = StudyDto.builder().name("new study").status(StudyStatus.DRAFT).build();
+    StudyDto newStudy =
+        StudyDto.builder().name("new study").financed(false).status(StudyStatus.DRAFT).build();
     studyService.createStudy(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(studyRepository, times(1)).save(any());
   }
 
   @Test
   public void shouldAllowInitialPendingStudyStatus() {
-    StudyDto newStudy = StudyDto.builder().name("new study").status(StudyStatus.PENDING).build();
+    StudyDto newStudy =
+        StudyDto.builder().name("new study").financed(false).status(StudyStatus.PENDING).build();
     studyService.createStudy(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(studyRepository, times(1)).save(any());
   }
