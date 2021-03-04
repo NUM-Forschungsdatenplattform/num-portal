@@ -106,11 +106,13 @@ public class UserService {
     UserDetails callerDetails = userDetailsService.validateReturnUserDetails(callerUserId);
 
     if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)
-        && !callerRoles.contains(Roles.SUPER_ADMIN)) {
-      if (!callerDetails.getOrganization().getId().equals(userToChange.getOrganization().getId())) {
-        throw new ForbiddenException(
-            "Organization admin can only manage users in the own organization.");
-      }
+        && !callerRoles.contains(Roles.SUPER_ADMIN)
+        && !callerDetails
+            .getOrganization()
+            .getId()
+            .equals(userToChange.getOrganization().getId())) {
+      throw new ForbiddenException(
+          "Organization admin can only manage users in the own organization.");
     }
 
     try {

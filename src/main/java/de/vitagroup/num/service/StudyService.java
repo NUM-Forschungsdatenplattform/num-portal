@@ -10,7 +10,6 @@ import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
-import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;

@@ -14,7 +14,6 @@ import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.PrivacyException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
