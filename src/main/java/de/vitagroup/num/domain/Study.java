@@ -1,8 +1,12 @@
 package de.vitagroup.num.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import de.vitagroup.num.domain.repository.CategorySetConverter;
 import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.repository.StringSetConverter;
+import java.time.LocalDate;
+import java.util.Set;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import lombok.AllArgsConstructor;
@@ -47,12 +51,26 @@ public class Study {
 
   private String secondHypotheses;
 
+  private String goal;
+
   @Enumerated(EnumType.STRING)
   private StudyStatus status;
+
+  @Convert(converter = CategorySetConverter.class)
+  private Set<StudyCategories> categories;
+
+  @Convert(converter = StringSetConverter.class)
+  private Set<String> keywords;
 
   private OffsetDateTime createDate;
 
   private OffsetDateTime modifiedDate;
+
+  private LocalDate startDate;
+
+  private LocalDate endDate;
+
+  private boolean financed;
 
   @Convert(converter = MapConverter.class)
   private Map<String, String> templates;

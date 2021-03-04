@@ -72,8 +72,7 @@ public class StudyService {
     return ehrBaseService.executeRawQuery(query);
   }
 
-  public void streamResponseAsCsv(
-      QueryResponseData queryResponseData, OutputStream outputStream) {
+  public void streamResponseAsCsv(QueryResponseData queryResponseData, OutputStream outputStream) {
     List<String> paths = new ArrayList<>();
 
     for (Map<String, String> column : queryResponseData.getColumns()) {
@@ -124,9 +123,15 @@ public class StudyService {
     study.setDescription(studyDto.getDescription());
     study.setFirstHypotheses(studyDto.getFirstHypotheses());
     study.setSecondHypotheses(studyDto.getSecondHypotheses());
+    study.setGoal(studyDto.getGoal());
+    study.setCategories(studyDto.getCategories());
+    study.setKeywords(studyDto.getKeywords());
     study.setCoordinator(coordinator.get());
     study.setCreateDate(OffsetDateTime.now());
     study.setModifiedDate(OffsetDateTime.now());
+    study.setStartDate(studyDto.getStartDate());
+    study.setEndDate(studyDto.getEndDate());
+    study.setFinanced(studyDto.isFinanced());
     return studyRepository.save(study);
   }
 
@@ -150,6 +155,12 @@ public class StudyService {
     studyToEdit.setModifiedDate(OffsetDateTime.now());
     studyToEdit.setFirstHypotheses(studyDto.getFirstHypotheses());
     studyToEdit.setSecondHypotheses(studyDto.getSecondHypotheses());
+    studyToEdit.setGoal(studyDto.getGoal());
+    studyToEdit.setCategories(studyDto.getCategories());
+    studyToEdit.setKeywords(studyDto.getKeywords());
+    studyToEdit.setStartDate(studyDto.getStartDate());
+    studyToEdit.setEndDate(studyDto.getEndDate());
+    studyToEdit.setFinanced(studyDto.isFinanced());
 
     return studyRepository.save(studyToEdit);
   }
