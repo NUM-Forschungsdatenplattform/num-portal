@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
   private static final String SUCCESS_REPLY = "Success";
+  private static final String EMAIL_CLAIM = "email";
 
   private final UserService userService;
   private final UserDetailsService userDetailsService;
@@ -73,8 +74,9 @@ public class AdminController {
 
   @PostMapping("/user/{userId}")
   @ApiOperation(value = "Creates user details")
-  public ResponseEntity<String> createUserOnFirstLogin(@NotNull @PathVariable String userId) {
-    userDetailsService.createUserDetails(userId);
+  public ResponseEntity<String> createUserOnFirstLogin(
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
+    userDetailsService.createUserDetails(userId, principal.getClaimAsString(EMAIL_CLAIM));
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 

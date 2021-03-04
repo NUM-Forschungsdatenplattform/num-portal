@@ -76,7 +76,8 @@ public class OrganizationService {
         .getMailDomains()
         .forEach(
             domain -> {
-              Optional<MailDomain> mailDomain = mailDomainRepository.findByName(domain);
+              Optional<MailDomain> mailDomain =
+                  mailDomainRepository.findByName(domain.toLowerCase());
               if (mailDomain.isPresent()) {
                 throw new BadRequestException("Organization mail domain already exists: " + domain);
               }
@@ -86,7 +87,12 @@ public class OrganizationService {
 
     organization.setDomains(
         organizationDto.getMailDomains().stream()
-            .map(domain -> MailDomain.builder().name(domain).organization(organization).build())
+            .map(
+                domain ->
+                    MailDomain.builder()
+                        .name(domain.toLowerCase())
+                        .organization(organization)
+                        .build())
             .collect(Collectors.toSet()));
 
     return organizationRepository.save(organization);
@@ -120,13 +126,14 @@ public class OrganizationService {
         .getMailDomains()
         .forEach(
             domain -> {
-              Optional<MailDomain> mailDomain = mailDomainRepository.findByName(domain);
+              Optional<MailDomain> mailDomain =
+                  mailDomainRepository.findByName(domain.toLowerCase());
               if (mailDomain.isPresent()
                   && !mailDomain
-                      .get()
-                      .getOrganization()
-                      .getId()
-                      .equals(organizationToEdit.getId())) {
+                  .get()
+                  .getOrganization()
+                  .getId()
+                  .equals(organizationToEdit.getId())) {
                 throw new BadRequestException("Organization mail domain already exists: " + domain);
               }
             });
@@ -155,11 +162,13 @@ public class OrganizationService {
     dto.getMailDomains()
         .forEach(
             domainName -> {
-              Optional<MailDomain> mailDomain = mailDomainRepository.findByName(domainName);
+              Optional<MailDomain> mailDomain = mailDomainRepository
+                  .findByName(domainName.toLowerCase());
               if (mailDomain.isEmpty()) {
                 newDomains.add(
                     mailDomainRepository.save(
-                        MailDomain.builder().name(domainName).organization(organization).build()));
+                        MailDomain.builder().name(domainName.toLowerCase())
+                            .organization(organization).build()));
               } else {
                 newDomains.add(mailDomain.get());
               }

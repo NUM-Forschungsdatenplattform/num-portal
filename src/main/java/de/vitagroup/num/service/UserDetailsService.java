@@ -1,7 +1,9 @@
 package de.vitagroup.num.service;
 
+import de.vitagroup.num.domain.MailDomain;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.ConflictException;
@@ -10,25 +12,29 @@ import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
 public class UserDetailsService {
 
+  public static final String DOMAIN_SEPARATOR = "@";
   private final UserDetailsRepository userDetailsRepository;
   private final OrganizationRepository organizationRepository;
+  private final MailDomainRepository mailDomainRepository;
 
   public Optional<UserDetails> getUserDetailsById(String userId) {
     return userDetailsRepository.findByUserId(userId);
   }
 
-  public UserDetails createUserDetails(String userId) {
+  public UserDetails createUserDetails(String userId, String emailAddress) {
     Optional<UserDetails> userDetails = userDetailsRepository.findByUserId(userId);
     if (userDetails.isPresent()) {
       throw new ConflictException("User " + userId + " already exists.");
     } else {
       UserDetails newUserDetails = UserDetails.builder().userId(userId).build();
+      resolveOrganization(emailAddress).ifPresent(newUserDetails::setOrganization);
       return userDetailsRepository.save(newUserDetails);
     }
   }
@@ -72,5 +78,14 @@ public class UserDetailsService {
     if (user.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
     }
+  }
+
+  private Optional<Organization> resolveOrganization(String email) {
+    if (StringUtils.isBlank(email) || !email.contains(DOMAIN_SEPARATOR)) {
+      return Optional.empty();
+    }
+    String domain = email.split("\\" + DOMAIN_SEPARATOR)[1];
+    Optional<MailDomain> mailDomain = mailDomainRepository.findByName(domain.toLowerCase());
+    return mailDomain.map(MailDomain::getOrganization);
   }
 }

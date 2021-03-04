@@ -1,20 +1,22 @@
 package de.vitagroup.num.service;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.ConflictException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.feign.KeycloakFeign;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Optional;
-
-import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserDetailsServiceTest {
@@ -33,12 +35,12 @@ public class UserDetailsServiceTest {
 
   @Test(expected = ConflictException.class)
   public void shouldHandleExistingUserDetails() {
-    userDetailsService.createUserDetails("existingUserId");
+    userDetailsService.createUserDetails("existingUserId", "unknownEmail");
   }
 
   @Test
   public void shouldCallRepoWhenCreatingUserDetails() {
-    userDetailsService.createUserDetails("newUserId");
+    userDetailsService.createUserDetails("newUserId", "unknownEmail");
     verify(userDetailsRepository, times(1)).save(any());
   }
 
