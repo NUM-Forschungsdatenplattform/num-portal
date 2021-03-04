@@ -6,6 +6,7 @@ import de.vitagroup.num.domain.StudyCategories;
 import java.io.IOException;
 import java.util.Set;
 import javax.persistence.AttributeConverter;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -30,10 +31,11 @@ public class CategorySetConverter implements AttributeConverter<Set<StudyCategor
   }
 
   @Override
+  @NotNull
   public Set<StudyCategories> convertToEntityAttribute(String categoriesJson) {
 
     if (StringUtils.isEmpty(categoriesJson)) {
-      return null;
+      return Set.of();
     }
 
     Set<StudyCategories> categories = null;

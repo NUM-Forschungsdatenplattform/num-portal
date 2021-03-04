@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Set;
 import javax.persistence.AttributeConverter;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -29,10 +31,11 @@ public class StringSetConverter implements AttributeConverter<Set<String>, Strin
   }
 
   @Override
+  @NotNull
   public Set<String> convertToEntityAttribute(String stringsJson) {
 
     if (StringUtils.isEmpty(stringsJson)) {
-      return null;
+      return Set.of();
     }
 
     Set<String> strings = null;
