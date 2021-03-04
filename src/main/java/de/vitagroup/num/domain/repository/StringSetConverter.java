@@ -7,7 +7,6 @@ import java.util.Set;
 import javax.persistence.AttributeConverter;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
