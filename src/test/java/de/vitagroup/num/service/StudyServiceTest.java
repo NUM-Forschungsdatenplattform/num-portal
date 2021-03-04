@@ -18,7 +18,6 @@ import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
-import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.SystemException;
@@ -37,7 +36,7 @@ public class StudyServiceTest {
 
   @Mock private StudyRepository studyRepository;
 
-  @Mock private UserDetailsRepository userDetailsRepository;
+  @Mock private UserDetailsService userDetailsService;
 
   @InjectMocks private StudyService studyService;
 
@@ -49,14 +48,14 @@ public class StudyServiceTest {
     UserDetails approvedCoordinator =
         UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
 
-    when(userDetailsRepository.findByUserId("approvedCoordinatorId"))
-        .thenReturn(Optional.of(approvedCoordinator));
+    when(userDetailsService.validateReturnUserDetails("approvedCoordinatorId"))
+        .thenReturn(approvedCoordinator);
 
-    when(userDetailsRepository.findByUserId("notApprovedCoordinatorId"))
-        .thenReturn(Optional.of(notApprovedCoordinator));
+    when(userDetailsService.validateReturnUserDetails("notApprovedCoordinatorId"))
+        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsRepository.findByUserId("nonExistingCoordinatorId"))
-        .thenReturn(Optional.empty());
+    when(userDetailsService.validateReturnUserDetails("nonExistingCoordinatorId"))
+        .thenThrow(new SystemException("User not found"));
   }
 
   @Test(expected = SystemException.class)

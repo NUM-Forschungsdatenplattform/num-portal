@@ -31,14 +31,7 @@ public class CommentService {
   }
 
   public Comment createComment(Comment comment, Long studyId, String loggedInUserId) {
-    UserDetails author =
-        userDetailsService
-            .getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (author.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
-    }
+    UserDetails author = userDetailsService.validateReturnUserDetails(loggedInUserId);
 
     Study study =
         studyService
@@ -54,7 +47,7 @@ public class CommentService {
   public Comment updateComment(
       Comment comment, Long commentId, String loggedInUserId, Long studyId) {
 
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateReturnUserDetails(loggedInUserId);
 
     if (!studyService.exists(studyId)) {
       throw new ResourceNotFound("Study not found: " + studyId);
@@ -79,7 +72,7 @@ public class CommentService {
   }
 
   public void deleteComment(Long commentId, Long studyId, String loggedInUserId) {
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateReturnUserDetails(loggedInUserId);
 
     if (!studyService.exists(studyId)) {
       throw new ResourceNotFound("Study does not exist");
@@ -98,17 +91,6 @@ public class CommentService {
       commentRepository.deleteById(commentId);
     } catch (EmptyResultDataAccessException e) {
       throw new BadRequestException(String.format("%s: %s", "Invalid commentId id", commentId));
-    }
-  }
-
-  private void validateLoggedInUser(String loggedInUserId) {
-    UserDetails author =
-        userDetailsService
-            .getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (author.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
     }
   }
 }

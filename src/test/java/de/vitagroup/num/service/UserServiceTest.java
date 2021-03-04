@@ -13,10 +13,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -34,7 +36,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
@@ -42,6 +46,8 @@ public class UserServiceTest {
   @Mock private KeycloakFeign keycloakFeign;
 
   @Mock private UserDetailsService userDetailsService;
+
+  @Mock private OrganizationMapper organizationMapper;
 
   @InjectMocks private UserService userService;
 
@@ -70,7 +76,44 @@ public class UserServiceTest {
     when(keycloakFeign.getRoles()).thenReturn(roles);
 
     when(userDetailsService.getUserDetailsById("4"))
-        .thenReturn(Optional.of(UserDetails.builder().userId("4").approved(true).build()));
+        .thenReturn(
+            Optional.of(
+                UserDetails.builder()
+                    .userId("4")
+                    .organization(Organization.builder().id(1L).build())
+                    .approved(true)
+                    .build()));
+    when(userDetailsService.validateReturnUserDetails("4"))
+        .thenReturn(
+            UserDetails.builder()
+                .userId("4")
+                .organization(Organization.builder().id(1L).build())
+                .approved(true)
+                .build());
+    when(userDetailsService.getUserDetailsById("5"))
+        .thenReturn(
+            Optional.of(
+                UserDetails.builder()
+                    .userId("5")
+                    .organization(Organization.builder().id(1L).build())
+                    .approved(true)
+                    .build()));
+    when(userDetailsService.getUserDetailsById("6"))
+        .thenReturn(
+            Optional.of(
+                UserDetails.builder()
+                    .userId("6")
+                    .organization(Organization.builder().id(1L).build())
+                    .approved(true)
+                    .build()));
+    when(userDetailsService.getUserDetailsById("7"))
+        .thenReturn(
+            Optional.of(
+                UserDetails.builder()
+                    .userId("7")
+                    .organization(Organization.builder().id(2L).build())
+                    .approved(true)
+                    .build()));
   }
 
   @Test(expected = SystemException.class)
@@ -108,6 +151,7 @@ public class UserServiceTest {
     userService.setUserRoles(
         "4",
         Collections.singletonList("non-existent role"),
+        "4",
         Collections.singletonList(Roles.SUPER_ADMIN));
   }
 
@@ -116,6 +160,7 @@ public class UserServiceTest {
     userService.setUserRoles(
         "4",
         Collections.singletonList("SUPER_ADMIN"),
+        "4",
         Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R1", "SUPER_ADMIN")});
@@ -124,7 +169,10 @@ public class UserServiceTest {
   @Test
   public void shouldNotSetExistingRole() {
     userService.setUserRoles(
-        "4", Collections.singletonList("RESEARCHER"), Collections.singletonList(Roles.SUPER_ADMIN));
+        "4",
+        Collections.singletonList("RESEARCHER"),
+        "4",
+        Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, never()).removeRoles(anyString(), any(Role[].class));
     verify(keycloakFeign, never()).addRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
   }
@@ -132,7 +180,7 @@ public class UserServiceTest {
   @Test
   public void shouldUnsetRoles() {
     userService.setUserRoles(
-        "4", Collections.emptyList(), Collections.singletonList(Roles.SUPER_ADMIN));
+        "4", Collections.emptyList(), "4", Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
   }
@@ -169,6 +217,15 @@ public class UserServiceTest {
     Set<de.vitagroup.num.domain.admin.User> userReturn = userService.searchUsers(null, null, false);
     assertNull(userReturn.iterator().next().getRoles());
     verify(keycloakFeign, times(0)).getRolesOfUser("4");
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldShouldNotAllowOrgAdminSetRolesUserDifferentOrg() {
+    userService.setUserRoles(
+        "7",
+        Collections.singletonList("RESEARCHER"),
+        "4",
+        Collections.singletonList("ORGANIZATION_ADMIN"));
   }
 
   @Test
@@ -222,7 +279,7 @@ public class UserServiceTest {
   private boolean testAddRole(Role role, String userRole) {
     try {
       userService.setUserRoles(
-          "5", Collections.singletonList(role.getName()), Collections.singletonList(userRole));
+          "5", Collections.singletonList(role.getName()), "4", Collections.singletonList(userRole));
       if (userRole.equals("SUPER_ADMIN")
           || (userRole.equals("ORGANIZATION_ADMIN")
               && !"SUPER_ADMIN".equals(role.getName())
@@ -251,7 +308,8 @@ public class UserServiceTest {
               .map(Role::getName)
               .filter(name -> !name.equals(role.getName()))
               .collect(Collectors.toList());
-      userService.setUserRoles("6", allButWantedToRemoveRoles, Collections.singletonList(userRole));
+      userService.setUserRoles(
+          "6", allButWantedToRemoveRoles, "4", Collections.singletonList(userRole));
       if (userRole.equals("SUPER_ADMIN")
           || (userRole.equals("ORGANIZATION_ADMIN")
               && !"SUPER_ADMIN".equals(role.getName())

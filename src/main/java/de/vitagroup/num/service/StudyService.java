@@ -41,7 +41,6 @@ import org.springframework.stereotype.Service;
 public class StudyService {
 
   private final StudyRepository studyRepository;
-  private final UserDetailsRepository userDetailsRepository;
   private final UserDetailsService userDetailsService;
   private final EhrBaseService ehrBaseService;
   private final ObjectMapper mapper;
@@ -58,7 +57,7 @@ public class StudyService {
 
   public QueryResponseData executeAql(String query, Long studyId, String userId) {
 
-    validateLoggedInUser(userId);
+    userDetailsService.validateReturnUserDetails(userId);
 
     Study study =
         studyRepository
@@ -101,15 +100,7 @@ public class StudyService {
 
   public Study createStudy(StudyDto studyDto, String userId, List<String> roles) {
 
-    Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(userId);
-
-    if (coordinator.isEmpty()) {
-      throw new SystemException("Logged in coordinator not found in portal");
-    }
-
-    if (coordinator.get().isNotApproved()) {
-      throw new ForbiddenException("User not approved:" + userId);
-    }
+    UserDetails coordinator = userDetailsService.validateReturnUserDetails(userId);
 
     Study study = Study.builder().build();
 
@@ -126,7 +117,7 @@ public class StudyService {
     study.setGoal(studyDto.getGoal());
     study.setCategories(studyDto.getCategories());
     study.setKeywords(studyDto.getKeywords());
-    study.setCoordinator(coordinator.get());
+    study.setCoordinator(coordinator);
     study.setCreateDate(OffsetDateTime.now());
     study.setModifiedDate(OffsetDateTime.now());
     study.setStartDate(studyDto.getStartDate());
@@ -137,7 +128,7 @@ public class StudyService {
 
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
 
-    validateLoggedInUser(userId);
+    userDetailsService.validateReturnUserDetails(userId);
 
     Study studyToEdit =
         studyRepository
@@ -257,17 +248,5 @@ public class StudyService {
 
   private boolean isValidInitialStatus(StudyStatus status) {
     return status.equals(StudyStatus.DRAFT) || status.equals(StudyStatus.PENDING);
-  }
-
-  private void validateLoggedInUser(String userId) {
-    Optional<UserDetails> user = userDetailsRepository.findByUserId(userId);
-
-    if (user.isEmpty()) {
-      throw new SystemException("Logged in coordinator not found in portal");
-    }
-
-    if (user.get().isNotApproved()) {
-      throw new ForbiddenException("User not approved:" + userId);
-    }
   }
 }

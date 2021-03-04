@@ -39,7 +39,7 @@ public class CohortService {
   }
 
   public Cohort createCohort(CohortDto cohortDto, String userId) {
-    verifyUserAndGetUserDetails(userId);
+    userDetailsService.validateReturnUserDetails(userId);
 
     Study study =
         studyService
@@ -73,7 +73,7 @@ public class CohortService {
   }
 
   public long getCohortGroupSize(CohortGroupDto cohortGroupDto, String userId) {
-    UserDetails coordinator = verifyUserAndGetUserDetails(userId);
+    UserDetails coordinator = userDetailsService.validateReturnUserDetails(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto, coordinator.getUserId());
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup);
@@ -84,7 +84,7 @@ public class CohortService {
   }
 
   public Cohort updateCohort(CohortDto cohortDto, Long cohortId, String userId) {
-    verifyUserAndGetUserDetails(userId);
+    userDetailsService.validateReturnUserDetails(userId);
 
     Cohort cohortToEdit =
         cohortRepository
@@ -141,18 +141,5 @@ public class CohortService {
     }
 
     return cohortGroup;
-  }
-
-  private UserDetails verifyUserAndGetUserDetails(String userId) {
-    Optional<UserDetails> userDetails = userDetailsService.getUserDetailsById(userId);
-
-    if (userDetails.isEmpty()) {
-      throw new SystemException("Logged in user not found in portal");
-    }
-
-    if (userDetails.get().isNotApproved()) {
-      throw new ForbiddenException("Logged in user not approved:" + userId);
-    }
-    return userDetails.get();
   }
 }

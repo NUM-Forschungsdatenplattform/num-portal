@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.AqlRepository;
-import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -32,7 +31,7 @@ public class AqlServiceTest {
 
   @Mock private AqlRepository aqlRepository;
 
-  @Mock private UserDetailsRepository userDetailsRepository;
+  @Mock private UserDetailsService userDetailsService;
 
   @InjectMocks private AqlService aqlService;
 
@@ -41,12 +40,13 @@ public class AqlServiceTest {
     UserDetails approvedUser =
         UserDetails.builder().userId("approvedUserId").approved(true).build();
 
-    when(userDetailsRepository.findByUserId("notApprovedId"))
-        .thenReturn(
-            Optional.of(UserDetails.builder().userId("notApprovedId").approved(false).build()));
+    when(userDetailsService.validateReturnUserDetails("notApprovedId"))
+        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsRepository.findByUserId("approvedUserId"))
-        .thenReturn(Optional.of(approvedUser));
+    when(userDetailsService.validateReturnUserDetails("nonExistingUser"))
+        .thenThrow(new SystemException("User not found"));
+
+    when(userDetailsService.validateReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
 
     when(aqlRepository.findById(1L))
         .thenReturn(
@@ -104,7 +104,7 @@ public class AqlServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleMissingOwner() {
-    aqlService.createAql(Aql.builder().build(), "missingOwnerId");
+    aqlService.createAql(Aql.builder().build(), "nonExistingUser");
   }
 
   @Test(expected = ForbiddenException.class)

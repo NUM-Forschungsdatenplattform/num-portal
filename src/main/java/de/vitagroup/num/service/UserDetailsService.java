@@ -34,7 +34,7 @@ public class UserDetailsService {
   }
 
   public UserDetails setOrganization(String loggedInUserId, String userId, Long organizationId) {
-    validateLoggedInUser(loggedInUserId);
+    validateReturnUserDetails(loggedInUserId);
 
     UserDetails userDetails =
         userDetailsRepository
@@ -52,7 +52,7 @@ public class UserDetailsService {
 
   public UserDetails approveUser(String loggedInUserId, String userId) {
 
-    validateLoggedInUser(loggedInUserId);
+    validateReturnUserDetails(loggedInUserId);
 
     Optional<UserDetails> userDetails = userDetailsRepository.findByUserId(userId);
     return userDetails
@@ -64,13 +64,14 @@ public class UserDetailsService {
         .orElseThrow(() -> new ResourceNotFound("User " + userId + " not created yet."));
   }
 
-  private void validateLoggedInUser(String loggedInUserId) {
+  public UserDetails validateReturnUserDetails(String userId) {
     UserDetails user =
-        getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
+        getUserDetailsById(userId).orElseThrow(() -> new SystemException("User not found"));
 
     if (user.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
+      throw new ForbiddenException("Cannot access this resource. User is not approved.");
     }
+
+    return user;
   }
 }

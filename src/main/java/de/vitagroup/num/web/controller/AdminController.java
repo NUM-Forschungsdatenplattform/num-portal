@@ -57,13 +57,14 @@ public class AdminController {
       @NotNull @PathVariable String userId,
       @NotNull @RequestBody List<String> roles) {
     return ResponseEntity.ok(
-        userService.setUserRoles(userId, roles, Roles.extractRoles(principal)));
+        userService.setUserRoles(
+            userId, roles, principal.getSubject(), Roles.extractRoles(principal)));
   }
 
   @PostMapping("/user/{userId}/organization")
-  @ApiOperation(value = "Adds the given organization to the user")
+  @ApiOperation(value = "Sets the user's organization")
   @PreAuthorize(Role.SUPER_ADMIN)
-  public ResponseEntity<String> addOrganization(
+  public ResponseEntity<String> setOrganization(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable String userId,
       @NotNull @RequestBody OrganizationDto organization) {

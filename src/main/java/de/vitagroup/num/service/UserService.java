@@ -93,7 +93,26 @@ public class UserService {
    * @param roleNames The list of roles of the user
    */
   public List<String> setUserRoles(
-      String userId, @NotNull List<String> roleNames, List<String> callerRoles) {
+      String userId,
+      @NotNull List<String> roleNames,
+      String callerUserId,
+      List<String> callerRoles) {
+
+    UserDetails userToChange =
+        userDetailsService
+            .getUserDetailsById(userId)
+            .orElseThrow(() -> new SystemException("User not found"));
+
+    UserDetails callerDetails = userDetailsService.validateReturnUserDetails(callerUserId);
+
+    if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)
+        && !callerRoles.contains(Roles.SUPER_ADMIN)) {
+      if (!callerDetails.getOrganization().getId().equals(userToChange.getOrganization().getId())) {
+        throw new ForbiddenException(
+            "Organization admin can only manage users in the own organization.");
+      }
+    }
+
     try {
       Map<String, Role> supportedRoles =
           keycloakFeign.getRoles().stream().collect(Collectors.toMap(Role::getName, role -> role));

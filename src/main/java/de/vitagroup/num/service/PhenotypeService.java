@@ -37,21 +37,14 @@ public class PhenotypeService {
   }
 
   public List<Phenotype> getAllPhenotypes(String loggedInUserId) {
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateReturnUserDetails(loggedInUserId);
 
     return phenotypeRepository.findByOwnerUserId(loggedInUserId);
   }
 
   public Phenotype createPhenotypes(Phenotype phenotype, String loggedInUserId) {
 
-    UserDetails user =
-        userDetailsService
-            .getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (user.isNotApproved()) {
-      throw new ForbiddenException("Logged in owner not approved.");
-    }
+    UserDetails user = userDetailsService.validateReturnUserDetails(loggedInUserId);
 
     validatePhenotypeAqls(phenotype, loggedInUserId);
 
@@ -60,7 +53,7 @@ public class PhenotypeService {
   }
 
   public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateReturnUserDetails(loggedInUserId);
 
     Set<String> ehrIds;
     try {
@@ -100,17 +93,6 @@ public class PhenotypeService {
       } else if (current instanceof GroupExpression) {
         queue.addAll(((GroupExpression) current).getChildren());
       }
-    }
-  }
-
-  public void validateLoggedInUser(String userId) {
-    UserDetails user =
-        userDetailsService
-            .getUserDetailsById(userId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (user.isNotApproved()) {
-      throw new ForbiddenException("Logged in user is not approved.");
     }
   }
 }
