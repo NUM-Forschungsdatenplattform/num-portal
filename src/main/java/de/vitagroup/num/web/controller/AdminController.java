@@ -94,6 +94,7 @@ public class AdminController {
   @ApiOperation(value = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
   public ResponseEntity<Set<User>> searchUsers(
+      @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestParam(required = false)
           @ApiParam(
               value =
@@ -106,7 +107,18 @@ public class AdminController {
           @ApiParam(
               value =
                   "A flag for controlling whether to include user's roles in the response (a bit slower)")
-          Boolean withRoles) {
-    return ResponseEntity.ok(userService.searchUsers(approved, search, withRoles));
+          Boolean withRoles,
+      @RequestParam(required = false)
+          @ApiParam(
+              value = "Restrict the list of users to users who have one of the roles in the list")
+          List<String> havingRoles) {
+    return ResponseEntity.ok(
+        userService.searchUsers(
+            principal.getSubject(),
+            approved,
+            search,
+            withRoles,
+            havingRoles,
+            Roles.extractRoles(principal)));
   }
 }

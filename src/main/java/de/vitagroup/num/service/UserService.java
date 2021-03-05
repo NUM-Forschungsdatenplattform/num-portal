@@ -13,6 +13,7 @@ import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -193,21 +194,61 @@ public class UserService {
    * @param withRoles flag whether to add roles to the user structure, if present, or not
    * @return the users that match the search parameters and with optional roles if indicated
    */
-  public Set<User> searchUsers(Boolean approved, String search, Boolean withRoles) {
+  public Set<User> searchUsers(
+      String loggedInUserId,
+      Boolean approved,
+      String search,
+      Boolean withRoles,
+      List<String> onlyHavingRoles,
+      List<String> callerRoles) {
+
+    UserDetails loggedInUser = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+
     Set<User> users = keycloakFeign.searchUsers(search);
     if (users == null) {
       return Collections.emptySet();
     }
+
     users.forEach(this::addUserDetails);
+
+    if ((withRoles != null && withRoles)
+        || (onlyHavingRoles != null && !onlyHavingRoles.isEmpty())
+        || callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+      users.forEach(this::addRoles);
+      if (onlyHavingRoles != null && !onlyHavingRoles.isEmpty()) {
+        users.removeIf(user -> user.getRoles().stream().noneMatch(onlyHavingRoles::contains));
+      }
+    }
 
     if (approved != null) {
       users.removeIf(user -> approved ? user.isNotApproved() : user.isApproved());
     }
 
-    if (withRoles != null && withRoles) {
-      users.forEach(this::addRoles);
+    if (callerRoles.contains(Roles.SUPER_ADMIN)) {
+      return users;
     }
 
-    return users;
+    Set<User> outputSet = new HashSet<>();
+
+    if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)) {
+      Long loggedInOrgId = loggedInUser.getOrganization().getId();
+      users.forEach(
+          user -> {
+            if (loggedInOrgId.equals(user.getOrganization().getId())) {
+              outputSet.add(user);
+            }
+          });
+    }
+
+    if (callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+      users.forEach(
+          user -> {
+            if (user.getRoles() != null && user.getRoles().contains(Roles.RESEARCHER)) {
+              outputSet.add(user);
+            }
+          });
+    }
+
+    return outputSet;
   }
 }
