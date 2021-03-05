@@ -10,7 +10,6 @@ import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +36,7 @@ public class OrganizationService {
    * @return List with available organizations
    */
   public List<Organization> getAllOrganizations(List<String> roles, String loggedInUserId) {
-    UserDetails user = validateLoggedInUser(loggedInUserId);
+    UserDetails user = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     if (roles.contains(Roles.SUPER_ADMIN)) {
       return organizationRepository.findAll();
@@ -62,7 +61,7 @@ public class OrganizationService {
 
   @Transactional
   public Organization create(String loggedInUserId, OrganizationDto organizationDto) {
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     organizationRepository
         .findByName(organizationDto.getName())
@@ -105,7 +104,7 @@ public class OrganizationService {
       List<String> roles,
       String loggedInUserId) {
 
-    UserDetails user = validateLoggedInUser(loggedInUserId);
+    UserDetails user = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     Organization organizationToEdit =
         organizationRepository
@@ -180,18 +179,5 @@ public class OrganizationService {
     } else {
       organization.setDomains(newDomains);
     }
-  }
-
-  private UserDetails validateLoggedInUser(String loggedInUserId) {
-    UserDetails user =
-        userDetailsService
-            .getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (user.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user is not approved.");
-    }
-
-    return user;
   }
 }

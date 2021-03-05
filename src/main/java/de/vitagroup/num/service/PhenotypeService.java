@@ -10,9 +10,7 @@ import de.vitagroup.num.domain.repository.PhenotypeRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.PhenotypeExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.PrivacyException;
-import de.vitagroup.num.web.exception.SystemException;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Optional;
@@ -37,21 +35,14 @@ public class PhenotypeService {
   }
 
   public List<Phenotype> getAllPhenotypes(String loggedInUserId) {
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     return phenotypeRepository.findByOwnerUserId(loggedInUserId);
   }
 
   public Phenotype createPhenotypes(Phenotype phenotype, String loggedInUserId) {
 
-    UserDetails user =
-        userDetailsService
-            .getUserDetailsById(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (user.isNotApproved()) {
-      throw new ForbiddenException("Logged in owner not approved.");
-    }
+    UserDetails user = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     validatePhenotypeAqls(phenotype, loggedInUserId);
 
@@ -60,7 +51,7 @@ public class PhenotypeService {
   }
 
   public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     Set<String> ehrIds;
     try {
@@ -100,17 +91,6 @@ public class PhenotypeService {
       } else if (current instanceof GroupExpression) {
         queue.addAll(((GroupExpression) current).getChildren());
       }
-    }
-  }
-
-  public void validateLoggedInUser(String userId) {
-    UserDetails user =
-        userDetailsService
-            .getUserDetailsById(userId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (user.isNotApproved()) {
-      throw new ForbiddenException("Logged in user is not approved.");
     }
   }
 }

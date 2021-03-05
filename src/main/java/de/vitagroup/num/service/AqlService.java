@@ -6,7 +6,6 @@ import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
 import de.vitagroup.num.domain.repository.AqlRepository;
-import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -28,18 +27,18 @@ public class AqlService {
 
   private final AqlRepository aqlRepository;
 
-  private final UserDetailsRepository userDetailsRepository;
-
   private final EhrBaseService ehrBaseService;
 
   private final ObjectMapper mapper;
+
+  private final UserDetailsService userDetailsService;
 
   public Optional<Aql> getAqlById(Long id) {
     return aqlRepository.findById(id);
   }
 
   public Aql getAqlById(Long id, String loggedInUserId) {
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     Aql aql = aqlRepository.findById(id).orElseThrow(ResourceNotFound::new);
 
@@ -51,15 +50,12 @@ public class AqlService {
   }
 
   public List<Aql> getVisibleAqls(String loggedInUserId) {
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
     return aqlRepository.findAllOwnedOrPublic(loggedInUserId);
   }
 
   public Aql createAql(Aql aql, String loggedInUserId) {
-    UserDetails user =
-        userDetailsRepository
-            .findByUserId(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
+    UserDetails user = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     if (user.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
@@ -73,7 +69,7 @@ public class AqlService {
   }
 
   public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     Aql aqlToEdit =
         aqlRepository
@@ -98,7 +94,7 @@ public class AqlService {
   }
 
   public void deleteById(Long id, String loggedInUserId) {
-    validateLoggedInUser(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     Aql aql =
         aqlRepository
@@ -122,15 +118,12 @@ public class AqlService {
    * @param name A string contained in the name of the aqls
    * @param filter Type of the search. Search all owned or public, searched owned only or search
    *     among own organization
-   * @param loggedInUserId
-   * @return
+   * @param loggedInUserId the user ID of the user sending the search request
+   * @return the list of AQLs that match the search filters
    */
   public List<Aql> searchAqls(String name, AqlSearchFilter filter, String loggedInUserId) {
 
-    UserDetails user =
-        userDetailsRepository
-            .findByUserId(loggedInUserId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
+    UserDetails user = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     if (user.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
@@ -150,7 +143,7 @@ public class AqlService {
   }
 
   public String executeAql(Long aqlId, String userId) {
-    validateLoggedInUser(userId);
+    userDetailsService.validateAndReturnUserDetails(userId);
     Aql aql =
         aqlRepository
             .findById(aqlId)
@@ -167,17 +160,6 @@ public class AqlService {
 
     } else {
       throw new ForbiddenException("Cannot access this resource.");
-    }
-  }
-
-  public void validateLoggedInUser(String userId) {
-    UserDetails user =
-        userDetailsRepository
-            .findByUserId(userId)
-            .orElseThrow(() -> new SystemException("Logged in user not found"));
-
-    if (user.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
     }
   }
 }

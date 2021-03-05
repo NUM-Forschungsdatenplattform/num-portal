@@ -57,7 +57,7 @@ public class OrganizationServiceTest {
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedUserWhenUpdating() {
     organizationService.update(
-        1L, OrganizationDto.builder().build(), List.of(), "notApprovedUserId");
+        3L, OrganizationDto.builder().build(), List.of(), "notApprovedUserId");
   }
 
   @Test(expected = ForbiddenException.class)
@@ -190,11 +190,13 @@ public class OrganizationServiceTest {
             .organization(Organization.builder().name("Organization A").build())
             .build();
 
-    when(userDetailsService.getUserDetailsById("approvedUserId"))
-        .thenReturn(Optional.of(approvedUser));
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
 
-    when(userDetailsService.getUserDetailsById("notApprovedUserId"))
-        .thenReturn(Optional.of(notApprovedUser));
+    when(userDetailsService.validateAndReturnUserDetails("missingUserId"))
+        .thenThrow(new SystemException("User not found"));
+
+    when(userDetailsService.validateAndReturnUserDetails("notApprovedUserId"))
+        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
     when(organizationRepository.findByName("Existing organization"))
         .thenReturn(
