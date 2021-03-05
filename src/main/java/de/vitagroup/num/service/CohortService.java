@@ -4,7 +4,6 @@ import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortGroup;
 import de.vitagroup.num.domain.Phenotype;
 import de.vitagroup.num.domain.Study;
-import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
@@ -54,7 +53,7 @@ public class CohortService {
             .name(cohortDto.getName())
             .description(cohortDto.getDescription())
             .study(study)
-            .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId))
+            .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()))
             .build();
 
     study.setCohort(cohort);
@@ -72,9 +71,9 @@ public class CohortService {
   }
 
   public long getCohortGroupSize(CohortGroupDto cohortGroupDto, String userId) {
-    UserDetails coordinator = userDetailsService.validateAndReturnUserDetails(userId);
+    userDetailsService.validateAndReturnUserDetails(userId);
 
-    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto, coordinator.getUserId());
+    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
       throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
@@ -94,13 +93,13 @@ public class CohortService {
       throw new ForbiddenException("Not allowed");
     }
 
-    cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId));
+    cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()));
     cohortToEdit.setDescription(cohortDto.getDescription());
     cohortToEdit.setName(cohortDto.getName());
     return cohortRepository.save(cohortToEdit);
   }
 
-  private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto, String userId) {
+  private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto) {
     if (cohortGroupDto == null) {
       throw new BadRequestException("Cohort groups cannot be empty");
     }
@@ -112,16 +111,7 @@ public class CohortService {
           phenotypeService.getPhenotypeById(cohortGroupDto.getPhenotypeId());
 
       if (phenotype.isPresent()) {
-
-        if (phenotype.get().hasEmptyOrDifferentOwner(userId)) {
-          throw new ForbiddenException(
-              "Cannot access phenotype: "
-                  + phenotype.get().getName()
-                  + ", phenotype has a different or missing owner");
-        }
-
         cohortGroup.setPhenotype(phenotype.get());
-
       } else {
         throw new BadRequestException("Invalid phenotype id");
       }
@@ -132,7 +122,7 @@ public class CohortService {
           cohortGroupDto.getChildren().stream()
               .map(
                   child -> {
-                    CohortGroup cohortGroupChild = convertToCohortGroupEntity(child, userId);
+                    CohortGroup cohortGroupChild = convertToCohortGroupEntity(child);
                     cohortGroupChild.setParent(cohortGroup);
                     return cohortGroupChild;
                   })
