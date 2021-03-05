@@ -179,12 +179,12 @@ public class OrganizationServiceTest {
             .organization(Organization.builder().name("Organization A").build())
             .build();
 
-    when(userDetailsService.validateReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
 
-    when(userDetailsService.validateReturnUserDetails("missingUserId"))
+    when(userDetailsService.validateAndReturnUserDetails("missingUserId"))
         .thenThrow(new SystemException("User not found"));
 
-    when(userDetailsService.validateReturnUserDetails("notApprovedUserId"))
+    when(userDetailsService.validateAndReturnUserDetails("notApprovedUserId"))
         .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
     when(organizationRepository.findByName("Existing organization"))

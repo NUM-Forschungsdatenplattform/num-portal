@@ -56,7 +56,7 @@ public class StudyService {
 
   public QueryResponseData executeAql(String query, Long studyId, String userId) {
 
-    userDetailsService.validateReturnUserDetails(userId);
+    userDetailsService.validateAndReturnUserDetails(userId);
 
     Study study =
         studyRepository
@@ -99,7 +99,7 @@ public class StudyService {
 
   public Study createStudy(StudyDto studyDto, String userId, List<String> roles) {
 
-    UserDetails coordinator = userDetailsService.validateReturnUserDetails(userId);
+    UserDetails coordinator = userDetailsService.validateAndReturnUserDetails(userId);
 
     Study study = Study.builder().build();
 
@@ -127,7 +127,7 @@ public class StudyService {
 
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
 
-    userDetailsService.validateReturnUserDetails(userId);
+    userDetailsService.validateAndReturnUserDetails(userId);
 
     Study studyToEdit =
         studyRepository

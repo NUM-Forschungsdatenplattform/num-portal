@@ -81,7 +81,7 @@ public class UserServiceTest {
                     .organization(Organization.builder().id(1L).build())
                     .approved(true)
                     .build()));
-    when(userDetailsService.validateReturnUserDetails("4"))
+    when(userDetailsService.validateAndReturnUserDetails("4"))
         .thenReturn(
             UserDetails.builder()
                 .userId("4")

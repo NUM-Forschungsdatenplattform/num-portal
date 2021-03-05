@@ -35,14 +35,14 @@ public class PhenotypeService {
   }
 
   public List<Phenotype> getAllPhenotypes(String loggedInUserId) {
-    userDetailsService.validateReturnUserDetails(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     return phenotypeRepository.findByOwnerUserId(loggedInUserId);
   }
 
   public Phenotype createPhenotypes(Phenotype phenotype, String loggedInUserId) {
 
-    UserDetails user = userDetailsService.validateReturnUserDetails(loggedInUserId);
+    UserDetails user = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     validatePhenotypeAqls(phenotype, loggedInUserId);
 
@@ -51,7 +51,7 @@ public class PhenotypeService {
   }
 
   public long getPhenotypeSize(Phenotype phenotype, String loggedInUserId) {
-    userDetailsService.validateReturnUserDetails(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     Set<String> ehrIds;
     try {

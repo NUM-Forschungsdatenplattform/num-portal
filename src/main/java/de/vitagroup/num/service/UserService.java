@@ -103,7 +103,7 @@ public class UserService {
             .getUserDetailsById(userId)
             .orElseThrow(() -> new SystemException("User not found"));
 
-    UserDetails callerDetails = userDetailsService.validateReturnUserDetails(callerUserId);
+    UserDetails callerDetails = userDetailsService.validateAndReturnUserDetails(callerUserId);
 
     if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)
         && !callerRoles.contains(Roles.SUPER_ADMIN)

@@ -40,13 +40,13 @@ public class AqlServiceTest {
     UserDetails approvedUser =
         UserDetails.builder().userId("approvedUserId").approved(true).build();
 
-    when(userDetailsService.validateReturnUserDetails("notApprovedId"))
+    when(userDetailsService.validateAndReturnUserDetails("notApprovedId"))
         .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsService.validateReturnUserDetails("nonExistingUser"))
+    when(userDetailsService.validateAndReturnUserDetails("nonExistingUser"))
         .thenThrow(new SystemException("User not found"));
 
-    when(userDetailsService.validateReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
 
     when(aqlRepository.findById(1L))
         .thenReturn(

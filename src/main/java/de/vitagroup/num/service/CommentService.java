@@ -31,7 +31,7 @@ public class CommentService {
   }
 
   public Comment createComment(Comment comment, Long studyId, String loggedInUserId) {
-    UserDetails author = userDetailsService.validateReturnUserDetails(loggedInUserId);
+    UserDetails author = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     Study study =
         studyService
@@ -47,7 +47,7 @@ public class CommentService {
   public Comment updateComment(
       Comment comment, Long commentId, String loggedInUserId, Long studyId) {
 
-    userDetailsService.validateReturnUserDetails(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     if (!studyService.exists(studyId)) {
       throw new ResourceNotFound("Study not found: " + studyId);
@@ -72,7 +72,7 @@ public class CommentService {
   }
 
   public void deleteComment(Long commentId, Long studyId, String loggedInUserId) {
-    userDetailsService.validateReturnUserDetails(loggedInUserId);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
     if (!studyService.exists(studyId)) {
       throw new ResourceNotFound("Study does not exist");

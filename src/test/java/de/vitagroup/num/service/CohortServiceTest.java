@@ -268,13 +268,13 @@ public class CohortServiceTest {
     UserDetails notApprovedUser =
         UserDetails.builder().userId("notApprovedUserId").approved(false).build();
 
-    when(userDetailsService.validateReturnUserDetails("notApprovedUserId"))
+    when(userDetailsService.validateAndReturnUserDetails("notApprovedUserId"))
         .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsService.validateReturnUserDetails("missingUserID"))
+    when(userDetailsService.validateAndReturnUserDetails("missingUserID"))
         .thenThrow(new SystemException("User not found"));
 
-    when(userDetailsService.validateReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
 
     when(studyService.getStudyById(2L))
         .thenReturn(

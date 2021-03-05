@@ -165,10 +165,10 @@ public class PhenotypeServiceTest {
     UserDetails approvedUser =
         UserDetails.builder().userId("approvedUserId").approved(true).build();
 
-    when(userDetailsService.validateReturnUserDetails("notApprovedUserId"))
+    when(userDetailsService.validateAndReturnUserDetails("notApprovedUserId"))
         .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsService.validateReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
 
     when(aqlService.getAqlById(1L))
         .thenReturn(Optional.of(Aql.builder().id(1L).publicAql(false).owner(approvedUser).build()));

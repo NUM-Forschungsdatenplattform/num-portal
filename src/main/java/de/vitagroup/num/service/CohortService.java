@@ -38,7 +38,7 @@ public class CohortService {
   }
 
   public Cohort createCohort(CohortDto cohortDto, String userId) {
-    userDetailsService.validateReturnUserDetails(userId);
+    userDetailsService.validateAndReturnUserDetails(userId);
 
     Study study =
         studyService
@@ -72,7 +72,7 @@ public class CohortService {
   }
 
   public long getCohortGroupSize(CohortGroupDto cohortGroupDto, String userId) {
-    UserDetails coordinator = userDetailsService.validateReturnUserDetails(userId);
+    UserDetails coordinator = userDetailsService.validateAndReturnUserDetails(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto, coordinator.getUserId());
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup);
@@ -83,7 +83,7 @@ public class CohortService {
   }
 
   public Cohort updateCohort(CohortDto cohortDto, Long cohortId, String userId) {
-    userDetailsService.validateReturnUserDetails(userId);
+    userDetailsService.validateAndReturnUserDetails(userId);
 
     Cohort cohortToEdit =
         cohortRepository
