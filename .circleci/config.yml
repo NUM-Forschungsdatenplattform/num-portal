@@ -4,7 +4,7 @@ workflows:
   version: 2
   nightly:
     triggers:
-        - schedule:
+      - schedule:
           cron: "0 21 * * *"
           filters:
             branches:
