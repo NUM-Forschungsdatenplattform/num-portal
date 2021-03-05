@@ -224,6 +224,10 @@ public class UserService {
       users.removeIf(user -> approved ? user.isNotApproved() : user.isApproved());
     }
 
+    return filterByCallerRole(users, callerRoles, loggedInUser);
+  }
+
+  private Set<User> filterByCallerRole(Set<User> users, List<String> callerRoles, UserDetails loggedInUser){
     if (callerRoles.contains(Roles.SUPER_ADMIN)) {
       return users;
     }
