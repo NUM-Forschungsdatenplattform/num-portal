@@ -50,7 +50,7 @@ public class PhenotypeServiceTest {
   @Test
   public void shouldCallRepoWhenRetrievingAllPhenotypes() {
     phenotypeService.getAllPhenotypes("approvedUserId");
-    verify(phenotypeRepository, times(1)).findByOwnerUserId("approvedUserId");
+    verify(phenotypeRepository, times(1)).findAll();
   }
 
   @Test(expected = ForbiddenException.class)
