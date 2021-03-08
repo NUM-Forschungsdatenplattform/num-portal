@@ -37,7 +37,7 @@ public class PhenotypeService {
   public List<Phenotype> getAllPhenotypes(String loggedInUserId) {
     userDetailsService.validateAndReturnUserDetails(loggedInUserId);
 
-    return phenotypeRepository.findByOwnerUserId(loggedInUserId);
+    return phenotypeRepository.findAll();
   }
 
   public Phenotype createPhenotypes(Phenotype phenotype, String loggedInUserId) {
