@@ -122,7 +122,6 @@ public class EhrBaseService {
     if (StringUtils.isEmpty(queryString)) {
       throw new BadRequestException("Empty aql query string");
     }
-
     try {
       new AqlToDtoParser().parse(queryString);
     } catch (AqlParseException e) {

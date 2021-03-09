@@ -8,6 +8,7 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
+import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -30,7 +31,7 @@ public class CohortService {
   private final UserDetailsService userDetailsService;
   private final ModelMapper modelMapper;
   private final PhenotypeService phenotypeService;
-  private final StudyService studyService;
+  private final StudyRepository studyRepository;
   private final PrivacyProperties privacyProperties;
 
   public Cohort getCohort(Long cohortId) {
@@ -41,8 +42,8 @@ public class CohortService {
     userDetailsService.validateAndReturnUserDetails(userId);
 
     Study study =
-        studyService
-            .getStudyById(cohortDto.getStudyId())
+        studyRepository
+            .findById(cohortDto.getStudyId())
             .orElseThrow(() -> new ResourceNotFound("Study not found: " + cohortDto.getStudyId()));
 
     if (study.hasEmptyOrDifferentOwner(userId)) {

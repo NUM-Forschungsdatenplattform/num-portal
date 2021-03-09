@@ -23,6 +23,7 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
+import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -55,7 +56,7 @@ public class CohortServiceTest {
 
   @Mock private UserDetailsService userDetailsService;
 
-  @Mock private StudyService studyService;
+  @Mock private StudyRepository studyRepository;
 
   @Mock private PhenotypeService phenotypeService;
 
@@ -276,7 +277,7 @@ public class CohortServiceTest {
 
     when(userDetailsService.validateAndReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
 
-    when(studyService.getStudyById(2L))
+    when(studyRepository.findById(2L))
         .thenReturn(
             Optional.of(
                 Study.builder()
@@ -290,7 +291,7 @@ public class CohortServiceTest {
     Study ownedStudy =
         Study.builder().name("Study").id(3L).name("Study name").coordinator(approvedUser).build();
 
-    when(studyService.getStudyById(3L)).thenReturn(Optional.of(ownedStudy));
+    when(studyRepository.findById(3L)).thenReturn(Optional.of(ownedStudy));
 
     Aql aql1 =
         Aql.builder()
