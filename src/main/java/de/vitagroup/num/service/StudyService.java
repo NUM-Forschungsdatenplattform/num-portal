@@ -228,7 +228,7 @@ public class StudyService {
         .collect(Collectors.toList()));
 
     ConditionLogicalOperatorDto newWhere = new ConditionLogicalOperatorDto();
-    newWhere.setValues(Collections.emptyList());
+    newWhere.setValues(new ArrayList<>());
     ConditionDto where = aqlDto.getWhere();
 
     if (where != null) {
