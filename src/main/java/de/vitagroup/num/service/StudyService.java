@@ -23,6 +23,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +31,18 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.ehrbase.aql.binder.AqlBinder;
+import org.ehrbase.aql.dto.AqlDto;
+import org.ehrbase.aql.dto.condition.ConditionDto;
+import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorDto;
+import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorSymbol;
+import org.ehrbase.aql.dto.condition.MatchesOperatorDto;
+import org.ehrbase.aql.dto.condition.SimpleValue;
+import org.ehrbase.aql.dto.select.SelectFieldDto;
+import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.stereotype.Service;
 
@@ -43,9 +54,11 @@ public class StudyService {
   private final UserDetailsService userDetailsService;
   private final EhrBaseService ehrBaseService;
   private final ObjectMapper mapper;
+  private final CohortService cohortService;
+  private static final String EHR_ID_PATH = "/ehr_id/value";
+
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
-
     QueryResponseData response = executeAql(query, studyId, userId);
     try {
       return mapper.writeValueAsString(response);
@@ -55,7 +68,6 @@ public class StudyService {
   }
 
   public QueryResponseData executeAql(String query, Long studyId, String userId) {
-
     userDetailsService.validateAndReturnUserDetails(userId);
 
     Study study =
@@ -67,7 +79,9 @@ public class StudyService {
       throw new ForbiddenException("Cannot access this study");
     }
 
-    return ehrBaseService.executeRawQuery(query);
+    String restrictedQuery = restrictToCohortEhrIds(query, study);
+
+    return ehrBaseService.executeRawQuery(restrictedQuery);
   }
 
   public void streamResponseAsCsv(QueryResponseData queryResponseData, OutputStream outputStream) {
@@ -78,7 +92,7 @@ public class StudyService {
     }
     try (CSVPrinter printer =
         CSVFormat.EXCEL
-            .withHeader(paths.toArray(new String[] {}))
+            .withHeader(paths.toArray(new String[]{}))
             .print(new OutputStreamWriter(outputStream))) {
 
       for (List<Object> row : queryResponseData.getRows()) {
@@ -165,12 +179,12 @@ public class StudyService {
     if (roles.contains(Roles.RESEARCHER)) {
       studiesList.addAll(
           studyRepository.findByResearchers_UserIdAndStatusIn(
-              userId, new StudyStatus[] {StudyStatus.PUBLISHED, StudyStatus.CLOSED}));
+              userId, new StudyStatus[]{StudyStatus.PUBLISHED, StudyStatus.CLOSED}));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
       studiesList.addAll(
           studyRepository.findByStatusIn(
-              new StudyStatus[] {StudyStatus.PENDING, StudyStatus.REVIEWING}));
+              new StudyStatus[]{StudyStatus.PENDING, StudyStatus.REVIEWING}));
     }
 
     return studiesList.stream().distinct().collect(Collectors.toList());
@@ -183,6 +197,48 @@ public class StudyService {
         LocalDateTime.now()
             .truncatedTo(ChronoUnit.MINUTES)
             .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+  }
+
+  private String restrictToCohortEhrIds(String query, Study study) {
+    if (study.getCohort() == null) {
+      return query;
+    }
+
+    Set<String> ehrIds = cohortService.executeCohort(study.getCohort().getId());
+
+    if (CollectionUtils.isEmpty(ehrIds)) {
+      return query;
+    }
+
+    AqlDto aqlDto = new AqlToDtoParser().parse(query);
+    MatchesOperatorDto matches = new MatchesOperatorDto();
+    SelectFieldDto select = new SelectFieldDto();
+    select.setAqlPath(EHR_ID_PATH);
+    select.setContainmentId(aqlDto.getEhr().getContainmentId());
+    matches.setStatement(select);
+
+    matches.setValues(ehrIds
+        .stream()
+        .map(
+            s -> {
+              SimpleValue simpleValue = new SimpleValue();
+              simpleValue.setValue(s);
+              return simpleValue;
+            })
+        .collect(Collectors.toList()));
+
+    ConditionLogicalOperatorDto newWhere = new ConditionLogicalOperatorDto();
+    newWhere.setValues(new ArrayList<>());
+    ConditionDto where = aqlDto.getWhere();
+
+    if (where != null) {
+      newWhere.setSymbol(ConditionLogicalOperatorSymbol.AND);
+      newWhere.getValues().add(where);
+    }
+
+    newWhere.getValues().add(matches);
+    aqlDto.setWhere(newWhere);
+    return new AqlBinder().bind(aqlDto).getLeft().buildAql();
   }
 
   private void setTemplates(Study study, StudyDto studyDto) {
