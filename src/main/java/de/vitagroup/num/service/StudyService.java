@@ -23,6 +23,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,8 @@ public class StudyService {
   private final EhrBaseService ehrBaseService;
   private final ObjectMapper mapper;
   private final CohortService cohortService;
+  private static final String EHR_ID_PATH = "/ehr_id/value";
+
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
     QueryResponseData response = executeAql(query, studyId, userId);
@@ -200,18 +203,17 @@ public class StudyService {
     if (study.getCohort() == null) {
       return query;
     }
+
     Set<String> ehrIds = cohortService.executeCohort(study.getCohort().getId());
 
     if (CollectionUtils.isEmpty(ehrIds)) {
       return query;
     }
 
-    String ehrIdPath = "/ehr_id/value";
-
     AqlDto aqlDto = new AqlToDtoParser().parse(query);
     MatchesOperatorDto matches = new MatchesOperatorDto();
     SelectFieldDto select = new SelectFieldDto();
-    select.setAqlPath(ehrIdPath);
+    select.setAqlPath(EHR_ID_PATH);
     select.setContainmentId(aqlDto.getEhr().getContainmentId());
     matches.setStatement(select);
 
@@ -226,7 +228,7 @@ public class StudyService {
         .collect(Collectors.toList()));
 
     ConditionLogicalOperatorDto newWhere = new ConditionLogicalOperatorDto();
-    newWhere.setValues(new ArrayList<>());
+    newWhere.setValues(Collections.emptyList());
     ConditionDto where = aqlDto.getWhere();
 
     if (where != null) {
