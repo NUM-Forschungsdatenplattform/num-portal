@@ -142,8 +142,8 @@ public class StudyServiceTest {
 
   @Test
   public void shouldHandleMissingStudy() {
-    Optional<Study> study = studyService.getStudyById(1L);
-
+    Optional<Study> study = studyService.getStudyById(19L);
+    
     assertThat(study, notNullValue());
     assertThat(study.isEmpty(), is(true));
   }
