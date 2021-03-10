@@ -12,6 +12,7 @@ import io.swagger.annotations.ApiResponses;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,13 +42,22 @@ public class PhenotypeController {
     @ApiResponse(code = 404, message = "Not found"),
     @ApiResponse(code = 500, message = "Internal server error")
   })
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<PhenotypeDto>> getAllPhenotypes(
       @AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(
         phenotypeService.getAllPhenotypes(principal.getSubject()).stream()
             .map(mapper::convertToDto)
             .collect(Collectors.toList()));
+  }
+
+  @GetMapping("/{id}")
+  @ApiOperation(value = "Retrieves a phenotype by id.")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
+  public ResponseEntity<PhenotypeDto> getPhenotypeById(
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @NotEmpty @PathVariable Long id) {
+    return ResponseEntity.ok(
+        mapper.convertToDto(phenotypeService.getPhenotypeById(id, principal.getSubject())));
   }
 
   @PostMapping

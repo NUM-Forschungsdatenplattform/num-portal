@@ -18,6 +18,7 @@ import de.vitagroup.num.service.executors.PhenotypeExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.PrivacyException;
+import de.vitagroup.num.web.exception.ResourceNotFound;
 import java.util.HashSet;
 import java.util.Optional;
 import org.junit.Before;
@@ -51,6 +52,17 @@ public class PhenotypeServiceTest {
   public void shouldCallRepoWhenRetrievingAllPhenotypes() {
     phenotypeService.getAllPhenotypes("approvedUserId");
     verify(phenotypeRepository, times(1)).findAll();
+  }
+
+  @Test
+  public void shouldCallRepoWhenRetrievingPhenotypeById() {
+    phenotypeService.getPhenotypeById(1L, "approvedUserId");
+    verify(phenotypeRepository, times(1)).findById(1L);
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void shouldHandlePhenotypeNotFound() {
+    phenotypeService.getPhenotypeById(1324L, "approvedUserId");
   }
 
   @Test(expected = ForbiddenException.class)
@@ -168,10 +180,14 @@ public class PhenotypeServiceTest {
     when(userDetailsService.validateAndReturnUserDetails("notApprovedUserId"))
         .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsService.validateAndReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+        .thenReturn(approvedUser);
 
     when(aqlService.getAqlById(1L))
         .thenReturn(Optional.of(Aql.builder().id(1L).publicAql(false).owner(approvedUser).build()));
+
+    when(phenotypeRepository.findById(1L))
+        .thenReturn(Optional.of(Phenotype.builder().id(1L).build()));
 
     when(aqlService.getAqlById(3L))
         .thenReturn(
