@@ -10,6 +10,7 @@ import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -54,8 +55,8 @@ public class StudyService {
   private final EhrBaseService ehrBaseService;
   private final ObjectMapper mapper;
   private final CohortService cohortService;
+  private final AtnaService atnaService;
   private static final String EHR_ID_PATH = "/ehr_id/value";
-
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
     QueryResponseData response = executeAql(query, studyId, userId);
@@ -67,20 +68,30 @@ public class StudyService {
   }
 
   public QueryResponseData executeAql(String query, Long studyId, String userId) {
-    userDetailsService.validateAndReturnUserDetails(userId);
+    QueryResponseData queryResponseData;
+    Study study = null;
+    try {
+      userDetailsService.validateAndReturnUserDetails(userId);
 
-    Study study =
-        studyRepository
-            .findById(studyId)
-            .orElseThrow(() -> new ResourceNotFound("Study not found: " + studyId));
+      study =
+          studyRepository
+              .findById(studyId)
+              .orElseThrow(() -> new ResourceNotFound("Study not found: " + studyId));
 
-    if (!study.isStudyResearcher(userId)) {
-      throw new ForbiddenException("Cannot access this study");
+      if (!study.isStudyResearcher(userId) && !study.getCoordinator().getUserId().equals(userId)) {
+        throw new ForbiddenException("Cannot access this study");
+      }
+
+      String restrictedQuery = restrictToCohortEhrIds(query, study);
+
+      queryResponseData = ehrBaseService.executeRawQuery(restrictedQuery);
+
+    } catch (Exception e) {
+      atnaService.logDataExport(userId, studyId, study, false);
+      throw e;
     }
-
-    String restrictedQuery = restrictToCohortEhrIds(query, study);
-
-    return ehrBaseService.executeRawQuery(restrictedQuery);
+    atnaService.logDataExport(userId, studyId, study, true);
+    return queryResponseData;
   }
 
   public void streamResponseAsCsv(QueryResponseData queryResponseData, OutputStream outputStream) {
@@ -91,7 +102,7 @@ public class StudyService {
     }
     try (CSVPrinter printer =
         CSVFormat.EXCEL
-            .withHeader(paths.toArray(new String[]{}))
+            .withHeader(paths.toArray(new String[] {}))
             .print(new OutputStreamWriter(outputStream))) {
 
       for (List<Object> row : queryResponseData.getRows()) {
@@ -178,12 +189,12 @@ public class StudyService {
     if (roles.contains(Roles.RESEARCHER)) {
       studiesList.addAll(
           studyRepository.findByResearchers_UserIdAndStatusIn(
-              userId, new StudyStatus[]{StudyStatus.PUBLISHED, StudyStatus.CLOSED}));
+              userId, new StudyStatus[] {StudyStatus.PUBLISHED, StudyStatus.CLOSED}));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
       studiesList.addAll(
           studyRepository.findByStatusIn(
-              new StudyStatus[]{StudyStatus.PENDING, StudyStatus.REVIEWING}));
+              new StudyStatus[] {StudyStatus.PENDING, StudyStatus.REVIEWING}));
     }
 
     return studiesList.stream().distinct().collect(Collectors.toList());
@@ -216,15 +227,15 @@ public class StudyService {
     select.setContainmentId(aqlDto.getEhr().getContainmentId());
     matches.setStatement(select);
 
-    matches.setValues(ehrIds
-        .stream()
-        .map(
-            s -> {
-              SimpleValue simpleValue = new SimpleValue();
-              simpleValue.setValue(s);
-              return simpleValue;
-            })
-        .collect(Collectors.toList()));
+    matches.setValues(
+        ehrIds.stream()
+            .map(
+                s -> {
+                  SimpleValue simpleValue = new SimpleValue();
+                  simpleValue.setValue(s);
+                  return simpleValue;
+                })
+            .collect(Collectors.toList()));
 
     ConditionLogicalOperatorDto newWhere = new ConditionLogicalOperatorDto();
     newWhere.setValues(new ArrayList<>());
