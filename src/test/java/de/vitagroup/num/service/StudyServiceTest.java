@@ -140,10 +140,6 @@ public class StudyServiceTest {
 
   @Test
   public void shouldFailExecutingAndLogWithUnapproved() {
-    when(cohortService.executeCohort(2L))
-        .thenReturn(
-            Set.of("f4da8646-8e36-4d9d-869c-af9dce5935c7", "61861e76-1606-48c9-adcf-49ebbb2c6bbd"));
-
     String query =
         "Select o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Systolic__magnitude, e/ehr_id/value as ehr_id from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.sample_blood_pressure.v1] where (o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude >= $magnitude and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude < 1.1)";
     Exception exception = null;
