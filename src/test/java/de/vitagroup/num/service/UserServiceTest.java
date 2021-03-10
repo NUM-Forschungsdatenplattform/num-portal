@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Sets;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
@@ -36,7 +38,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.modelmapper.ModelMapper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
@@ -45,7 +49,9 @@ public class UserServiceTest {
 
   @Mock private UserDetailsService userDetailsService;
 
-  @Mock private OrganizationMapper organizationMapper;
+  @Spy private final ModelMapper modelMapper = new ModelMapper();
+
+  @Spy private final OrganizationMapper organizationMapper = new OrganizationMapper(modelMapper);
 
   @InjectMocks private UserService userService;
 
@@ -57,6 +63,14 @@ public class UserServiceTest {
           new Role("R4", "STUDY_COORDINATOR"),
           new Role("R5", "CONTENT_ADMIN"),
           new Role("R6", "STUDY_APPROVER"));
+
+  private final Set<User> allValidUsers =
+      Sets.newHashSet(
+          User.builder().id("4").build(),
+          User.builder().id("5").build(),
+          User.builder().id("6").build(),
+          User.builder().id("7").build(),
+          User.builder().id("8").build());
 
   @Before
   public void setup() {
@@ -70,22 +84,27 @@ public class UserServiceTest {
     when(keycloakFeign.getRolesOfUser("4")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
     when(keycloakFeign.getRolesOfUser("5")).thenReturn(Collections.emptySet());
     when(keycloakFeign.getRolesOfUser("6")).thenReturn(roles);
+    when(keycloakFeign.getRolesOfUser("7")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
+    when(keycloakFeign.getRolesOfUser("8")).thenReturn(Set.of(new Role("R4", "STUDY_COORDINATOR")));
 
     when(keycloakFeign.getRoles()).thenReturn(roles);
+
+    when(keycloakFeign.searchUsers(any())).thenReturn(allValidUsers);
 
     when(userDetailsService.getUserDetailsById("4"))
         .thenReturn(
             Optional.of(
                 UserDetails.builder()
                     .userId("4")
-                    .organization(Organization.builder().id(1L).build())
+                    .organization(
+                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
     when(userDetailsService.validateAndReturnUserDetails("4"))
         .thenReturn(
             UserDetails.builder()
                 .userId("4")
-                .organization(Organization.builder().id(1L).build())
+                .organization(Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                 .approved(true)
                 .build());
     when(userDetailsService.getUserDetailsById("5"))
@@ -93,15 +112,24 @@ public class UserServiceTest {
             Optional.of(
                 UserDetails.builder()
                     .userId("5")
-                    .organization(Organization.builder().id(1L).build())
+                    .organization(
+                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
+    when(userDetailsService.validateAndReturnUserDetails("5"))
+        .thenReturn(
+            UserDetails.builder()
+                .userId("5")
+                .organization(Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                .approved(true)
+                .build());
     when(userDetailsService.getUserDetailsById("6"))
         .thenReturn(
             Optional.of(
                 UserDetails.builder()
                     .userId("6")
-                    .organization(Organization.builder().id(1L).build())
+                    .organization(
+                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
     when(userDetailsService.getUserDetailsById("7"))
@@ -109,7 +137,17 @@ public class UserServiceTest {
             Optional.of(
                 UserDetails.builder()
                     .userId("7")
-                    .organization(Organization.builder().id(2L).build())
+                    .organization(
+                        Organization.builder().id(2L).name("org 2").domains(Set.of()).build())
+                    .approved(true)
+                    .build()));
+    when(userDetailsService.getUserDetailsById("8"))
+        .thenReturn(
+            Optional.of(
+                UserDetails.builder()
+                    .userId("8")
+                    .organization(
+                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
   }
@@ -201,9 +239,17 @@ public class UserServiceTest {
     user.setFirstName("john");
     user.setId("4");
     when(keycloakFeign.searchUsers(null)).thenReturn(Set.of(user));
-    Set<de.vitagroup.num.domain.admin.User> userReturn = userService.searchUsers(null, null, true);
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers("user", null, null, true, List.of(Roles.SUPER_ADMIN));
     assertThat(userReturn.iterator().next().getRoles().iterator().next(), is("RESEARCHER"));
     verify(keycloakFeign, times(1)).getRolesOfUser("4");
+  }
+
+  @Test
+  public void shouldReturnEnoughUsers() {
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
+    assertEquals(5, userReturn.size());
   }
 
   @Test
@@ -212,9 +258,38 @@ public class UserServiceTest {
     user.setFirstName("john");
     user.setId("4");
     when(keycloakFeign.searchUsers(null)).thenReturn(Set.of(user));
-    Set<de.vitagroup.num.domain.admin.User> userReturn = userService.searchUsers(null, null, false);
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
     assertNull(userReturn.iterator().next().getRoles());
     verify(keycloakFeign, times(0)).getRolesOfUser("4");
+  }
+
+  @Test
+  public void shouldReturnUserWithRolesWithinOrg() {
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers("5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN));
+    assertEquals(4, userReturn.size());
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
+  }
+
+  @Test
+  public void shouldReturnUserWithRolesWithinOrgAndResearchers() {
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers(
+            "5",
+            null,
+            null,
+            false,
+            List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
+    assertEquals(5, userReturn.size());
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
   }
 
   @Test(expected = ForbiddenException.class)

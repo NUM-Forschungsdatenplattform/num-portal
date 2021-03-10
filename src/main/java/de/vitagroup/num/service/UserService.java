@@ -13,6 +13,7 @@ import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -193,21 +194,60 @@ public class UserService {
    * @param withRoles flag whether to add roles to the user structure, if present, or not
    * @return the users that match the search parameters and with optional roles if indicated
    */
-  public Set<User> searchUsers(Boolean approved, String search, Boolean withRoles) {
+  public Set<User> searchUsers(
+      String loggedInUserId,
+      Boolean approved,
+      String search,
+      Boolean withRoles,
+      List<String> callerRoles) {
+
+    UserDetails loggedInUser = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+
     Set<User> users = keycloakFeign.searchUsers(search);
     if (users == null) {
       return Collections.emptySet();
     }
+
     users.forEach(this::addUserDetails);
+
+    if ((withRoles != null && withRoles)
+        || callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+      users.forEach(this::addRoles);
+    }
 
     if (approved != null) {
       users.removeIf(user -> approved ? user.isNotApproved() : user.isApproved());
     }
 
-    if (withRoles != null && withRoles) {
-      users.forEach(this::addRoles);
+    return filterByCallerRole(users, callerRoles, loggedInUser);
+  }
+
+  private Set<User> filterByCallerRole(Set<User> users, List<String> callerRoles, UserDetails loggedInUser){
+    if (callerRoles.contains(Roles.SUPER_ADMIN)) {
+      return users;
     }
 
-    return users;
+    Set<User> outputSet = new HashSet<>();
+
+    if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)) {
+      Long loggedInOrgId = loggedInUser.getOrganization().getId();
+      users.forEach(
+          user -> {
+            if (loggedInOrgId.equals(user.getOrganization().getId())) {
+              outputSet.add(user);
+            }
+          });
+    }
+
+    if (callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+      users.forEach(
+          user -> {
+            if (user.getRoles() != null && user.getRoles().contains(Roles.RESEARCHER)) {
+              outputSet.add(user);
+            }
+          });
+    }
+
+    return outputSet;
   }
 }
