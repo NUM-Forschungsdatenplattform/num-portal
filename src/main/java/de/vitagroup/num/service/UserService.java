@@ -199,7 +199,6 @@ public class UserService {
       Boolean approved,
       String search,
       Boolean withRoles,
-      List<String> onlyHavingRoles,
       List<String> callerRoles) {
 
     UserDetails loggedInUser = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
@@ -212,12 +211,8 @@ public class UserService {
     users.forEach(this::addUserDetails);
 
     if ((withRoles != null && withRoles)
-        || (onlyHavingRoles != null && !onlyHavingRoles.isEmpty())
         || callerRoles.contains(Roles.STUDY_COORDINATOR)) {
       users.forEach(this::addRoles);
-      if (onlyHavingRoles != null && !onlyHavingRoles.isEmpty()) {
-        users.removeIf(user -> user.getRoles().stream().noneMatch(onlyHavingRoles::contains));
-      }
     }
 
     if (approved != null) {

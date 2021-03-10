@@ -240,7 +240,7 @@ public class UserServiceTest {
     user.setId("4");
     when(keycloakFeign.searchUsers(null)).thenReturn(Set.of(user));
     Set<de.vitagroup.num.domain.admin.User> userReturn =
-        userService.searchUsers("user", null, null, true, null, List.of(Roles.SUPER_ADMIN));
+        userService.searchUsers("user", null, null, true, List.of(Roles.SUPER_ADMIN));
     assertThat(userReturn.iterator().next().getRoles().iterator().next(), is("RESEARCHER"));
     verify(keycloakFeign, times(1)).getRolesOfUser("4");
   }
@@ -248,7 +248,7 @@ public class UserServiceTest {
   @Test
   public void shouldReturnEnoughUsers() {
     Set<de.vitagroup.num.domain.admin.User> userReturn =
-        userService.searchUsers("user", null, null, false, null, List.of(Roles.SUPER_ADMIN));
+        userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
     assertEquals(5, userReturn.size());
   }
 
@@ -259,7 +259,7 @@ public class UserServiceTest {
     user.setId("4");
     when(keycloakFeign.searchUsers(null)).thenReturn(Set.of(user));
     Set<de.vitagroup.num.domain.admin.User> userReturn =
-        userService.searchUsers("user", null, null, false, null, List.of(Roles.SUPER_ADMIN));
+        userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
     assertNull(userReturn.iterator().next().getRoles());
     verify(keycloakFeign, times(0)).getRolesOfUser("4");
   }
@@ -267,7 +267,7 @@ public class UserServiceTest {
   @Test
   public void shouldReturnUserWithRolesWithinOrg() {
     Set<de.vitagroup.num.domain.admin.User> userReturn =
-        userService.searchUsers("5", null, null, false, null, List.of(Roles.ORGANIZATION_ADMIN));
+        userService.searchUsers("5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN));
     assertEquals(4, userReturn.size());
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
@@ -283,54 +283,12 @@ public class UserServiceTest {
             null,
             null,
             false,
-            null,
             List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
     assertEquals(5, userReturn.size());
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
-    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
-  }
-
-  @Test
-  public void shouldReturnUserWithRolesWithinOrgResearchers() {
-    Set<de.vitagroup.num.domain.admin.User> userReturn =
-        userService.searchUsers(
-            "5", null, null, false, List.of(Roles.RESEARCHER), List.of(Roles.ORGANIZATION_ADMIN));
-    assertEquals(2, userReturn.size());
-    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
-    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
-  }
-
-  @Test
-  public void shouldReturnUserWithRolesWithinOrgOrgAdmin() {
-    Set<de.vitagroup.num.domain.admin.User> userReturn =
-        userService.searchUsers(
-            "5",
-            null,
-            null,
-            false,
-            List.of(Roles.STUDY_COORDINATOR),
-            List.of(Roles.ORGANIZATION_ADMIN));
-    assertEquals(2, userReturn.size());
-    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
-    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
-  }
-
-  @Test
-  public void shouldReturnUserWithRolesWithinOrgOrgAdminResearcher() {
-    Set<de.vitagroup.num.domain.admin.User> userReturn =
-        userService.searchUsers(
-            "5",
-            null,
-            null,
-            false,
-            List.of(Roles.STUDY_COORDINATOR, Roles.RESEARCHER),
-            List.of(Roles.ORGANIZATION_ADMIN));
-    assertEquals(3, userReturn.size());
-    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
-    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
   }
 

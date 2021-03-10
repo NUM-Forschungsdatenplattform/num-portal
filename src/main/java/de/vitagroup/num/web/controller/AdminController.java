@@ -107,18 +107,13 @@ public class AdminController {
           @ApiParam(
               value =
                   "A flag for controlling whether to include user's roles in the response (a bit slower)")
-          Boolean withRoles,
-      @RequestParam(required = false)
-          @ApiParam(
-              value = "Restrict the list of users to users who have one of the roles in the list")
-          List<String> havingRoles) {
+          Boolean withRoles) {
     return ResponseEntity.ok(
         userService.searchUsers(
             principal.getSubject(),
             approved,
             search,
             withRoles,
-            havingRoles,
             Roles.extractRoles(principal)));
   }
 }
