@@ -1,6 +1,7 @@
 package de.vitagroup.num.web.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -41,5 +42,6 @@ public class ApplicationSecurity extends WebSecurityConfigurerAdapter {
   @Override
   public void configure(WebSecurity web) {
     web.ignoring().antMatchers(AUTH_WHITELIST);
+    web.ignoring().mvcMatchers(HttpMethod.GET, "/content/navigation");
   }
 }

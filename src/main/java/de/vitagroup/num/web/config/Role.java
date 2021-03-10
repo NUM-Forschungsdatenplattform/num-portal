@@ -6,6 +6,7 @@ public class Role {
   public static final String STUDY_COORDINATOR = "hasRole('STUDY_COORDINATOR')";
   public static final String STUDY_APPROVER = "hasRole('STUDY_APPROVER')";
   public static final String RESEARCHER = "hasRole('RESEARCHER')";
+  public static final String CONTENT_ADMIN = "hasRole('CONTENT_ADMIN')";
   public static final String STUDY_COORDINATOR_OR_RESEARCHER =
       "hasAnyRole('STUDY_COORDINATOR', 'RESEARCHER')";
   public static final String STUDY_COORDINATOR_OR_APPROVER =
