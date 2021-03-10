@@ -68,13 +68,6 @@ public class CohortController {
     return ResponseEntity.ok(cohortService.executeCohort(Long.parseLong(cohortId)));
   }
 
-  @PostMapping("{cohortId}/size")
-  @ApiOperation(value = "Retrieves the cohort size")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
-  public ResponseEntity<Long> retrieveCohortSize(@PathVariable String cohortId) {
-    return ResponseEntity.ok(cohortService.getCohortSize(Long.parseLong(cohortId)));
-  }
-
   @PostMapping("size")
   @ApiOperation(value = "Retrieves the cohort group size without saving")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
