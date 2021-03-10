@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.Roles;
@@ -20,6 +21,7 @@ import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -57,6 +59,8 @@ public class StudyServiceTest {
 
   @Mock private EhrBaseService ehrBaseService;
 
+  @Mock private AtnaService atnaService;
+
   @InjectMocks private StudyService studyService;
 
   @Captor ArgumentCaptor<String> stringArgumentCaptor;
@@ -69,54 +73,6 @@ public class StudyServiceTest {
 
   private static final String EHR_ID_1 = "f4da8646-8e36-4d9d-869c-af9dce5935c7";
   private static final String EHR_ID_2 = "61861e76-1606-48c9-adcf-49ebbb2c6bbd";
-
-  @Before
-  public void setup() {
-    UserDetails notApprovedCoordinator =
-        UserDetails.builder().userId("notApprovedCoordinatorId").approved(false).build();
-
-    UserDetails approvedCoordinator =
-        UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
-
-    when(userDetailsService.validateAndReturnUserDetails("approvedCoordinatorId"))
-        .thenReturn(approvedCoordinator);
-
-    when(userDetailsService.validateAndReturnUserDetails("notApprovedCoordinatorId"))
-        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
-
-    when(userDetailsService.validateAndReturnUserDetails("nonExistingCoordinatorId"))
-        .thenThrow(new SystemException("User not found"));
-
-    when(studyRepository.findById(1L))
-        .thenReturn(
-            Optional.of(
-                Study.builder()
-                    .id(1L)
-                    .cohort(Cohort.builder().id(2L).build())
-                    .researchers(List.of(approvedCoordinator))
-                    .build()));
-
-    when(studyRepository.findById(3L))
-        .thenReturn(
-            Optional.of(
-                Study.builder()
-                    .id(1L)
-                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
-                    .researchers(List.of(approvedCoordinator))
-                    .build()));
-
-    when(studyRepository.findById(2L))
-        .thenReturn(
-            Optional.of(
-                Study.builder()
-                    .id(1L)
-                    .cohort(Cohort.builder().id(2L).build())
-                    .researchers(List.of(approvedCoordinator))
-                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
-                    .build()));
-
-    when(cohortService.executeCohort(2L)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
-  }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleStudyWithoutTemplates() {
@@ -170,6 +126,23 @@ public class StudyServiceTest {
     Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
     String restrictedQuery = stringArgumentCaptor.getValue();
     new AqlToDtoParser().parse(restrictedQuery);
+  }
+
+  @Test
+  public void shouldFailExecutingAndLogWithUnapproved() {
+    String query =
+        "Select o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Systolic__magnitude, e/ehr_id/value as ehr_id from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.sample_blood_pressure.v1] where (o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude >= $magnitude and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude < 1.1)";
+    Exception exception = null;
+    try {
+      studyService.executeAql(query, 1L, "notApprovedCoordinatorId");
+    } catch (Exception e) {
+      exception = e;
+    }
+
+    Mockito.verify(atnaService, times(1))
+        .logDataExport(eq("notApprovedCoordinatorId"), eq(1L), eq(null), eq(false));
+
+    assertTrue(exception instanceof ForbiddenException);
   }
 
   @Test(expected = SystemException.class)
@@ -574,5 +547,53 @@ public class StudyServiceTest {
         StudyDto.builder().name("new study").financed(false).status(StudyStatus.PENDING).build();
     studyService.createStudy(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(studyRepository, times(1)).save(any());
+  }
+
+  @Before
+  public void setup() {
+    UserDetails notApprovedCoordinator =
+        UserDetails.builder().userId("notApprovedCoordinatorId").approved(false).build();
+
+    UserDetails approvedCoordinator =
+        UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
+
+    when(userDetailsService.validateAndReturnUserDetails("approvedCoordinatorId"))
+        .thenReturn(approvedCoordinator);
+
+    when(userDetailsService.validateAndReturnUserDetails("notApprovedCoordinatorId"))
+        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
+
+    when(userDetailsService.validateAndReturnUserDetails("nonExistingCoordinatorId"))
+        .thenThrow(new SystemException("User not found"));
+
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .cohort(Cohort.builder().id(2L).build())
+                    .researchers(List.of(approvedCoordinator))
+                    .build()));
+
+    when(studyRepository.findById(3L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+                    .researchers(List.of(approvedCoordinator))
+                    .build()));
+
+    when(studyRepository.findById(2L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .cohort(Cohort.builder().id(2L).build())
+                    .researchers(List.of(approvedCoordinator))
+                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+                    .build()));
+
+    when(cohortService.executeCohort(2L)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
   }
 }

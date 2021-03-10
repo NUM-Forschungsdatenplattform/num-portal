@@ -10,6 +10,7 @@ import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -24,7 +25,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -59,9 +59,10 @@ public class StudyService {
   private final EhrBaseService ehrBaseService;
   private final ObjectMapper mapper;
   private final CohortService cohortService;
+  private final AtnaService atnaService;
+
   private static final String EHR_ID_PATH = "/ehr_id/value";
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
-  private static final String COMPOSITION_IDENTIFIER = "c";
   private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
@@ -74,20 +75,30 @@ public class StudyService {
   }
 
   public QueryResponseData executeAql(String query, Long studyId, String userId) {
-    userDetailsService.validateAndReturnUserDetails(userId);
+    QueryResponseData queryResponseData;
+    Study study = null;
+    try {
+      userDetailsService.validateAndReturnUserDetails(userId);
 
-    Study study =
-        studyRepository
-            .findById(studyId)
-            .orElseThrow(() -> new ResourceNotFound("Study not found: " + studyId));
+      study =
+          studyRepository
+              .findById(studyId)
+              .orElseThrow(() -> new ResourceNotFound("Study not found: " + studyId));
 
-    if (!study.isStudyResearcher(userId)) {
-      throw new ForbiddenException("Cannot access this study");
+      if (!study.isStudyResearcher(userId) && study.hasEmptyOrDifferentOwner(userId)) {
+        throw new ForbiddenException("Cannot access this study");
+      }
+
+      String restrictedQuery = restrictQueryToStudy(query, study);
+
+      queryResponseData = ehrBaseService.executeRawQuery(restrictedQuery);
+
+    } catch (Exception e) {
+      atnaService.logDataExport(userId, studyId, study, false);
+      throw e;
     }
-
-    String restrictedQuery = restrictQueryToStudy(query, study);
-
-    return ehrBaseService.executeRawQuery(restrictedQuery);
+    atnaService.logDataExport(userId, studyId, study, true);
+    return queryResponseData;
   }
 
   public void streamResponseAsCsv(QueryResponseData queryResponseData, OutputStream outputStream) {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Study;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -39,21 +40,21 @@ public class AtnaService {
     auditContext.setAuditRepositoryHost(properties.getHost());
   }
 
-  public void logDataExport(String userId, Study study, boolean successful) {
+  public void logDataExport(String userId, Long studyId, @Nullable Study study, boolean successful) {
     AuditMessage auditMessage =
         new DataExportBuilder(
                 successful ? EventOutcomeIndicator.Success : EventOutcomeIndicator.MajorFailure,
                 EventType.of(EVENT_CODE_DATA_EXPORT, SYSTEM_NAME, "Export"),
                 XspaPoUCode.Research)
             .addActiveParticipant(new ActiveParticipantType(userId, true))
-            .addStudyParticipantObject(String.valueOf(study.getId()), getStudyDetails(study))
+            .addStudyParticipantObject(String.valueOf(studyId), getStudyDetails(study))
             .setAuditSource(auditContext)
             .getMessage();
 
     validateAndSend(auditMessage);
   }
 
-  private List<TypeValuePairType> getStudyDetails(Study study) {
+  private List<TypeValuePairType> getStudyDetails(@Nullable Study study) {
     try {
       Long organizationId = study.getCoordinator().getOrganization().getId();
       return List.of(
