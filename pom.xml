@@ -20,7 +20,7 @@
     <commons-collections4.version>4.1</commons-collections4.version>
     <commons-io.version>2.5</commons-io.version>
     <ehr-sdk.version>v1.3.0</ehr-sdk.version>
-    <aql-editor-backend-starter.version>0.2.0</aql-editor-backend-starter.version>
+    <aql-editor-backend-starter.version>v0.3.0</aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>6.1</logstash-logback-encoder.version>
     <modelmapper.version>2.3.9</modelmapper.version>
     <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
