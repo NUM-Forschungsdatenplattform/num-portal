@@ -11,6 +11,7 @@ import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.PhenotypeExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.PrivacyException;
+import de.vitagroup.num.web.exception.ResourceNotFound;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,14 @@ public class PhenotypeService {
   private final UserDetailsService userDetailsService;
   private final AqlService aqlService;
   private final PhenotypeExecutor phenotypeExecutor;
+
+  public Phenotype getPhenotypeById(Long phenotypeId, String loggedInUserId) {
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+
+    return phenotypeRepository
+        .findById(phenotypeId)
+        .orElseThrow(() -> new ResourceNotFound("Phenotype not found: " + phenotypeId));
+  }
 
   public Optional<Phenotype> getPhenotypeById(Long phenotypeId) {
     return phenotypeRepository.findById(phenotypeId);
