@@ -78,7 +78,7 @@ public class StudyService {
               .findById(studyId)
               .orElseThrow(() -> new ResourceNotFound("Study not found: " + studyId));
 
-      if (!study.isStudyResearcher(userId) && !study.getCoordinator().getUserId().equals(userId)) {
+      if (!study.isStudyResearcher(userId) && study.hasEmptyOrDifferentOwner(userId)) {
         throw new ForbiddenException("Cannot access this study");
       }
 
