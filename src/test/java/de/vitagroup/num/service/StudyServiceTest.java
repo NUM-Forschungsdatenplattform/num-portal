@@ -9,6 +9,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,6 +21,7 @@ import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -47,23 +49,19 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class StudyServiceTest {
 
-  @Mock
-  private StudyRepository studyRepository;
+  @Mock private StudyRepository studyRepository;
 
-  @Mock
-  private UserDetailsService userDetailsService;
+  @Mock private UserDetailsService userDetailsService;
 
-  @Mock
-  private CohortService cohortService;
+  @Mock private CohortService cohortService;
 
-  @Mock
-  private EhrBaseService ehrBaseService;
+  @Mock private EhrBaseService ehrBaseService;
 
-  @InjectMocks
-  private StudyService studyService;
+  @Mock private AtnaService atnaService;
 
-  @Captor
-  ArgumentCaptor<String> stringArgumentCaptor;
+  @InjectMocks private StudyService studyService;
+
+  @Captor ArgumentCaptor<String> stringArgumentCaptor;
 
   @Before
   public void setup() {
@@ -82,38 +80,79 @@ public class StudyServiceTest {
     when(userDetailsService.validateAndReturnUserDetails("nonExistingCoordinatorId"))
         .thenThrow(new SystemException("User not found"));
 
-    when(studyRepository.findById(1L)).thenReturn(Optional
-        .of(Study.builder().id(1L).cohort(Cohort.builder().id(2L).build())
-            .researchers(List.of(approvedCoordinator)).build()));
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .cohort(Cohort.builder().id(2L).build())
+                    .researchers(List.of(approvedCoordinator))
+                    .build()));
   }
 
   @Test
   public void shouldCorrectlyRestrictQuery() {
-    when(cohortService.executeCohort(2L)).thenReturn(
-        Set.of("f4da8646-8e36-4d9d-869c-af9dce5935c7", "61861e76-1606-48c9-adcf-49ebbb2c6bbd"));
+    when(cohortService.executeCohort(2L))
+        .thenReturn(
+            Set.of("f4da8646-8e36-4d9d-869c-af9dce5935c7", "61861e76-1606-48c9-adcf-49ebbb2c6bbd"));
 
-    String query = "Select o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Systolic__magnitude, e/ehr_id/value as ehr_id from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.sample_blood_pressure.v1] where (o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude >= $magnitude and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude < 1.1)";
+    String query =
+        "Select o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Systolic__magnitude, e/ehr_id/value as ehr_id from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.sample_blood_pressure.v1] where (o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude >= $magnitude and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude < 1.1)";
     studyService.executeAql(query, 1L, "approvedCoordinatorId");
 
+    Mockito.verify(atnaService, times(1))
+        .logDataExport(eq("approvedCoordinatorId"), eq(1L), any(Study.class), eq(true));
     Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
     String restrictedQuery = stringArgumentCaptor.getValue();
 
     AqlDto newAqlDto = new AqlToDtoParser().parse(restrictedQuery);
     assertThat(newAqlDto.getWhere(), notNullValue());
-    ConditionLogicalOperatorDto conditionDto = (ConditionLogicalOperatorDto)newAqlDto.getWhere();
+    ConditionLogicalOperatorDto conditionDto = (ConditionLogicalOperatorDto) newAqlDto.getWhere();
     assertThat(conditionDto.getSymbol(), is(ConditionLogicalOperatorSymbol.AND));
     assertThat(conditionDto.getValues().size(), is(3));
 
-    conditionDto.getValues().stream().anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
+    conditionDto
+        .getValues()
+        .forEach(
+            condition -> {
+              if (condition instanceof MatchesOperatorDto) {
+                assertThat(((MatchesOperatorDto) condition).getValues().size(), is(2));
 
-    conditionDto.getValues().forEach(condition -> {
-      if(condition instanceof MatchesOperatorDto){
-        assertThat(((MatchesOperatorDto) condition).getValues().size(), is(2));
+                assertTrue(
+                    ((MatchesOperatorDto) condition)
+                        .getValues().stream()
+                            .anyMatch(
+                                value1 ->
+                                    ((SimpleValue) value1)
+                                        .getValue()
+                                        .equals("61861e76-1606-48c9-adcf-49ebbb2c6bbd")));
+                assertTrue(
+                    ((MatchesOperatorDto) condition)
+                        .getValues().stream()
+                            .anyMatch(
+                                value1 ->
+                                    ((SimpleValue) value1)
+                                        .getValue()
+                                        .equals("f4da8646-8e36-4d9d-869c-af9dce5935c7")));
+              }
+            });
+  }
 
-        assertTrue(((MatchesOperatorDto) condition).getValues().stream().anyMatch(value1 -> ((SimpleValue)value1).getValue().equals("61861e76-1606-48c9-adcf-49ebbb2c6bbd")));
-        assertTrue(((MatchesOperatorDto) condition).getValues().stream().anyMatch(value1 -> ((SimpleValue)value1).getValue().equals("f4da8646-8e36-4d9d-869c-af9dce5935c7")));
-      }
-    });
+  @Test
+  public void shouldFailExecutingAndLogWithUnapproved() {
+    String query =
+        "Select o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Systolic__magnitude, e/ehr_id/value as ehr_id from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.sample_blood_pressure.v1] where (o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude >= $magnitude and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude < 1.1)";
+    Exception exception = null;
+    try {
+      studyService.executeAql(query, 1L, "notApprovedCoordinatorId");
+    } catch (Exception e) {
+      exception = e;
+    }
+
+    Mockito.verify(atnaService, times(1))
+        .logDataExport(eq("notApprovedCoordinatorId"), eq(1L), eq(null), eq(false));
+
+    assertTrue(exception instanceof ForbiddenException);
   }
 
   @Test(expected = SystemException.class)
@@ -143,7 +182,7 @@ public class StudyServiceTest {
   @Test
   public void shouldHandleMissingStudy() {
     Optional<Study> study = studyService.getStudyById(19L);
-    
+
     assertThat(study, notNullValue());
     assertThat(study.isEmpty(), is(true));
   }
