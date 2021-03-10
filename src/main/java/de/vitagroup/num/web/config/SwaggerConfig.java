@@ -78,7 +78,7 @@ public class SwaggerConfig {
 
   @Bean
   public Docket contentApi() {
-    return getDocket("Content", "/content.*");
+    return getDocket("Content", "/content.*").useDefaultResponseMessages(false);
   }
 
   @Bean
