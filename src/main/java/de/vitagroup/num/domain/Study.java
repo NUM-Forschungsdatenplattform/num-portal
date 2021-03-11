@@ -29,6 +29,7 @@ import javax.persistence.ManyToOne;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 
 @Entity
@@ -96,6 +97,9 @@ public class Study {
   }
 
   public boolean isStudyResearcher(String userId) {
+    if(CollectionUtils.isEmpty(researchers)){
+      return false;
+    }
     return researchers.stream().anyMatch(r -> userId.equals(r.getUserId()));
   }
 }

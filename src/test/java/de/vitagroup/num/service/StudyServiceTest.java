@@ -6,6 +6,7 @@ import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,14 +66,28 @@ public class StudyServiceTest {
 
   @Captor ArgumentCaptor<String> stringArgumentCaptor;
 
-  private static final String QUERY =
-      "SELECT e/ehr_id/value, o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value, o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value FROM EHR e contains COMPOSITION c3[openEHR-EHR-COMPOSITION.report.v1] contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
-  private static final String QUERY_BASIC = "SELECT e FROM EHR e";
-
   private static final String CORONA_TEMPLATE = "Corona_Anamnese";
 
   private static final String EHR_ID_1 = "f4da8646-8e36-4d9d-869c-af9dce5935c7";
   private static final String EHR_ID_2 = "61861e76-1606-48c9-adcf-49ebbb2c6bbd";
+  private static final String EHR_ID_3 = "47dc21a2-7076-4a57-89dc-bd83729ed52f";
+
+  private static final String QUERY =
+      "SELECT e/ehr_id/value, "
+          + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value, "
+          + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value "
+          + "FROM EHR e "
+          + "contains COMPOSITION c3[openEHR-EHR-COMPOSITION.report.v1] "
+          + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
+          + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
+
+  private static final String QUERY2 = "Select e/ehr_id/value as F1, "
+      + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
+      + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 from EHR e "
+      + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
+      + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
+
+  private static final String QUERY_BASIC = "SELECT e FROM EHR e";
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleStudyWithoutTemplates() {
@@ -82,6 +97,39 @@ public class StudyServiceTest {
   @Test(expected = BadRequestException.class)
   public void shouldHandleStudyWithoutCohort() {
     studyService.executeAql(QUERY, 3L, "approvedCoordinatorId");
+  }
+
+  // TODO: this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed
+  @Ignore
+  @Test
+  public void shouldCorrectlyRestrictQueryWithContainsAndNoComposition() {
+    studyService.executeAql(QUERY2, 4L, "approvedCoordinatorId");
+
+    Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
+    String restrictedQuery = stringArgumentCaptor.getValue();
+
+    new AqlToDtoParser().parse(restrictedQuery);
+
+    String expectedQuery = "Select e/ehr_id/value as F1, "
+        + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
+        + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 "
+        + "from EHR e "
+        + "contains (COMPOSITION c0 and SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
+        + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]) "
+        + "where (e/ehr_id/value matches {'47dc21a2-7076-4a57-89dc-bd83729ed52f'} and c0/archetype_details/template_id/value matches {'Corona_Anamnese'})";
+
+    assertEquals(restrictedQuery, expectedQuery);
+  }
+
+  // TODO: this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed
+  @Ignore
+  @Test
+  public void shouldCorrectlyRestrictBasicQuery() {
+    studyService.executeAql(QUERY_BASIC, 2L, "approvedCoordinatorId");
+    Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
+    String restrictedQuery = stringArgumentCaptor.getValue();
+
+    new AqlToDtoParser().parse(restrictedQuery);
   }
 
   @Test
@@ -116,16 +164,6 @@ public class StudyServiceTest {
     assertTrue(
         templatesMatches.getValues().stream()
             .anyMatch(t -> ((SimpleValue) t).getValue().equals(CORONA_TEMPLATE)));
-  }
-
-  // TODO: this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed
-  @Ignore
-  @Test
-  public void shouldCorrectlyBasicQuery() {
-    studyService.executeAql(QUERY_BASIC, 3L, "approvedCoordinatorId");
-    Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
-    String restrictedQuery = stringArgumentCaptor.getValue();
-    new AqlToDtoParser().parse(restrictedQuery);
   }
 
   @Test
@@ -566,6 +604,14 @@ public class StudyServiceTest {
     when(userDetailsService.validateAndReturnUserDetails("nonExistingCoordinatorId"))
         .thenThrow(new SystemException("User not found"));
 
+    when(studyRepository.findById(3L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(3L)
+                    .researchers(List.of(approvedCoordinator))
+                    .build()));
+
     when(studyRepository.findById(1L))
         .thenReturn(
             Optional.of(
@@ -575,25 +621,27 @@ public class StudyServiceTest {
                     .researchers(List.of(approvedCoordinator))
                     .build()));
 
-    when(studyRepository.findById(3L))
-        .thenReturn(
-            Optional.of(
-                Study.builder()
-                    .id(1L)
-                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
-                    .researchers(List.of(approvedCoordinator))
-                    .build()));
-
     when(studyRepository.findById(2L))
         .thenReturn(
             Optional.of(
                 Study.builder()
-                    .id(1L)
+                    .id(2L)
                     .cohort(Cohort.builder().id(2L).build())
                     .researchers(List.of(approvedCoordinator))
                     .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
                     .build()));
 
+//    when(studyRepository.findById(4L))
+//        .thenReturn(
+//            Optional.of(
+//                Study.builder()
+//                    .id(4L)
+//                    .cohort(Cohort.builder().id(4L).build())
+//                    .researchers(List.of(approvedCoordinator))
+//                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+//                    .build()));
+
     when(cohortService.executeCohort(2L)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
+//    when(cohortService.executeCohort(4L)).thenReturn(Set.of(EHR_ID_3));
   }
 }

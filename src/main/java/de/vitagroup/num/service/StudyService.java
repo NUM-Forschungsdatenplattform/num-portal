@@ -45,6 +45,9 @@ import org.ehrbase.aql.dto.condition.MatchesOperatorDto;
 import org.ehrbase.aql.dto.condition.SimpleValue;
 import org.ehrbase.aql.dto.condition.Value;
 import org.ehrbase.aql.dto.containment.ContainmentDto;
+import org.ehrbase.aql.dto.containment.ContainmentExpresionDto;
+import org.ehrbase.aql.dto.containment.ContainmentLogicalOperator;
+import org.ehrbase.aql.dto.containment.ContainmentLogicalOperatorSymbol;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
@@ -233,19 +236,35 @@ public class StudyService {
     SelectFieldDto select = new SelectFieldDto();
     select.setAqlPath(TEMPLATE_ID_PATH);
 
-    Integer compositionIdentifier = findComposition((ContainmentDto) aqlDto.getContains());
+    ContainmentExpresionDto contains = aqlDto.getContains();
+    Integer nextContainmentId = findNextContainmentId((ContainmentDto) contains);
+    if (contains != null) {
+      Integer compositionIdentifier = findComposition((ContainmentDto) contains);
+      if (compositionIdentifier != null) {
+        select.setContainmentId(compositionIdentifier);
+      } else {
 
-    if (compositionIdentifier != null) {
-      select.setContainmentId(compositionIdentifier);
+        select.setContainmentId(nextContainmentId);
+
+        ContainmentLogicalOperator newContains = new ContainmentLogicalOperator();
+        newContains.setValues(new ArrayList<>());
+
+        ContainmentDto composition = new ContainmentDto();
+        composition.setId(nextContainmentId);
+        composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
+
+        newContains.setSymbol(ContainmentLogicalOperatorSymbol.AND);
+        newContains.getValues().add(composition);
+        newContains.getValues().add(contains);
+
+        aqlDto.setContains(newContains);
+      }
     } else {
-      Integer nextContainmentId = findNextContainmentId((ContainmentDto) aqlDto.getContains());
+      ContainmentDto composition = new ContainmentDto();
+      composition.setId(nextContainmentId);
+      composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
+      aqlDto.setContains(composition);
       select.setContainmentId(nextContainmentId);
-
-      ContainmentDto contains = new ContainmentDto();
-      contains.setId(nextContainmentId);
-      contains.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
-
-      aqlDto.setContains(contains);
     }
 
     MatchesOperatorDto matches = new MatchesOperatorDto();
