@@ -231,12 +231,12 @@ public class StudyService {
 
     ArrayList<String> templates = new ArrayList<>(templatesMap.keySet());
 
-    AqlDto aqlDto = new AqlToDtoParser().parse(query);
+    AqlDto aql = new AqlToDtoParser().parse(query);
 
     SelectFieldDto select = new SelectFieldDto();
     select.setAqlPath(TEMPLATE_ID_PATH);
 
-    ContainmentExpresionDto contains = aqlDto.getContains();
+    ContainmentExpresionDto contains = aql.getContains();
     Integer nextContainmentId = findNextContainmentId((ContainmentDto) contains);
     if (contains != null) {
       Integer compositionIdentifier = findComposition((ContainmentDto) contains);
@@ -257,32 +257,20 @@ public class StudyService {
         newContains.getValues().add(composition);
         newContains.getValues().add(contains);
 
-        aqlDto.setContains(newContains);
+        aql.setContains(newContains);
       }
     } else {
       ContainmentDto composition = new ContainmentDto();
       composition.setId(nextContainmentId);
       composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
-      aqlDto.setContains(composition);
+      aql.setContains(composition);
       select.setContainmentId(nextContainmentId);
     }
 
-    MatchesOperatorDto matches = new MatchesOperatorDto();
-    matches.setStatement(select);
-    matches.setValues(toSimpleValueList(templates));
+    List<Value> templateValues = toSimpleValueList(templates);
+    extendWhereClause(aql, select, templateValues);
 
-    ConditionLogicalOperatorDto newWhere = new ConditionLogicalOperatorDto();
-    newWhere.setValues(new ArrayList<>());
-
-    if (aqlDto.getWhere() != null) {
-      newWhere.setSymbol(ConditionLogicalOperatorSymbol.AND);
-      newWhere.getValues().add(aqlDto.getWhere());
-    }
-
-    newWhere.getValues().add(matches);
-    aqlDto.setWhere(newWhere);
-
-    return new AqlBinder().bind(aqlDto).getLeft().buildAql();
+    return new AqlBinder().bind(aql).getLeft().buildAql();
   }
 
   public String restrictToCohortEhrIds(String query, Study study) {
@@ -296,19 +284,26 @@ public class StudyService {
       throw new BadRequestException("Cohort size cannot be 0");
     }
 
-    AqlDto aqlDto = new AqlToDtoParser().parse(query);
+    AqlDto aql = new AqlToDtoParser().parse(query);
 
     SelectFieldDto select = new SelectFieldDto();
     select.setAqlPath(EHR_ID_PATH);
-    select.setContainmentId(aqlDto.getEhr().getContainmentId());
+    select.setContainmentId(aql.getEhr().getContainmentId());
 
+    List<Value> ehrValues = toSimpleValueList(ehrIds);
+    extendWhereClause(aql, select, ehrValues);
+
+    return new AqlBinder().bind(aql).getLeft().buildAql();
+  }
+
+  private void extendWhereClause(AqlDto aql, SelectFieldDto select, List<Value> values) {
     MatchesOperatorDto matches = new MatchesOperatorDto();
     matches.setStatement(select);
-    matches.setValues(toSimpleValueList(ehrIds));
+    matches.setValues(values);
 
     ConditionLogicalOperatorDto newWhere = new ConditionLogicalOperatorDto();
     newWhere.setValues(new ArrayList<>());
-    ConditionDto where = aqlDto.getWhere();
+    ConditionDto where = aql.getWhere();
 
     if (where != null) {
       newWhere.setSymbol(ConditionLogicalOperatorSymbol.AND);
@@ -316,8 +311,7 @@ public class StudyService {
     }
 
     newWhere.getValues().add(matches);
-    aqlDto.setWhere(newWhere);
-    return new AqlBinder().bind(aqlDto).getLeft().buildAql();
+    aql.setWhere(newWhere);
   }
 
   public Integer findComposition(ContainmentDto dto) {
