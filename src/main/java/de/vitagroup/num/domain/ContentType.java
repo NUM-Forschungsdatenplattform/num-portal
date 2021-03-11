@@ -1,5 +1,6 @@
 package de.vitagroup.num.domain;
 
 public enum ContentType {
-  NAVIGATION
+  NAVIGATION,
+  CARD
 }
