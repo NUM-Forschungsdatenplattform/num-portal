@@ -202,7 +202,7 @@ public class UserService {
     if (users == null) {
       return Collections.emptySet();
     }
-
+    users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
     users.forEach(this::addUserDetails);
 
     if ((withRoles != null && withRoles) || callerRoles.contains(Roles.STUDY_COORDINATOR)) {
