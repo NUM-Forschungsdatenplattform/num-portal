@@ -228,9 +228,6 @@ public class StudyService {
     if (MapUtils.isEmpty(templatesMap)) {
       throw new BadRequestException("No templates attached to this study");
     }
-
-    ArrayList<String> templates = new ArrayList<>(templatesMap.keySet());
-
     AqlDto aql = new AqlToDtoParser().parse(query);
 
     SelectFieldDto select = new SelectFieldDto();
@@ -267,7 +264,7 @@ public class StudyService {
       select.setContainmentId(nextContainmentId);
     }
 
-    List<Value> templateValues = toSimpleValueList(templates);
+    List<Value> templateValues = toSimpleValueList(templatesMap.keySet());
     extendWhereClause(aql, select, templateValues);
 
     return new AqlBinder().bind(aql).getLeft().buildAql();
@@ -289,9 +286,8 @@ public class StudyService {
     SelectFieldDto select = new SelectFieldDto();
     select.setAqlPath(EHR_ID_PATH);
     select.setContainmentId(aql.getEhr().getContainmentId());
-
-    List<Value> ehrValues = toSimpleValueList(ehrIds);
-    extendWhereClause(aql, select, ehrValues);
+    
+    extendWhereClause(aql, select, toSimpleValueList(ehrIds));
 
     return new AqlBinder().bind(aql).getLeft().buildAql();
   }
