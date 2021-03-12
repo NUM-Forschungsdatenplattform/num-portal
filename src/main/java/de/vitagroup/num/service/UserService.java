@@ -225,13 +225,16 @@ public class UserService {
     Set<User> outputSet = new HashSet<>();
 
     if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)) {
-      Long loggedInOrgId = loggedInUser.getOrganization().getId();
-      users.forEach(
-          user -> {
-            if (loggedInOrgId.equals(user.getOrganization().getId())) {
-              outputSet.add(user);
-            }
-          });
+      if (loggedInUser.getOrganization() != null) {
+        Long loggedInOrgId = loggedInUser.getOrganization().getId();
+        users.forEach(
+            user -> {
+              if (user.getOrganization() != null
+                  && loggedInOrgId.equals(user.getOrganization().getId())) {
+                outputSet.add(user);
+              }
+            });
+      }
     }
 
     if (callerRoles.contains(Roles.STUDY_COORDINATOR)) {

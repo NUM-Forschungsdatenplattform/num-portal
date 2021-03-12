@@ -71,7 +71,8 @@ public class UserServiceTest {
           User.builder().id("5").build(),
           User.builder().id("6").build(),
           User.builder().id("7").build(),
-          User.builder().id("8").build());
+          User.builder().id("8").build(),
+          User.builder().id("9").build());
 
   @Before
   public void setup() {
@@ -87,6 +88,8 @@ public class UserServiceTest {
     when(keycloakFeign.getRolesOfUser("6")).thenReturn(roles);
     when(keycloakFeign.getRolesOfUser("7")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
     when(keycloakFeign.getRolesOfUser("8")).thenReturn(Set.of(new Role("R4", "STUDY_COORDINATOR")));
+    when(keycloakFeign.getRolesOfUser("9"))
+        .thenReturn(Set.of(new Role("R3", "ORGANIZATION_ADMIN")));
 
     when(keycloakFeign.getRoles()).thenReturn(roles);
 
@@ -151,6 +154,10 @@ public class UserServiceTest {
                         Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
+    when(userDetailsService.getUserDetailsById("9"))
+        .thenReturn(Optional.of(UserDetails.builder().userId("9").approved(true).build()));
+    when(userDetailsService.validateAndReturnUserDetails("9"))
+        .thenReturn(UserDetails.builder().userId("9").approved(true).build());
   }
 
   @Test(expected = SystemException.class)
@@ -236,7 +243,7 @@ public class UserServiceTest {
 
   @Test
   public void shouldReturnUserWithRoles() {
-    Set<User> users = new HashSet();
+    Set<User> users = new HashSet<>();
     users.add(User.builder().firstName("John").id("4").build());
 
     when(keycloakFeign.searchUsers(null)).thenReturn(users);
@@ -251,12 +258,12 @@ public class UserServiceTest {
   public void shouldReturnEnoughUsers() {
     Set<de.vitagroup.num.domain.admin.User> userReturn =
         userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
-    assertEquals(5, userReturn.size());
+    assertEquals(6, userReturn.size());
   }
 
   @Test
   public void shouldReturnUserWithoutRoles() {
-    Set<User> users = new HashSet();
+    Set<User> users = new HashSet<>();
     users.add(User.builder().firstName("John").id("4").build());
 
     when(keycloakFeign.searchUsers(null)).thenReturn(users);
@@ -283,17 +290,24 @@ public class UserServiceTest {
   public void shouldReturnUserWithRolesWithinOrgAndResearchers() {
     Set<de.vitagroup.num.domain.admin.User> userReturn =
         userService.searchUsers(
-            "5",
-            null,
-            null,
-            false,
-            List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
+            "5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
     assertEquals(5, userReturn.size());
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
     assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
+  }
+
+  @Test
+  public void shouldNotReturnUsersWithinOrgWhenCallerDoesntHaveOrg() {
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers(
+            "9", null, null, false, List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
+    assertEquals(3, userReturn.size());
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
   }
 
   @Test(expected = ForbiddenException.class)
