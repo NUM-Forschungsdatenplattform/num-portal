@@ -24,6 +24,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.ehrbase.aql.binder.AqlBinder;
@@ -41,6 +43,11 @@ import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorDto;
 import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorSymbol;
 import org.ehrbase.aql.dto.condition.MatchesOperatorDto;
 import org.ehrbase.aql.dto.condition.SimpleValue;
+import org.ehrbase.aql.dto.condition.Value;
+import org.ehrbase.aql.dto.containment.ContainmentDto;
+import org.ehrbase.aql.dto.containment.ContainmentExpresionDto;
+import org.ehrbase.aql.dto.containment.ContainmentLogicalOperator;
+import org.ehrbase.aql.dto.containment.ContainmentLogicalOperatorSymbol;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
@@ -56,7 +63,10 @@ public class StudyService {
   private final ObjectMapper mapper;
   private final CohortService cohortService;
   private final AtnaService atnaService;
+
   private static final String EHR_ID_PATH = "/ehr_id/value";
+  private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
+  private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
     QueryResponseData response = executeAql(query, studyId, userId);
@@ -82,7 +92,7 @@ public class StudyService {
         throw new ForbiddenException("Cannot access this study");
       }
 
-      String restrictedQuery = restrictToCohortEhrIds(query, study);
+      String restrictedQuery = restrictQueryToStudy(query, study);
 
       queryResponseData = ehrBaseService.executeRawQuery(restrictedQuery);
 
@@ -209,37 +219,87 @@ public class StudyService {
             .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
   }
 
-  private String restrictToCohortEhrIds(String query, Study study) {
+  private String restrictQueryToStudy(String query, Study study) {
+    return restrictToStudyTemplates(restrictToCohortEhrIds(query, study), study.getTemplates());
+  }
+
+  public String restrictToStudyTemplates(String query, Map<String, String> templatesMap) {
+
+    if (MapUtils.isEmpty(templatesMap)) {
+      throw new BadRequestException("No templates attached to this study");
+    }
+    AqlDto aql = new AqlToDtoParser().parse(query);
+
+    SelectFieldDto select = new SelectFieldDto();
+    select.setAqlPath(TEMPLATE_ID_PATH);
+
+    ContainmentExpresionDto contains = aql.getContains();
+    Integer nextContainmentId = findNextContainmentId((ContainmentDto) contains);
+    if (contains != null) {
+      Integer compositionIdentifier = findComposition((ContainmentDto) contains);
+      if (compositionIdentifier != null) {
+        select.setContainmentId(compositionIdentifier);
+      } else {
+
+        select.setContainmentId(nextContainmentId);
+
+        ContainmentLogicalOperator newContains = new ContainmentLogicalOperator();
+        newContains.setValues(new ArrayList<>());
+
+        ContainmentDto composition = new ContainmentDto();
+        composition.setId(nextContainmentId);
+        composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
+
+        newContains.setSymbol(ContainmentLogicalOperatorSymbol.AND);
+        newContains.getValues().add(composition);
+        newContains.getValues().add(contains);
+
+        aql.setContains(newContains);
+      }
+    } else {
+      ContainmentDto composition = new ContainmentDto();
+      composition.setId(nextContainmentId);
+      composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
+      aql.setContains(composition);
+      select.setContainmentId(nextContainmentId);
+    }
+
+    List<Value> templateValues = toSimpleValueList(templatesMap.keySet());
+    extendWhereClause(aql, select, templateValues);
+
+    return new AqlBinder().bind(aql).getLeft().buildAql();
+  }
+
+  public String restrictToCohortEhrIds(String query, Study study) {
     if (study.getCohort() == null) {
-      return query;
+      throw new BadRequestException("Study cohort cannot be empty");
     }
 
     Set<String> ehrIds = cohortService.executeCohort(study.getCohort().getId());
 
     if (CollectionUtils.isEmpty(ehrIds)) {
-      return query;
+      throw new BadRequestException("Cohort size cannot be 0");
     }
 
-    AqlDto aqlDto = new AqlToDtoParser().parse(query);
-    MatchesOperatorDto matches = new MatchesOperatorDto();
+    AqlDto aql = new AqlToDtoParser().parse(query);
+
     SelectFieldDto select = new SelectFieldDto();
     select.setAqlPath(EHR_ID_PATH);
-    select.setContainmentId(aqlDto.getEhr().getContainmentId());
-    matches.setStatement(select);
+    select.setContainmentId(aql.getEhr().getContainmentId());
+    
+    extendWhereClause(aql, select, toSimpleValueList(ehrIds));
 
-    matches.setValues(
-        ehrIds.stream()
-            .map(
-                s -> {
-                  SimpleValue simpleValue = new SimpleValue();
-                  simpleValue.setValue(s);
-                  return simpleValue;
-                })
-            .collect(Collectors.toList()));
+    return new AqlBinder().bind(aql).getLeft().buildAql();
+  }
+
+  private void extendWhereClause(AqlDto aql, SelectFieldDto select, List<Value> values) {
+    MatchesOperatorDto matches = new MatchesOperatorDto();
+    matches.setStatement(select);
+    matches.setValues(values);
 
     ConditionLogicalOperatorDto newWhere = new ConditionLogicalOperatorDto();
     newWhere.setValues(new ArrayList<>());
-    ConditionDto where = aqlDto.getWhere();
+    ConditionDto where = aql.getWhere();
 
     if (where != null) {
       newWhere.setSymbol(ConditionLogicalOperatorSymbol.AND);
@@ -247,8 +307,40 @@ public class StudyService {
     }
 
     newWhere.getValues().add(matches);
-    aqlDto.setWhere(newWhere);
-    return new AqlBinder().bind(aqlDto).getLeft().buildAql();
+    aql.setWhere(newWhere);
+  }
+
+  public Integer findComposition(ContainmentDto dto) {
+    if (dto == null) {
+      return null;
+    }
+    if (dto.getArchetypeId().contains(COMPOSITION_ARCHETYPE_ID)) {
+      return dto.getId();
+    } else {
+      return findComposition((ContainmentDto) dto.getContains());
+    }
+  }
+
+  public Integer findNextContainmentId(ContainmentDto dto) {
+    if (dto == null) {
+      return 1;
+    }
+    if (dto.getContains() != null) {
+      return findNextContainmentId((ContainmentDto) dto.getContains());
+    } else {
+      return dto.getId() + 1;
+    }
+  }
+
+  private List<Value> toSimpleValueList(Collection<String> list) {
+    return list.stream()
+        .map(
+            s -> {
+              SimpleValue simpleValue = new SimpleValue();
+              simpleValue.setValue(s);
+              return simpleValue;
+            })
+        .collect(Collectors.toList());
   }
 
   private void setTemplates(Study study, StudyDto studyDto) {

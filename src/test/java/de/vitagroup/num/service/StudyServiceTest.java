@@ -6,13 +6,14 @@ import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.Roles;
@@ -28,6 +29,7 @@ import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.ehrbase.aql.dto.AqlDto;
@@ -37,6 +39,7 @@ import org.ehrbase.aql.dto.condition.MatchesOperatorDto;
 import org.ehrbase.aql.dto.condition.SimpleValue;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -63,79 +66,104 @@ public class StudyServiceTest {
 
   @Captor ArgumentCaptor<String> stringArgumentCaptor;
 
-  @Before
-  public void setup() {
-    UserDetails notApprovedCoordinator =
-        UserDetails.builder().userId("notApprovedCoordinatorId").approved(false).build();
+  private static final String CORONA_TEMPLATE = "Corona_Anamnese";
 
-    UserDetails approvedCoordinator =
-        UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
+  private static final String EHR_ID_1 = "f4da8646-8e36-4d9d-869c-af9dce5935c7";
+  private static final String EHR_ID_2 = "61861e76-1606-48c9-adcf-49ebbb2c6bbd";
+  private static final String EHR_ID_3 = "47dc21a2-7076-4a57-89dc-bd83729ed52f";
 
-    when(userDetailsService.validateAndReturnUserDetails("approvedCoordinatorId"))
-        .thenReturn(approvedCoordinator);
+  private static final String QUERY =
+      "SELECT e/ehr_id/value, "
+          + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value, "
+          + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value "
+          + "FROM EHR e "
+          + "contains COMPOSITION c3[openEHR-EHR-COMPOSITION.report.v1] "
+          + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
+          + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
 
-    when(userDetailsService.validateAndReturnUserDetails("notApprovedCoordinatorId"))
-        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
+  private static final String QUERY2 = "Select e/ehr_id/value as F1, "
+      + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
+      + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 from EHR e "
+      + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
+      + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
 
-    when(userDetailsService.validateAndReturnUserDetails("nonExistingCoordinatorId"))
-        .thenThrow(new SystemException("User not found"));
+  private static final String QUERY_BASIC = "SELECT e FROM EHR e";
 
-    when(studyRepository.findById(1L))
-        .thenReturn(
-            Optional.of(
-                Study.builder()
-                    .id(1L)
-                    .cohort(Cohort.builder().id(2L).build())
-                    .researchers(List.of(approvedCoordinator))
-                    .build()));
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleStudyWithoutTemplates() {
+    studyService.executeAql(QUERY, 1L, "approvedCoordinatorId");
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleStudyWithoutCohort() {
+    studyService.executeAql(QUERY, 3L, "approvedCoordinatorId");
+  }
+
+  // TODO: this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed
+  @Ignore
+  @Test
+  public void shouldCorrectlyRestrictQueryWithContainsAndNoComposition() {
+    studyService.executeAql(QUERY2, 4L, "approvedCoordinatorId");
+
+    Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
+    String restrictedQuery = stringArgumentCaptor.getValue();
+
+    new AqlToDtoParser().parse(restrictedQuery);
+
+    String expectedQuery = "Select e/ehr_id/value as F1, "
+        + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
+        + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 "
+        + "from EHR e "
+        + "contains (COMPOSITION c0 and SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
+        + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]) "
+        + "where (e/ehr_id/value matches {'47dc21a2-7076-4a57-89dc-bd83729ed52f'} and c0/archetype_details/template_id/value matches {'Corona_Anamnese'})";
+
+    assertEquals(restrictedQuery, expectedQuery);
+  }
+
+  // TODO: this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed
+  @Ignore
+  @Test
+  public void shouldCorrectlyRestrictBasicQuery() {
+    studyService.executeAql(QUERY_BASIC, 2L, "approvedCoordinatorId");
+    Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
+    String restrictedQuery = stringArgumentCaptor.getValue();
+
+    new AqlToDtoParser().parse(restrictedQuery);
   }
 
   @Test
   public void shouldCorrectlyRestrictQuery() {
-    when(cohortService.executeCohort(2L))
-        .thenReturn(
-            Set.of("f4da8646-8e36-4d9d-869c-af9dce5935c7", "61861e76-1606-48c9-adcf-49ebbb2c6bbd"));
+    studyService.executeAql(QUERY, 2L, "approvedCoordinatorId");
 
-    String query =
-        "Select o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Systolic__magnitude, e/ehr_id/value as ehr_id from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.sample_blood_pressure.v1] where (o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude >= $magnitude and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude < 1.1)";
-    studyService.executeAql(query, 1L, "approvedCoordinatorId");
-
-    Mockito.verify(atnaService, times(1))
-        .logDataExport(eq("approvedCoordinatorId"), eq(1L), any(Study.class), eq(true));
     Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
     String restrictedQuery = stringArgumentCaptor.getValue();
 
     AqlDto newAqlDto = new AqlToDtoParser().parse(restrictedQuery);
+
     assertThat(newAqlDto.getWhere(), notNullValue());
     ConditionLogicalOperatorDto conditionDto = (ConditionLogicalOperatorDto) newAqlDto.getWhere();
     assertThat(conditionDto.getSymbol(), is(ConditionLogicalOperatorSymbol.AND));
-    assertThat(conditionDto.getValues().size(), is(3));
+    assertThat(conditionDto.getValues().size(), is(2));
 
-    conditionDto
-        .getValues()
-        .forEach(
-            condition -> {
-              if (condition instanceof MatchesOperatorDto) {
-                assertThat(((MatchesOperatorDto) condition).getValues().size(), is(2));
+    conditionDto.getValues().stream()
+        .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
 
-                assertTrue(
-                    ((MatchesOperatorDto) condition)
-                        .getValues().stream()
-                            .anyMatch(
-                                value1 ->
-                                    ((SimpleValue) value1)
-                                        .getValue()
-                                        .equals("61861e76-1606-48c9-adcf-49ebbb2c6bbd")));
-                assertTrue(
-                    ((MatchesOperatorDto) condition)
-                        .getValues().stream()
-                            .anyMatch(
-                                value1 ->
-                                    ((SimpleValue) value1)
-                                        .getValue()
-                                        .equals("f4da8646-8e36-4d9d-869c-af9dce5935c7")));
-              }
-            });
+    MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
+    assertThat(ehrMatches.getValues().size(), is(2));
+
+    assertTrue(
+        ehrMatches.getValues().stream()
+            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_1)));
+    assertTrue(
+        ehrMatches.getValues().stream()
+            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_2)));
+
+    MatchesOperatorDto templatesMatches = (MatchesOperatorDto) conditionDto.getValues().get(1);
+    assertThat(templatesMatches.getValues().size(), is(1));
+    assertTrue(
+        templatesMatches.getValues().stream()
+            .anyMatch(t -> ((SimpleValue) t).getValue().equals(CORONA_TEMPLATE)));
   }
 
   @Test
@@ -557,5 +585,63 @@ public class StudyServiceTest {
         StudyDto.builder().name("new study").financed(false).status(StudyStatus.PENDING).build();
     studyService.createStudy(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(studyRepository, times(1)).save(any());
+  }
+
+  @Before
+  public void setup() {
+    UserDetails notApprovedCoordinator =
+        UserDetails.builder().userId("notApprovedCoordinatorId").approved(false).build();
+
+    UserDetails approvedCoordinator =
+        UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
+
+    when(userDetailsService.validateAndReturnUserDetails("approvedCoordinatorId"))
+        .thenReturn(approvedCoordinator);
+
+    when(userDetailsService.validateAndReturnUserDetails("notApprovedCoordinatorId"))
+        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
+
+    when(userDetailsService.validateAndReturnUserDetails("nonExistingCoordinatorId"))
+        .thenThrow(new SystemException("User not found"));
+
+    when(studyRepository.findById(3L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(3L)
+                    .researchers(List.of(approvedCoordinator))
+                    .build()));
+
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .cohort(Cohort.builder().id(2L).build())
+                    .researchers(List.of(approvedCoordinator))
+                    .build()));
+
+    when(studyRepository.findById(2L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(2L)
+                    .cohort(Cohort.builder().id(2L).build())
+                    .researchers(List.of(approvedCoordinator))
+                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+                    .build()));
+
+//    when(studyRepository.findById(4L))
+//        .thenReturn(
+//            Optional.of(
+//                Study.builder()
+//                    .id(4L)
+//                    .cohort(Cohort.builder().id(4L).build())
+//                    .researchers(List.of(approvedCoordinator))
+//                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+//                    .build()));
+
+    when(cohortService.executeCohort(2L)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
+//    when(cohortService.executeCohort(4L)).thenReturn(Set.of(EHR_ID_3));
   }
 }
