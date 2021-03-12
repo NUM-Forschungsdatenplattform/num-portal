@@ -35,13 +35,8 @@ public class UserService {
   private final OrganizationMapper organizationMapper;
 
   public User getUserProfile(String loggedInUserId) {
-    Optional<UserDetails> loggedInUser = userDetailsService.getUserDetailsById(loggedInUserId);
-
-    if (loggedInUser.isEmpty()) {
-      throw new SystemException("An error has occurred, user not present.");
-    }
-
-    return getUserById(loggedInUser.get().getUserId(), true);
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    return getUserById(loggedInUserId, true);
   }
 
   /**
@@ -51,8 +46,8 @@ public class UserService {
    * @return User
    */
   public User getUserById(String userId, Boolean withRole) {
+    userDetailsService.validateAndReturnUserDetails(userId);
     try {
-
       User user = keycloakFeign.getUser(userId);
 
       if (BooleanUtils.isTrue(withRole)) {
@@ -210,8 +205,7 @@ public class UserService {
 
     users.forEach(this::addUserDetails);
 
-    if ((withRoles != null && withRoles)
-        || callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+    if ((withRoles != null && withRoles) || callerRoles.contains(Roles.STUDY_COORDINATOR)) {
       users.forEach(this::addRoles);
     }
 
@@ -222,7 +216,8 @@ public class UserService {
     return filterByCallerRole(users, callerRoles, loggedInUser);
   }
 
-  private Set<User> filterByCallerRole(Set<User> users, List<String> callerRoles, UserDetails loggedInUser){
+  private Set<User> filterByCallerRole(
+      Set<User> users, List<String> callerRoles, UserDetails loggedInUser) {
     if (callerRoles.contains(Roles.SUPER_ADMIN)) {
       return users;
     }
