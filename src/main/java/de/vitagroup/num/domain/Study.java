@@ -1,14 +1,17 @@
 package de.vitagroup.num.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import de.vitagroup.num.domain.repository.CategorySetConverter;
 import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.StringSetConverter;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +32,7 @@ import javax.persistence.ManyToOne;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import lombok.ToString;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -37,7 +41,7 @@ import org.apache.commons.lang3.ObjectUtils;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(exclude = "cohort")
+@EqualsAndHashCode(exclude = {"cohort", "transitions"})
 public class Study {
 
   @Id
@@ -91,6 +95,11 @@ public class Study {
       joinColumns = @JoinColumn(name = "study_id"),
       inverseJoinColumns = @JoinColumn(name = "user_details_id"))
   private List<UserDetails> researchers;
+
+  @ToString.Exclude
+  @JsonManagedReference
+  @OneToMany(mappedBy = "study", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<StudyTransition> transitions = new HashSet<>();
 
   public boolean hasEmptyOrDifferentOwner(String userId) {
     return ObjectUtils.isEmpty(coordinator) || !coordinator.getUserId().equals(userId);

@@ -21,7 +21,9 @@ public class PhenotypeMapper {
 
   public PhenotypeDto convertToDto(Phenotype phenotype) {
     PhenotypeDto phenotypeDto = modelMapper.map(phenotype, PhenotypeDto.class);
-    phenotypeDto.setOwnerId(phenotype.getOwner().getUserId());
+    if (phenotype.getOwner() != null) {
+      phenotypeDto.setOwnerId(phenotype.getOwner().getUserId());
+    }
     return phenotypeDto;
   }
 
@@ -30,8 +32,8 @@ public class PhenotypeMapper {
     phenotype.setId(null);
     return phenotype;
   }
+
   public Phenotype convertToEntity(ExpressionDto expressionDto) {
     return modelMapper.map(expressionDto, Phenotype.class);
   }
-
 }

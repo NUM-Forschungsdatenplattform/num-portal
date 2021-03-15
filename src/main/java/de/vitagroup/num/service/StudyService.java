@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
+import de.vitagroup.num.domain.StudyTransition;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
@@ -36,6 +37,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.ConditionDto;
@@ -137,12 +139,13 @@ public class StudyService {
 
     Study study = Study.builder().build();
 
+    validateStatus(null, studyDto.getStatus(), roles);
+    persistTransition(study, study.getStatus(), studyDto.getStatus(), coordinator);
+
     setTemplates(study, studyDto);
     setResearchers(study, studyDto);
 
-    validateStatus(null, studyDto.getStatus(), roles);
     study.setStatus(studyDto.getStatus());
-
     study.setName(studyDto.getName());
     study.setDescription(studyDto.getDescription());
     study.setFirstHypotheses(studyDto.getFirstHypotheses());
@@ -156,24 +159,26 @@ public class StudyService {
     study.setStartDate(studyDto.getStartDate());
     study.setEndDate(studyDto.getEndDate());
     study.setFinanced(studyDto.isFinanced());
+
     return studyRepository.save(study);
   }
 
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
 
-    userDetailsService.validateAndReturnUserDetails(userId);
+    UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
 
     Study studyToEdit =
         studyRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFound("Study not found: " + id));
 
+    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
+    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
+
     setTemplates(studyToEdit, studyDto);
     setResearchers(studyToEdit, studyDto);
 
-    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
     studyToEdit.setStatus(studyDto.getStatus());
-
     studyToEdit.setName(studyDto.getName());
     studyToEdit.setDescription(studyDto.getDescription());
     studyToEdit.setModifiedDate(OffsetDateTime.now());
@@ -223,7 +228,7 @@ public class StudyService {
     return restrictToStudyTemplates(restrictToCohortEhrIds(query, study), study.getTemplates());
   }
 
-  public String restrictToStudyTemplates(String query, Map<String, String> templatesMap) {
+  private String restrictToStudyTemplates(String query, Map<String, String> templatesMap) {
 
     if (MapUtils.isEmpty(templatesMap)) {
       throw new BadRequestException("No templates attached to this study");
@@ -270,7 +275,7 @@ public class StudyService {
     return new AqlBinder().bind(aql).getLeft().buildAql();
   }
 
-  public String restrictToCohortEhrIds(String query, Study study) {
+  private String restrictToCohortEhrIds(String query, Study study) {
     if (study.getCohort() == null) {
       throw new BadRequestException("Study cohort cannot be empty");
     }
@@ -286,7 +291,7 @@ public class StudyService {
     SelectFieldDto select = new SelectFieldDto();
     select.setAqlPath(EHR_ID_PATH);
     select.setContainmentId(aql.getEhr().getContainmentId());
-    
+
     extendWhereClause(aql, select, toSimpleValueList(ehrIds));
 
     return new AqlBinder().bind(aql).getLeft().buildAql();
@@ -310,7 +315,7 @@ public class StudyService {
     aql.setWhere(newWhere);
   }
 
-  public Integer findComposition(ContainmentDto dto) {
+  private Integer findComposition(ContainmentDto dto) {
     if (dto == null) {
       return null;
     }
@@ -321,7 +326,7 @@ public class StudyService {
     }
   }
 
-  public Integer findNextContainmentId(ContainmentDto dto) {
+  private Integer findNextContainmentId(ContainmentDto dto) {
     if (dto == null) {
       return 1;
     }
@@ -405,5 +410,31 @@ public class StudyService {
 
   private boolean isValidInitialStatus(StudyStatus status) {
     return status.equals(StudyStatus.DRAFT) || status.equals(StudyStatus.PENDING);
+  }
+
+  private void persistTransition(
+      Study study, StudyStatus fromStatus, StudyStatus toStatus, UserDetails user) {
+
+    if (fromStatus != null && fromStatus.equals(toStatus)) {
+      return;
+    }
+
+    StudyTransition studyTransition =
+        StudyTransition.builder()
+            .toStatus(toStatus)
+            .study(study)
+            .user(user)
+            .createDate(OffsetDateTime.now())
+            .build();
+
+    if (fromStatus != null) {
+      studyTransition.setFromStatus(fromStatus);
+    }
+
+    if (study.getTransitions() != null) {
+      study.getTransitions().add(studyTransition);
+    } else {
+      study.setTransitions(Set.of(studyTransition));
+    }
   }
 }
