@@ -153,5 +153,5 @@ privacy:
 
 atna:
   enabled: false
-  host: 151.80.206.33
-  port: 3001
+  host: localhost
+  port: 514

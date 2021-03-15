@@ -2,6 +2,17 @@ version: 2.1
 
 workflows:
   version: 2
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 21 * * *"
+          filters:
+            branches:
+              only:
+                - nightly-builds
+    jobs:
+      - test:
+          context: org-global
   build_and_test:
     jobs:
       - test:
@@ -79,7 +90,7 @@ jobs:
 
   build_and_deploy:
     docker:
-      - image: circleci/openjdk:11.0.8-jdk
+      - image: cimg/openjdk:11.0.9
         auth:
           username: $DOCKER_USER
           password: $DOCKER_HUB_PASSWORD
@@ -94,6 +105,7 @@ jobs:
           command: |
             if [ $CIRCLE_BRANCH = "master" ]; then
                 TAG=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
+                git push -u origin master:nightly-builds # Make sure that the nightly build branch is up-to-date with master
             elif [ $CIRCLE_BRANCH = "develop" ]; then
                 TAG=$CIRCLE_BRANCH
             else
@@ -101,7 +113,7 @@ jobs:
             fi
             echo "Publishing Docker image with following tag: ${TAG}"
             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
-            ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$DOCKER_USER/num-portal:$TAG -DskipTests -Djdk.tls.client.protocols=TLSv1.2
+            ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$DOCKER_USER/num-portal:$TAG -DskipTests
             docker push $DOCKER_USER/num-portal:$TAG
       - cache-in-maven-dependencies
 

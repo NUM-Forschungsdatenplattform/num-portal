@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,10 +14,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Sets;
+import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -24,6 +28,7 @@ import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -34,7 +39,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.modelmapper.ModelMapper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
@@ -42,6 +49,10 @@ public class UserServiceTest {
   @Mock private KeycloakFeign keycloakFeign;
 
   @Mock private UserDetailsService userDetailsService;
+
+  @Spy private final ModelMapper modelMapper = new ModelMapper();
+
+  @Spy private final OrganizationMapper organizationMapper = new OrganizationMapper(modelMapper);
 
   @InjectMocks private UserService userService;
 
@@ -53,6 +64,15 @@ public class UserServiceTest {
           new Role("R4", "STUDY_COORDINATOR"),
           new Role("R5", "CONTENT_ADMIN"),
           new Role("R6", "STUDY_APPROVER"));
+
+  private final Set<User> allValidUsers =
+      Sets.newHashSet(
+          User.builder().id("4").build(),
+          User.builder().id("5").build(),
+          User.builder().id("6").build(),
+          User.builder().id("7").build(),
+          User.builder().id("8").build(),
+          User.builder().id("9").build());
 
   @Before
   public void setup() {
@@ -66,11 +86,78 @@ public class UserServiceTest {
     when(keycloakFeign.getRolesOfUser("4")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
     when(keycloakFeign.getRolesOfUser("5")).thenReturn(Collections.emptySet());
     when(keycloakFeign.getRolesOfUser("6")).thenReturn(roles);
+    when(keycloakFeign.getRolesOfUser("7")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
+    when(keycloakFeign.getRolesOfUser("8")).thenReturn(Set.of(new Role("R4", "STUDY_COORDINATOR")));
+    when(keycloakFeign.getRolesOfUser("9"))
+        .thenReturn(Set.of(new Role("R3", "ORGANIZATION_ADMIN")));
 
     when(keycloakFeign.getRoles()).thenReturn(roles);
 
+    when(keycloakFeign.searchUsers(any())).thenReturn(allValidUsers);
+
     when(userDetailsService.getUserDetailsById("4"))
-        .thenReturn(Optional.of(UserDetails.builder().userId("4").approved(true).build()));
+        .thenReturn(
+            Optional.of(
+                UserDetails.builder()
+                    .userId("4")
+                    .organization(
+                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                    .approved(true)
+                    .build()));
+    when(userDetailsService.validateAndReturnUserDetails("4"))
+        .thenReturn(
+            UserDetails.builder()
+                .userId("4")
+                .organization(Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                .approved(true)
+                .build());
+    when(userDetailsService.getUserDetailsById("5"))
+        .thenReturn(
+            Optional.of(
+                UserDetails.builder()
+                    .userId("5")
+                    .organization(
+                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                    .approved(true)
+                    .build()));
+    when(userDetailsService.validateAndReturnUserDetails("5"))
+        .thenReturn(
+            UserDetails.builder()
+                .userId("5")
+                .organization(Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                .approved(true)
+                .build());
+    when(userDetailsService.getUserDetailsById("6"))
+        .thenReturn(
+            Optional.of(
+                UserDetails.builder()
+                    .userId("6")
+                    .organization(
+                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                    .approved(true)
+                    .build()));
+    when(userDetailsService.getUserDetailsById("7"))
+        .thenReturn(
+            Optional.of(
+                UserDetails.builder()
+                    .userId("7")
+                    .organization(
+                        Organization.builder().id(2L).name("org 2").domains(Set.of()).build())
+                    .approved(true)
+                    .build()));
+    when(userDetailsService.getUserDetailsById("8"))
+        .thenReturn(
+            Optional.of(
+                UserDetails.builder()
+                    .userId("8")
+                    .organization(
+                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                    .approved(true)
+                    .build()));
+    when(userDetailsService.getUserDetailsById("9"))
+        .thenReturn(Optional.of(UserDetails.builder().userId("9").approved(true).build()));
+    when(userDetailsService.validateAndReturnUserDetails("9"))
+        .thenReturn(UserDetails.builder().userId("9").approved(true).build());
   }
 
   @Test(expected = SystemException.class)
@@ -108,6 +195,7 @@ public class UserServiceTest {
     userService.setUserRoles(
         "4",
         Collections.singletonList("non-existent role"),
+        "4",
         Collections.singletonList(Roles.SUPER_ADMIN));
   }
 
@@ -116,6 +204,7 @@ public class UserServiceTest {
     userService.setUserRoles(
         "4",
         Collections.singletonList("SUPER_ADMIN"),
+        "4",
         Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R1", "SUPER_ADMIN")});
@@ -124,7 +213,10 @@ public class UserServiceTest {
   @Test
   public void shouldNotSetExistingRole() {
     userService.setUserRoles(
-        "4", Collections.singletonList("RESEARCHER"), Collections.singletonList(Roles.SUPER_ADMIN));
+        "4",
+        Collections.singletonList("RESEARCHER"),
+        "4",
+        Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, never()).removeRoles(anyString(), any(Role[].class));
     verify(keycloakFeign, never()).addRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
   }
@@ -132,7 +224,7 @@ public class UserServiceTest {
   @Test
   public void shouldUnsetRoles() {
     userService.setUserRoles(
-        "4", Collections.emptyList(), Collections.singletonList(Roles.SUPER_ADMIN));
+        "4", Collections.emptyList(), "4", Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
   }
@@ -151,24 +243,80 @@ public class UserServiceTest {
 
   @Test
   public void shouldReturnUserWithRoles() {
-    User user = new User();
-    user.setFirstName("john");
-    user.setId("4");
-    when(keycloakFeign.searchUsers(null)).thenReturn(Set.of(user));
-    Set<de.vitagroup.num.domain.admin.User> userReturn = userService.searchUsers(null, null, true);
+    Set<User> users = new HashSet<>();
+    users.add(User.builder().firstName("John").id("4").build());
+
+    when(keycloakFeign.searchUsers(null)).thenReturn(users);
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers("user", null, null, true, List.of(Roles.SUPER_ADMIN));
+
     assertThat(userReturn.iterator().next().getRoles().iterator().next(), is("RESEARCHER"));
     verify(keycloakFeign, times(1)).getRolesOfUser("4");
   }
 
   @Test
+  public void shouldReturnEnoughUsers() {
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
+    assertEquals(6, userReturn.size());
+  }
+
+  @Test
   public void shouldReturnUserWithoutRoles() {
-    User user = new User();
-    user.setFirstName("john");
-    user.setId("4");
-    when(keycloakFeign.searchUsers(null)).thenReturn(Set.of(user));
-    Set<de.vitagroup.num.domain.admin.User> userReturn = userService.searchUsers(null, null, false);
+    Set<User> users = new HashSet<>();
+    users.add(User.builder().firstName("John").id("4").build());
+
+    when(keycloakFeign.searchUsers(null)).thenReturn(users);
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
+
     assertNull(userReturn.iterator().next().getRoles());
     verify(keycloakFeign, times(0)).getRolesOfUser("4");
+  }
+
+  @Test
+  public void shouldReturnUserWithRolesWithinOrg() {
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers("5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN));
+
+    assertEquals(4, userReturn.size());
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
+  }
+
+  @Test
+  public void shouldReturnUserWithRolesWithinOrgAndResearchers() {
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers(
+            "5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
+    assertEquals(5, userReturn.size());
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
+  }
+
+  @Test
+  public void shouldNotReturnUsersWithinOrgWhenCallerDoesntHaveOrg() {
+    Set<de.vitagroup.num.domain.admin.User> userReturn =
+        userService.searchUsers(
+            "9", null, null, false, List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
+    assertEquals(3, userReturn.size());
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
+    assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldShouldNotAllowOrgAdminSetRolesUserDifferentOrg() {
+    userService.setUserRoles(
+        "7",
+        Collections.singletonList("RESEARCHER"),
+        "4",
+        Collections.singletonList("ORGANIZATION_ADMIN"));
   }
 
   @Test
@@ -222,7 +370,7 @@ public class UserServiceTest {
   private boolean testAddRole(Role role, String userRole) {
     try {
       userService.setUserRoles(
-          "5", Collections.singletonList(role.getName()), Collections.singletonList(userRole));
+          "5", Collections.singletonList(role.getName()), "4", Collections.singletonList(userRole));
       if (userRole.equals("SUPER_ADMIN")
           || (userRole.equals("ORGANIZATION_ADMIN")
               && !"SUPER_ADMIN".equals(role.getName())
@@ -251,7 +399,8 @@ public class UserServiceTest {
               .map(Role::getName)
               .filter(name -> !name.equals(role.getName()))
               .collect(Collectors.toList());
-      userService.setUserRoles("6", allButWantedToRemoveRoles, Collections.singletonList(userRole));
+      userService.setUserRoles(
+          "6", allButWantedToRemoveRoles, "4", Collections.singletonList(userRole));
       if (userRole.equals("SUPER_ADMIN")
           || (userRole.equals("ORGANIZATION_ADMIN")
               && !"SUPER_ADMIN".equals(role.getName())

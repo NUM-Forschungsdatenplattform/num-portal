@@ -57,7 +57,7 @@ public class OrganizationServiceTest {
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedUserWhenUpdating() {
     organizationService.update(
-        1L, OrganizationDto.builder().build(), List.of(), "notApprovedUserId");
+        3L, OrganizationDto.builder().build(), List.of(), "notApprovedUserId");
   }
 
   @Test(expected = ForbiddenException.class)
@@ -67,7 +67,8 @@ public class OrganizationServiceTest {
 
   @Test
   public void shouldHandleNoRolesWhenGettingAll() {
-    List organizations = organizationService.getAllOrganizations(List.of(), "approvedUserId");
+    List<Organization> organizations = organizationService
+        .getAllOrganizations(List.of(), "approvedUserId");
     assertThat(organizations.size(), is(0));
   }
 
@@ -95,7 +96,17 @@ public class OrganizationServiceTest {
         "approvedUserId",
         OrganizationDto.builder()
             .name("Organization")
-            .mailDomains(Set.of("Existing mail domain"))
+            .mailDomains(Set.of("existing mail domain"))
+            .build());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleNotUniqueMailDomainInMixCase() {
+    organizationService.create(
+        "approvedUserId",
+        OrganizationDto.builder()
+            .name("Organization")
+            .mailDomains(Set.of("EXISTING Mail domain"))
             .build());
   }
 
@@ -105,7 +116,7 @@ public class OrganizationServiceTest {
         "approvedUserId",
         OrganizationDto.builder()
             .name("Some organization name")
-            .mailDomains(Set.of("Some mail domain name"))
+            .mailDomains(Set.of("ç"))
             .build());
 
     verify(organizationRepository, times(1)).save(any());
@@ -122,7 +133,7 @@ public class OrganizationServiceTest {
         2L,
         OrganizationDto.builder()
             .name("Some organization name")
-            .mailDomains(Set.of("Some mail domain name"))
+            .mailDomains(Set.of("some mail domain name"))
             .build(),
         List.of(),
         "approvedUserId");
@@ -134,7 +145,7 @@ public class OrganizationServiceTest {
         3L,
         OrganizationDto.builder()
             .name("Existing organization")
-            .mailDomains(Set.of("Some mail domain name"))
+            .mailDomains(Set.of("some mail domain name"))
             .build(),
         List.of(),
         "approvedUserId");
@@ -146,7 +157,7 @@ public class OrganizationServiceTest {
         3L,
         OrganizationDto.builder()
             .name("Good name")
-            .mailDomains(Set.of("Some mail domain name"))
+            .mailDomains(Set.of("some mail domain name"))
             .build(),
         List.of(Roles.SUPER_ADMIN),
         "approvedUserId");
@@ -160,7 +171,7 @@ public class OrganizationServiceTest {
         OrganizationDto.builder()
             .name("Good name")
             .mailDomains(
-                Set.of("Some mail domain name", "Existing mail domain, other organization"))
+                Set.of("some mail domain name", "existing mail domain, other organization"))
             .build(),
         List.of(Roles.SUPER_ADMIN),
         "approvedUserId");
@@ -179,11 +190,13 @@ public class OrganizationServiceTest {
             .organization(Organization.builder().name("Organization A").build())
             .build();
 
-    when(userDetailsService.getUserDetailsById("approvedUserId"))
-        .thenReturn(Optional.of(approvedUser));
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
 
-    when(userDetailsService.getUserDetailsById("notApprovedUserId"))
-        .thenReturn(Optional.of(notApprovedUser));
+    when(userDetailsService.validateAndReturnUserDetails("missingUserId"))
+        .thenThrow(new SystemException("User not found"));
+
+    when(userDetailsService.validateAndReturnUserDetails("notApprovedUserId"))
+        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
     when(organizationRepository.findByName("Existing organization"))
         .thenReturn(
@@ -194,14 +207,14 @@ public class OrganizationServiceTest {
     when(organizationRepository.findById(3L))
         .thenReturn(Optional.of(Organization.builder().id(3L).name("Existing").build()));
 
-    when(mailDomainRepository.findByName("Existing mail domain"))
-        .thenReturn(Optional.of(MailDomain.builder().name("Existing mail domain").build()));
+    when(mailDomainRepository.findByName("existing mail domain"))
+        .thenReturn(Optional.of(MailDomain.builder().name("existing mail domain").build()));
 
-    when(mailDomainRepository.findByName("Existing mail domain, other organization"))
+    when(mailDomainRepository.findByName("existing mail domain, other organization"))
         .thenReturn(
             Optional.of(
                 MailDomain.builder()
-                    .name("Existing mail domain, other organization")
+                    .name("existing mail domain, other organization")
                     .organization(Organization.builder().id(123L).build())
                     .build()));
   }

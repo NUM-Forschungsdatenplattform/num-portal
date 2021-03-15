@@ -77,6 +77,11 @@ public class SwaggerConfig {
   }
 
   @Bean
+  public Docket contentApi() {
+    return getDocket("Content", "/content.*").useDefaultResponseMessages(false);
+  }
+
+  @Bean
   public SecurityConfiguration security(SwaggerProperties properties) {
     return SecurityConfigurationBuilder.builder()
         .clientId(properties.getClientName())

@@ -23,6 +23,8 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
+import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -54,11 +56,13 @@ public class CohortServiceTest {
 
   @Mock private UserDetailsService userDetailsService;
 
-  @Mock private StudyService studyService;
+  @Mock private StudyRepository studyRepository;
 
   @Mock private PhenotypeService phenotypeService;
 
   @Spy private ModelMapper modelMapper;
+
+  @Mock private PrivacyProperties privacyProperties;
 
   @Captor ArgumentCaptor<Cohort> cohortCaptor;
 
@@ -265,13 +269,15 @@ public class CohortServiceTest {
     UserDetails notApprovedUser =
         UserDetails.builder().userId("notApprovedUserId").approved(false).build();
 
-    when(userDetailsService.getUserDetailsById("approvedUserId"))
-        .thenReturn(Optional.of(approvedUser));
+    when(userDetailsService.validateAndReturnUserDetails("notApprovedUserId"))
+        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsService.getUserDetailsById("notApprovedUserId"))
-        .thenReturn(Optional.of(notApprovedUser));
+    when(userDetailsService.validateAndReturnUserDetails("missingUserID"))
+        .thenThrow(new SystemException("User not found"));
 
-    when(studyService.getStudyById(2L))
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
+
+    when(studyRepository.findById(2L))
         .thenReturn(
             Optional.of(
                 Study.builder()
@@ -285,7 +291,7 @@ public class CohortServiceTest {
     Study ownedStudy =
         Study.builder().name("Study").id(3L).name("Study name").coordinator(approvedUser).build();
 
-    when(studyService.getStudyById(3L)).thenReturn(Optional.of(ownedStudy));
+    when(studyRepository.findById(3L)).thenReturn(Optional.of(ownedStudy));
 
     Aql aql1 =
         Aql.builder()
@@ -367,5 +373,6 @@ public class CohortServiceTest {
     when(cohortRepository.findById(1L)).thenReturn(Optional.empty());
     when(cohortRepository.findById(2L)).thenReturn(Optional.of(Cohort.builder().id(2L).build()));
     when(cohortExecutor.executeGroup(any())).thenReturn(Set.of("test1", "test2"));
+    when(privacyProperties.getMinHits()).thenReturn(2);
   }
 }

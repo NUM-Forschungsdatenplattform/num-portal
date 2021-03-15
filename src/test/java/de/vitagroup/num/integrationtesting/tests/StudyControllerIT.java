@@ -22,6 +22,7 @@ import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
+import java.time.LocalDate;
 import java.util.Arrays;
 import lombok.SneakyThrows;
 import org.junit.After;
@@ -52,6 +53,9 @@ public class StudyControllerIT extends IntegrationTest {
     Study draftStudy =
         Study.builder()
             .name("draft")
+            .goal("Default")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
             .status(StudyStatus.DRAFT)
@@ -60,6 +64,9 @@ public class StudyControllerIT extends IntegrationTest {
     Study pendingStudy =
         Study.builder()
             .name("pending")
+            .goal("Default")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
             .status(StudyStatus.PENDING)
@@ -68,6 +75,9 @@ public class StudyControllerIT extends IntegrationTest {
     Study reviewingStudy =
         Study.builder()
             .name("reviewing")
+            .goal("Default")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
             .status(StudyStatus.REVIEWING)
@@ -76,6 +86,9 @@ public class StudyControllerIT extends IntegrationTest {
     Study changeRegStudy =
         Study.builder()
             .name("changeRequest")
+            .goal("Default")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
             .status(StudyStatus.CHANGE_REQUEST)
@@ -84,6 +97,9 @@ public class StudyControllerIT extends IntegrationTest {
     Study deniedStudy =
         Study.builder()
             .name("denied")
+            .goal("Default")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
             .status(StudyStatus.DENIED)
@@ -92,6 +108,9 @@ public class StudyControllerIT extends IntegrationTest {
     Study approvedStudy =
         Study.builder()
             .name("approved")
+            .goal("Default")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
             .status(StudyStatus.APPROVED)
@@ -100,6 +119,9 @@ public class StudyControllerIT extends IntegrationTest {
     Study publishedStudy =
         Study.builder()
             .name("published")
+            .goal("Default")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
             .status(StudyStatus.PUBLISHED)
@@ -108,6 +130,9 @@ public class StudyControllerIT extends IntegrationTest {
     Study closedStudy =
         Study.builder()
             .name("closed")
+            .goal("Default")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
             .status(StudyStatus.CLOSED)
@@ -143,7 +168,14 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {RESEARCHER})
   public void shouldNotAccessStudyApiWithWrongRole() {
     StudyDto validStudy =
-        StudyDto.builder().name("s1").firstHypotheses("fh1").status(StudyStatus.DRAFT).build();
+        StudyDto.builder()
+            .name("s1")
+            .goal("Default")
+            .endDate(LocalDate.now())
+            .startDate(LocalDate.now())
+            .firstHypotheses("fh1")
+            .status(StudyStatus.DRAFT)
+            .build();
     String studyJson = mapper.writeValueAsString(validStudy);
 
     mockMvc
@@ -152,10 +184,10 @@ public class StudyControllerIT extends IntegrationTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(studyJson))
-        .andExpect(status().isUnauthorized());
+        .andExpect(status().isForbidden());
   }
 
-  @Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
+  @Ignore // TODO: Integration testing infrastructure to include keycloak dependency as container
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_COORDINATOR})
@@ -175,7 +207,7 @@ public class StudyControllerIT extends IntegrationTest {
         .andExpect(jsonPath("$.firstHypotheses").value(validStudy.getFirstHypotheses()));
   }
 
-  @Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
+  @Ignore // TODO: Integration testing infrastructure to include keycloak dependency as container
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -190,7 +222,7 @@ public class StudyControllerIT extends IntegrationTest {
     assertEquals(8, studies.length);
   }
 
-  @Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
+  @Ignore // TODO: Integration testing infrastructure to include keycloak dependency as container
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -229,7 +261,7 @@ public class StudyControllerIT extends IntegrationTest {
     assertEquals(0, studies.length);
   }
 
-  @Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
+  @Ignore // TODO: Integration testing infrastructure to include keycloak dependency as container
   @Test
   @SneakyThrows
   @WithMockNumUser(

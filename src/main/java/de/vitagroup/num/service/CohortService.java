@@ -4,15 +4,16 @@ import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortGroup;
 import de.vitagroup.num.domain.Phenotype;
 import de.vitagroup.num.domain.Study;
-import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
+import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
+import de.vitagroup.num.web.exception.PrivacyException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,18 +30,19 @@ public class CohortService {
   private final UserDetailsService userDetailsService;
   private final ModelMapper modelMapper;
   private final PhenotypeService phenotypeService;
-  private final StudyService studyService;
+  private final StudyRepository studyRepository;
+  private final PrivacyProperties privacyProperties;
 
   public Cohort getCohort(Long cohortId) {
     return cohortRepository.findById(cohortId).orElseThrow(ResourceNotFound::new);
   }
 
   public Cohort createCohort(CohortDto cohortDto, String userId) {
-    verifyUserAndGetUserDetails(userId);
+    userDetailsService.validateAndReturnUserDetails(userId);
 
     Study study =
-        studyService
-            .getStudyById(cohortDto.getStudyId())
+        studyRepository
+            .findById(cohortDto.getStudyId())
             .orElseThrow(() -> new ResourceNotFound("Study not found: " + cohortDto.getStudyId()));
 
     if (study.hasEmptyOrDifferentOwner(userId)) {
@@ -52,7 +54,7 @@ public class CohortService {
             .name(cohortDto.getName())
             .description(cohortDto.getDescription())
             .study(study)
-            .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId))
+            .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()))
             .build();
 
     study.setCohort(cohort);
@@ -70,14 +72,18 @@ public class CohortService {
   }
 
   public long getCohortGroupSize(CohortGroupDto cohortGroupDto, String userId) {
-    UserDetails coordinator = verifyUserAndGetUserDetails(userId);
+    userDetailsService.validateAndReturnUserDetails(userId);
 
-    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto, coordinator.getUserId());
-    return cohortExecutor.executeGroup(cohortGroup).size();
+    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
+    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup);
+    if (ehrIds.size() < privacyProperties.getMinHits()) {
+      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
+    }
+    return ehrIds.size();
   }
 
   public Cohort updateCohort(CohortDto cohortDto, Long cohortId, String userId) {
-    verifyUserAndGetUserDetails(userId);
+    userDetailsService.validateAndReturnUserDetails(userId);
 
     Cohort cohortToEdit =
         cohortRepository
@@ -88,13 +94,13 @@ public class CohortService {
       throw new ForbiddenException("Not allowed");
     }
 
-    cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup(), userId));
+    cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()));
     cohortToEdit.setDescription(cohortDto.getDescription());
     cohortToEdit.setName(cohortDto.getName());
     return cohortRepository.save(cohortToEdit);
   }
 
-  private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto, String userId) {
+  private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto) {
     if (cohortGroupDto == null) {
       throw new BadRequestException("Cohort groups cannot be empty");
     }
@@ -106,16 +112,7 @@ public class CohortService {
           phenotypeService.getPhenotypeById(cohortGroupDto.getPhenotypeId());
 
       if (phenotype.isPresent()) {
-
-        if (phenotype.get().hasEmptyOrDifferentOwner(userId)) {
-          throw new ForbiddenException(
-              "Cannot access phenotype: "
-                  + phenotype.get().getName()
-                  + ", phenotype has a different or missing owner");
-        }
-
         cohortGroup.setPhenotype(phenotype.get());
-
       } else {
         throw new BadRequestException("Invalid phenotype id");
       }
@@ -126,7 +123,7 @@ public class CohortService {
           cohortGroupDto.getChildren().stream()
               .map(
                   child -> {
-                    CohortGroup cohortGroupChild = convertToCohortGroupEntity(child, userId);
+                    CohortGroup cohortGroupChild = convertToCohortGroupEntity(child);
                     cohortGroupChild.setParent(cohortGroup);
                     return cohortGroupChild;
                   })
@@ -134,18 +131,5 @@ public class CohortService {
     }
 
     return cohortGroup;
-  }
-
-  private UserDetails verifyUserAndGetUserDetails(String userId) {
-    Optional<UserDetails> userDetails = userDetailsService.getUserDetailsById(userId);
-
-    if (userDetails.isEmpty()) {
-      throw new SystemException("Logged in user not found in portal");
-    }
-
-    if (userDetails.get().isNotApproved()) {
-      throw new ForbiddenException("Logged in user not approved:" + userId);
-    }
-    return userDetails.get();
   }
 }

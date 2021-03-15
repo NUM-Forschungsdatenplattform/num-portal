@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
   private static final String SUCCESS_REPLY = "Success";
+  private static final String EMAIL_CLAIM = "email";
 
   private final UserService userService;
   private final UserDetailsService userDetailsService;
@@ -57,13 +58,14 @@ public class AdminController {
       @NotNull @PathVariable String userId,
       @NotNull @RequestBody List<String> roles) {
     return ResponseEntity.ok(
-        userService.setUserRoles(userId, roles, Roles.extractRoles(principal)));
+        userService.setUserRoles(
+            userId, roles, principal.getSubject(), Roles.extractRoles(principal)));
   }
 
   @PostMapping("/user/{userId}/organization")
-  @ApiOperation(value = "Adds the given organization to the user")
+  @ApiOperation(value = "Sets the user's organization")
   @PreAuthorize(Role.SUPER_ADMIN)
-  public ResponseEntity<String> addOrganization(
+  public ResponseEntity<String> setOrganization(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable String userId,
       @NotNull @RequestBody OrganizationDto organization) {
@@ -73,8 +75,9 @@ public class AdminController {
 
   @PostMapping("/user/{userId}")
   @ApiOperation(value = "Creates user details")
-  public ResponseEntity<String> createUserOnFirstLogin(@NotNull @PathVariable String userId) {
-    userDetailsService.createUserDetails(userId);
+  public ResponseEntity<String> createUserOnFirstLogin(
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
+    userDetailsService.createUserDetails(userId, principal.getClaimAsString(EMAIL_CLAIM));
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
@@ -91,6 +94,7 @@ public class AdminController {
   @ApiOperation(value = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
   public ResponseEntity<Set<User>> searchUsers(
+      @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestParam(required = false)
           @ApiParam(
               value =
@@ -104,6 +108,12 @@ public class AdminController {
               value =
                   "A flag for controlling whether to include user's roles in the response (a bit slower)")
           Boolean withRoles) {
-    return ResponseEntity.ok(userService.searchUsers(approved, search, withRoles));
+    return ResponseEntity.ok(
+        userService.searchUsers(
+            principal.getSubject(),
+            approved,
+            search,
+            withRoles,
+            Roles.extractRoles(principal)));
   }
 }

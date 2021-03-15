@@ -32,7 +32,7 @@ public class AqlControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldNotAccessAqlApiWithWrongRole() {
-    mockMvc.perform(get(String.format("%s/%s", AQL_PATH, 1))).andExpect(status().isUnauthorized());
+    mockMvc.perform(get(String.format("%s/%s", AQL_PATH, 1))).andExpect(status().isForbidden());
   }
 
   @Test

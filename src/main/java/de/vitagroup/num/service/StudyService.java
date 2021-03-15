@@ -5,12 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
+import de.vitagroup.num.domain.StudyTransition;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
-import de.vitagroup.num.domain.repository.UserDetailsRepository;
+import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -24,6 +25,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +33,25 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.StringUtils;
+import org.ehrbase.aql.binder.AqlBinder;
+import org.ehrbase.aql.dto.AqlDto;
+import org.ehrbase.aql.dto.condition.ConditionDto;
+import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorDto;
+import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorSymbol;
+import org.ehrbase.aql.dto.condition.MatchesOperatorDto;
+import org.ehrbase.aql.dto.condition.SimpleValue;
+import org.ehrbase.aql.dto.condition.Value;
+import org.ehrbase.aql.dto.containment.ContainmentDto;
+import org.ehrbase.aql.dto.containment.ContainmentExpresionDto;
+import org.ehrbase.aql.dto.containment.ContainmentLogicalOperator;
+import org.ehrbase.aql.dto.containment.ContainmentLogicalOperatorSymbol;
+import org.ehrbase.aql.dto.select.SelectFieldDto;
+import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.stereotype.Service;
 
@@ -41,13 +60,17 @@ import org.springframework.stereotype.Service;
 public class StudyService {
 
   private final StudyRepository studyRepository;
-  private final UserDetailsRepository userDetailsRepository;
   private final UserDetailsService userDetailsService;
   private final EhrBaseService ehrBaseService;
   private final ObjectMapper mapper;
+  private final CohortService cohortService;
+  private final AtnaService atnaService;
+
+  private static final String EHR_ID_PATH = "/ehr_id/value";
+  private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
+  private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
-
     QueryResponseData response = executeAql(query, studyId, userId);
     try {
       return mapper.writeValueAsString(response);
@@ -57,23 +80,33 @@ public class StudyService {
   }
 
   public QueryResponseData executeAql(String query, Long studyId, String userId) {
+    QueryResponseData queryResponseData;
+    Study study = null;
+    try {
+      userDetailsService.validateAndReturnUserDetails(userId);
 
-    validateLoggedInUser(userId);
+      study =
+          studyRepository
+              .findById(studyId)
+              .orElseThrow(() -> new ResourceNotFound("Study not found: " + studyId));
 
-    Study study =
-        studyRepository
-            .findById(studyId)
-            .orElseThrow(() -> new ResourceNotFound("Study not found: " + studyId));
+      if (!study.isStudyResearcher(userId) && study.hasEmptyOrDifferentOwner(userId)) {
+        throw new ForbiddenException("Cannot access this study");
+      }
 
-    if (!study.isStudyResearcher(userId)) {
-      throw new ForbiddenException("Cannot access this study");
+      String restrictedQuery = restrictQueryToStudy(query, study);
+
+      queryResponseData = ehrBaseService.executeRawQuery(restrictedQuery);
+
+    } catch (Exception e) {
+      atnaService.logDataExport(userId, studyId, study, false);
+      throw e;
     }
-
-    return ehrBaseService.executeRawQuery(query);
+    atnaService.logDataExport(userId, studyId, study, true);
+    return queryResponseData;
   }
 
-  public void streamResponseAsCsv(
-      QueryResponseData queryResponseData, OutputStream outputStream) {
+  public void streamResponseAsCsv(QueryResponseData queryResponseData, OutputStream outputStream) {
     List<String> paths = new ArrayList<>();
 
     for (Map<String, String> column : queryResponseData.getColumns()) {
@@ -102,54 +135,61 @@ public class StudyService {
 
   public Study createStudy(StudyDto studyDto, String userId, List<String> roles) {
 
-    Optional<UserDetails> coordinator = userDetailsRepository.findByUserId(userId);
-
-    if (coordinator.isEmpty()) {
-      throw new SystemException("Logged in coordinator not found in portal");
-    }
-
-    if (coordinator.get().isNotApproved()) {
-      throw new ForbiddenException("User not approved:" + userId);
-    }
+    UserDetails coordinator = userDetailsService.validateAndReturnUserDetails(userId);
 
     Study study = Study.builder().build();
+
+    validateStatus(null, studyDto.getStatus(), roles);
+    persistTransition(study, study.getStatus(), studyDto.getStatus(), coordinator);
 
     setTemplates(study, studyDto);
     setResearchers(study, studyDto);
 
-    validateStatus(null, studyDto.getStatus(), roles);
     study.setStatus(studyDto.getStatus());
-
     study.setName(studyDto.getName());
     study.setDescription(studyDto.getDescription());
     study.setFirstHypotheses(studyDto.getFirstHypotheses());
     study.setSecondHypotheses(studyDto.getSecondHypotheses());
-    study.setCoordinator(coordinator.get());
+    study.setGoal(studyDto.getGoal());
+    study.setCategories(studyDto.getCategories());
+    study.setKeywords(studyDto.getKeywords());
+    study.setCoordinator(coordinator);
     study.setCreateDate(OffsetDateTime.now());
     study.setModifiedDate(OffsetDateTime.now());
+    study.setStartDate(studyDto.getStartDate());
+    study.setEndDate(studyDto.getEndDate());
+    study.setFinanced(studyDto.isFinanced());
+
     return studyRepository.save(study);
   }
 
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
 
-    validateLoggedInUser(userId);
+    UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
 
     Study studyToEdit =
         studyRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFound("Study not found: " + id));
 
+    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
+    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
+
     setTemplates(studyToEdit, studyDto);
     setResearchers(studyToEdit, studyDto);
 
-    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
     studyToEdit.setStatus(studyDto.getStatus());
-
     studyToEdit.setName(studyDto.getName());
     studyToEdit.setDescription(studyDto.getDescription());
     studyToEdit.setModifiedDate(OffsetDateTime.now());
     studyToEdit.setFirstHypotheses(studyDto.getFirstHypotheses());
     studyToEdit.setSecondHypotheses(studyDto.getSecondHypotheses());
+    studyToEdit.setGoal(studyDto.getGoal());
+    studyToEdit.setCategories(studyDto.getCategories());
+    studyToEdit.setKeywords(studyDto.getKeywords());
+    studyToEdit.setStartDate(studyDto.getStartDate());
+    studyToEdit.setEndDate(studyDto.getEndDate());
+    studyToEdit.setFinanced(studyDto.isFinanced());
 
     return studyRepository.save(studyToEdit);
   }
@@ -182,6 +222,130 @@ public class StudyService {
         LocalDateTime.now()
             .truncatedTo(ChronoUnit.MINUTES)
             .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+  }
+
+  private String restrictQueryToStudy(String query, Study study) {
+    return restrictToStudyTemplates(restrictToCohortEhrIds(query, study), study.getTemplates());
+  }
+
+  private String restrictToStudyTemplates(String query, Map<String, String> templatesMap) {
+
+    if (MapUtils.isEmpty(templatesMap)) {
+      throw new BadRequestException("No templates attached to this study");
+    }
+    AqlDto aql = new AqlToDtoParser().parse(query);
+
+    SelectFieldDto select = new SelectFieldDto();
+    select.setAqlPath(TEMPLATE_ID_PATH);
+
+    ContainmentExpresionDto contains = aql.getContains();
+    Integer nextContainmentId = findNextContainmentId((ContainmentDto) contains);
+    if (contains != null) {
+      Integer compositionIdentifier = findComposition((ContainmentDto) contains);
+      if (compositionIdentifier != null) {
+        select.setContainmentId(compositionIdentifier);
+      } else {
+
+        select.setContainmentId(nextContainmentId);
+
+        ContainmentLogicalOperator newContains = new ContainmentLogicalOperator();
+        newContains.setValues(new ArrayList<>());
+
+        ContainmentDto composition = new ContainmentDto();
+        composition.setId(nextContainmentId);
+        composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
+
+        newContains.setSymbol(ContainmentLogicalOperatorSymbol.AND);
+        newContains.getValues().add(composition);
+        newContains.getValues().add(contains);
+
+        aql.setContains(newContains);
+      }
+    } else {
+      ContainmentDto composition = new ContainmentDto();
+      composition.setId(nextContainmentId);
+      composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
+      aql.setContains(composition);
+      select.setContainmentId(nextContainmentId);
+    }
+
+    List<Value> templateValues = toSimpleValueList(templatesMap.keySet());
+    extendWhereClause(aql, select, templateValues);
+
+    return new AqlBinder().bind(aql).getLeft().buildAql();
+  }
+
+  private String restrictToCohortEhrIds(String query, Study study) {
+    if (study.getCohort() == null) {
+      throw new BadRequestException("Study cohort cannot be empty");
+    }
+
+    Set<String> ehrIds = cohortService.executeCohort(study.getCohort().getId());
+
+    if (CollectionUtils.isEmpty(ehrIds)) {
+      throw new BadRequestException("Cohort size cannot be 0");
+    }
+
+    AqlDto aql = new AqlToDtoParser().parse(query);
+
+    SelectFieldDto select = new SelectFieldDto();
+    select.setAqlPath(EHR_ID_PATH);
+    select.setContainmentId(aql.getEhr().getContainmentId());
+
+    extendWhereClause(aql, select, toSimpleValueList(ehrIds));
+
+    return new AqlBinder().bind(aql).getLeft().buildAql();
+  }
+
+  private void extendWhereClause(AqlDto aql, SelectFieldDto select, List<Value> values) {
+    MatchesOperatorDto matches = new MatchesOperatorDto();
+    matches.setStatement(select);
+    matches.setValues(values);
+
+    ConditionLogicalOperatorDto newWhere = new ConditionLogicalOperatorDto();
+    newWhere.setValues(new ArrayList<>());
+    ConditionDto where = aql.getWhere();
+
+    if (where != null) {
+      newWhere.setSymbol(ConditionLogicalOperatorSymbol.AND);
+      newWhere.getValues().add(where);
+    }
+
+    newWhere.getValues().add(matches);
+    aql.setWhere(newWhere);
+  }
+
+  private Integer findComposition(ContainmentDto dto) {
+    if (dto == null) {
+      return null;
+    }
+    if (dto.getArchetypeId().contains(COMPOSITION_ARCHETYPE_ID)) {
+      return dto.getId();
+    } else {
+      return findComposition((ContainmentDto) dto.getContains());
+    }
+  }
+
+  private Integer findNextContainmentId(ContainmentDto dto) {
+    if (dto == null) {
+      return 1;
+    }
+    if (dto.getContains() != null) {
+      return findNextContainmentId((ContainmentDto) dto.getContains());
+    } else {
+      return dto.getId() + 1;
+    }
+  }
+
+  private List<Value> toSimpleValueList(Collection<String> list) {
+    return list.stream()
+        .map(
+            s -> {
+              SimpleValue simpleValue = new SimpleValue();
+              simpleValue.setValue(s);
+              return simpleValue;
+            })
+        .collect(Collectors.toList());
   }
 
   private void setTemplates(Study study, StudyDto studyDto) {
@@ -248,15 +412,29 @@ public class StudyService {
     return status.equals(StudyStatus.DRAFT) || status.equals(StudyStatus.PENDING);
   }
 
-  private void validateLoggedInUser(String userId) {
-    Optional<UserDetails> user = userDetailsRepository.findByUserId(userId);
+  private void persistTransition(
+      Study study, StudyStatus fromStatus, StudyStatus toStatus, UserDetails user) {
 
-    if (user.isEmpty()) {
-      throw new SystemException("Logged in coordinator not found in portal");
+    if (fromStatus != null && fromStatus.equals(toStatus)) {
+      return;
     }
 
-    if (user.get().isNotApproved()) {
-      throw new ForbiddenException("User not approved:" + userId);
+    StudyTransition studyTransition =
+        StudyTransition.builder()
+            .toStatus(toStatus)
+            .study(study)
+            .user(user)
+            .createDate(OffsetDateTime.now())
+            .build();
+
+    if (fromStatus != null) {
+      studyTransition.setFromStatus(fromStatus);
+    }
+
+    if (study.getTransitions() != null) {
+      study.getTransitions().add(studyTransition);
+    } else {
+      study.setTransitions(Set.of(studyTransition));
     }
   }
 }

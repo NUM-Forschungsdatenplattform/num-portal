@@ -1,7 +1,6 @@
 package de.vitagroup.num.config;
 
 import de.vitagroup.num.properties.EhrBaseProperties;
-import de.vitagroup.num.service.ehrbase.EhrTemplateProvider;
 import java.net.URI;
 import java.net.URISyntaxException;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +14,7 @@ import org.ehrbase.client.openehrclient.OpenEhrClientConfig;
 import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 @RequiredArgsConstructor
@@ -23,6 +23,7 @@ public class EhrBaseConfig {
   private final EhrBaseProperties ehrBaseProperties;
 
   @Bean
+  @Primary
   public DefaultRestClient createRestClient() throws URISyntaxException {
     CredentialsProvider provider = new BasicCredentialsProvider();
     provider.setCredentials(
@@ -34,8 +35,6 @@ public class EhrBaseConfig {
         HttpClientBuilder.create().setDefaultCredentialsProvider(provider).build();
 
     return new DefaultRestClient(
-        new OpenEhrClientConfig(new URI(ehrBaseProperties.getRestApiUrl())),
-        new EhrTemplateProvider(),
-        httpClient);
+        new OpenEhrClientConfig(new URI(ehrBaseProperties.getRestApiUrl())), null, httpClient);
   }
 }

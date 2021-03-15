@@ -3,6 +3,7 @@ package de.vitagroup.num.web.exception;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -58,7 +59,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
-  @ExceptionHandler({BadRequestException.class})
+  @ExceptionHandler({BadRequestException.class, ConstraintViolationException.class})
   public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex) {
     log.debug(ex.getMessage(), ex);
 
@@ -94,16 +95,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.CONFLICT);
   }
 
-  @ExceptionHandler({AccessDeniedException.class, NotAuthorizedException.class})
-  public ResponseEntity<ErrorResponse> handleAccessDenied(Exception ex) {
-    log.debug(ex.getMessage(), ex);
-
-    ErrorResponse response =
-        ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
-    return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.UNAUTHORIZED);
-  }
-
-  @ExceptionHandler({ForbiddenException.class})
+  @ExceptionHandler({ForbiddenException.class, AccessDeniedException.class})
   public ResponseEntity<ErrorResponse> handleNotApprovedUser(Exception ex) {
     log.debug(ex.getMessage(), ex);
 
