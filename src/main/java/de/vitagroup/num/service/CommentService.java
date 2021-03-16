@@ -36,7 +36,7 @@ public class CommentService {
     Study study =
         studyService
             .getStudyById(studyId)
-            .orElseThrow(() -> new SystemException("Study not found " + studyId));
+            .orElseThrow(() -> new ResourceNotFound("Study not found " + studyId));
 
     comment.setStudy(study);
     comment.setAuthor(author);
