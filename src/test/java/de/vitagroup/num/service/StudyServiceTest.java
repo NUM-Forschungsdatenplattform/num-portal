@@ -72,7 +72,7 @@ public class StudyServiceTest {
   private static final String EHR_ID_2 = "61861e76-1606-48c9-adcf-49ebbb2c6bbd";
   private static final String EHR_ID_3 = "47dc21a2-7076-4a57-89dc-bd83729ed52f";
 
-  private static final String QUERY =
+  private static final String QUERY_1 =
       "SELECT e/ehr_id/value, "
           + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value, "
           + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value "
@@ -81,42 +81,127 @@ public class StudyServiceTest {
           + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
           + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
 
-  private static final String QUERY2 = "Select e/ehr_id/value as F1, "
-      + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
-      + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 from EHR e "
-      + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
-      + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
+  private static final String QUERY_2 =
+      "Select e/ehr_id/value as F1, "
+          + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
+          + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 from EHR e "
+          + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
+          + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
 
   private static final String QUERY_BASIC = "SELECT e FROM EHR e";
 
+  private static final String QUERY_3 =
+      "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, "
+          + "c1 as openEHR_EHR_COMPOSITION_report_v1 FROM  "
+          + "EHR e "
+          + "contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
+
+  private static final String QUERY_4 =
+      "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, "
+          + "c1 as openEHR_EHR_COMPOSITION_report_v1 FROM  "
+          + "EHR e "
+          + "contains COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] "
+          + "contains (COMPOSITION c2[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
+
+  @Test
+  public void shouldHandleQuery3() {
+    studyService.executeAql(QUERY_3, 2L, "approvedCoordinatorId");
+    Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
+    String restrictedQuery = stringArgumentCaptor.getValue();
+
+    AqlDto dto = new AqlToDtoParser().parse(restrictedQuery);
+
+    assertThat(dto, notNullValue());
+    assertThat(dto.getWhere(), notNullValue());
+
+    ConditionLogicalOperatorDto conditionDto = (ConditionLogicalOperatorDto) dto.getWhere();
+    assertThat(conditionDto.getSymbol(), is(ConditionLogicalOperatorSymbol.AND));
+    assertThat(conditionDto.getValues().size(), is(2));
+
+    conditionDto.getValues().stream()
+        .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
+
+    MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
+    assertThat(ehrMatches.getValues().size(), is(2));
+
+    assertTrue(
+        ehrMatches.getValues().stream()
+            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_1)));
+    assertTrue(
+        ehrMatches.getValues().stream()
+            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_2)));
+
+    MatchesOperatorDto templatesMatches = (MatchesOperatorDto) conditionDto.getValues().get(1);
+    assertThat(templatesMatches.getValues().size(), is(1));
+    assertTrue(
+        templatesMatches.getValues().stream()
+            .anyMatch(t -> ((SimpleValue) t).getValue().equals(CORONA_TEMPLATE)));
+  }
+
+  @Test
+  public void shouldHandleQuery4() {
+    studyService.executeAql(QUERY_4, 2L, "approvedCoordinatorId");
+    Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
+    String restrictedQuery = stringArgumentCaptor.getValue();
+
+    AqlDto dto = new AqlToDtoParser().parse(restrictedQuery);
+
+    assertThat(dto, notNullValue());
+    assertThat(dto.getWhere(), notNullValue());
+
+    ConditionLogicalOperatorDto conditionDto = (ConditionLogicalOperatorDto) dto.getWhere();
+    assertThat(conditionDto.getSymbol(), is(ConditionLogicalOperatorSymbol.AND));
+    assertThat(conditionDto.getValues().size(), is(2));
+
+    conditionDto.getValues().stream()
+        .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
+
+    MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
+    assertThat(ehrMatches.getValues().size(), is(2));
+
+    assertTrue(
+        ehrMatches.getValues().stream()
+            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_1)));
+    assertTrue(
+        ehrMatches.getValues().stream()
+            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_2)));
+
+    MatchesOperatorDto templatesMatches = (MatchesOperatorDto) conditionDto.getValues().get(1);
+    assertThat(templatesMatches.getValues().size(), is(1));
+    assertTrue(
+        templatesMatches.getValues().stream()
+            .anyMatch(t -> ((SimpleValue) t).getValue().equals(CORONA_TEMPLATE)));
+  }
+
   @Test(expected = BadRequestException.class)
   public void shouldHandleStudyWithoutTemplates() {
-    studyService.executeAql(QUERY, 1L, "approvedCoordinatorId");
+    studyService.executeAql(QUERY_1, 1L, "approvedCoordinatorId");
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleStudyWithoutCohort() {
-    studyService.executeAql(QUERY, 3L, "approvedCoordinatorId");
+    studyService.executeAql(QUERY_1, 3L, "approvedCoordinatorId");
   }
 
   // TODO: this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed
   @Ignore
   @Test
   public void shouldCorrectlyRestrictQueryWithContainsAndNoComposition() {
-    studyService.executeAql(QUERY2, 4L, "approvedCoordinatorId");
+    studyService.executeAql(QUERY_2, 4L, "approvedCoordinatorId");
 
     Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
     String restrictedQuery = stringArgumentCaptor.getValue();
 
     new AqlToDtoParser().parse(restrictedQuery);
 
-    String expectedQuery = "Select e/ehr_id/value as F1, "
-        + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
-        + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 "
-        + "from EHR e "
-        + "contains (COMPOSITION c0 and SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
-        + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]) "
-        + "where (e/ehr_id/value matches {'47dc21a2-7076-4a57-89dc-bd83729ed52f'} and c0/archetype_details/template_id/value matches {'Corona_Anamnese'})";
+    String expectedQuery =
+        "Select e/ehr_id/value as F1, "
+            + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
+            + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 "
+            + "from EHR e "
+            + "contains (COMPOSITION c0 and SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
+            + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]) "
+            + "where (e/ehr_id/value matches {'47dc21a2-7076-4a57-89dc-bd83729ed52f'} and c0/archetype_details/template_id/value matches {'Corona_Anamnese'})";
 
     assertEquals(restrictedQuery, expectedQuery);
   }
@@ -134,7 +219,7 @@ public class StudyServiceTest {
 
   @Test
   public void shouldCorrectlyRestrictQuery() {
-    studyService.executeAql(QUERY, 2L, "approvedCoordinatorId");
+    studyService.executeAql(QUERY_1, 2L, "approvedCoordinatorId");
 
     Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
     String restrictedQuery = stringArgumentCaptor.getValue();
@@ -606,11 +691,7 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(3L))
         .thenReturn(
-            Optional.of(
-                Study.builder()
-                    .id(3L)
-                    .researchers(List.of(approvedCoordinator))
-                    .build()));
+            Optional.of(Study.builder().id(3L).researchers(List.of(approvedCoordinator)).build()));
 
     when(studyRepository.findById(1L))
         .thenReturn(
@@ -631,17 +712,17 @@ public class StudyServiceTest {
                     .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
                     .build()));
 
-//    when(studyRepository.findById(4L))
-//        .thenReturn(
-//            Optional.of(
-//                Study.builder()
-//                    .id(4L)
-//                    .cohort(Cohort.builder().id(4L).build())
-//                    .researchers(List.of(approvedCoordinator))
-//                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
-//                    .build()));
+    //    when(studyRepository.findById(4L))
+    //        .thenReturn(
+    //            Optional.of(
+    //                Study.builder()
+    //                    .id(4L)
+    //                    .cohort(Cohort.builder().id(4L).build())
+    //                    .researchers(List.of(approvedCoordinator))
+    //                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+    //                    .build()));
 
     when(cohortService.executeCohort(2L)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
-//    when(cohortService.executeCohort(4L)).thenReturn(Set.of(EHR_ID_3));
+    //    when(cohortService.executeCohort(4L)).thenReturn(Set.of(EHR_ID_3));
   }
 }

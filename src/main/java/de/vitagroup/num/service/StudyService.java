@@ -6,7 +6,9 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.StudyTransition;
+import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
@@ -24,12 +26,14 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -239,9 +243,9 @@ public class StudyService {
     select.setAqlPath(TEMPLATE_ID_PATH);
 
     ContainmentExpresionDto contains = aql.getContains();
-    Integer nextContainmentId = findNextContainmentId((ContainmentDto) contains);
+    Integer nextContainmentId = findNextContainmentId(contains);
     if (contains != null) {
-      Integer compositionIdentifier = findComposition((ContainmentDto) contains);
+      Integer compositionIdentifier = findComposition(contains);
       if (compositionIdentifier != null) {
         select.setContainmentId(compositionIdentifier);
       } else {
@@ -315,26 +319,73 @@ public class StudyService {
     aql.setWhere(newWhere);
   }
 
-  private Integer findComposition(ContainmentDto dto) {
+  private Integer findComposition(ContainmentExpresionDto dto) {
     if (dto == null) {
       return null;
     }
-    if (dto.getArchetypeId().contains(COMPOSITION_ARCHETYPE_ID)) {
-      return dto.getId();
-    } else {
-      return findComposition((ContainmentDto) dto.getContains());
+
+    Queue<ContainmentExpresionDto> queue = new ArrayDeque<>();
+    queue.add(dto);
+
+    while (!queue.isEmpty()) {
+      ContainmentExpresionDto current = queue.remove();
+
+      if (current instanceof ContainmentLogicalOperator) {
+
+        ContainmentLogicalOperator containmentLogicalOperator = (ContainmentLogicalOperator) current;
+
+        queue.addAll(containmentLogicalOperator.getValues());
+
+      } else if (current instanceof ContainmentDto) {
+
+        ContainmentDto containmentDto = (ContainmentDto) current;
+
+        if (containmentDto.getArchetypeId().contains(COMPOSITION_ARCHETYPE_ID)) {
+          return containmentDto.getId();
+        }
+
+        if (containmentDto.getContains() != null) {
+          queue.add(containmentDto.getContains());
+        }
+      }
     }
+    return null;
   }
 
-  private Integer findNextContainmentId(ContainmentDto dto) {
+  private Integer findNextContainmentId(ContainmentExpresionDto dto) {
+
     if (dto == null) {
       return 1;
     }
-    if (dto.getContains() != null) {
-      return findNextContainmentId((ContainmentDto) dto.getContains());
-    } else {
-      return dto.getId() + 1;
+
+    Queue<ContainmentExpresionDto> queue = new ArrayDeque<>();
+    queue.add(dto);
+
+    int nextId = 0;
+
+    while (!queue.isEmpty()) {
+      ContainmentExpresionDto current = queue.remove();
+
+      if (current instanceof ContainmentLogicalOperator) {
+
+        ContainmentLogicalOperator containmentLogicalOperator = (ContainmentLogicalOperator) current;
+
+        queue.addAll(containmentLogicalOperator.getValues());
+
+      } else if (current instanceof ContainmentDto) {
+
+        ContainmentDto containmentDto = (ContainmentDto) current;
+
+        if(containmentDto.getId() > nextId){
+          nextId = containmentDto.getId();
+        }
+
+        if (containmentDto.getContains() != null) {
+          queue.add(containmentDto.getContains());
+        }
+      }
     }
+    return nextId + 1;
   }
 
   private List<Value> toSimpleValueList(Collection<String> list) {
