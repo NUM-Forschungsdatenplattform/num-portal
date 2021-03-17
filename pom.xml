@@ -12,8 +12,8 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <relativePath/>
-    <version>2.3.4.RELEASE</version>
+    <version>2.4.3</version>
+    <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
   <properties>
@@ -25,7 +25,7 @@
     <modelmapper.version>2.3.9</modelmapper.version>
     <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
     <java.version>11</java.version>
-    <openfeign.version>2.2.5.RELEASE</openfeign.version>
+    <openfeign.version>3.0.1</openfeign.version>
     <commons-csv.version>1.4</commons-csv.version>
     <jacoco.version>0.8.6</jacoco.version>
     <dependency-check.version>6.1.1</dependency-check.version>
