@@ -1,6 +1,7 @@
 package de.vitagroup.num.domain.dto;
 
 import de.vitagroup.num.domain.Expression;
+import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.validation.ValidExpression;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -35,5 +36,5 @@ public class PhenotypeDto {
   @ApiModelProperty(required = true, value = "The aql query tree defining the phenotype")
   private Expression query;
 
-  @ApiModelProperty private String ownerId;
+  @ApiModelProperty private User owner;
 }
