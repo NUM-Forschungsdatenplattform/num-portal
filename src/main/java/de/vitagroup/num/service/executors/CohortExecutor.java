@@ -45,7 +45,7 @@ public class CohortExecutor {
 
     } else if (cohortGroup.getType() == Type.PHENOTYPE) {
 
-      return phenotypeExecutor.execute(cohortGroup.getPhenotype());
+      return phenotypeExecutor.execute(cohortGroup.getPhenotype(), parameters);
     }
 
     return SetUtils.emptySet();
