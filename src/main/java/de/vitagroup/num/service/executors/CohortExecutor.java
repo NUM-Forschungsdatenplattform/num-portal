@@ -6,6 +6,7 @@ import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -28,14 +29,16 @@ public class CohortExecutor {
       throw new IllegalArgumentException("Cannot execute an empty cohort");
     }
 
-    return executeGroup(cohort.getCohortGroup());
+    return executeGroup(cohort.getCohortGroup(), cohort.getCohortGroup().getParameters());
   }
 
-  public Set<String> executeGroup(CohortGroup cohortGroup) {
+  public Set<String> executeGroup(CohortGroup cohortGroup, Map<String, Object> parameters) {
     if (cohortGroup.getType() == Type.GROUP) {
 
       List<Set<String>> sets =
-          cohortGroup.getChildren().stream().map(this::executeGroup).collect(Collectors.toList());
+          cohortGroup.getChildren().stream()
+              .map(e -> executeGroup(e, parameters))
+              .collect(Collectors.toList());
 
       return setOperations.apply(
           cohortGroup.getOperator(), sets, ehrBaseService.getAllPatientIds());

@@ -30,7 +30,7 @@ public class CohortGroupDto {
   @ApiModelProperty(
       value =
           "Cohort group parameter map representing the name of the aql parameter and the corresponding value")
-  private Map<String, String> parameters;
+  private Map<String, Object> parameters;
 
   @ApiModelProperty(required = true, value = "Type of the cohort group", example = "PHENOTYPE")
   @NotNull(message = "Type cannot be null")
