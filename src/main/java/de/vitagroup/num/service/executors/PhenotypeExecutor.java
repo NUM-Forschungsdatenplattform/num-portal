@@ -89,10 +89,7 @@ public class PhenotypeExecutor {
 
   private List<ParameterValue> getParameterValues(Map<String, Object> parameters) {
     List<ParameterValue> parameterValues = new LinkedList<>();
-    parameters.forEach(
-        (k, v) -> {
-          parameterValues.add(new ParameterValue(k, v));
-        });
+    parameters.forEach((k, v) -> parameterValues.add(new ParameterValue(k, v)));
     return parameterValues;
   }
 }
