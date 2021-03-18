@@ -36,3 +36,8 @@ ehrbase:
 
 privacy:
   minHits: ${PRIVACY_MIN_HITS}
+
+atna:
+  enabled: ${ATNA_ENABLED}
+  host: ${ATNA_HOST}
+  port: ${ATNA_PORT}
