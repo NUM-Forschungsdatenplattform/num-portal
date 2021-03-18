@@ -75,7 +75,7 @@ public class CohortService {
     userDetailsService.validateAndReturnUserDetails(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
-    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup);
+    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, cohortGroup.getParameters());
     if (ehrIds.size() < privacyProperties.getMinHits()) {
       throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
     }

@@ -30,7 +30,7 @@ public class CohortGroup {
   private Operator operator;
 
   @Convert(converter = MapConverter.class)
-  private Map<String, String> parameters;
+  private Map<String, Object> parameters;
 
   @ManyToOne
   @JsonBackReference
