@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.SetUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.client.aql.parameter.ParameterValue;
 import org.springframework.stereotype.Service;
 
@@ -67,8 +68,17 @@ public class PhenotypeExecutor {
 
   private void addParameters(Map<String, Object> parameters, AqlExpression aqlExpression) {
     if (MapUtils.isNotEmpty(parameters)) {
+
+      if (aqlExpression.getAql() == null) {
+        return;
+      }
+
       Aql aql = aqlExpression.getAql();
       String query = aql.getQuery();
+
+      if (StringUtils.isEmpty(query)) {
+        return;
+      }
 
       for (ParameterValue v : getParameterValues(parameters)) {
         query = query.replace(v.getParameter().getAqlParameter(), v.buildAql());
