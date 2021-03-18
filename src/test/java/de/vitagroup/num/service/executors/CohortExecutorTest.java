@@ -3,6 +3,7 @@ package de.vitagroup.num.service.executors;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Aql;
@@ -55,8 +56,8 @@ public class CohortExecutorTest {
     Phenotype phenotype2 =
         Phenotype.builder().id(2L).name(PHENOTYPE_NAME).query(aqlExpression2).build();
 
-    when(phenotypeExecutor.execute(phenotype1)).thenReturn(Set.of("1", "2", "5", "10"));
-    when(phenotypeExecutor.execute(phenotype2)).thenReturn(Set.of("1", "2", "4", "5", "6", "10"));
+    when(phenotypeExecutor.execute(phenotype1, null)).thenReturn(Set.of("1", "2", "5", "10"));
+    when(phenotypeExecutor.execute(phenotype2, null)).thenReturn(Set.of("1", "2", "4", "5", "6", "10"));
 
     CohortGroup first = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype1).build();
     CohortGroup second = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype2).build();
@@ -90,8 +91,8 @@ public class CohortExecutorTest {
     Phenotype phenotype2 =
         Phenotype.builder().id(2L).name(PHENOTYPE_NAME).query(aqlExpression2).build();
 
-    when(phenotypeExecutor.execute(phenotype1)).thenReturn(Set.of("1", "2", "5", "10"));
-    when(phenotypeExecutor.execute(phenotype2))
+    when(phenotypeExecutor.execute(phenotype1, null)).thenReturn(Set.of("1", "2", "5", "10"));
+    when(phenotypeExecutor.execute(phenotype2, null))
         .thenReturn(Set.of("4", "5", "6", "7", "8", "9", "10"));
 
     CohortGroup first = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype1).build();

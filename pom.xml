@@ -31,10 +31,12 @@
     <dependency-check.version>6.1.1</dependency-check.version>
     <failsafe.version>2.22.2</failsafe.version>
     <surefire.version>2.22.2</surefire.version>
+    <ehcache.version>3.9.2</ehcache.version>
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
     <skip.dependency.check>false</skip.dependency.check>
-    <ehcache.version>3.9.2</ehcache.version>
+    <surefire.jacoco.args/>
+    <failsafe.jacoco.args/>
   </properties>
 
   <repositories>
@@ -64,6 +66,10 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-mail</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.security</groupId>

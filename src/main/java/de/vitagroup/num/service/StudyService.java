@@ -6,15 +6,14 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.StudyTransition;
-import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -41,7 +40,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.ConditionDto;
@@ -69,6 +67,7 @@ public class StudyService {
   private final ObjectMapper mapper;
   private final CohortService cohortService;
   private final AtnaService atnaService;
+  private final ZarsService zarsService;
 
   private static final String EHR_ID_PATH = "/ehr_id/value";
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
@@ -147,7 +146,7 @@ public class StudyService {
     persistTransition(study, study.getStatus(), studyDto.getStatus(), coordinator);
 
     setTemplates(study, studyDto);
-    setResearchers(study, studyDto);
+    study.setResearchers(getResearchers(studyDto));
 
     study.setStatus(studyDto.getStatus());
     study.setName(studyDto.getName());
@@ -164,7 +163,13 @@ public class StudyService {
     study.setEndDate(studyDto.getEndDate());
     study.setFinanced(studyDto.isFinanced());
 
-    return studyRepository.save(study);
+    Study savedStudy = studyRepository.save(study);
+
+    if (savedStudy.getStatus() == StudyStatus.PENDING) {
+      zarsService.registerToZars(study);
+    }
+
+    return savedStudy;
   }
 
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
@@ -180,8 +185,14 @@ public class StudyService {
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
 
     setTemplates(studyToEdit, studyDto);
-    setResearchers(studyToEdit, studyDto);
+    List<UserDetails> newResearchers = getResearchers(studyDto);
+    List<UserDetails> oldResearchers = studyToEdit.getResearchers();
+    if (oldResearchers != null) {
+      oldResearchers.size(); // trigger lazy loading of old list before new is set
+    }
+    studyToEdit.setResearchers(newResearchers);
 
+    StudyStatus oldStatus = studyToEdit.getStatus();
     studyToEdit.setStatus(studyDto.getStatus());
     studyToEdit.setName(studyDto.getName());
     studyToEdit.setDescription(studyDto.getDescription());
@@ -195,7 +206,32 @@ public class StudyService {
     studyToEdit.setEndDate(studyDto.getEndDate());
     studyToEdit.setFinanced(studyDto.isFinanced());
 
-    return studyRepository.save(studyToEdit);
+    Study savedStudy = studyRepository.save(studyToEdit);
+    registerToZarsIfNecessary(savedStudy, oldStatus, oldResearchers, newResearchers);
+    return savedStudy;
+  }
+
+  private void registerToZarsIfNecessary(
+      Study study,
+      StudyStatus oldStatus,
+      List<UserDetails> oldResearchers,
+      List<UserDetails> newResearchers) {
+    StudyStatus newStatus = study.getStatus();
+    if (((newStatus == StudyStatus.PENDING
+                || newStatus == StudyStatus.APPROVED
+                || newStatus == StudyStatus.PUBLISHED
+                || newStatus == StudyStatus.CLOSED)
+            && newStatus != oldStatus)
+        || (newStatus == StudyStatus.PUBLISHED
+            && researchersAreDifferent(oldResearchers, newResearchers))) {
+      zarsService.registerToZars(study);
+    }
+  }
+
+  private boolean researchersAreDifferent(
+      List<UserDetails> oldResearchers, List<UserDetails> newResearchers) {
+    return !(oldResearchers.containsAll(newResearchers)
+        && newResearchers.containsAll(oldResearchers));
   }
 
   public List<Study> getStudies(String userId, List<String> roles) {
@@ -332,7 +368,8 @@ public class StudyService {
 
       if (current instanceof ContainmentLogicalOperator) {
 
-        ContainmentLogicalOperator containmentLogicalOperator = (ContainmentLogicalOperator) current;
+        ContainmentLogicalOperator containmentLogicalOperator =
+            (ContainmentLogicalOperator) current;
 
         queue.addAll(containmentLogicalOperator.getValues());
 
@@ -368,7 +405,8 @@ public class StudyService {
 
       if (current instanceof ContainmentLogicalOperator) {
 
-        ContainmentLogicalOperator containmentLogicalOperator = (ContainmentLogicalOperator) current;
+        ContainmentLogicalOperator containmentLogicalOperator =
+            (ContainmentLogicalOperator) current;
 
         queue.addAll(containmentLogicalOperator.getValues());
 
@@ -376,7 +414,7 @@ public class StudyService {
 
         ContainmentDto containmentDto = (ContainmentDto) current;
 
-        if(containmentDto.getId() > nextId){
+        if (containmentDto.getId() > nextId) {
           nextId = containmentDto.getId();
         }
 
@@ -411,7 +449,7 @@ public class StudyService {
     }
   }
 
-  private void setResearchers(Study study, StudyDto studyDto) {
+  private List<UserDetails> getResearchers(StudyDto studyDto) {
     List<UserDetails> newResearchersList = new LinkedList<>();
 
     if (studyDto.getResearchers() != null) {
@@ -429,7 +467,7 @@ public class StudyService {
         newResearchersList.add(researcher.get());
       }
     }
-    study.setResearchers(newResearchersList);
+    return newResearchersList;
   }
 
   private void validateStatus(

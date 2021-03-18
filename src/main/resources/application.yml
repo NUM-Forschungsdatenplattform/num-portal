@@ -33,6 +33,19 @@ spring:
         provider:
           userStoreClient:
             token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: numportalwebapp@gmail.com
+    password: notPassword
+    from: numportalwebapp@gmail.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+            required: true
 
 swagger:
   oauth2:
@@ -76,6 +89,10 @@ atna:
   host: 151.80.206.33
   port: 3001
 
+zars:
+  enabled: false
+  email: foo@foo.bar
+
 # use local ehrbase until we get central one
 ehrbase:
   rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
@@ -116,6 +133,19 @@ spring:
             token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
   mvc:
     log-request-details: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: numportalwebapp@gmail.com
+    password: notPassword
+    from: numportalwebapp@gmail.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+            required: true
 
 swagger:
   oauth2:
@@ -155,3 +185,7 @@ atna:
   enabled: false
   host: localhost
   port: 514
+
+zars:
+  enabled: false
+  email: foo@foo.bar

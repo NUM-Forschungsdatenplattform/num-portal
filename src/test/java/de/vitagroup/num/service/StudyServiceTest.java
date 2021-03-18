@@ -24,6 +24,7 @@ import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.SystemException;
@@ -61,6 +62,8 @@ public class StudyServiceTest {
   @Mock private EhrBaseService ehrBaseService;
 
   @Mock private AtnaService atnaService;
+
+  @Mock private ZarsService zarsService;
 
   @InjectMocks private StudyService studyService;
 
@@ -119,7 +122,9 @@ public class StudyServiceTest {
     assertThat(conditionDto.getValues().size(), is(2));
 
     conditionDto.getValues().stream()
-        .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
+        .anyMatch(
+            conditionDto1 ->
+                conditionDto1 instanceof MatchesOperatorDto); // TODO: should test the return value
 
     MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
     assertThat(ehrMatches.getValues().size(), is(2));
@@ -154,7 +159,9 @@ public class StudyServiceTest {
     assertThat(conditionDto.getValues().size(), is(2));
 
     conditionDto.getValues().stream()
-        .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
+        .anyMatch(
+            conditionDto1 ->
+                conditionDto1 instanceof MatchesOperatorDto); // TODO: should test the return value
 
     MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
     assertThat(ehrMatches.getValues().size(), is(2));
@@ -232,7 +239,9 @@ public class StudyServiceTest {
     assertThat(conditionDto.getValues().size(), is(2));
 
     conditionDto.getValues().stream()
-        .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
+        .anyMatch(
+            conditionDto1 ->
+                conditionDto1 instanceof MatchesOperatorDto); // TODO: should test the return value
 
     MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
     assertThat(ehrMatches.getValues().size(), is(2));
@@ -711,6 +720,14 @@ public class StudyServiceTest {
                     .researchers(List.of(approvedCoordinator))
                     .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
                     .build()));
+
+    when(studyRepository.save(any()))
+        .thenAnswer(
+            invocation -> {
+              Study study = invocation.getArgument(0, Study.class);
+              study.setId(1L);
+              return study;
+            });
 
     //    when(studyRepository.findById(4L))
     //        .thenReturn(

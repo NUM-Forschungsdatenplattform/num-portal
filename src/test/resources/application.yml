@@ -31,6 +31,20 @@ spring:
         provider:
           userStoreClient:
             token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: numportalwebapp@gmail.com
+    password: notPassword
+    from: numportalwebapp@gmail.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+            required: true
+
 swagger:
   oauth2:
     token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
@@ -78,3 +92,7 @@ cors:
 
 privacy:
   minHits: 0
+
+zars:
+  enabled: false
+  email: foo@foo.bar
