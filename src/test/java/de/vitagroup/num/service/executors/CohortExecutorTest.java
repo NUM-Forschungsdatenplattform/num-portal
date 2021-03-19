@@ -14,6 +14,7 @@ import de.vitagroup.num.domain.Phenotype;
 import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
+import java.util.Map;
 import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,8 +56,8 @@ public class CohortExecutorTest {
     Phenotype phenotype2 =
         Phenotype.builder().id(2L).name(PHENOTYPE_NAME).query(aqlExpression2).build();
 
-    when(phenotypeExecutor.execute(phenotype1, null)).thenReturn(Set.of("1", "2", "5", "10"));
-    when(phenotypeExecutor.execute(phenotype2, null)).thenReturn(Set.of("1", "2", "4", "5", "6", "10"));
+    when(phenotypeExecutor.execute(phenotype1, Map.of("p1", 1))).thenReturn(Set.of("1", "2", "5", "10"));
+    when(phenotypeExecutor.execute(phenotype2, Map.of("p1", 1))).thenReturn(Set.of("1", "2", "4", "5", "6", "10"));
 
     CohortGroup first = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype1).build();
     CohortGroup second = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype2).build();
@@ -66,6 +67,7 @@ public class CohortExecutorTest {
             .type(Type.GROUP)
             .operator(Operator.AND)
             .children(Set.of(first, second))
+            .parameters(Map.of("p1", 1))
             .build();
 
     Cohort cohort = Cohort.builder().name(COHORT_NAME).cohortGroup(andCohort).build();
@@ -90,8 +92,8 @@ public class CohortExecutorTest {
     Phenotype phenotype2 =
         Phenotype.builder().id(2L).name(PHENOTYPE_NAME).query(aqlExpression2).build();
 
-    when(phenotypeExecutor.execute(phenotype1, null)).thenReturn(Set.of("1", "2", "5", "10"));
-    when(phenotypeExecutor.execute(phenotype2, null))
+    when(phenotypeExecutor.execute(phenotype1, Map.of("p1", 1))).thenReturn(Set.of("1", "2", "5", "10"));
+    when(phenotypeExecutor.execute(phenotype2, Map.of("p1", 1)))
         .thenReturn(Set.of("4", "5", "6", "7", "8", "9", "10"));
 
     CohortGroup first = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype1).build();
@@ -101,6 +103,7 @@ public class CohortExecutorTest {
         CohortGroup.builder()
             .type(Type.GROUP)
             .operator(Operator.OR)
+            .parameters(Map.of("p1", 1))
             .children(Set.of(first, second))
             .build();
 
