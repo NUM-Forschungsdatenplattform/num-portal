@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -172,6 +173,7 @@ public class StudyService {
     return savedStudy;
   }
 
+  @Transactional
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
 
     UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
@@ -187,9 +189,6 @@ public class StudyService {
     setTemplates(studyToEdit, studyDto);
     List<UserDetails> newResearchers = getResearchers(studyDto);
     List<UserDetails> oldResearchers = studyToEdit.getResearchers();
-    if (oldResearchers != null) {
-      oldResearchers.size(); // trigger lazy loading of old list before new is set
-    }
     studyToEdit.setResearchers(newResearchers);
 
     StudyStatus oldStatus = studyToEdit.getStatus();
