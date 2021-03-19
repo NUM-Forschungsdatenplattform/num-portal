@@ -29,8 +29,8 @@
     <commons-csv.version>1.8</commons-csv.version>
     <jacoco.version>0.8.6</jacoco.version>
     <dependency-check.version>6.1.1</dependency-check.version>
-    <failsafe.version>3.0.0-M5</failsafe.version>
-    <surefire.version>3.0.0-M5</surefire.version>
+    <failsafe.version>2.22.2</failsafe.version>
+    <surefire.version>2.22.2</surefire.version>
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
     <skip.dependency.check>false</skip.dependency.check>
