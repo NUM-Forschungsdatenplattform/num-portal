@@ -22,7 +22,8 @@ public class CommentService {
   private final UserDetailsService userDetailsService;
   private final StudyService studyService;
 
-  public List<Comment> getComments(Long studyId) {
+  public List<Comment> getComments(Long studyId, String userId) {
+    userDetailsService.validateAndReturnUserDetails(userId);
     if (!studyService.exists(studyId)) {
       throw new ResourceNotFound("Study does not exist");
     }

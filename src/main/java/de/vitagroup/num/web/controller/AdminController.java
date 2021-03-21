@@ -37,16 +37,17 @@ public class AdminController {
 
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
-  public ResponseEntity<User> getUser(@NotNull @PathVariable String userId) {
-    return ResponseEntity.ok(userService.getUserById(userId, true));
+  public ResponseEntity<User> getUser(
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
+    return ResponseEntity.ok(userService.getUserById(userId, true, principal.getSubject()));
   }
 
   @GetMapping("/user/{userId}/role")
   @ApiOperation(value = "Retrieves the roles of the given user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<Set<de.vitagroup.num.domain.admin.Role>> getRolesOfUser(
-      @NotNull @PathVariable String userId) {
-    return ResponseEntity.ok(userService.getUserRoles(userId));
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
+    return ResponseEntity.ok(userService.getUserRoles(userId, principal.getSubject()));
   }
 
   @PostMapping("/user/{userId}/role")
@@ -109,10 +110,6 @@ public class AdminController {
           Boolean withRoles) {
     return ResponseEntity.ok(
         userService.searchUsers(
-            principal.getSubject(),
-            approved,
-            search,
-            withRoles,
-            Roles.extractRoles(principal)));
+            principal.getSubject(), approved, search, withRoles, Roles.extractRoles(principal)));
   }
 }

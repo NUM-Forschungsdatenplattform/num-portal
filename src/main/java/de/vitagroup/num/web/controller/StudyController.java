@@ -109,9 +109,9 @@ public class StudyController {
   @ApiOperation(value = "Executes the aql")
   @PreAuthorize(Role.RESEARCHER)
   public ResponseEntity<String> executeAql(
+      @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid RawQueryDto query,
-      @NotNull @NotEmpty @PathVariable Long studyId,
-      @AuthenticationPrincipal @NotNull Jwt principal) {
+      @NotNull @NotEmpty @PathVariable Long studyId) {
     return ResponseEntity.ok(
         studyService.executeAqlAndJsonify(query.getQuery(), studyId, principal.getSubject()));
   }
@@ -120,9 +120,9 @@ public class StudyController {
   @ApiOperation(value = "Executes the aql and returns the result as a csv file attachment")
   @PreAuthorize(Role.RESEARCHER)
   public ResponseEntity<StreamingResponseBody> exportResults(
+      @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid RawQueryDto query,
-      @NotNull @NotEmpty @PathVariable Long studyId,
-      @AuthenticationPrincipal @NotNull Jwt principal) {
+      @NotNull @NotEmpty @PathVariable Long studyId) {
     QueryResponseData queryResponseData =
         studyService.executeAql(query.getQuery(), studyId, principal.getSubject());
     StreamingResponseBody streamingResponseBody =
@@ -140,9 +140,10 @@ public class StudyController {
   @ApiOperation(value = "Retrieves the list of attached comments to a particular study")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<CommentDto>> getComments(
+      @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @NotEmpty @PathVariable Long studyId) {
     return ResponseEntity.ok(
-        commentService.getComments(studyId).stream()
+        commentService.getComments(studyId, principal.getSubject()).stream()
             .map(commentMapper::convertToDto)
             .collect(Collectors.toList()));
   }

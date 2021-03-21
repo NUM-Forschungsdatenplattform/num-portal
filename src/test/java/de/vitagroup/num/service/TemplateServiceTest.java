@@ -1,5 +1,6 @@
 package de.vitagroup.num.service;
 
+import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.TemplateMetadataDto;
 import de.vitagroup.num.mapper.TemplateMapper;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
@@ -27,6 +28,8 @@ public class TemplateServiceTest {
 
   @Mock private TemplateMapper templateMapper;
 
+  @Mock private UserDetailsService userDetailsService;
+
   @InjectMocks private TemplateService templateService;
 
   @Before
@@ -40,12 +43,19 @@ public class TemplateServiceTest {
     when(ehrBaseService.getAllTemplatesMetadata()).thenReturn(List.of(t1));
     when(templateMapper.convertToTemplateMetadataDto(any()))
         .thenReturn(TemplateMetadataDto.builder().name("t1").build());
+
+    UserDetails approvedUser =
+        UserDetails.builder().userId("approvedUserId").approved(true).build();
+
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+        .thenReturn(approvedUser);
   }
 
   @Test
   public void shouldCorrectlyRetrieveTemplateMetadata() {
-    List<TemplateMetadataDto> numTemplates = templateService.getAllTemplatesMetadata();
-    
+    List<TemplateMetadataDto> numTemplates =
+        templateService.getAllTemplatesMetadata("approvedUserId");
+
     assertThat(numTemplates, notNullValue());
     assertThat(numTemplates.size(), is(1));
     assertThat(numTemplates.get(0).getName(), is("t1"));

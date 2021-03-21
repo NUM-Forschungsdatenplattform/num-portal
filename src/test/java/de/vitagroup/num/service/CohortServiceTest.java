@@ -78,7 +78,7 @@ public class CohortServiceTest {
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingCohortWhenRetrieving() {
-    cohortService.getCohort(1L);
+    cohortService.getCohort(1L, "approvedUserId");
   }
 
   @Test(expected = BadRequestException.class)

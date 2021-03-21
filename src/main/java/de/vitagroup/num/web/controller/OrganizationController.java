@@ -56,20 +56,19 @@ public class OrganizationController {
   @ApiOperation(value = "Creates an organization")
   @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<OrganizationDto> createOrganization(
-      @Valid @NotNull @RequestBody OrganizationDto organizationDto,
-      @AuthenticationPrincipal @NotNull Jwt principal) {
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @Valid @NotNull @RequestBody OrganizationDto organizationDto) {
     return ResponseEntity.ok(
-        mapper.convertToDto(
-            organizationService.create(principal.getSubject(), organizationDto)));
+        mapper.convertToDto(organizationService.create(principal.getSubject(), organizationDto)));
   }
 
   @PutMapping(value = "/{id}")
   @ApiOperation(value = "Updates an organization")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<OrganizationDto> updateOrganization(
+      @AuthenticationPrincipal @NotNull Jwt principal,
       @PathVariable("id") Long organizationId,
-      @Valid @NotNull @RequestBody OrganizationDto organizationDto,
-      @AuthenticationPrincipal @NotNull Jwt principal) {
+      @Valid @NotNull @RequestBody OrganizationDto organizationDto) {
     return ResponseEntity.ok(
         mapper.convertToDto(
             organizationService.update(

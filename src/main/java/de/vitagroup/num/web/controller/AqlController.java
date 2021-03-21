@@ -109,8 +109,8 @@ public class AqlController {
   @ApiOperation(value = "Executes the aql")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<String> executeAql(
-      @NotNull @NotEmpty @PathVariable Long aqlId,
-      @AuthenticationPrincipal @NotNull Jwt principal) {
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @NotEmpty @PathVariable Long aqlId) {
     return ResponseEntity.ok(aqlService.executeAql(aqlId, principal.getSubject()));
   }
 }

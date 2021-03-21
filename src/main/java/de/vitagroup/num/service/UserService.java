@@ -39,6 +39,11 @@ public class UserService {
     return getUserById(loggedInUserId, true);
   }
 
+  public User getUserById(String userId, boolean withRole, String loggedInUserId) {
+    userDetailsService.validateAndReturnUserDetails(userId);
+    return getUserById(loggedInUserId, withRole);
+  }
+
   /**
    * Retrieves user, portal user details and corresponding roles from identity provider
    *
@@ -46,7 +51,6 @@ public class UserService {
    * @return User
    */
   public User getUserById(String userId, Boolean withRole) {
-    userDetailsService.validateAndReturnUserDetails(userId);
     try {
       User user = keycloakFeign.getUser(userId);
 
@@ -71,15 +75,9 @@ public class UserService {
    * @param userId External id of the user
    * @return Set of roles
    */
-  public Set<Role> getUserRoles(String userId) {
-    try {
-      return keycloakFeign.getRolesOfUser(userId);
-    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException(
-          "An error has occurred, cannot retrieve user roles, please try again later");
-    } catch (FeignException.NotFound e) {
-      throw new ResourceNotFound("No roles found");
-    }
+  public Set<Role> getUserRoles(String userId, String loggedInUserId) {
+    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    return getUserRoles(userId);
   }
 
   /**
@@ -157,6 +155,17 @@ public class UserService {
       throw new SystemException("An error has occurred, please try again later");
     } catch (FeignException.NotFound e) {
       throw new ResourceNotFound("Role or user not found");
+    }
+  }
+
+  private Set<Role> getUserRoles(String userId) {
+    try {
+      return keycloakFeign.getRolesOfUser(userId);
+    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
+      throw new SystemException(
+          "An error has occurred, cannot retrieve user roles, please try again later");
+    } catch (FeignException.NotFound e) {
+      throw new ResourceNotFound("No roles found");
     }
   }
 

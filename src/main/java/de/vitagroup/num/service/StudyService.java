@@ -332,7 +332,8 @@ public class StudyService {
 
       if (current instanceof ContainmentLogicalOperator) {
 
-        ContainmentLogicalOperator containmentLogicalOperator = (ContainmentLogicalOperator) current;
+        ContainmentLogicalOperator containmentLogicalOperator =
+            (ContainmentLogicalOperator) current;
 
         queue.addAll(containmentLogicalOperator.getValues());
 
@@ -368,7 +369,8 @@ public class StudyService {
 
       if (current instanceof ContainmentLogicalOperator) {
 
-        ContainmentLogicalOperator containmentLogicalOperator = (ContainmentLogicalOperator) current;
+        ContainmentLogicalOperator containmentLogicalOperator =
+            (ContainmentLogicalOperator) current;
 
         queue.addAll(containmentLogicalOperator.getValues());
 
@@ -376,7 +378,7 @@ public class StudyService {
 
         ContainmentDto containmentDto = (ContainmentDto) current;
 
-        if(containmentDto.getId() > nextId){
+        if (containmentDto.getId() > nextId) {
           nextId = containmentDto.getId();
         }
 
