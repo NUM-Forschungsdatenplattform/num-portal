@@ -41,7 +41,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/study")
+@RequestMapping(value = "/study", produces = "application/json")
 public class StudyController {
 
   private final StudyService studyService;

@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Validated
 @Controller
 @AllArgsConstructor
-@RequestMapping("/content")
+@RequestMapping(value = "/content", produces = "application/json")
 public class ContentController {
 
   private final ContentService contentService;

@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping(value = "/admin", produces = "application/json")
 @AllArgsConstructor
 public class AdminController {
 
@@ -109,10 +109,6 @@ public class AdminController {
           Boolean withRoles) {
     return ResponseEntity.ok(
         userService.searchUsers(
-            principal.getSubject(),
-            approved,
-            search,
-            withRoles,
-            Roles.extractRoles(principal)));
+            principal.getSubject(), approved, search, withRoles, Roles.extractRoles(principal)));
   }
 }
