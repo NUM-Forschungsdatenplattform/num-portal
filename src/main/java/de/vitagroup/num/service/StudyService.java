@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
@@ -76,6 +77,9 @@ public class StudyService {
   private static final String EHR_ID_PATH = "/ehr_id/value";
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
   private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
+  private static final String CSV_FILE_ENDING = ".csv";
+  private static final String JSON_FILE_ENDING = ".json";
+  private static final String CSV_MEDIA_TYPE = "text/csv";
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
     QueryResponseData response = executeAql(query, studyId, userId);
@@ -133,8 +137,8 @@ public class StudyService {
   }
 
   public StreamingResponseBody getExportResponseBody(
-      String query, Long studyId, String userId, String format) {
-    if ("json".equals(format)) {
+      String query, Long studyId, String userId, ExportType format) {
+    if (format == ExportType.json) {
       String jsonResponse = executeAqlAndJsonify(query, studyId, userId);
       return outputStream -> {
         outputStream.write(jsonResponse.getBytes(StandardCharsets.UTF_8));
@@ -146,15 +150,15 @@ public class StudyService {
     return outputStream -> streamResponseAsCsv(queryResponseData, outputStream);
   }
 
-  public MultiValueMap<String, String> getExportHeaders(String format, Long studyId) {
+  public MultiValueMap<String, String> getExportHeaders(ExportType format, Long studyId) {
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     String fileEnding;
-    if ("json".equals(format)) {
-      fileEnding = ".json";
+    if (format == ExportType.json) {
+      fileEnding = JSON_FILE_ENDING;
       headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     } else {
-      fileEnding = ".csv";
-      headers.add(HttpHeaders.CONTENT_TYPE, "text/csv");
+      fileEnding = CSV_FILE_ENDING;
+      headers.add(HttpHeaders.CONTENT_TYPE, CSV_MEDIA_TYPE);
     }
     headers.add(
         HttpHeaders.CONTENT_DISPOSITION,

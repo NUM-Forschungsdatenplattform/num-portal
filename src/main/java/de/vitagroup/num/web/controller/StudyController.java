@@ -1,6 +1,7 @@
 package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Comment;
+import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.dto.CommentDto;
@@ -125,7 +126,7 @@ public class StudyController {
           @ApiParam(
               value =
                   "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
-          String format,
+          ExportType format,
       @AuthenticationPrincipal @NotNull Jwt principal) {
     StreamingResponseBody streamingResponseBody =
         studyService.getExportResponseBody(
