@@ -2,13 +2,12 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.StudyTransition;
-import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
@@ -22,6 +21,7 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,7 +41,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.ConditionDto;
@@ -57,7 +56,12 @@ import org.ehrbase.aql.dto.containment.ContainmentLogicalOperatorSymbol;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @Service
 @AllArgsConstructor
@@ -73,6 +77,9 @@ public class StudyService {
   private static final String EHR_ID_PATH = "/ehr_id/value";
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
   private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
+  private static final String CSV_FILE_ENDING = ".csv";
+  private static final String JSON_FILE_ENDING = ".json";
+  private static final String CSV_MEDIA_TYPE = "text/csv";
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
     QueryResponseData response = executeAql(query, studyId, userId);
@@ -127,6 +134,36 @@ public class StudyService {
     } catch (IOException e) {
       throw new SystemException("Error while creating the CSV file");
     }
+  }
+
+  public StreamingResponseBody getExportResponseBody(
+      String query, Long studyId, String userId, ExportType format) {
+    if (format == ExportType.json) {
+      String jsonResponse = executeAqlAndJsonify(query, studyId, userId);
+      return outputStream -> {
+        outputStream.write(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        outputStream.flush();
+        outputStream.close();
+      };
+    }
+    QueryResponseData queryResponseData = executeAql(query, studyId, userId);
+    return outputStream -> streamResponseAsCsv(queryResponseData, outputStream);
+  }
+
+  public MultiValueMap<String, String> getExportHeaders(ExportType format, Long studyId) {
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+    String fileEnding;
+    if (format == ExportType.json) {
+      fileEnding = JSON_FILE_ENDING;
+      headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+    } else {
+      fileEnding = CSV_FILE_ENDING;
+      headers.add(HttpHeaders.CONTENT_TYPE, CSV_MEDIA_TYPE);
+    }
+    headers.add(
+        HttpHeaders.CONTENT_DISPOSITION,
+        "attachment; filename=" + getExportFilenameBody(studyId) + fileEnding);
+    return headers;
   }
 
   public Optional<Study> getStudyById(Long studyId) {
@@ -219,13 +256,14 @@ public class StudyService {
     return studiesList.stream().distinct().collect(Collectors.toList());
   }
 
-  public String getCsvFilename(Long studyId) {
+  public String getExportFilenameBody(Long studyId) {
     return String.format(
-        "Study_%d_%s.csv",
-        studyId,
-        LocalDateTime.now()
-            .truncatedTo(ChronoUnit.MINUTES)
-            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            "Study_%d_%s",
+            studyId,
+            LocalDateTime.now()
+                .truncatedTo(ChronoUnit.MINUTES)
+                .format(DateTimeFormatter.ISO_LOCAL_DATE))
+        .replace('-', '_');
   }
 
   private String restrictQueryToStudy(String query, Study study) {
@@ -332,7 +370,8 @@ public class StudyService {
 
       if (current instanceof ContainmentLogicalOperator) {
 
-        ContainmentLogicalOperator containmentLogicalOperator = (ContainmentLogicalOperator) current;
+        ContainmentLogicalOperator containmentLogicalOperator =
+            (ContainmentLogicalOperator) current;
 
         queue.addAll(containmentLogicalOperator.getValues());
 
@@ -368,7 +407,8 @@ public class StudyService {
 
       if (current instanceof ContainmentLogicalOperator) {
 
-        ContainmentLogicalOperator containmentLogicalOperator = (ContainmentLogicalOperator) current;
+        ContainmentLogicalOperator containmentLogicalOperator =
+            (ContainmentLogicalOperator) current;
 
         queue.addAll(containmentLogicalOperator.getValues());
 
@@ -376,7 +416,7 @@ public class StudyService {
 
         ContainmentDto containmentDto = (ContainmentDto) current;
 
-        if(containmentDto.getId() > nextId){
+        if (containmentDto.getId() > nextId) {
           nextId = containmentDto.getId();
         }
 
