@@ -138,13 +138,16 @@ public class NumLogger {
       if (annotation
           .annotationType()
           .isAnnotationPresent(org.springframework.web.bind.annotation.RequestMapping.class)) {
-        for (RequestMapping a :
+
+        RequestMapping[] mappings =
             annotation
                 .annotationType()
-                .getAnnotationsByType(
-                    org.springframework.web.bind.annotation.RequestMapping.class)) {
-          for (RequestMethod reqMethod : a.method()) {
-            return reqMethod;
+                .getAnnotationsByType(org.springframework.web.bind.annotation.RequestMapping.class);
+
+        if (mappings.length > 0) {
+          RequestMethod[] methods = mappings[0].method();
+          if (methods.length > 0) {
+            return methods[0];
           }
         }
       }
