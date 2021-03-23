@@ -56,23 +56,24 @@ import org.ehrbase.aql.dto.containment.ContainmentLogicalOperatorSymbol;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
 public class StudyService {
 
+  private static final String EHR_ID_PATH = "/ehr_id/value";
+  private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
+  private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
   private final StudyRepository studyRepository;
   private final UserDetailsService userDetailsService;
   private final EhrBaseService ehrBaseService;
   private final ObjectMapper mapper;
   private final CohortService cohortService;
   private final AtnaService atnaService;
+  @Nullable
   private final ZarsService zarsService;
-
-  private static final String EHR_ID_PATH = "/ehr_id/value";
-  private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
-  private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
     QueryResponseData response = executeAql(query, studyId, userId);
@@ -167,7 +168,7 @@ public class StudyService {
     Study savedStudy = studyRepository.save(study);
 
     if (savedStudy.getStatus() == StudyStatus.PENDING) {
-      zarsService.registerToZars(study);
+      registerToZars(study);
     }
 
     return savedStudy;
@@ -223,7 +224,7 @@ public class StudyService {
             && newStatus != oldStatus)
         || (newStatus == StudyStatus.PUBLISHED
             && researchersAreDifferent(oldResearchers, newResearchers))) {
-      zarsService.registerToZars(study);
+      registerToZars(study);
     }
   }
 
@@ -278,7 +279,7 @@ public class StudyService {
     select.setAqlPath(TEMPLATE_ID_PATH);
 
     ContainmentExpresionDto contains = aql.getContains();
-    Integer nextContainmentId = findNextContainmentId(contains);
+    int nextContainmentId = findNextContainmentId(contains);
     if (contains != null) {
       Integer compositionIdentifier = findComposition(contains);
       if (compositionIdentifier != null) {
@@ -523,6 +524,12 @@ public class StudyService {
       study.getTransitions().add(studyTransition);
     } else {
       study.setTransitions(Set.of(studyTransition));
+    }
+  }
+
+  private void registerToZars(Study study) {
+    if (zarsService != null) {
+      zarsService.registerToZars(study);
     }
   }
 }

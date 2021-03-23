@@ -27,12 +27,15 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
 @AllArgsConstructor
+@ConditionalOnBean(ZarsProperties.class)
 public class ZarsService {
 
   private final ObjectMapper objectMapper;
@@ -46,43 +49,32 @@ public class ZarsService {
 
   @PostConstruct
   public void initialize() {
-    if (zarsProperties.isEnabled()) {
-      try {
-        File resource = new ClassPathResource("ZARSHeaders.json").getFile();
-        String json = new String(Files.readAllBytes(resource.toPath()));
-        zarsHeaders = objectMapper.readValue(json, String[].class);
-      } catch (IOException e) {
-        log.error("Failed to read ZARS headers file, can't send updates to ZARS!");
-      }
+    try {
+      File resource = new ClassPathResource("ZARSHeaders.json").getFile();
+      String json = new String(Files.readAllBytes(resource.toPath()));
+      zarsHeaders = objectMapper.readValue(json, String[].class);
+    } catch (IOException e) {
+      log.error("Failed to read ZARS headers file, can't send updates to ZARS!");
     }
   }
 
   public void registerToZars(@NotNull Study study) {
-    if (zarsProperties.isEnabled()) {
-      String csv = generateCSV(study);
-      String subject = "Projekt NUM-" + study.getId();
-      String body =
-          String.format(
-              "NUM-%d\nTitel: %s\nProjektleiter: %s\nNeuer Status: %s",
-              study.getId(), study.getName(), getCoordinator(study), study.getStatus().toString());
-      emailService.sendEmailWithAttachment(
-          subject,
-          body,
-          zarsProperties.getEmail(),
-          csv,
-          "NUM_" + study.getId() + ".csv",
-          "text/csv");
-      log.debug("Registration email successfully sent to " + zarsProperties.getEmail());
-    } else {
-      log.info("ZARS registration not enabled, no email sent");
-    }
+    String csv = generateCSV(study);
+    String subject = "Projekt NUM-" + study.getId();
+    String body =
+        String.format(
+            "NUM-%d%nTitel: %s%nProjektleiter: %s%nNeuer Status: %s",
+            study.getId(), study.getName(), getCoordinator(study), study.getStatus().toString());
+    emailService.sendEmailWithAttachment(
+        subject, body, zarsProperties.getEmail(), csv, "NUM_" + study.getId() + ".csv", "text/csv");
+    log.debug("Registration email successfully sent to " + zarsProperties.getEmail());
   }
 
   @NotNull
   private String generateCSV(@NotNull Study study) {
     if (zarsHeaders == null) {
       log.error("ZARS headers file reading has failed, can't send updates to ZARS!");
-      return "";
+      return StringUtils.EMPTY;
     }
     StringWriter writer = new StringWriter();
     try (CSVPrinter printer = CSVFormat.EXCEL.withHeader(zarsHeaders).print(writer)) {
@@ -138,7 +130,7 @@ public class ZarsService {
   @NotNull
   private String getQueries(Study study) {
     if (study.getCohort() == null) {
-      return "";
+      return StringUtils.EMPTY;
     }
     return String.join(", ", cohortQueryLister.list(study.getCohort()));
   }
@@ -152,12 +144,12 @@ public class ZarsService {
             .orElse(Collections.emptyList());
     if (transitions.size() > 1) {
       log.error("More than one transition from REVIEWING to APPROVED for study " + study.getId());
-      return "";
+      return StringUtils.EMPTY;
     }
     if (transitions.size() == 1) {
       return transitions.get(0).getCreateDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
     }
-    return "";
+    return StringUtils.EMPTY;
   }
 
   @NotNull
@@ -192,6 +184,6 @@ public class ZarsService {
     if (transitions.size() == 1) {
       return transitions.get(0).getCreateDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
     }
-    return "";
+    return StringUtils.EMPTY;
   }
 }
