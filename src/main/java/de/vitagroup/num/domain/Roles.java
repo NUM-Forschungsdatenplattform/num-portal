@@ -38,10 +38,11 @@ public class Roles {
     if (callersRoles.contains(SUPER_ADMIN) && SUPER_ADMIN_ASSIGNABLE.contains(roleToSet)) {
       return true;
     }
-    if (callersRoles.contains(ORGANIZATION_ADMIN)
-        && ORGANIZATION_ADMIN_ASSIGNABLE.contains(roleToSet)) {
-      return true;
-    }
-    return false;
+    return callersRoles.contains(ORGANIZATION_ADMIN)
+        && ORGANIZATION_ADMIN_ASSIGNABLE.contains(roleToSet);
+  }
+
+  public static boolean hasRole(String role, Jwt principal) {
+    return extractRoles(principal).contains(role);
   }
 }

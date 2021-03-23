@@ -10,10 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.eq;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.Roles;
@@ -52,26 +52,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class StudyServiceTest {
 
-  @Mock private StudyRepository studyRepository;
-
-  @Mock private UserDetailsService userDetailsService;
-
-  @Mock private CohortService cohortService;
-
-  @Mock private EhrBaseService ehrBaseService;
-
-  @Mock private AtnaService atnaService;
-
-  @InjectMocks private StudyService studyService;
-
-  @Captor ArgumentCaptor<String> stringArgumentCaptor;
-
   private static final String CORONA_TEMPLATE = "Corona_Anamnese";
-
   private static final String EHR_ID_1 = "f4da8646-8e36-4d9d-869c-af9dce5935c7";
   private static final String EHR_ID_2 = "61861e76-1606-48c9-adcf-49ebbb2c6bbd";
   private static final String EHR_ID_3 = "47dc21a2-7076-4a57-89dc-bd83729ed52f";
-
   private static final String QUERY_1 =
       "SELECT e/ehr_id/value, "
           + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value, "
@@ -80,28 +64,38 @@ public class StudyServiceTest {
           + "contains COMPOSITION c3[openEHR-EHR-COMPOSITION.report.v1] "
           + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
           + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
-
   private static final String QUERY_2 =
       "Select e/ehr_id/value as F1, "
           + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
           + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 from EHR e "
           + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
           + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
-
   private static final String QUERY_BASIC = "SELECT e FROM EHR e";
-
   private static final String QUERY_3 =
       "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, "
           + "c1 as openEHR_EHR_COMPOSITION_report_v1 FROM  "
           + "EHR e "
           + "contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
-
   private static final String QUERY_4 =
       "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, "
           + "c1 as openEHR_EHR_COMPOSITION_report_v1 FROM  "
           + "EHR e "
           + "contains COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] "
           + "contains (COMPOSITION c2[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
+  @Captor
+  ArgumentCaptor<String> stringArgumentCaptor;
+  @Mock
+  private StudyRepository studyRepository;
+  @Mock
+  private UserDetailsService userDetailsService;
+  @Mock
+  private CohortService cohortService;
+  @Mock
+  private EhrBaseService ehrBaseService;
+  @Mock
+  private AtnaService atnaService;
+  @InjectMocks
+  private StudyService studyService;
 
   @Test
   public void shouldHandleQuery3() {
@@ -670,6 +664,49 @@ public class StudyServiceTest {
         StudyDto.builder().name("new study").financed(false).status(StudyStatus.PENDING).build();
     studyService.createStudy(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(studyRepository, times(1)).save(any());
+  }
+
+  @Test
+  public void shouldAllowEditingOwnedStudy() {
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .coordinator(new UserDetails("approvedCoordinatorId", null, true))
+                    .build()));
+
+    StudyDto existingStudy =
+        StudyDto.builder()
+            .id(1L)
+            .name("existing study")
+            .financed(false)
+            .status(StudyStatus.PENDING)
+            .build();
+    studyService.updateStudy(
+        existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    verify(studyRepository, times(1)).save(any());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldRejectEditingNotOwnedStudy() {
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .coordinator(new UserDetails("ownerCoordinatorId", null, true))
+                    .build()));
+
+    StudyDto existingStudy =
+        StudyDto.builder()
+            .id(1L)
+            .name("existing study")
+            .financed(false)
+            .status(StudyStatus.PENDING)
+            .build();
+    studyService.updateStudy(
+        existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
   }
 
   @Before
