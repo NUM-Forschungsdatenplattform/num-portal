@@ -5,6 +5,7 @@ import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
+import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -35,6 +36,7 @@ public class AdminController {
   private final UserService userService;
   private final UserDetailsService userDetailsService;
 
+  @AuditLog
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
   public ResponseEntity<User> getUser(
@@ -42,6 +44,7 @@ public class AdminController {
     return ResponseEntity.ok(userService.getUserById(userId, true, principal.getSubject()));
   }
 
+  @AuditLog
   @GetMapping("/user/{userId}/role")
   @ApiOperation(value = "Retrieves the roles of the given user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -50,6 +53,7 @@ public class AdminController {
     return ResponseEntity.ok(userService.getUserRoles(userId, principal.getSubject()));
   }
 
+  @AuditLog
   @PostMapping("/user/{userId}/role")
   @ApiOperation(value = "Updates the users roles to the given set.")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -62,6 +66,7 @@ public class AdminController {
             userId, roles, principal.getSubject(), Roles.extractRoles(principal)));
   }
 
+  @AuditLog
   @PostMapping("/user/{userId}/organization")
   @ApiOperation(value = "Sets the user's organization")
   @PreAuthorize(Role.SUPER_ADMIN)
@@ -73,6 +78,7 @@ public class AdminController {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
+  @AuditLog
   @PostMapping("/user/{userId}")
   @ApiOperation(value = "Creates user details")
   public ResponseEntity<String> createUserOnFirstLogin(
@@ -81,6 +87,7 @@ public class AdminController {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
+  @AuditLog
   @PostMapping("/user/{userId}/approve")
   @ApiOperation(value = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -90,6 +97,7 @@ public class AdminController {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
+  @AuditLog
   @GetMapping("/user")
   @ApiOperation(value = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)

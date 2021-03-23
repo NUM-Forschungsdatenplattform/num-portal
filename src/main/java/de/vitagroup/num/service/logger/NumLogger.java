@@ -8,11 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.CodeSignature;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,14 +34,16 @@ public class NumLogger {
   private static final String DELETE = "DELETE";
   private static final String GET = "GET";
 
-  @Pointcut("within(de.vitagroup.num.web.controller..*)")
-  public void controllerMethods() {}
-
-  @Before("controllerMethods() && args(principal, ..)")
-  public void logMethodCall(JoinPoint joinPoint, Jwt principal) {
+  @Before("@annotation(AuditLog)")
+  public void logMethodCall(JoinPoint joinPoint) {
 
     try {
-      logApiOperations(joinPoint, principal);
+      if (SecurityContextHolder.getContext().getAuthentication() == null) {
+        return;
+      }
+
+      logApiOperations(
+          joinPoint, (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     } catch (Exception e) {
       log.error("Cannot log audit log {}", e);
     }

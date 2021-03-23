@@ -5,6 +5,7 @@ import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.mapper.CohortMapper;
 import de.vitagroup.num.service.CohortService;
+import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import java.util.Set;
@@ -32,6 +33,7 @@ public class CohortController {
 
   private final CohortMapper cohortMapper;
 
+  @AuditLog
   @GetMapping("{cohortId}")
   @ApiOperation(value = "Retrieves a single cohort.")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -41,6 +43,7 @@ public class CohortController {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohort));
   }
 
+  @AuditLog
   @PostMapping
   @ApiOperation(value = "Stores a cohort")
   @PreAuthorize(Role.STUDY_COORDINATOR)
@@ -51,6 +54,7 @@ public class CohortController {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
+  @AuditLog
   @PutMapping(value = "/{id}")
   @ApiOperation(value = "Updates a cohort")
   @PreAuthorize(Role.STUDY_COORDINATOR)
@@ -62,6 +66,7 @@ public class CohortController {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
+  @AuditLog
   @PostMapping("{cohortId}/execute")
   @ApiOperation(value = "Executes the cohort")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -69,6 +74,7 @@ public class CohortController {
     return ResponseEntity.ok(cohortService.executeCohort(Long.parseLong(cohortId)));
   }
 
+  @AuditLog
   @PostMapping("size")
   @ApiOperation(value = "Retrieves the cohort group size without saving")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
