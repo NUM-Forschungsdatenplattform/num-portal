@@ -44,5 +44,6 @@ public class ApplicationSecurity extends WebSecurityConfigurerAdapter {
     web.ignoring().antMatchers(AUTH_WHITELIST);
     web.ignoring().mvcMatchers(HttpMethod.GET, "/content/navigation");
     web.ignoring().mvcMatchers(HttpMethod.GET, "/content/cards");
+    web.ignoring().mvcMatchers(HttpMethod.GET, "/content/metrics");
   }
 }

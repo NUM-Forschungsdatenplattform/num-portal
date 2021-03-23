@@ -7,7 +7,9 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.StudyTransition;
+import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.ProjectInfoDto;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
@@ -68,11 +70,18 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 public class StudyService {
 
   private final StudyRepository studyRepository;
+
   private final UserDetailsService userDetailsService;
+
   private final EhrBaseService ehrBaseService;
+
   private final ObjectMapper mapper;
+
   private final CohortService cohortService;
+
   private final AtnaService atnaService;
+
+  private final UserService userService;
 
   private static final String EHR_ID_PATH = "/ehr_id/value";
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
@@ -80,6 +89,31 @@ public class StudyService {
   private static final String CSV_FILE_ENDING = ".csv";
   private static final String JSON_FILE_ENDING = ".json";
   private static final String CSV_MEDIA_TYPE = "text/csv";
+
+  /**
+   * Counts the number of projects existing in the platform
+   *
+   * @return
+   */
+  public long countProjects() {
+    return studyRepository.count();
+  }
+
+  /**
+   * Retrieves a list of latest projects information
+   *
+   * @param count number of projects to be retrieved
+   * @return
+   */
+  public List<ProjectInfoDto> getLatestProjectsInfo(int count) {
+
+    if (count < 1) {
+      return List.of();
+    }
+
+    List<Study> projects = studyRepository.findLatestProjects(count);
+    return projects.stream().map(this::toProjectInfo).collect(Collectors.toList());
+  }
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
     QueryResponseData response = executeAql(query, studyId, userId);
@@ -527,5 +561,25 @@ public class StudyService {
     } else {
       study.setTransitions(Set.of(studyTransition));
     }
+  }
+
+  private ProjectInfoDto toProjectInfo(Study study) {
+    if (study == null) {
+      return null;
+    }
+
+    ProjectInfoDto project =
+        ProjectInfoDto.builder().createDate(study.getCreateDate()).title(study.getName()).build();
+
+    if (study.getCoordinator() != null) {
+      User coordinator = userService.getUserById(study.getCoordinator().getUserId(), false);
+      project.setCoordinator(
+          String.format("%s %s", coordinator.getFirstName(), coordinator.getLastName()));
+
+      if (study.getCoordinator().getOrganization() != null) {
+        project.setOrganization(study.getCoordinator().getOrganization().getName());
+      }
+    }
+    return project;
   }
 }
