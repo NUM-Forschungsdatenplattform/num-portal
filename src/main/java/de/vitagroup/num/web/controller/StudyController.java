@@ -1,6 +1,7 @@
 package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Comment;
+import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.dto.CommentDto;
@@ -13,6 +14,7 @@ import de.vitagroup.num.service.StudyService;
 import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -20,14 +22,11 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import org.ehrbase.response.openehr.QueryResponseData;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,12 +35,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/study")
+@RequestMapping(value = "/study", produces = "application/json")
 public class StudyController {
 
   private final StudyService studyService;
@@ -98,10 +98,16 @@ public class StudyController {
       @PathVariable("id") Long studyId,
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
-    Study study =
-        studyService.updateStudy(
-            studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
-
+    Study study;
+    if (Roles.hasRole(Roles.STUDY_APPROVER, principal)) {
+      study =
+          studyService.updateStudyStatus(
+              studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
+    } else {
+      study =
+          studyService.updateStudy(
+              studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
+    }
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
 
@@ -116,22 +122,22 @@ public class StudyController {
         studyService.executeAqlAndJsonify(query.getQuery(), studyId, principal.getSubject()));
   }
 
-  @PostMapping(value = "/{studyId}/export", produces = "text/csv")
+  @PostMapping(value = "/{studyId}/export")
   @ApiOperation(value = "Executes the aql and returns the result as a csv file attachment")
   @PreAuthorize(Role.RESEARCHER)
   public ResponseEntity<StreamingResponseBody> exportResults(
       @RequestBody @Valid RawQueryDto query,
       @NotNull @NotEmpty @PathVariable Long studyId,
+      @RequestParam(required = false)
+          @ApiParam(
+              value =
+                  "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
+          ExportType format,
       @AuthenticationPrincipal @NotNull Jwt principal) {
-    QueryResponseData queryResponseData =
-        studyService.executeAql(query.getQuery(), studyId, principal.getSubject());
     StreamingResponseBody streamingResponseBody =
-        outputStream -> studyService.streamResponseAsCsv(queryResponseData, outputStream);
-    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-    headers.add(
-        HttpHeaders.CONTENT_DISPOSITION,
-        "attachment; filename=" + studyService.getCsvFilename(studyId));
-    headers.add(HttpHeaders.CONTENT_TYPE, "text/csv");
+        studyService.getExportResponseBody(
+            query.getQuery(), studyId, principal.getSubject(), format);
+    MultiValueMap<String, String> headers = studyService.getExportHeaders(format, studyId);
 
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }
@@ -180,7 +186,7 @@ public class StudyController {
 
   @DeleteMapping("/{studyId}/comment/{commentId}")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  void deleteComment(
+  public void deleteComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @NotEmpty @PathVariable Long studyId,
       @NotNull @NotEmpty @PathVariable Long commentId) {

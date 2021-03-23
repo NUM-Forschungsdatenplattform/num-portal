@@ -2,11 +2,14 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.StudyTransition;
+import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.ProjectInfoDto;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
@@ -21,6 +24,7 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -56,8 +60,13 @@ import org.ehrbase.aql.dto.containment.ContainmentLogicalOperatorSymbol;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @Service
 @AllArgsConstructor
@@ -66,14 +75,52 @@ public class StudyService {
   private static final String EHR_ID_PATH = "/ehr_id/value";
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
   private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
+  private static final String CSV_FILE_ENDING = ".csv";
+  private static final String JSON_FILE_ENDING = ".json";
+  private static final String CSV_MEDIA_TYPE = "text/csv";
+  private static final String STUDY_NOT_FOUND = "Study not found: ";
+
   private final StudyRepository studyRepository;
+
   private final UserDetailsService userDetailsService;
+
   private final EhrBaseService ehrBaseService;
+
   private final ObjectMapper mapper;
+
   private final CohortService cohortService;
+
   private final AtnaService atnaService;
+
+  private final UserService userService;
+
   @Nullable
   private final ZarsService zarsService;
+
+  /**
+   * Counts the number of projects existing in the platform
+   *
+   * @return
+   */
+  public long countProjects() {
+    return studyRepository.count();
+  }
+
+  /**
+   * Retrieves a list of latest projects information
+   *
+   * @param count number of projects to be retrieved
+   * @return
+   */
+  public List<ProjectInfoDto> getLatestProjectsInfo(int count) {
+
+    if (count < 1) {
+      return List.of();
+    }
+
+    List<Study> projects = studyRepository.findLatestProjects(count);
+    return projects.stream().map(this::toProjectInfo).collect(Collectors.toList());
+  }
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
     QueryResponseData response = executeAql(query, studyId, userId);
@@ -93,7 +140,7 @@ public class StudyService {
       study =
           studyRepository
               .findById(studyId)
-              .orElseThrow(() -> new ResourceNotFound("Study not found: " + studyId));
+              .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + studyId));
 
       if (!study.isStudyResearcher(userId) && study.hasEmptyOrDifferentOwner(userId)) {
         throw new ForbiddenException("Cannot access this study");
@@ -128,6 +175,36 @@ public class StudyService {
     } catch (IOException e) {
       throw new SystemException("Error while creating the CSV file");
     }
+  }
+
+  public StreamingResponseBody getExportResponseBody(
+      String query, Long studyId, String userId, ExportType format) {
+    if (format == ExportType.json) {
+      String jsonResponse = executeAqlAndJsonify(query, studyId, userId);
+      return outputStream -> {
+        outputStream.write(jsonResponse.getBytes(StandardCharsets.UTF_8));
+        outputStream.flush();
+        outputStream.close();
+      };
+    }
+    QueryResponseData queryResponseData = executeAql(query, studyId, userId);
+    return outputStream -> streamResponseAsCsv(queryResponseData, outputStream);
+  }
+
+  public MultiValueMap<String, String> getExportHeaders(ExportType format, Long studyId) {
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+    String fileEnding;
+    if (format == ExportType.json) {
+      fileEnding = JSON_FILE_ENDING;
+      headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+    } else {
+      fileEnding = CSV_FILE_ENDING;
+      headers.add(HttpHeaders.CONTENT_TYPE, CSV_MEDIA_TYPE);
+    }
+    headers.add(
+        HttpHeaders.CONTENT_DISPOSITION,
+        "attachment; filename=" + getExportFilenameBody(studyId) + fileEnding);
+    return headers;
   }
 
   public Optional<Study> getStudyById(Long studyId) {
@@ -182,7 +259,9 @@ public class StudyService {
     Study studyToEdit =
         studyRepository
             .findById(id)
-            .orElseThrow(() -> new ResourceNotFound("Study not found: " + id));
+            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+
+    validateCoordinatorIsOwner(studyToEdit, userId);
 
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
@@ -232,6 +311,22 @@ public class StudyService {
       List<UserDetails> oldResearchers, List<UserDetails> newResearchers) {
     return !(oldResearchers.containsAll(newResearchers)
         && newResearchers.containsAll(oldResearchers));
+    return studyRepository.save(studyToEdit);
+  }
+
+  public Study updateStudyStatus(StudyDto studyDto, Long id, String userId, List<String> roles) {
+    UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
+
+    Study studyToEdit =
+        studyRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+
+    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
+    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
+    studyToEdit.setStatus(studyDto.getStatus());
+
+    return studyRepository.save(studyToEdit);
   }
 
   public List<Study> getStudies(String userId, List<String> roles) {
@@ -525,6 +620,32 @@ public class StudyService {
     } else {
       study.setTransitions(Set.of(studyTransition));
     }
+  }
+
+  private void validateCoordinatorIsOwner(Study study, String loggedInUser) {
+    if (study.hasEmptyOrDifferentOwner(loggedInUser)) {
+      throw new ForbiddenException("Cannot access this resource. User is not owner.");
+    }
+  }
+
+  private ProjectInfoDto toProjectInfo(Study study) {
+    if (study == null) {
+      return null;
+    }
+
+    ProjectInfoDto project =
+        ProjectInfoDto.builder().createDate(study.getCreateDate()).title(study.getName()).build();
+
+    if (study.getCoordinator() != null) {
+      User coordinator = userService.getUserById(study.getCoordinator().getUserId(), false);
+      project.setCoordinator(
+          String.format("%s %s", coordinator.getFirstName(), coordinator.getLastName()));
+
+      if (study.getCoordinator().getOrganization() != null) {
+        project.setOrganization(study.getCoordinator().getOrganization().getName());
+      }
+    }
+    return project;
   }
 
   private void registerToZars(Study study) {

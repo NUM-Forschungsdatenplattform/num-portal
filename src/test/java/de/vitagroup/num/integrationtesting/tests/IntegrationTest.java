@@ -29,23 +29,37 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @TestPropertySource(locations = "classpath:application.yml")
 public abstract class IntegrationTest {
 
-  @Autowired public MockMvc mockMvc;
-
-  @Rule public WireMockRule wireMockRule = new WireMockRule(8099);
+  public static final String UNAUTHORIZED_USER_ID = "b59e5edb-3121-4e0a-8ccb-af6798207a73";
+  private static final String IDENTITY_PROVIDER_URL =
+      "/auth/realms/Num/protocol/openid-connect/certs";
+  private static final String IDENTITY_PROVIDER_TOKEN_ENDPOINT =
+      "/auth/realms/Num/protocol/openid-connect/token";
+  private static final String USER_ENDPOINT_USER1 = "/auth/admin/realms/Num/users/user1";
+  private static final String EHR_BASE_URL = "/ehrbase/rest/openehr/v1/definition/template/adl1.4/";
 
   @ClassRule
   public static PostgreSQLContainer postgreSQLContainer = NumPostgresqlContainer.getInstance();
 
-  public static final String AUTHORIZED_USER_ID = "b59e5edb-3121-4e0a-8ccb-af6798207a72";
-  public static final String UNAUTHORIZED_USER_ID = "b59e5edb-3121-4e0a-8ccb-af6798207a73";
-
-  public static final String IDENTITY_PROVIDER_URL =
-      "/auth/realms/Num/protocol/openid-connect/certs";
-  public static final String EHR_BASE_URL = "/ehrbase/rest/openehr/v1/definition/template/adl1.4/";
+  @Autowired
+  public MockMvc mockMvc;
+  @Rule
+  public WireMockRule wireMockRule = new WireMockRule(8099);
 
   @Before
   @SneakyThrows
   public void setup() {
+    stubFor(
+        WireMock.get(USER_ENDPOINT_USER1)
+            .willReturn(
+                okJson(
+                    "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"User1\"}")));
+
+    stubFor(
+        WireMock.post(IDENTITY_PROVIDER_TOKEN_ENDPOINT)
+            .willReturn(
+                okJson(
+                    "{\"token_type\": \"Bearer\",\"access_token\":\"{{randomValue length=20 type='ALPHANUMERIC'}}\"}")));
+
     stubFor(WireMock.get(IDENTITY_PROVIDER_URL).willReturn(okJson(TokenGenerator.pk)));
 
     stubFor(

@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/organization")
+@RequestMapping(value = "/organization", produces = "application/json")
 @AllArgsConstructor
 public class OrganizationController {
 

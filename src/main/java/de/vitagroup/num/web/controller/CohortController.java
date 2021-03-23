@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/cohort")
+@RequestMapping(value = "/cohort", produces = "application/json")
 public class CohortController {
 
   private final CohortService cohortService;
@@ -74,6 +74,7 @@ public class CohortController {
   public ResponseEntity<Long> getCohortGroupSize(
       @NotNull @RequestBody CohortGroupDto cohortGroupDto,
       @AuthenticationPrincipal @NotNull Jwt principal) {
-    return ResponseEntity.ok(cohortService.getCohortGroupSize(cohortGroupDto, principal.getSubject()));
+    return ResponseEntity.ok(
+        cohortService.getCohortGroupSize(cohortGroupDto, principal.getSubject()));
   }
 }

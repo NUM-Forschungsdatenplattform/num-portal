@@ -1,7 +1,9 @@
 package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.dto.CardDto;
+import de.vitagroup.num.domain.dto.MetricsDto;
 import de.vitagroup.num.domain.dto.NavigationItemDto;
+import de.vitagroup.num.domain.dto.ProjectInfoDto;
 import de.vitagroup.num.service.ContentService;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
@@ -24,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Validated
 @Controller
 @AllArgsConstructor
-@RequestMapping("/content")
+@RequestMapping(value = "/content", produces = "application/json")
 public class ContentController {
 
   private final ContentService contentService;
@@ -37,6 +39,18 @@ public class ContentController {
   })
   public ResponseEntity<String> getNavigationItems() {
     return ResponseEntity.ok(contentService.getNavigationItems());
+  }
+
+  @GetMapping("/metrics")
+  @ApiOperation(value = "Retrieves platform metrics")
+  public ResponseEntity<MetricsDto> getMetrics() {
+    return ResponseEntity.ok(contentService.getMetrics());
+  }
+
+  @GetMapping("/latest-projects")
+  @ApiOperation(value = "Retrieves latest project info")
+  public ResponseEntity<List<ProjectInfoDto>> getLatestProjects() {
+    return ResponseEntity.ok(contentService.getLatestProjects());
   }
 
   @PostMapping("/navigation")
