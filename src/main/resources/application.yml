@@ -92,7 +92,7 @@ privacy:
 spring:
   profiles: local
   datasource:
-    url: jdbc:postgresql://localhost:5432/num?currentSchema=num
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=num
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: postgres
