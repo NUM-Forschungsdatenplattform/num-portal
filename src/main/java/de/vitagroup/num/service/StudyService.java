@@ -89,6 +89,7 @@ public class StudyService {
   private static final String CSV_FILE_ENDING = ".csv";
   private static final String JSON_FILE_ENDING = ".json";
   private static final String CSV_MEDIA_TYPE = "text/csv";
+  private static final String STUDY_NOT_FOUND = "Study not found: ";
 
   /**
    * Counts the number of projects existing in the platform
@@ -133,7 +134,7 @@ public class StudyService {
       study =
           studyRepository
               .findById(studyId)
-              .orElseThrow(() -> new ResourceNotFound("Study not found: " + studyId));
+              .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + studyId));
 
       if (!study.isStudyResearcher(userId) && study.hasEmptyOrDifferentOwner(userId)) {
         throw new ForbiddenException("Cannot access this study");
@@ -245,7 +246,9 @@ public class StudyService {
     Study studyToEdit =
         studyRepository
             .findById(id)
-            .orElseThrow(() -> new ResourceNotFound("Study not found: " + id));
+            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+
+    validateCoordinatorIsOwner(studyToEdit, userId);
 
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
@@ -265,6 +268,21 @@ public class StudyService {
     studyToEdit.setStartDate(studyDto.getStartDate());
     studyToEdit.setEndDate(studyDto.getEndDate());
     studyToEdit.setFinanced(studyDto.isFinanced());
+
+    return studyRepository.save(studyToEdit);
+  }
+
+  public Study updateStudyStatus(StudyDto studyDto, Long id, String userId, List<String> roles) {
+    UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
+
+    Study studyToEdit =
+        studyRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+
+    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
+    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
+    studyToEdit.setStatus(studyDto.getStatus());
 
     return studyRepository.save(studyToEdit);
   }
@@ -315,7 +333,7 @@ public class StudyService {
     select.setAqlPath(TEMPLATE_ID_PATH);
 
     ContainmentExpresionDto contains = aql.getContains();
-    Integer nextContainmentId = findNextContainmentId(contains);
+    int nextContainmentId = findNextContainmentId(contains);
     if (contains != null) {
       Integer compositionIdentifier = findComposition(contains);
       if (compositionIdentifier != null) {
@@ -560,6 +578,12 @@ public class StudyService {
       study.getTransitions().add(studyTransition);
     } else {
       study.setTransitions(Set.of(studyTransition));
+    }
+  }
+
+  private void validateCoordinatorIsOwner(Study study, String loggedInUser) {
+    if (study.hasEmptyOrDifferentOwner(loggedInUser)) {
+      throw new ForbiddenException("Cannot access this resource. User is not owner.");
     }
   }
 
