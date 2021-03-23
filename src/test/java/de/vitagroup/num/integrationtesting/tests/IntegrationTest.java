@@ -30,11 +30,12 @@ import org.testcontainers.containers.PostgreSQLContainer;
 public abstract class IntegrationTest {
 
   public static final String UNAUTHORIZED_USER_ID = "b59e5edb-3121-4e0a-8ccb-af6798207a73";
-  public static final String IDENTITY_PROVIDER_URL =
+  private static final String IDENTITY_PROVIDER_URL =
       "/auth/realms/Num/protocol/openid-connect/certs";
-  public static final String IDENTITY_PROVIDER_TOKEN_ENDPOINT =
+  private static final String IDENTITY_PROVIDER_TOKEN_ENDPOINT =
       "/auth/realms/Num/protocol/openid-connect/token";
-  public static final String EHR_BASE_URL = "/ehrbase/rest/openehr/v1/definition/template/adl1.4/";
+  private static final String USER_ENDPOINT_USER1 = "/auth/admin/realms/Num/users/user1";
+  private static final String EHR_BASE_URL = "/ehrbase/rest/openehr/v1/definition/template/adl1.4/";
 
   @ClassRule
   public static PostgreSQLContainer postgreSQLContainer = NumPostgresqlContainer.getInstance();
@@ -48,7 +49,7 @@ public abstract class IntegrationTest {
   @SneakyThrows
   public void setup() {
     stubFor(
-        WireMock.get("/auth/admin/realms/Num/users/user1")
+        WireMock.get(USER_ENDPOINT_USER1)
             .willReturn(
                 okJson(
                     "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"User1\"}")));
