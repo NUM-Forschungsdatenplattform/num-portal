@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @AllArgsConstructor
-@RequestMapping("/template")
+@RequestMapping(value = "/template", produces = "application/json")
 public class TemplateController {
 
   private final TemplateService templateService;

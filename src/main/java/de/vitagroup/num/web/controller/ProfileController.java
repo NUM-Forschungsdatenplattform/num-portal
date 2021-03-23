@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/profile")
+@RequestMapping(value = "/profile", produces = "application/json")
 @AllArgsConstructor
 public class ProfileController {
 

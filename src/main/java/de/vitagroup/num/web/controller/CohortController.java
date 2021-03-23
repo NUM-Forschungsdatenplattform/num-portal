@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/cohort")
+@RequestMapping(value = "/cohort", produces = "application/json")
 public class CohortController {
 
   private final CohortService cohortService;

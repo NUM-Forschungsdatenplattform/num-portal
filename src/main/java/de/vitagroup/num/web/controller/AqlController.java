@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/aql")
+@RequestMapping(value = "/aql", produces = "application/json")
 public class AqlController {
 
   private final AqlService aqlService;

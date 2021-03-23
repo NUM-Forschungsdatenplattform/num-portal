@@ -42,7 +42,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/study")
+@RequestMapping(value = "/study", produces = "application/json")
 public class StudyController {
 
   private final StudyService studyService;
@@ -102,10 +102,16 @@ public class StudyController {
       @PathVariable("id") Long studyId,
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
-    Study study =
-        studyService.updateStudy(
-            studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
-
+    Study study;
+    if (Roles.hasRole(Roles.STUDY_APPROVER, principal)) {
+      study =
+          studyService.updateStudyStatus(
+              studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
+    } else {
+      study =
+          studyService.updateStudy(
+              studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
+    }
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
 
@@ -190,7 +196,7 @@ public class StudyController {
   @AuditLog
   @DeleteMapping("/{studyId}/comment/{commentId}")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  void deleteComment(
+  public void deleteComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @NotEmpty @PathVariable Long studyId,
       @NotNull @NotEmpty @PathVariable Long commentId) {
