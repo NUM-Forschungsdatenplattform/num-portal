@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/phenotype")
+@RequestMapping(value = "/phenotype", produces = "application/json")
 @AllArgsConstructor
 public class PhenotypeController {
 
