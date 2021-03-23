@@ -27,8 +27,19 @@ import org.springframework.stereotype.Service;
 public class OrganizationService {
 
   private final OrganizationRepository organizationRepository;
+
   private final MailDomainRepository mailDomainRepository;
+
   private final UserDetailsService userDetailsService;
+
+  /**
+   * Counts the number of organization existing in the platform
+   *
+   * @return
+   */
+  public long countOrganizations() {
+    return organizationRepository.count();
+  }
 
   /**
    * Retrieves a list with available organizations
@@ -129,10 +140,10 @@ public class OrganizationService {
                   mailDomainRepository.findByName(domain.toLowerCase());
               if (mailDomain.isPresent()
                   && !mailDomain
-                  .get()
-                  .getOrganization()
-                  .getId()
-                  .equals(organizationToEdit.getId())) {
+                      .get()
+                      .getOrganization()
+                      .getId()
+                      .equals(organizationToEdit.getId())) {
                 throw new BadRequestException("Organization mail domain already exists: " + domain);
               }
             });
@@ -161,13 +172,15 @@ public class OrganizationService {
     dto.getMailDomains()
         .forEach(
             domainName -> {
-              Optional<MailDomain> mailDomain = mailDomainRepository
-                  .findByName(domainName.toLowerCase());
+              Optional<MailDomain> mailDomain =
+                  mailDomainRepository.findByName(domainName.toLowerCase());
               if (mailDomain.isEmpty()) {
                 newDomains.add(
                     mailDomainRepository.save(
-                        MailDomain.builder().name(domainName.toLowerCase())
-                            .organization(organization).build()));
+                        MailDomain.builder()
+                            .name(domainName.toLowerCase())
+                            .organization(organization)
+                            .build()));
               } else {
                 newDomains.add(mailDomain.get());
               }
