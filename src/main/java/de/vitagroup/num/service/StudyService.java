@@ -2,7 +2,6 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
@@ -24,7 +23,6 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -60,13 +58,8 @@ import org.ehrbase.aql.dto.containment.ContainmentLogicalOperatorSymbol;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @Service
 @AllArgsConstructor
@@ -75,9 +68,6 @@ public class StudyService {
   private static final String EHR_ID_PATH = "/ehr_id/value";
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
   private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
-  private static final String CSV_FILE_ENDING = ".csv";
-  private static final String JSON_FILE_ENDING = ".json";
-  private static final String CSV_MEDIA_TYPE = "text/csv";
   private static final String STUDY_NOT_FOUND = "Study not found: ";
 
   private final StudyRepository studyRepository;
@@ -177,36 +167,6 @@ public class StudyService {
     }
   }
 
-  public StreamingResponseBody getExportResponseBody(
-      String query, Long studyId, String userId, ExportType format) {
-    if (format == ExportType.json) {
-      String jsonResponse = executeAqlAndJsonify(query, studyId, userId);
-      return outputStream -> {
-        outputStream.write(jsonResponse.getBytes(StandardCharsets.UTF_8));
-        outputStream.flush();
-        outputStream.close();
-      };
-    }
-    QueryResponseData queryResponseData = executeAql(query, studyId, userId);
-    return outputStream -> streamResponseAsCsv(queryResponseData, outputStream);
-  }
-
-  public MultiValueMap<String, String> getExportHeaders(ExportType format, Long studyId) {
-    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-    String fileEnding;
-    if (format == ExportType.json) {
-      fileEnding = JSON_FILE_ENDING;
-      headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-    } else {
-      fileEnding = CSV_FILE_ENDING;
-      headers.add(HttpHeaders.CONTENT_TYPE, CSV_MEDIA_TYPE);
-    }
-    headers.add(
-        HttpHeaders.CONTENT_DISPOSITION,
-        "attachment; filename=" + getExportFilenameBody(studyId) + fileEnding);
-    return headers;
-  }
-
   public Optional<Study> getStudyById(Long studyId) {
     return studyRepository.findById(studyId);
   }
@@ -257,9 +217,7 @@ public class StudyService {
     UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
 
     Study studyToEdit =
-        studyRepository
-            .findById(id)
-            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+        studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
 
     validateCoordinatorIsOwner(studyToEdit, userId);
 
@@ -311,16 +269,13 @@ public class StudyService {
       List<UserDetails> oldResearchers, List<UserDetails> newResearchers) {
     return !(oldResearchers.containsAll(newResearchers)
         && newResearchers.containsAll(oldResearchers));
-    return studyRepository.save(studyToEdit);
   }
 
   public Study updateStudyStatus(StudyDto studyDto, Long id, String userId, List<String> roles) {
     UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
 
     Study studyToEdit =
-        studyRepository
-            .findById(id)
-            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+        studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
 
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
