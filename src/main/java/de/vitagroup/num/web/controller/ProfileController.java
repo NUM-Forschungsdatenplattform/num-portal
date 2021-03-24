@@ -2,6 +2,7 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.service.UserService;
+import de.vitagroup.num.service.logger.AuditLog;
 import io.swagger.annotations.ApiOperation;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -19,6 +20,7 @@ public class ProfileController {
 
   private final UserService userService;
 
+  @AuditLog
   @GetMapping()
   @ApiOperation(value = "Retrieves the user profile information")
   public ResponseEntity<User> getUserProfile(@AuthenticationPrincipal @NotNull Jwt principal) {

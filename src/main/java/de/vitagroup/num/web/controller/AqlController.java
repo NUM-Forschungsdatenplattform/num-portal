@@ -5,6 +5,7 @@ import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
+import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -36,6 +37,7 @@ public class AqlController {
   private final AqlService aqlService;
   private final AqlMapper mapper;
 
+  @AuditLog
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves public or owned aql query by id.")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
@@ -45,6 +47,7 @@ public class AqlController {
         mapper.convertToDto(aqlService.getAqlById(id, principal.getSubject())));
   }
 
+  @AuditLog
   @PostMapping()
   @ApiOperation(value = "Creates an aql; the logged in user is assigned as owner of the aql.")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
@@ -55,6 +58,7 @@ public class AqlController {
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
+  @AuditLog
   @PutMapping(value = "/{id}")
   @ApiOperation(
       value = "Updates an aql; the logged in user is assigned as owner of the aql at creation time")
@@ -69,12 +73,14 @@ public class AqlController {
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
+  @AuditLog
   @DeleteMapping("/{id}")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   void deleteAql(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
     aqlService.deleteById(id, principal.getSubject());
   }
 
+  @AuditLog
   @GetMapping("/search")
   @ApiOperation(value = "Retrieves a list of aqls based on a search string and search type")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
@@ -94,6 +100,7 @@ public class AqlController {
             .collect(Collectors.toList()));
   }
 
+  @AuditLog
   @GetMapping()
   @ApiOperation(
       value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
@@ -105,12 +112,13 @@ public class AqlController {
             .collect(Collectors.toList()));
   }
 
+  @AuditLog
   @PostMapping("{aqlId}/execute")
   @ApiOperation(value = "Executes the aql")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<String> executeAql(
-      @NotNull @NotEmpty @PathVariable Long aqlId,
-      @AuthenticationPrincipal @NotNull Jwt principal) {
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @NotEmpty @PathVariable Long aqlId) {
     return ResponseEntity.ok(aqlService.executeAql(aqlId, principal.getSubject()));
   }
 }

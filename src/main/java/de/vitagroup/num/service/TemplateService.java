@@ -18,16 +18,19 @@ public class TemplateService {
 
   private final TemplateMapper templateMapper;
 
+  private final UserDetailsService userDetailsService;
+
   /**
    * Retrieves a list of all available templates metadata information
    *
    * @return
    */
-  public List<TemplateMetadataDto> getAllTemplatesMetadata() {
+  public List<TemplateMetadataDto> getAllTemplatesMetadata(String userId) {
+    userDetailsService.validateAndReturnUserDetails(userId);
+
     List<TemplateMetaDataDto> templateMetaDataDtos = ehrBaseService.getAllTemplatesMetadata();
     return templateMetaDataDtos.stream()
         .map(templateMapper::convertToTemplateMetadataDto)
         .collect(Collectors.toList());
   }
-
 }

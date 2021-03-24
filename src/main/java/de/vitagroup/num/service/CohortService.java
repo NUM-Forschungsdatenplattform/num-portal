@@ -33,7 +33,8 @@ public class CohortService {
   private final StudyRepository studyRepository;
   private final PrivacyProperties privacyProperties;
 
-  public Cohort getCohort(Long cohortId) {
+  public Cohort getCohort(Long cohortId, String userId) {
+    userDetailsService.validateAndReturnUserDetails(userId);
     return cohortRepository.findById(cohortId).orElseThrow(ResourceNotFound::new);
   }
 
