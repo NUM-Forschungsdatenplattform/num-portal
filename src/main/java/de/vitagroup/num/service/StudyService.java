@@ -16,6 +16,7 @@ import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -38,6 +39,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -60,6 +62,7 @@ import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -68,6 +71,14 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @Service
 @AllArgsConstructor
 public class StudyService {
+
+  private static final String EHR_ID_PATH = "/ehr_id/value";
+  private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
+  private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
+  private static final String STUDY_NOT_FOUND = "Study not found: ";
+  private static final String CSV_FILE_ENDING = ".csv";
+  private static final String JSON_FILE_ENDING = ".json";
+  private static final String CSV_MEDIA_TYPE = "text/csv";
 
   private final StudyRepository studyRepository;
 
@@ -83,13 +94,8 @@ public class StudyService {
 
   private final UserService userService;
 
-  private static final String EHR_ID_PATH = "/ehr_id/value";
-  private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
-  private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
-  private static final String CSV_FILE_ENDING = ".csv";
-  private static final String JSON_FILE_ENDING = ".json";
-  private static final String CSV_MEDIA_TYPE = "text/csv";
-  private static final String STUDY_NOT_FOUND = "Study not found: ";
+  @Nullable
+  private final ZarsService zarsService;
 
   /**
    * Counts the number of projects existing in the platform
@@ -219,7 +225,7 @@ public class StudyService {
     persistTransition(study, study.getStatus(), studyDto.getStatus(), coordinator);
 
     setTemplates(study, studyDto);
-    setResearchers(study, studyDto);
+    study.setResearchers(getResearchers(studyDto));
 
     study.setStatus(studyDto.getStatus());
     study.setName(studyDto.getName());
@@ -236,17 +242,22 @@ public class StudyService {
     study.setEndDate(studyDto.getEndDate());
     study.setFinanced(studyDto.isFinanced());
 
-    return studyRepository.save(study);
+    Study savedStudy = studyRepository.save(study);
+
+    if (savedStudy.getStatus() == StudyStatus.PENDING) {
+      registerToZars(study);
+    }
+
+    return savedStudy;
   }
 
+  @Transactional
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
 
     UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
 
     Study studyToEdit =
-        studyRepository
-            .findById(id)
-            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+        studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
 
     validateCoordinatorIsOwner(studyToEdit, userId);
 
@@ -254,8 +265,11 @@ public class StudyService {
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
 
     setTemplates(studyToEdit, studyDto);
-    setResearchers(studyToEdit, studyDto);
+    List<UserDetails> newResearchers = getResearchers(studyDto);
+    List<UserDetails> oldResearchers = studyToEdit.getResearchers();
+    studyToEdit.setResearchers(newResearchers);
 
+    StudyStatus oldStatus = studyToEdit.getStatus();
     studyToEdit.setStatus(studyDto.getStatus());
     studyToEdit.setName(studyDto.getName());
     studyToEdit.setDescription(studyDto.getDescription());
@@ -269,16 +283,39 @@ public class StudyService {
     studyToEdit.setEndDate(studyDto.getEndDate());
     studyToEdit.setFinanced(studyDto.isFinanced());
 
-    return studyRepository.save(studyToEdit);
+    Study savedStudy = studyRepository.save(studyToEdit);
+    registerToZarsIfNecessary(savedStudy, oldStatus, oldResearchers, newResearchers);
+    return savedStudy;
+  }
+
+  private void registerToZarsIfNecessary(
+      Study study,
+      StudyStatus oldStatus,
+      List<UserDetails> oldResearchers,
+      List<UserDetails> newResearchers) {
+    StudyStatus newStatus = study.getStatus();
+    if (((newStatus == StudyStatus.PENDING
+                || newStatus == StudyStatus.APPROVED
+                || newStatus == StudyStatus.PUBLISHED
+                || newStatus == StudyStatus.CLOSED)
+            && newStatus != oldStatus)
+        || (newStatus == StudyStatus.PUBLISHED
+            && researchersAreDifferent(oldResearchers, newResearchers))) {
+      registerToZars(study);
+    }
+  }
+
+  private boolean researchersAreDifferent(
+      List<UserDetails> oldResearchers, List<UserDetails> newResearchers) {
+    return !(oldResearchers.containsAll(newResearchers)
+        && newResearchers.containsAll(oldResearchers));
   }
 
   public Study updateStudyStatus(StudyDto studyDto, Long id, String userId, List<String> roles) {
     UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
 
     Study studyToEdit =
-        studyRepository
-            .findById(id)
-            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+        studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
 
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
@@ -310,11 +347,11 @@ public class StudyService {
 
   public String getExportFilenameBody(Long studyId) {
     return String.format(
-            "Study_%d_%s",
-            studyId,
-            LocalDateTime.now()
-                .truncatedTo(ChronoUnit.MINUTES)
-                .format(DateTimeFormatter.ISO_LOCAL_DATE))
+        "Study_%d_%s",
+        studyId,
+        LocalDateTime.now()
+            .truncatedTo(ChronoUnit.MINUTES)
+            .format(DateTimeFormatter.ISO_LOCAL_DATE))
         .replace('-', '_');
   }
 
@@ -503,7 +540,7 @@ public class StudyService {
     }
   }
 
-  private void setResearchers(Study study, StudyDto studyDto) {
+  private List<UserDetails> getResearchers(StudyDto studyDto) {
     List<UserDetails> newResearchersList = new LinkedList<>();
 
     if (studyDto.getResearchers() != null) {
@@ -521,7 +558,7 @@ public class StudyService {
         newResearchersList.add(researcher.get());
       }
     }
-    study.setResearchers(newResearchersList);
+    return newResearchersList;
   }
 
   private void validateStatus(
@@ -605,5 +642,11 @@ public class StudyService {
       }
     }
     return project;
+  }
+
+  private void registerToZars(Study study) {
+    if (zarsService != null) {
+      zarsService.registerToZars(study);
+    }
   }
 }
