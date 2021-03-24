@@ -31,10 +31,12 @@
     <dependency-check.version>6.1.1</dependency-check.version>
     <failsafe.version>2.22.2</failsafe.version>
     <surefire.version>2.22.2</surefire.version>
+    <ehcache.version>3.9.2</ehcache.version>
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
     <skip.dependency.check>false</skip.dependency.check>
-    <ehcache.version>3.9.2</ehcache.version>
+    <surefire.jacoco.args/>
+    <failsafe.jacoco.args/>
   </properties>
 
   <repositories>
@@ -64,6 +66,10 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-mail</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.security</groupId>
@@ -116,6 +122,10 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-aop</artifactId>
     </dependency>
     <dependency>
       <groupId>com.github.ehrbase.openEHR_SDK</groupId>
@@ -347,15 +357,29 @@
           <argLine>${surefire.jacoco.args}</argLine>
           <skipTests>${skip.unit.tests}</skipTests>
         </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit47</artifactId>
+            <version>${surefire.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.2</version>
+        <version>${failsafe.version}</version>
         <configuration>
           <argLine>${failsafe.jacoco.args}</argLine>
           <skipTests>${skip.integration.tests}</skipTests>
         </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit47</artifactId>
+            <version>${surefire.version}</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <goals>

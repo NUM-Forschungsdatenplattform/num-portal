@@ -5,6 +5,7 @@ import de.vitagroup.num.domain.dto.ExpressionDto;
 import de.vitagroup.num.domain.dto.PhenotypeDto;
 import de.vitagroup.num.mapper.PhenotypeMapper;
 import de.vitagroup.num.service.PhenotypeService;
+import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -27,13 +28,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/phenotype")
+@RequestMapping(value = "/phenotype", produces = "application/json")
 @AllArgsConstructor
 public class PhenotypeController {
 
   private final PhenotypeService phenotypeService;
   private final PhenotypeMapper mapper;
 
+  @AuditLog
   @GetMapping
   @ApiOperation(value = "Retrieves a list of phenotypes")
   @ApiResponses({
@@ -51,6 +53,7 @@ public class PhenotypeController {
             .collect(Collectors.toList()));
   }
 
+  @AuditLog
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves a phenotype by id.")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -60,6 +63,7 @@ public class PhenotypeController {
         mapper.convertToDto(phenotypeService.getPhenotypeById(id, principal.getSubject())));
   }
 
+  @AuditLog
   @PostMapping
   @ApiOperation(value = "Stores a phenotype")
   @ApiResponses({
@@ -79,6 +83,7 @@ public class PhenotypeController {
     return ResponseEntity.ok(mapper.convertToDto(phenotype));
   }
 
+  @AuditLog
   @PostMapping("/size")
   @ApiOperation(
       value = "Executes a phenotype and returns the count of matching ehr ids in the phenotype")

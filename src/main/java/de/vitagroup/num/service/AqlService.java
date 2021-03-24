@@ -33,6 +33,15 @@ public class AqlService {
 
   private final UserDetailsService userDetailsService;
 
+  /**
+   * Counts the number of aql queries existing in the platform
+   *
+   * @return
+   */
+  public long countAqls() {
+    return aqlRepository.count();
+  }
+
   public Optional<Aql> getAqlById(Long id) {
     return aqlRepository.findById(id);
   }
