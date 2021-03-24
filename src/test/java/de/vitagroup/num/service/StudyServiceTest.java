@@ -6,6 +6,7 @@ import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorDto;
 import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorSymbol;
@@ -83,21 +85,61 @@ public class StudyServiceTest {
           + "EHR e "
           + "contains COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] "
           + "contains (COMPOSITION c2[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
-  @Captor
-  ArgumentCaptor<String> stringArgumentCaptor;
-  @Mock
-  private StudyRepository studyRepository;
-  @Mock
-  private UserDetailsService userDetailsService;
-  @Mock
-  private CohortService cohortService;
-  @Mock
-  private EhrBaseService ehrBaseService;
-  @Mock
-  private AtnaService atnaService;
-  @InjectMocks
-  private StudyService studyService;
+  private static final String QUERY_5 =
+      "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, c1 as openEHR_EHR_COMPOSITION_report_v1 FROM EHR e contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c2[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
+
+  @Captor ArgumentCaptor<String> stringArgumentCaptor;
+  @Mock private StudyRepository studyRepository;
+  @Mock private UserDetailsService userDetailsService;
+  @Mock private CohortService cohortService;
+  @Mock private EhrBaseService ehrBaseService;
+  @Mock private AtnaService atnaService;
   @Mock private ZarsService zarsService;
+  @InjectMocks private StudyService studyService;
+
+  @Ignore(
+      value =
+          "This test should pass when https://github.com/ehrbase/openEHR_SDK/issues/203 is fixed")
+  @Test
+  public void shouldBeConsistentInParsingAql() {
+    String initialQuery =
+        "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, c1 as openEHR_EHR_COMPOSITION_report_v1 "
+            + "FROM EHR e contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] "
+            + "and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1]) "
+            + "WHERE (e/ehr_id/value matches {'b3a40b41-36e1-4802-8748-062d4000aaae'} "
+            + "and c0/archetype_details/template_id/value matches {'Corona_Anamnese'} "
+            + "and c1/archetype_details/template_id/value matches {'Corona_Anamnese'})";
+
+    AqlDto initialDto = new AqlToDtoParser().parse(initialQuery);
+    assertThat(initialDto.getWhere(), notNullValue());
+    assertThat(((ConditionLogicalOperatorDto) initialDto.getWhere()).getValues(), notNullValue());
+    assertThat(((ConditionLogicalOperatorDto) initialDto.getWhere()).getValues().size(), is(3));
+
+    String initialDtoToString = new AqlBinder().bind(initialDto).getLeft().buildAql();
+    AqlDto parsedQuery = new AqlToDtoParser().parse(initialDtoToString);
+
+    assertThat(parsedQuery.getWhere(), notNullValue());
+    assertThat(((ConditionLogicalOperatorDto) parsedQuery.getWhere()).getValues(), notNullValue());
+    assertThat(((ConditionLogicalOperatorDto) parsedQuery.getWhere()).getValues().size(), is(3));
+  }
+
+  @Test
+  public void shouldHandleQuery5() {
+
+    AqlDto initialQueryDto = new AqlToDtoParser().parse(QUERY_5);
+    assertThat(initialQueryDto, notNullValue());
+    assertThat(initialQueryDto.getWhere(), nullValue());
+
+    studyService.executeAql(QUERY_5, 2L, "approvedCoordinatorId");
+    Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
+    String restrictedQuery = stringArgumentCaptor.getValue();
+
+    AqlDto parsedRestrictedQuery = new AqlToDtoParser().parse(restrictedQuery);
+    assertThat(parsedRestrictedQuery, notNullValue());
+    assertThat(parsedRestrictedQuery.getWhere(), notNullValue());
+
+    assertThat(parsedRestrictedQuery.getWhere(), notNullValue());
+  }
 
   @Test
   public void shouldHandleQuery3() {
@@ -183,8 +225,9 @@ public class StudyServiceTest {
     studyService.executeAql(QUERY_1, 3L, "approvedCoordinatorId");
   }
 
-  // TODO: this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed
-  @Ignore
+  @Ignore(
+      value =
+          "this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed")
   @Test
   public void shouldCorrectlyRestrictQueryWithContainsAndNoComposition() {
     studyService.executeAql(QUERY_2, 4L, "approvedCoordinatorId");
@@ -206,8 +249,9 @@ public class StudyServiceTest {
     assertEquals(restrictedQuery, expectedQuery);
   }
 
-  // TODO: this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed
-  @Ignore
+  @Ignore(
+      value =
+          "this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed")
   @Test
   public void shouldCorrectlyRestrictBasicQuery() {
     studyService.executeAql(QUERY_BASIC, 2L, "approvedCoordinatorId");
