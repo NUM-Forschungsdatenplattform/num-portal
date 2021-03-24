@@ -266,8 +266,8 @@ public class StudyService {
     List<UserDetails> oldResearchers = studyToEdit.getResearchers();
     studyToEdit.setResearchers(newResearchers);
 
-    if (studyToEdit.getStatus().equals(StudyStatus.APPROVED)
-        || studyToEdit.getStatus().equals(StudyStatus.PUBLISHED)) {
+    if (StudyStatus.APPROVED.equals(studyToEdit.getStatus())
+        || StudyStatus.PUBLISHED.equals(studyToEdit.getStatus())) {
       Study savedStudy = studyRepository.save(studyToEdit);
       registerToZarsIfNecessary(savedStudy, savedStudy.getStatus(), oldResearchers, newResearchers);
       return savedStudy;
