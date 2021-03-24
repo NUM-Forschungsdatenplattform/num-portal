@@ -22,6 +22,7 @@ import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
+import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
@@ -30,6 +31,7 @@ import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -759,6 +761,44 @@ public class StudyServiceTest {
             .build();
     studyService.updateStudy(
         existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+  }
+
+  @Test
+  public void shouldOnlyAllowEditingOfResearchersAfterApprovedState() {
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .name("oldName")
+                    .status(StudyStatus.APPROVED)
+                    .researchers(
+                        Collections.singletonList(
+                            UserDetails.builder().userId("2").approved(true).build()))
+                    .coordinator(new UserDetails("approvedCoordinatorId", null, true))
+                    .build()));
+
+    when(userDetailsService.getUserDetailsById("1"))
+        .thenReturn(Optional.of(UserDetails.builder().userId("1").approved(true).build()));
+
+    StudyDto existingStudy =
+        StudyDto.builder()
+            .id(1L)
+            .name("existing study")
+            .status(StudyStatus.APPROVED)
+            .researchers(
+                Collections.singletonList(
+                    UserDetailsDto.builder().userId("1").approved(true).build()))
+            .financed(false)
+            .build();
+    Study returnedStudy =
+        studyService.updateStudy(
+            existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+
+    assertThat(returnedStudy.getName(), is("oldName"));
+    assertThat(returnedStudy.getResearchers().get(0).getUserId(), is("1"));
+
+    verify(studyRepository, times(1)).save(any());
   }
 
   @Before
