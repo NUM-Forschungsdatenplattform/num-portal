@@ -6,14 +6,15 @@ import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.eq;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.Roles;
@@ -21,17 +22,21 @@ import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
+import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorDto;
 import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorSymbol;
@@ -52,26 +57,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class StudyServiceTest {
 
-  @Mock private StudyRepository studyRepository;
-
-  @Mock private UserDetailsService userDetailsService;
-
-  @Mock private CohortService cohortService;
-
-  @Mock private EhrBaseService ehrBaseService;
-
-  @Mock private AtnaService atnaService;
-
-  @InjectMocks private StudyService studyService;
-
-  @Captor ArgumentCaptor<String> stringArgumentCaptor;
-
   private static final String CORONA_TEMPLATE = "Corona_Anamnese";
-
   private static final String EHR_ID_1 = "f4da8646-8e36-4d9d-869c-af9dce5935c7";
   private static final String EHR_ID_2 = "61861e76-1606-48c9-adcf-49ebbb2c6bbd";
   private static final String EHR_ID_3 = "47dc21a2-7076-4a57-89dc-bd83729ed52f";
-
   private static final String QUERY_1 =
       "SELECT e/ehr_id/value, "
           + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value, "
@@ -80,28 +69,79 @@ public class StudyServiceTest {
           + "contains COMPOSITION c3[openEHR-EHR-COMPOSITION.report.v1] "
           + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
           + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
-
   private static final String QUERY_2 =
       "Select e/ehr_id/value as F1, "
           + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
           + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 from EHR e "
           + "contains SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
           + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
-
   private static final String QUERY_BASIC = "SELECT e FROM EHR e";
-
   private static final String QUERY_3 =
       "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, "
           + "c1 as openEHR_EHR_COMPOSITION_report_v1 FROM  "
           + "EHR e "
           + "contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
-
   private static final String QUERY_4 =
       "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, "
           + "c1 as openEHR_EHR_COMPOSITION_report_v1 FROM  "
           + "EHR e "
           + "contains COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] "
           + "contains (COMPOSITION c2[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
+  private static final String QUERY_5 =
+      "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, c1 as openEHR_EHR_COMPOSITION_report_v1 FROM EHR e contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c2[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
+
+  @Captor ArgumentCaptor<String> stringArgumentCaptor;
+  @Mock private StudyRepository studyRepository;
+  @Mock private UserDetailsService userDetailsService;
+  @Mock private CohortService cohortService;
+  @Mock private EhrBaseService ehrBaseService;
+  @Mock private AtnaService atnaService;
+  @Mock private ZarsService zarsService;
+  @InjectMocks private StudyService studyService;
+
+  @Ignore(
+      value =
+          "This test should pass when https://github.com/ehrbase/openEHR_SDK/issues/203 is fixed")
+  @Test
+  public void shouldBeConsistentInParsingAql() {
+    String initialQuery =
+        "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, c1 as openEHR_EHR_COMPOSITION_report_v1 "
+            + "FROM EHR e contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] "
+            + "and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1]) "
+            + "WHERE (e/ehr_id/value matches {'b3a40b41-36e1-4802-8748-062d4000aaae'} "
+            + "and c0/archetype_details/template_id/value matches {'Corona_Anamnese'} "
+            + "and c1/archetype_details/template_id/value matches {'Corona_Anamnese'})";
+
+    AqlDto initialDto = new AqlToDtoParser().parse(initialQuery);
+    assertThat(initialDto.getWhere(), notNullValue());
+    assertThat(((ConditionLogicalOperatorDto) initialDto.getWhere()).getValues(), notNullValue());
+    assertThat(((ConditionLogicalOperatorDto) initialDto.getWhere()).getValues().size(), is(3));
+
+    String initialDtoToString = new AqlBinder().bind(initialDto).getLeft().buildAql();
+    AqlDto parsedQuery = new AqlToDtoParser().parse(initialDtoToString);
+
+    assertThat(parsedQuery.getWhere(), notNullValue());
+    assertThat(((ConditionLogicalOperatorDto) parsedQuery.getWhere()).getValues(), notNullValue());
+    assertThat(((ConditionLogicalOperatorDto) parsedQuery.getWhere()).getValues().size(), is(3));
+  }
+
+  @Test
+  public void shouldHandleQuery5() {
+
+    AqlDto initialQueryDto = new AqlToDtoParser().parse(QUERY_5);
+    assertThat(initialQueryDto, notNullValue());
+    assertThat(initialQueryDto.getWhere(), nullValue());
+
+    studyService.executeAql(QUERY_5, 2L, "approvedCoordinatorId");
+    Mockito.verify(ehrBaseService).executeRawQuery(stringArgumentCaptor.capture());
+    String restrictedQuery = stringArgumentCaptor.getValue();
+
+    AqlDto parsedRestrictedQuery = new AqlToDtoParser().parse(restrictedQuery);
+    assertThat(parsedRestrictedQuery, notNullValue());
+    assertThat(parsedRestrictedQuery.getWhere(), notNullValue());
+
+    assertThat(parsedRestrictedQuery.getWhere(), notNullValue());
+  }
 
   @Test
   public void shouldHandleQuery3() {
@@ -119,7 +159,9 @@ public class StudyServiceTest {
     assertThat(conditionDto.getValues().size(), is(2));
 
     conditionDto.getValues().stream()
-        .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
+        .anyMatch(
+            conditionDto1 ->
+                conditionDto1 instanceof MatchesOperatorDto); // TODO: should test the return value
 
     MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
     assertThat(ehrMatches.getValues().size(), is(2));
@@ -154,7 +196,9 @@ public class StudyServiceTest {
     assertThat(conditionDto.getValues().size(), is(2));
 
     conditionDto.getValues().stream()
-        .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
+        .anyMatch(
+            conditionDto1 ->
+                conditionDto1 instanceof MatchesOperatorDto); // TODO: should test the return value
 
     MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
     assertThat(ehrMatches.getValues().size(), is(2));
@@ -183,8 +227,9 @@ public class StudyServiceTest {
     studyService.executeAql(QUERY_1, 3L, "approvedCoordinatorId");
   }
 
-  // TODO: this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed
-  @Ignore
+  @Ignore(
+      value =
+          "this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed")
   @Test
   public void shouldCorrectlyRestrictQueryWithContainsAndNoComposition() {
     studyService.executeAql(QUERY_2, 4L, "approvedCoordinatorId");
@@ -206,8 +251,9 @@ public class StudyServiceTest {
     assertEquals(restrictedQuery, expectedQuery);
   }
 
-  // TODO: this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed
-  @Ignore
+  @Ignore(
+      value =
+          "this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed")
   @Test
   public void shouldCorrectlyRestrictBasicQuery() {
     studyService.executeAql(QUERY_BASIC, 2L, "approvedCoordinatorId");
@@ -232,7 +278,9 @@ public class StudyServiceTest {
     assertThat(conditionDto.getValues().size(), is(2));
 
     conditionDto.getValues().stream()
-        .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
+        .anyMatch(
+            conditionDto1 ->
+                conditionDto1 instanceof MatchesOperatorDto); // TODO: should test the return value
 
     MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
     assertThat(ehrMatches.getValues().size(), is(2));
@@ -672,6 +720,87 @@ public class StudyServiceTest {
     verify(studyRepository, times(1)).save(any());
   }
 
+  @Test
+  public void shouldAllowEditingOwnedStudy() {
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .coordinator(new UserDetails("approvedCoordinatorId", null, true))
+                    .build()));
+
+    StudyDto existingStudy =
+        StudyDto.builder()
+            .id(1L)
+            .name("existing study")
+            .financed(false)
+            .status(StudyStatus.PENDING)
+            .build();
+    studyService.updateStudy(
+        existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    verify(studyRepository, times(1)).save(any());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldRejectEditingNotOwnedStudy() {
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .coordinator(new UserDetails("ownerCoordinatorId", null, true))
+                    .build()));
+
+    StudyDto existingStudy =
+        StudyDto.builder()
+            .id(1L)
+            .name("existing study")
+            .financed(false)
+            .status(StudyStatus.PENDING)
+            .build();
+    studyService.updateStudy(
+        existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+  }
+
+  @Test
+  public void shouldOnlyAllowEditingOfResearchersAfterApprovedState() {
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .name("oldName")
+                    .status(StudyStatus.APPROVED)
+                    .researchers(
+                        Collections.singletonList(
+                            UserDetails.builder().userId("2").approved(true).build()))
+                    .coordinator(new UserDetails("approvedCoordinatorId", null, true))
+                    .build()));
+
+    when(userDetailsService.getUserDetailsById("1"))
+        .thenReturn(Optional.of(UserDetails.builder().userId("1").approved(true).build()));
+
+    StudyDto existingStudy =
+        StudyDto.builder()
+            .id(1L)
+            .name("existing study")
+            .status(StudyStatus.APPROVED)
+            .researchers(
+                Collections.singletonList(
+                    UserDetailsDto.builder().userId("1").approved(true).build()))
+            .financed(false)
+            .build();
+    Study returnedStudy =
+        studyService.updateStudy(
+            existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+
+    assertThat(returnedStudy.getName(), is("oldName"));
+    assertThat(returnedStudy.getResearchers().get(0).getUserId(), is("1"));
+
+    verify(studyRepository, times(1)).save(any());
+  }
+
   @Before
   public void setup() {
     UserDetails notApprovedCoordinator =
@@ -711,6 +840,14 @@ public class StudyServiceTest {
                     .researchers(List.of(approvedCoordinator))
                     .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
                     .build()));
+
+    when(studyRepository.save(any()))
+        .thenAnswer(
+            invocation -> {
+              Study study = invocation.getArgument(0, Study.class);
+              study.setId(1L);
+              return study;
+            });
 
     //    when(studyRepository.findById(4L))
     //        .thenReturn(

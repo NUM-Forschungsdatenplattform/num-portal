@@ -4,6 +4,7 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.OrganizationService;
+import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
@@ -25,13 +26,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/organization")
+@RequestMapping(value = "/organization", produces = "application/json")
 @AllArgsConstructor
 public class OrganizationController {
 
   private final OrganizationService organizationService;
   private final OrganizationMapper mapper;
 
+  @AuditLog
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves an organization by external id")
   public ResponseEntity<OrganizationDto> getOrganizationById(
@@ -39,6 +41,7 @@ public class OrganizationController {
     return ResponseEntity.ok(mapper.convertToDto(organizationService.getOrganizationById(id)));
   }
 
+  @AuditLog
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of available organizations")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -52,24 +55,25 @@ public class OrganizationController {
             .collect(Collectors.toList()));
   }
 
+  @AuditLog
   @PostMapping()
   @ApiOperation(value = "Creates an organization")
   @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<OrganizationDto> createOrganization(
-      @Valid @NotNull @RequestBody OrganizationDto organizationDto,
-      @AuthenticationPrincipal @NotNull Jwt principal) {
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @Valid @NotNull @RequestBody OrganizationDto organizationDto) {
     return ResponseEntity.ok(
-        mapper.convertToDto(
-            organizationService.create(principal.getSubject(), organizationDto)));
+        mapper.convertToDto(organizationService.create(principal.getSubject(), organizationDto)));
   }
 
+  @AuditLog
   @PutMapping(value = "/{id}")
   @ApiOperation(value = "Updates an organization")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<OrganizationDto> updateOrganization(
+      @AuthenticationPrincipal @NotNull Jwt principal,
       @PathVariable("id") Long organizationId,
-      @Valid @NotNull @RequestBody OrganizationDto organizationDto,
-      @AuthenticationPrincipal @NotNull Jwt principal) {
+      @Valid @NotNull @RequestBody OrganizationDto organizationDto) {
     return ResponseEntity.ok(
         mapper.convertToDto(
             organizationService.update(

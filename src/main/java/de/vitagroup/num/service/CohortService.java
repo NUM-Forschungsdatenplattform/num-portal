@@ -33,7 +33,8 @@ public class CohortService {
   private final StudyRepository studyRepository;
   private final PrivacyProperties privacyProperties;
 
-  public Cohort getCohort(Long cohortId) {
+  public Cohort getCohort(Long cohortId, String userId) {
+    userDetailsService.validateAndReturnUserDetails(userId);
     return cohortRepository.findById(cohortId).orElseThrow(ResourceNotFound::new);
   }
 
@@ -75,7 +76,7 @@ public class CohortService {
     userDetailsService.validateAndReturnUserDetails(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
-    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup);
+    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, cohortGroup.getParameters());
     if (ehrIds.size() < privacyProperties.getMinHits()) {
       throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
     }

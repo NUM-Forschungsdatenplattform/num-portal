@@ -1,8 +1,10 @@
 package de.vitagroup.num.mapper;
 
 import de.vitagroup.num.domain.Phenotype;
+import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.ExpressionDto;
 import de.vitagroup.num.domain.dto.PhenotypeDto;
+import de.vitagroup.num.service.UserService;
 import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class PhenotypeMapper {
 
   private final ModelMapper modelMapper;
+  private final UserService userService;
 
   @PostConstruct
   public void initialize() {
@@ -21,9 +24,12 @@ public class PhenotypeMapper {
 
   public PhenotypeDto convertToDto(Phenotype phenotype) {
     PhenotypeDto phenotypeDto = modelMapper.map(phenotype, PhenotypeDto.class);
+
     if (phenotype.getOwner() != null) {
-      phenotypeDto.setOwnerId(phenotype.getOwner().getUserId());
+      User owner = userService.getUserById(phenotype.getOwner().getUserId(), false);
+      phenotypeDto.setOwner(owner);
     }
+
     return phenotypeDto;
   }
 

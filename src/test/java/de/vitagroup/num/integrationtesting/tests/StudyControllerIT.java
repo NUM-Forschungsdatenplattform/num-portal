@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,19 +37,25 @@ import org.springframework.test.web.servlet.MvcResult;
 
 public class StudyControllerIT extends IntegrationTest {
 
-  @Autowired public MockMvc mockMvc;
-  @Autowired private ObjectMapper mapper;
-  @Autowired private StudyRepository studyRepository;
-  @Autowired private UserDetailsRepository userDetailsRepository;
-
   private static final String STUDY_PATH = "/study";
+  @Autowired
+  public MockMvc mockMvc;
+  UserDetails user1;
+  UserDetails user2;
+  UserDetails user3;
+  @Autowired
+  private ObjectMapper mapper;
+  @Autowired
+  private StudyRepository studyRepository;
+  @Autowired
+  private UserDetailsRepository userDetailsRepository;
 
   @Before
   public void setupStudies() {
     studyRepository.deleteAll();
-    UserDetails user1 = UserDetails.builder().userId("user1").build();
+    user1 = UserDetails.builder().userId("user1").approved(true).build();
     userDetailsRepository.save(user1);
-    UserDetails user2 = UserDetails.builder().userId("user2").build();
+    user2 = UserDetails.builder().userId("user2").approved(true).build();
     userDetailsRepository.save(user2);
     Study draftStudy =
         Study.builder()
@@ -187,7 +194,7 @@ public class StudyControllerIT extends IntegrationTest {
         .andExpect(status().isForbidden());
   }
 
-  @Ignore // TODO: Integration testing infrastructure to include keycloak dependency as container
+  @Ignore("Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_COORDINATOR})
@@ -207,7 +214,7 @@ public class StudyControllerIT extends IntegrationTest {
         .andExpect(jsonPath("$.firstHypotheses").value(validStudy.getFirstHypotheses()));
   }
 
-  @Ignore // TODO: Integration testing infrastructure to include keycloak dependency as container
+  @Ignore("Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -222,7 +229,7 @@ public class StudyControllerIT extends IntegrationTest {
     assertEquals(8, studies.length);
   }
 
-  @Ignore // TODO: Integration testing infrastructure to include keycloak dependency as container
+  @Ignore("Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -261,7 +268,7 @@ public class StudyControllerIT extends IntegrationTest {
     assertEquals(0, studies.length);
   }
 
-  @Ignore // TODO: Integration testing infrastructure to include keycloak dependency as container
+  @Ignore("Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -318,5 +325,88 @@ public class StudyControllerIT extends IntegrationTest {
     StudyDto[] studies =
         mapper.readValue(result.getResponse().getContentAsString(), StudyDto[].class);
     assertEquals(0, studies.length);
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(
+      roles = {STUDY_APPROVER},
+      userId = "user2")
+  public void shouldOnlyAllowUpdatingStatusForApproverRole() {
+    String studyName = "unchanged";
+
+    Study unchangedStudy =
+        Study.builder()
+            .name(studyName)
+            .goal("Default")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now())
+            .coordinator(user1)
+            .researchers(Lists.newArrayList(user1))
+            .status(StudyStatus.REVIEWING)
+            .build();
+    Study study = studyRepository.save(unchangedStudy);
+
+    StudyDto updateStudy =
+        StudyDto.builder()
+            .name("s1")
+            .goal("goal")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now().plusDays(5))
+            .firstHypotheses("fh1")
+            .status(StudyStatus.APPROVED)
+            .build();
+
+    String studyJson = mapper.writeValueAsString(updateStudy);
+
+    mockMvc
+        .perform(
+            put(String.format("%s/%s", STUDY_PATH, study.getId()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(studyJson))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value(studyName))
+        .andExpect(jsonPath("$.status").value(StudyStatus.APPROVED.name()));
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(
+      roles = {STUDY_COORDINATOR},
+      userId = "user1")
+  public void shouldUpdateStudySuccessfully() {
+    Study createStudy =
+        Study.builder()
+            .name("createStudy")
+            .goal("Default")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now())
+            .coordinator(user1)
+            .researchers(Lists.newArrayList(user1))
+            .build();
+    Study study = studyRepository.save(createStudy);
+
+    StudyDto updateStudy =
+        StudyDto.builder()
+            .name("updateStudy")
+            .goal("goal")
+            .startDate(LocalDate.now())
+            .endDate(LocalDate.now().plusDays(5))
+            .firstHypotheses("fh1")
+            .status(StudyStatus.PENDING)
+            .build();
+
+    String studyJson = mapper.writeValueAsString(updateStudy);
+
+    mockMvc
+        .perform(
+            put(String.format("%s/%s", STUDY_PATH, study.getId()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(studyJson))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("updateStudy"))
+        .andExpect(jsonPath("$.status").value(StudyStatus.PENDING.name()));
   }
 }

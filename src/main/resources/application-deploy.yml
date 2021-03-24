@@ -19,6 +19,20 @@ spring:
         provider:
           userStoreClient:
             token-uri: ${KEYCLOAK_ENDPOINT}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
+  mail:
+    host: ${EMAIL_HOST}
+    port: ${EMAIL_PORT}
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASS}
+    from: ${EMAIL_FROM}
+    properties:
+      mail:
+        smtp:
+          auth: ${EMAIL_AUTH}
+          starttls:
+            enabled: ${EMAIL_STARTTLS_ENABLED}
+            required: ${EMAIL_STARTTLS_REQUIRED}
+
 userstore:
   url: ${KEYCLOAK_ENDPOINT}/auth/admin/realms/${KEYCLOAK_REALM}
 
@@ -36,3 +50,13 @@ ehrbase:
 
 privacy:
   minHits: ${PRIVACY_MIN_HITS}
+
+atna:
+  enabled: ${ATNA_ENABLED}
+  host: ${ATNA_HOST}
+  port: ${ATNA_PORT}
+
+
+zars:
+  enabled: ${ZARS_ENABLED}
+  email: ${ZARS_EMAIL}

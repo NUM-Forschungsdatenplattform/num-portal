@@ -29,7 +29,10 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
       HttpStatus status,
       WebRequest request) {
 
-    ErrorResponse response = ErrorResponse.builder().errors(List.of(ex.getMessage())).build();
+    log.error("Http message not readable", ex);
+
+    ErrorResponse response =
+        ErrorResponse.builder().errors(List.of("Http message not readable")).build();
     return new ResponseEntity<>(response, headers, HttpStatus.BAD_REQUEST);
   }
 

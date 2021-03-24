@@ -12,12 +12,12 @@ import java.util.Map;
 
 @Slf4j
 @AllArgsConstructor
-public class MapConverter implements AttributeConverter<Map<String, String>, String> {
+public class MapConverter implements AttributeConverter<Map<String, Object>, String> {
 
   private ObjectMapper mapper;
 
   @Override
-  public String convertToDatabaseColumn(Map<String, String> parameters) {
+  public String convertToDatabaseColumn(Map<String, Object> parameters) {
 
     String parametersJson = null;
     try {
@@ -30,13 +30,13 @@ public class MapConverter implements AttributeConverter<Map<String, String>, Str
   }
 
   @Override
-  public Map<String, String> convertToEntityAttribute(String parametersJson) {
+  public Map<String, Object> convertToEntityAttribute(String parametersJson) {
 
     if (StringUtils.isEmpty(parametersJson)) {
       return null;
     }
 
-    Map<String, String> parameters = null;
+    Map<String, Object> parameters = null;
     try {
       parameters = mapper.readValue(parametersJson, Map.class);
     } catch (final IOException e) {

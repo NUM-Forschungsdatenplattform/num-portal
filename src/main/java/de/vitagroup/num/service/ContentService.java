@@ -1,11 +1,12 @@
 package de.vitagroup.num.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Content;
 import de.vitagroup.num.domain.ContentType;
 import de.vitagroup.num.domain.dto.CardDto;
+import de.vitagroup.num.domain.dto.MetricsDto;
 import de.vitagroup.num.domain.dto.NavigationItemDto;
+import de.vitagroup.num.domain.dto.ProjectInfoDto;
 import de.vitagroup.num.domain.repository.ContentItemRepository;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.ArrayList;
@@ -20,7 +21,38 @@ import org.springframework.stereotype.Service;
 public class ContentService {
 
   private final ContentItemRepository contentItemRepository;
+
   private final ObjectMapper mapper;
+
+  private final StudyService projectService;
+
+  private final AqlService aqlService;
+
+  private final OrganizationService organizationService;
+
+  private static final int PROJECT_COUNT = 5;
+
+  /**
+   * Retrieves info about the latest five projects
+   *
+   * @return
+   */
+  public List<ProjectInfoDto> getLatestProjects() {
+    return projectService.getLatestProjectsInfo(PROJECT_COUNT);
+  }
+
+  /**
+   * Computes platform metrics, number of projects, number of organizations and number of aqls
+   *
+   * @return
+   */
+  public MetricsDto getMetrics() {
+    return MetricsDto.builder()
+        .aqls(aqlService.countAqls())
+        .projects(projectService.countProjects())
+        .organizations(organizationService.countOrganizations())
+        .build();
+  }
 
   public String getNavigationItems() {
     List<Content> contents =

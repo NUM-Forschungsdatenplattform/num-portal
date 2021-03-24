@@ -177,17 +177,26 @@ public class UserServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleRolesBadRequest() {
-    userService.getUserRoles("1");
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+        .thenReturn(UserDetails.builder().userId("approvedUserId").approved(true).build());
+
+    userService.getUserRoles("1", "approvedUserId");
   }
 
   @Test(expected = SystemException.class)
   public void shouldHandleRolesError() {
-    userService.getUserRoles("2");
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+        .thenReturn(UserDetails.builder().userId("approvedUserId").approved(true).build());
+
+    userService.getUserRoles("2", "approvedUserId");
   }
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleRolesNotFound() {
-    userService.getUserRoles("3");
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+        .thenReturn(UserDetails.builder().userId("approvedUserId").approved(true).build());
+
+    userService.getUserRoles("3", "approvedUserId");
   }
 
   @Test(expected = BadRequestException.class)

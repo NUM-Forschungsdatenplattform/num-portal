@@ -60,7 +60,9 @@ jobs:
       - store_artifacts:
           path: target/dependency-check-report.html
       - store_test_results:
-          path: ~/test-results
+          path: ~/test-results/unit-tests/
+      - store_test_results:
+          path: ~/test-results/integration-tests/
       - sonarcloud/scan
       - cache-in-maven-dependencies
   tag-version:

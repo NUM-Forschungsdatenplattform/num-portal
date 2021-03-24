@@ -1,12 +1,16 @@
 package de.vitagroup.num.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,6 +35,7 @@ import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.Before;
@@ -67,12 +72,13 @@ public class CohortServiceTest {
   @Captor ArgumentCaptor<Cohort> cohortCaptor;
 
   @Captor ArgumentCaptor<CohortGroup> cohortGroupCaptor;
+  @Captor ArgumentCaptor<Map<String, Object>> mapCaptor;
 
   UserDetails approvedUser = UserDetails.builder().userId("approvedUserId").approved(true).build();
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingCohortWhenRetrieving() {
-    cohortService.getCohort(1L);
+    cohortService.getCohort(1L, "approvedUserId");
   }
 
   @Test(expected = BadRequestException.class)
@@ -223,11 +229,13 @@ public class CohortServiceTest {
         CohortGroupDto.builder()
             .type(Type.GROUP)
             .operator(Operator.OR)
+            .parameters(Map.of("p1", 1))
             .children(List.of(first, second))
             .build();
 
     long size = cohortService.getCohortGroupSize(orCohort, approvedUser.getUserId());
-    Mockito.verify(cohortExecutor, times(1)).executeGroup(cohortGroupCaptor.capture());
+    Mockito.verify(cohortExecutor, times(1))
+        .executeGroup(cohortGroupCaptor.capture(), mapCaptor.capture());
 
     assertEquals(2, size);
     CohortGroup executedCohortGroup = cohortGroupCaptor.getValue();
@@ -265,7 +273,6 @@ public class CohortServiceTest {
 
   @Before
   public void setup() {
-
     UserDetails notApprovedUser =
         UserDetails.builder().userId("notApprovedUserId").approved(false).build();
 
@@ -275,7 +282,8 @@ public class CohortServiceTest {
     when(userDetailsService.validateAndReturnUserDetails("missingUserID"))
         .thenThrow(new SystemException("User not found"));
 
-    when(userDetailsService.validateAndReturnUserDetails("approvedUserId")).thenReturn(approvedUser);
+    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+        .thenReturn(approvedUser);
 
     when(studyRepository.findById(2L))
         .thenReturn(
@@ -306,9 +314,16 @@ public class CohortServiceTest {
             .name("AQL query name 2")
             .query("SELECT A2 ... FROM E2... WHERE ...")
             .build();
+    Aql aql4 =
+        Aql.builder()
+            .id(4L)
+            .name("AQL query name 4")
+            .query("SELECT A4 ... FROM E4... WHERE ...")
+            .build();
 
     AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
     AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
+    AqlExpression aqlExpression4 = AqlExpression.builder().aql(aql4).build();
 
     Phenotype phenotype1 =
         Phenotype.builder()
@@ -327,15 +342,6 @@ public class CohortServiceTest {
             .owner(approvedUser)
             .query(aqlExpression2)
             .build();
-
-    Aql aql4 =
-        Aql.builder()
-            .id(4L)
-            .name("AQL query name 4")
-            .query("SELECT A4 ... FROM E4... WHERE ...")
-            .build();
-
-    AqlExpression aqlExpression4 = AqlExpression.builder().aql(aql4).build();
 
     Phenotype phenotype4 =
         Phenotype.builder()
@@ -372,7 +378,9 @@ public class CohortServiceTest {
     when(cohortRepository.findById(4L)).thenReturn(Optional.of(cohortToEdit));
     when(cohortRepository.findById(1L)).thenReturn(Optional.empty());
     when(cohortRepository.findById(2L)).thenReturn(Optional.of(Cohort.builder().id(2L).build()));
-    when(cohortExecutor.executeGroup(any())).thenReturn(Set.of("test1", "test2"));
+
+    when(cohortExecutor.executeGroup(any(), anyMap())).thenReturn(Set.of("test1", "test2"));
+
     when(privacyProperties.getMinHits()).thenReturn(2);
   }
 }
