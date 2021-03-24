@@ -366,44 +366,72 @@ public class StudyService {
     }
     AqlDto aql = new AqlToDtoParser().parse(query);
 
-    SelectFieldDto select = new SelectFieldDto();
-    select.setAqlPath(TEMPLATE_ID_PATH);
+    List<SelectFieldDto> whereClauseSelectFields = new LinkedList<>();
 
     ContainmentExpresionDto contains = aql.getContains();
     int nextContainmentId = findNextContainmentId(contains);
+
     if (contains != null) {
-      Integer compositionIdentifier = findComposition(contains);
-      if (compositionIdentifier != null) {
-        select.setContainmentId(compositionIdentifier);
+      List<Integer> compositions = findCompositions(contains);
+
+      if (CollectionUtils.isNotEmpty(compositions)) {
+        compositions.forEach(
+            id -> {
+              SelectFieldDto selectFieldDto = new SelectFieldDto();
+              selectFieldDto.setAqlPath(TEMPLATE_ID_PATH);
+              selectFieldDto.setContainmentId(id);
+              whereClauseSelectFields.add(selectFieldDto);
+            });
+
       } else {
-
-        select.setContainmentId(nextContainmentId);
-
-        ContainmentLogicalOperator newContains = new ContainmentLogicalOperator();
-        newContains.setValues(new ArrayList<>());
-
-        ContainmentDto composition = new ContainmentDto();
-        composition.setId(nextContainmentId);
-        composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
-
-        newContains.setSymbol(ContainmentLogicalOperatorSymbol.AND);
-        newContains.getValues().add(composition);
-        newContains.getValues().add(contains);
-
-        aql.setContains(newContains);
+        extendContainsClause(aql, whereClauseSelectFields, contains, nextContainmentId);
       }
     } else {
-      ContainmentDto composition = new ContainmentDto();
-      composition.setId(nextContainmentId);
-      composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
-      aql.setContains(composition);
-      select.setContainmentId(nextContainmentId);
+      createContainsClause(aql, whereClauseSelectFields, nextContainmentId);
     }
 
     List<Value> templateValues = toSimpleValueList(templatesMap.keySet());
-    extendWhereClause(aql, select, templateValues);
+    extendWhereClause(aql, whereClauseSelectFields, templateValues);
 
     return new AqlBinder().bind(aql).getLeft().buildAql();
+  }
+
+  private void createContainsClause(
+      AqlDto aql, List<SelectFieldDto> whereClauseSelectFields, int nextContainmentId) {
+
+    SelectFieldDto select = new SelectFieldDto();
+    select.setAqlPath(TEMPLATE_ID_PATH);
+    select.setContainmentId(nextContainmentId);
+    whereClauseSelectFields.add(select);
+
+    ContainmentDto composition = new ContainmentDto();
+    composition.setId(nextContainmentId);
+    composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
+    aql.setContains(composition);
+  }
+
+  private void extendContainsClause(
+      AqlDto aql,
+      List<SelectFieldDto> whereClauseSelectFields,
+      ContainmentExpresionDto contains,
+      int nextContainmentId) {
+    SelectFieldDto select = new SelectFieldDto();
+    select.setAqlPath(TEMPLATE_ID_PATH);
+    select.setContainmentId(nextContainmentId);
+    whereClauseSelectFields.add(select);
+
+    ContainmentLogicalOperator newContains = new ContainmentLogicalOperator();
+    newContains.setValues(new ArrayList<>());
+
+    ContainmentDto composition = new ContainmentDto();
+    composition.setId(nextContainmentId);
+    composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
+
+    newContains.setSymbol(ContainmentLogicalOperatorSymbol.AND);
+    newContains.getValues().add(composition);
+    newContains.getValues().add(contains);
+
+    aql.setContains(newContains);
   }
 
   private String restrictToCohortEhrIds(String query, Study study) {
@@ -423,15 +451,21 @@ public class StudyService {
     select.setAqlPath(EHR_ID_PATH);
     select.setContainmentId(aql.getEhr().getContainmentId());
 
-    extendWhereClause(aql, select, toSimpleValueList(ehrIds));
+    extendWhereClause(aql, List.of(select), toSimpleValueList(ehrIds));
 
     return new AqlBinder().bind(aql).getLeft().buildAql();
   }
 
-  private void extendWhereClause(AqlDto aql, SelectFieldDto select, List<Value> values) {
-    MatchesOperatorDto matches = new MatchesOperatorDto();
-    matches.setStatement(select);
-    matches.setValues(values);
+  private void extendWhereClause(AqlDto aql, List<SelectFieldDto> selects, List<Value> values) {
+    List<MatchesOperatorDto> matchesOperatorDtos = new LinkedList<>();
+
+    selects.forEach(
+        selectFieldDto -> {
+          MatchesOperatorDto matches = new MatchesOperatorDto();
+          matches.setStatement(selectFieldDto);
+          matches.setValues(values);
+          matchesOperatorDtos.add(matches);
+        });
 
     ConditionLogicalOperatorDto newWhere = new ConditionLogicalOperatorDto();
     newWhere.setValues(new ArrayList<>());
@@ -442,14 +476,24 @@ public class StudyService {
       newWhere.getValues().add(where);
     }
 
-    newWhere.getValues().add(matches);
+    if (CollectionUtils.isNotEmpty(matchesOperatorDtos) && matchesOperatorDtos.size() > 1) {
+      newWhere.setSymbol(ConditionLogicalOperatorSymbol.AND);
+    }
+
+    matchesOperatorDtos.forEach(
+        matchesOperatorDto -> {
+          newWhere.getValues().add(matchesOperatorDto);
+        });
+
     aql.setWhere(newWhere);
   }
 
-  private Integer findComposition(ContainmentExpresionDto dto) {
+  private List<Integer> findCompositions(ContainmentExpresionDto dto) {
     if (dto == null) {
       return null;
     }
+
+    List<Integer> compositions = new LinkedList<>();
 
     Queue<ContainmentExpresionDto> queue = new ArrayDeque<>();
     queue.add(dto);
@@ -469,7 +513,7 @@ public class StudyService {
         ContainmentDto containmentDto = (ContainmentDto) current;
 
         if (containmentDto.getArchetypeId().contains(COMPOSITION_ARCHETYPE_ID)) {
-          return containmentDto.getId();
+          compositions.add(containmentDto.getId());
         }
 
         if (containmentDto.getContains() != null) {
@@ -477,7 +521,7 @@ public class StudyService {
         }
       }
     }
-    return null;
+    return compositions;
   }
 
   private Integer findNextContainmentId(ContainmentExpresionDto dto) {
