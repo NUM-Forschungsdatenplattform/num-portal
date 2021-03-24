@@ -260,14 +260,21 @@ public class StudyService {
         studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
 
     validateCoordinatorIsOwner(studyToEdit, userId);
-
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
-    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
 
-    setTemplates(studyToEdit, studyDto);
     List<UserDetails> newResearchers = getResearchers(studyDto);
     List<UserDetails> oldResearchers = studyToEdit.getResearchers();
     studyToEdit.setResearchers(newResearchers);
+
+    if (StudyStatus.APPROVED.equals(studyToEdit.getStatus())
+        || StudyStatus.PUBLISHED.equals(studyToEdit.getStatus())) {
+      Study savedStudy = studyRepository.save(studyToEdit);
+      registerToZarsIfNecessary(savedStudy, savedStudy.getStatus(), oldResearchers, newResearchers);
+      return savedStudy;
+    }
+
+    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
+    setTemplates(studyToEdit, studyDto);
 
     StudyStatus oldStatus = studyToEdit.getStatus();
     studyToEdit.setStatus(studyDto.getStatus());
