@@ -440,15 +440,8 @@ public class StudyServiceTest {
     StudyDto studyDto =
         StudyDto.builder().name("Study is edited").status(StudyStatus.APPROVED).build();
 
-    Exception exception =
-        assertThrows(
-            BadRequestException.class,
-            () ->
-                studyService.updateStudy(
-                    studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER)));
-
-    String expectedMessage = "Study status transition from CLOSED to APPROVED not allowed";
-    assertThat(exception.getMessage(), is(expectedMessage));
+    studyService.updateStudy(
+        studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
   }
 
   @Test
@@ -465,18 +458,11 @@ public class StudyServiceTest {
     StudyDto studyDto =
         StudyDto.builder().name("Study is edited").status(StudyStatus.DRAFT).build();
 
-    Exception exception =
-        assertThrows(
-            BadRequestException.class,
-            () ->
-                studyService.updateStudy(
-                    studyDto,
-                    1L,
-                    "approvedCoordinatorId",
-                    List.of(STUDY_COORDINATOR, STUDY_APPROVER)));
-
-    String expectedMessage = "Study status transition from CLOSED to DRAFT not allowed";
-    assertThat(exception.getMessage(), is(expectedMessage));
+    studyService.updateStudy(
+        studyDto,
+        1L,
+        "approvedCoordinatorId",
+        List.of(STUDY_COORDINATOR, STUDY_APPROVER));
   }
 
   @Test
