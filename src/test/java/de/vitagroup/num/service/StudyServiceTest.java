@@ -426,7 +426,7 @@ public class StudyServiceTest {
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
-  @Test
+  @Test(expected = ForbiddenException.class)
   public void shouldRejectStudyClosedToApprovedTransition() {
     Study studyToEdit =
         Study.builder()
@@ -444,7 +444,7 @@ public class StudyServiceTest {
         studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
   }
 
-  @Test
+  @Test(expected = ForbiddenException.class)
   public void shouldRejectStudyClosedToDraftTransition() {
     Study studyToEdit =
         Study.builder()
@@ -784,6 +784,29 @@ public class StudyServiceTest {
     assertThat(returnedStudy.getName(), is("oldName"));
     assertThat(returnedStudy.getResearchers().get(0).getUserId(), is("1"));
 
+    verify(studyRepository, times(1)).save(any());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldRejectEditingClosedStudies() {
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .status(StudyStatus.CLOSED)
+                    .coordinator(new UserDetails("approvedCoordinatorId", null, true))
+                    .build()));
+
+    StudyDto existingStudy =
+        StudyDto.builder()
+            .id(1L)
+            .name("existing study")
+            .financed(false)
+            .status(StudyStatus.CLOSED)
+            .build();
+    studyService.updateStudy(
+        existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(studyRepository, times(1)).save(any());
   }
 
