@@ -113,12 +113,12 @@ public class AqlController {
   }
 
   @AuditLog
-  @PostMapping("{aqlId}/execute")
-  @ApiOperation(value = "Executes the aql")
+  @PostMapping("{aqlId}/size")
+  @ApiOperation(value = "Executes an aql and returns the count of matching ehr ids in the phenotype")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
-  public ResponseEntity<String> executeAql(
+  public ResponseEntity<Long> getAqlSize(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @NotEmpty @PathVariable Long aqlId) {
-    return ResponseEntity.ok(aqlService.executeAql(aqlId, principal.getSubject()));
+    return ResponseEntity.ok(aqlService.getAqlSize(aqlId, principal.getSubject()));
   }
 }
