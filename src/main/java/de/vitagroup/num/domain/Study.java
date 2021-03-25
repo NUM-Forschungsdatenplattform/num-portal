@@ -6,12 +6,14 @@ import de.vitagroup.num.domain.repository.CategorySetConverter;
 import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.StringSetConverter;
+
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.OneToMany;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,6 +34,7 @@ import javax.persistence.ManyToOne;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+
 import lombok.ToString;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -51,6 +54,10 @@ public class Study {
   private String name;
 
   private String description;
+
+  private String simpleDescription;
+
+  private boolean usedOutsideEu;
 
   private String firstHypotheses;
 
@@ -106,7 +113,7 @@ public class Study {
   }
 
   public boolean isStudyResearcher(String userId) {
-    if(CollectionUtils.isEmpty(researchers)){
+    if (CollectionUtils.isEmpty(researchers)) {
       return false;
     }
     return researchers.stream().anyMatch(r -> userId.equals(r.getUserId()));

@@ -6,6 +6,7 @@ import de.vitagroup.num.domain.StudyStatus;
 import de.vitagroup.num.domain.admin.User;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,6 +36,10 @@ public class StudyDto {
   private String name;
 
   @ApiModelProperty private String description;
+
+  @ApiModelProperty private String simpleDescription;
+
+  @ApiModelProperty private boolean usedOutsideEu;
 
   @ApiModelProperty @Valid private List<TemplateInfoDto> templates;
 
