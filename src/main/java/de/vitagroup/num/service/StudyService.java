@@ -253,11 +253,14 @@ public class StudyService {
 
   @Transactional
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
-
     UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
 
     Study studyToEdit =
         studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+
+    if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
+      throw new ForbiddenException("Update of closed study is not allowed");
+    }
 
     validateCoordinatorIsOwner(studyToEdit, userId);
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
@@ -323,6 +326,10 @@ public class StudyService {
 
     Study studyToEdit =
         studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+
+    if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
+      throw new ForbiddenException("Update of closed study is not allowed");
+    }
 
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
