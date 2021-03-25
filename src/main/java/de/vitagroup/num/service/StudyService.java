@@ -94,8 +94,7 @@ public class StudyService {
 
   private final UserService userService;
 
-  @Nullable
-  private final ZarsService zarsService;
+  @Nullable private final ZarsService zarsService;
 
   /**
    * Counts the number of projects existing in the platform
@@ -230,6 +229,8 @@ public class StudyService {
     study.setStatus(studyDto.getStatus());
     study.setName(studyDto.getName());
     study.setDescription(studyDto.getDescription());
+    study.setSimpleDescription(studyDto.getSimpleDescription());
+    study.setUsedOutsideEu(studyDto.isUsedOutsideEu());
     study.setFirstHypotheses(studyDto.getFirstHypotheses());
     study.setSecondHypotheses(studyDto.getSecondHypotheses());
     study.setGoal(studyDto.getGoal());
@@ -282,6 +283,8 @@ public class StudyService {
     StudyStatus oldStatus = studyToEdit.getStatus();
     studyToEdit.setStatus(studyDto.getStatus());
     studyToEdit.setName(studyDto.getName());
+    studyToEdit.setSimpleDescription(studyDto.getSimpleDescription());
+    studyToEdit.setUsedOutsideEu(studyDto.isUsedOutsideEu());
     studyToEdit.setDescription(studyDto.getDescription());
     studyToEdit.setModifiedDate(OffsetDateTime.now());
     studyToEdit.setFirstHypotheses(studyDto.getFirstHypotheses());
@@ -361,11 +364,11 @@ public class StudyService {
 
   public String getExportFilenameBody(Long studyId) {
     return String.format(
-        "Study_%d_%s",
-        studyId,
-        LocalDateTime.now()
-            .truncatedTo(ChronoUnit.MINUTES)
-            .format(DateTimeFormatter.ISO_LOCAL_DATE))
+            "Study_%d_%s",
+            studyId,
+            LocalDateTime.now()
+                .truncatedTo(ChronoUnit.MINUTES)
+                .format(DateTimeFormatter.ISO_LOCAL_DATE))
         .replace('-', '_');
   }
 
