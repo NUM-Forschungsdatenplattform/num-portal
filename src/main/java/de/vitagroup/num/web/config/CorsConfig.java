@@ -23,7 +23,7 @@ public class CorsConfig {
     CorsConfiguration corsConfiguration = new CorsConfiguration();
 
     corsConfiguration.setAllowCredentials(true);
-    corsConfiguration.setAllowedOrigins(corsProperties.getAllowedOrigins());
+    corsConfiguration.setAllowedOriginPatterns(corsProperties.getAllowedOrigins());
     corsConfiguration.setAllowedMethods(Collections.singletonList(CorsConfiguration.ALL));
     corsConfiguration.setAllowedHeaders(Collections.singletonList(CorsConfiguration.ALL));
     source.registerCorsConfiguration(BASE_PATH, corsConfiguration);
