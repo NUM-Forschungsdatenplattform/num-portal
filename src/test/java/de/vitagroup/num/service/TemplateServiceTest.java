@@ -1,9 +1,17 @@
 package de.vitagroup.num.service;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.TemplateMetadataDto;
 import de.vitagroup.num.mapper.TemplateMapper;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import java.time.OffsetDateTime;
+import java.util.List;
 import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,15 +19,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.time.OffsetDateTime;
-import java.util.List;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TemplateServiceTest {
@@ -47,7 +46,7 @@ public class TemplateServiceTest {
     UserDetails approvedUser =
         UserDetails.builder().userId("approvedUserId").approved(true).build();
 
-    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+    when(userDetailsService.checkIsUserApproved("approvedUserId"))
         .thenReturn(approvedUser);
   }
 
