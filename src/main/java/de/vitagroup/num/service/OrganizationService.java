@@ -47,7 +47,7 @@ public class OrganizationService {
    * @return List with available organizations
    */
   public List<Organization> getAllOrganizations(List<String> roles, String loggedInUserId) {
-    UserDetails user = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (roles.contains(Roles.SUPER_ADMIN)) {
       return organizationRepository.findAll();
@@ -72,7 +72,7 @@ public class OrganizationService {
 
   @Transactional
   public Organization create(String loggedInUserId, OrganizationDto organizationDto) {
-    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    userDetailsService.checkIsUserApproved(loggedInUserId);
 
     organizationRepository
         .findByName(organizationDto.getName())
@@ -115,7 +115,7 @@ public class OrganizationService {
       List<String> roles,
       String loggedInUserId) {
 
-    UserDetails user = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     Organization organizationToEdit =
         organizationRepository

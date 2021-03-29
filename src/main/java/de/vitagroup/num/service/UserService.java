@@ -35,13 +35,13 @@ public class UserService {
   private final OrganizationMapper organizationMapper;
 
   public User getUserProfile(String loggedInUserId) {
-    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    userDetailsService.checkIsUserApproved(loggedInUserId);
     return getUserById(loggedInUserId, true);
   }
 
   public User getUserById(String userId, boolean withRole, String loggedInUserId) {
-    userDetailsService.validateAndReturnUserDetails(userId);
-    return getUserById(loggedInUserId, withRole);
+    userDetailsService.checkIsUserApproved(loggedInUserId);
+    return getUserById(userId, withRole);
   }
 
   /**
@@ -76,7 +76,7 @@ public class UserService {
    * @return Set of roles
    */
   public Set<Role> getUserRoles(String userId, String loggedInUserId) {
-    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    userDetailsService.checkIsUserApproved(loggedInUserId);
     return getUserRoles(userId);
   }
 
@@ -97,7 +97,7 @@ public class UserService {
             .getUserDetailsById(userId)
             .orElseThrow(() -> new SystemException("User not found"));
 
-    UserDetails callerDetails = userDetailsService.validateAndReturnUserDetails(callerUserId);
+    UserDetails callerDetails = userDetailsService.checkIsUserApproved(callerUserId);
 
     if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)
         && !callerRoles.contains(Roles.SUPER_ADMIN)
@@ -205,7 +205,7 @@ public class UserService {
       Boolean withRoles,
       List<String> callerRoles) {
 
-    UserDetails loggedInUser = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     Set<User> users = keycloakFeign.searchUsers(search);
     if (users == null) {

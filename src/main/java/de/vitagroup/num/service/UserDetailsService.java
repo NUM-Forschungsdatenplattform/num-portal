@@ -40,7 +40,7 @@ public class UserDetailsService {
   }
 
   public UserDetails setOrganization(String loggedInUserId, String userId, Long organizationId) {
-    validateAndReturnUserDetails(loggedInUserId);
+    checkIsUserApproved(loggedInUserId);
 
     UserDetails userDetails =
         userDetailsRepository
@@ -58,7 +58,7 @@ public class UserDetailsService {
 
   public UserDetails approveUser(String loggedInUserId, String userId) {
 
-    validateAndReturnUserDetails(loggedInUserId);
+    checkIsUserApproved(loggedInUserId);
 
     Optional<UserDetails> userDetails = userDetailsRepository.findByUserId(userId);
     return userDetails
@@ -70,7 +70,7 @@ public class UserDetailsService {
         .orElseThrow(() -> new ResourceNotFound("User " + userId + " not created yet."));
   }
 
-  public UserDetails validateAndReturnUserDetails(String userId) {
+  public UserDetails checkIsUserApproved(String userId) {
     UserDetails user =
         getUserDetailsById(userId).orElseThrow(() -> new SystemException("User not found"));
 

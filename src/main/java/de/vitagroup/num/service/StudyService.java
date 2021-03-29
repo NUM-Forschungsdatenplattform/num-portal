@@ -134,7 +134,7 @@ public class StudyService {
     QueryResponseData queryResponseData;
     Study study = null;
     try {
-      userDetailsService.validateAndReturnUserDetails(userId);
+      userDetailsService.checkIsUserApproved(userId);
 
       study =
           studyRepository
@@ -216,7 +216,7 @@ public class StudyService {
 
   public Study createStudy(StudyDto studyDto, String userId, List<String> roles) {
 
-    UserDetails coordinator = userDetailsService.validateAndReturnUserDetails(userId);
+    UserDetails coordinator = userDetailsService.checkIsUserApproved(userId);
 
     Study study = Study.builder().build();
 
@@ -254,7 +254,7 @@ public class StudyService {
 
   @Transactional
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
-    UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
+    UserDetails user = userDetailsService.checkIsUserApproved(userId);
 
     Study studyToEdit =
         studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
@@ -325,7 +325,7 @@ public class StudyService {
   }
 
   public Study updateStudyStatus(StudyDto studyDto, Long id, String userId, List<String> roles) {
-    UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
+    UserDetails user = userDetailsService.checkIsUserApproved(userId);
 
     Study studyToEdit =
         studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
