@@ -306,10 +306,10 @@ public class StudyService {
     studyToEdit.setResearchers(newResearchers);
 
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
-    studyToEdit.setStatus(studyDto.getStatus());
 
     if (StudyStatus.APPROVED.equals(studyToEdit.getStatus())
         || StudyStatus.PUBLISHED.equals(studyToEdit.getStatus())) {
+      studyToEdit.setStatus(studyDto.getStatus());
       Study savedStudy = studyRepository.save(studyToEdit);
       registerToZarsIfNecessary(savedStudy, savedStudy.getStatus(), oldResearchers, newResearchers);
       return savedStudy;
@@ -317,6 +317,7 @@ public class StudyService {
     setTemplates(studyToEdit, studyDto);
 
     StudyStatus oldStatus = studyToEdit.getStatus();
+    studyToEdit.setStatus(studyDto.getStatus());
     studyToEdit.setName(studyDto.getName());
     studyToEdit.setSimpleDescription(studyDto.getSimpleDescription());
     studyToEdit.setUsedOutsideEu(studyDto.isUsedOutsideEu());
