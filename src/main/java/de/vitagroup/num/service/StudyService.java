@@ -297,6 +297,7 @@ public class StudyService {
     if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
       throw new ForbiddenException("Update of closed study is not allowed");
     }
+    StudyStatus oldStatus = studyToEdit.getStatus();
 
     validateCoordinatorIsOwner(studyToEdit, user.getUserId());
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
@@ -311,12 +312,11 @@ public class StudyService {
         || StudyStatus.PUBLISHED.equals(studyToEdit.getStatus())) {
       studyToEdit.setStatus(studyDto.getStatus());
       Study savedStudy = studyRepository.save(studyToEdit);
-      registerToZarsIfNecessary(savedStudy, savedStudy.getStatus(), oldResearchers, newResearchers);
+      registerToZarsIfNecessary(savedStudy, oldStatus, oldResearchers, newResearchers);
       return savedStudy;
     }
     setTemplates(studyToEdit, studyDto);
 
-    StudyStatus oldStatus = studyToEdit.getStatus();
     studyToEdit.setStatus(studyDto.getStatus());
     studyToEdit.setName(studyDto.getName());
     studyToEdit.setSimpleDescription(studyDto.getSimpleDescription());
