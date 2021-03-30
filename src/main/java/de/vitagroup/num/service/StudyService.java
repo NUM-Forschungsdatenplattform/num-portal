@@ -270,7 +270,7 @@ public class StudyService {
     }
   }
 
-  public Study updateStudyStatus(
+  private Study updateStudyStatus(
       StudyDto studyDto, List<String> roles, UserDetails user, Study studyToEdit) {
 
     StudyStatus oldStudyStatus = studyToEdit.getStatus();
