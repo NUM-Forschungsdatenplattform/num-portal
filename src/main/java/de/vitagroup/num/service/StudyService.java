@@ -330,6 +330,7 @@ public class StudyService {
     Study studyToEdit =
         studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
 
+    StudyStatus oldStudyStatus = studyToEdit.getStatus();
     if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
       throw new ForbiddenException("Update of closed study is not allowed");
     }
@@ -338,7 +339,12 @@ public class StudyService {
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
     studyToEdit.setStatus(studyDto.getStatus());
 
-    return studyRepository.save(studyToEdit);
+    Study savedStudy = studyRepository.save(studyToEdit);
+
+    registerToZarsIfNecessary(
+        savedStudy, oldStudyStatus, savedStudy.getResearchers(), savedStudy.getResearchers());
+
+    return savedStudy;
   }
 
   public List<Study> getStudies(String userId, List<String> roles) {

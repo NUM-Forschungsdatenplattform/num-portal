@@ -59,15 +59,24 @@ public class ZarsService {
   }
 
   public void registerToZars(@NotNull Study study) {
-    String csv = generateCSV(study);
-    String subject = "Projekt NUM-" + study.getId();
-    String body =
-        String.format(
-            "NUM-%d%nTitel: %s%nProjektleiter: %s%nNeuer Status: %s",
-            study.getId(), study.getName(), getCoordinator(study), study.getStatus().toString());
-    emailService.sendEmailWithAttachment(
-        subject, body, zarsProperties.getEmail(), csv, "NUM_" + study.getId() + ".csv", "text/csv");
-    log.debug("Registration email successfully sent to " + zarsProperties.getEmail());
+    try {
+      String csv = generateCSV(study);
+      String subject = "Projekt NUM-" + study.getId();
+      String body =
+          String.format(
+              "NUM-%d%nTitel: %s%nProjektleiter: %s%nNeuer Status: %s",
+              study.getId(), study.getName(), getCoordinator(study), study.getStatus().toString());
+      emailService.sendEmailWithAttachment(
+          subject,
+          body,
+          zarsProperties.getEmail(),
+          csv,
+          "NUM_" + study.getId() + ".csv",
+          "text/csv");
+      log.debug("Registration email successfully sent to " + zarsProperties.getEmail());
+    } catch (Exception e) {
+      log.error("Could not send email to ZARS", e);
+    }
   }
 
   @NotNull
