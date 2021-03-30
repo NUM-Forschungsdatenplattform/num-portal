@@ -107,7 +107,7 @@ public class ZarsService {
     values.add(study.getEndDate().toString()); // End date
     values.add(study.getGoal()); // Goal
     values.add(study.getDescription()); // Description
-    values.add(""); // TODO: add simple text description when it is implemented
+    values.add(study.getSimpleDescription()); // Simple description
     values.add(String.join(", ", study.getKeywords())); // Keywords
     values.add(
         study.getCategories().stream()
