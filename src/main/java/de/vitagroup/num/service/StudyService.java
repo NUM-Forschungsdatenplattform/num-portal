@@ -259,11 +259,46 @@ public class StudyService {
     Study studyToEdit =
         studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
 
+    if (CollectionUtils.isNotEmpty(roles)
+        && roles.contains(Roles.STUDY_COORDINATOR)
+        && studyToEdit.isCoordinator(userId)) {
+      return updateStudyAllFields(studyDto, roles, user, studyToEdit);
+    } else if (CollectionUtils.isNotEmpty(roles) && roles.contains(Roles.STUDY_APPROVER)) {
+      return updateStudyStatus(studyDto, roles, user, studyToEdit);
+    } else {
+      throw new ForbiddenException("No permissions to edit this study");
+    }
+  }
+
+  private Study updateStudyStatus(
+      StudyDto studyDto, List<String> roles, UserDetails user, Study studyToEdit) {
+
+    StudyStatus oldStudyStatus = studyToEdit.getStatus();
+
     if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
       throw new ForbiddenException("Update of closed study is not allowed");
     }
 
-    validateCoordinatorIsOwner(studyToEdit, userId);
+    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
+    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
+    studyToEdit.setStatus(studyDto.getStatus());
+
+    Study savedStudy = studyRepository.save(studyToEdit);
+
+    registerToZarsIfNecessary(
+        savedStudy, oldStudyStatus, savedStudy.getResearchers(), savedStudy.getResearchers());
+
+    return savedStudy;
+  }
+
+  private Study updateStudyAllFields(
+      StudyDto studyDto, List<String> roles, UserDetails user, Study studyToEdit) {
+
+    if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
+      throw new ForbiddenException("Update of closed study is not allowed");
+    }
+
+    validateCoordinatorIsOwner(studyToEdit, user.getUserId());
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
 
     List<UserDetails> newResearchers = getResearchers(studyDto);
@@ -322,29 +357,6 @@ public class StudyService {
       List<UserDetails> oldResearchers, List<UserDetails> newResearchers) {
     return !(oldResearchers.containsAll(newResearchers)
         && newResearchers.containsAll(oldResearchers));
-  }
-
-  public Study updateStudyStatus(StudyDto studyDto, Long id, String userId, List<String> roles) {
-    UserDetails user = userDetailsService.checkIsUserApproved(userId);
-
-    Study studyToEdit =
-        studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
-
-    StudyStatus oldStudyStatus = studyToEdit.getStatus();
-    if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
-      throw new ForbiddenException("Update of closed study is not allowed");
-    }
-
-    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
-    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
-    studyToEdit.setStatus(studyDto.getStatus());
-
-    Study savedStudy = studyRepository.save(studyToEdit);
-
-    registerToZarsIfNecessary(
-        savedStudy, oldStudyStatus, savedStudy.getResearchers(), savedStudy.getResearchers());
-
-    return savedStudy;
   }
 
   public List<Study> getStudies(String userId, List<String> roles) {

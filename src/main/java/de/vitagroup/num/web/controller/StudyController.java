@@ -102,16 +102,10 @@ public class StudyController {
       @PathVariable("id") Long studyId,
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
-    Study study;
-    if (Roles.hasRole(Roles.STUDY_APPROVER, principal)) {
-      study =
-          studyService.updateStudyStatus(
-              studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
-    } else {
-      study =
-          studyService.updateStudy(
-              studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
-    }
+    Study study =
+        studyService.updateStudy(
+            studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
+
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
 
@@ -152,7 +146,8 @@ public class StudyController {
   @GetMapping("/{studyId}/comment")
   @ApiOperation(value = "Retrieves the list of attached comments to a particular study")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<List<CommentDto>> getComments(@AuthenticationPrincipal @NotNull Jwt principal,
+  public ResponseEntity<List<CommentDto>> getComments(
+      @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @NotEmpty @PathVariable Long studyId) {
     return ResponseEntity.ok(
         commentService.getComments(studyId, principal.getSubject()).stream()
