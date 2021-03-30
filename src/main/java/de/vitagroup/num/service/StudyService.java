@@ -304,8 +304,9 @@ public class StudyService {
     List<UserDetails> newResearchers = getResearchers(studyDto);
     List<UserDetails> oldResearchers = studyToEdit.getResearchers();
     studyToEdit.setResearchers(newResearchers);
-    studyToEdit.setStatus(studyDto.getStatus());
+
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
+    studyToEdit.setStatus(studyDto.getStatus());
 
     if (StudyStatus.APPROVED.equals(studyToEdit.getStatus())
         || StudyStatus.PUBLISHED.equals(studyToEdit.getStatus())) {
