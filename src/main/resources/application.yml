@@ -105,6 +105,10 @@ cors:
 privacy:
   minHits: 20
 
+num:
+  url: https://dev.num-codex.de/home
+  locale: en
+
 ---
 spring:
   profiles: local
@@ -189,3 +193,7 @@ atna:
 zars:
   enabled: false
   email: foo@foo.bar
+
+num:
+  url: https://dev.num-codex.de/home
+  locale: en
