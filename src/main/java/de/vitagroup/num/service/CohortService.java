@@ -34,12 +34,12 @@ public class CohortService {
   private final PrivacyProperties privacyProperties;
 
   public Cohort getCohort(Long cohortId, String userId) {
-    userDetailsService.validateAndReturnUserDetails(userId);
+    userDetailsService.checkIsUserApproved(userId);
     return cohortRepository.findById(cohortId).orElseThrow(ResourceNotFound::new);
   }
 
   public Cohort createCohort(CohortDto cohortDto, String userId) {
-    userDetailsService.validateAndReturnUserDetails(userId);
+    userDetailsService.checkIsUserApproved(userId);
 
     Study study =
         studyRepository
@@ -73,7 +73,7 @@ public class CohortService {
   }
 
   public long getCohortGroupSize(CohortGroupDto cohortGroupDto, String userId) {
-    userDetailsService.validateAndReturnUserDetails(userId);
+    userDetailsService.checkIsUserApproved(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, cohortGroup.getParameters());
@@ -84,7 +84,7 @@ public class CohortService {
   }
 
   public Cohort updateCohort(CohortDto cohortDto, Long cohortId, String userId) {
-    userDetailsService.validateAndReturnUserDetails(userId);
+    userDetailsService.checkIsUserApproved(userId);
 
     Cohort cohortToEdit =
         cohortRepository

@@ -426,7 +426,7 @@ public class StudyServiceTest {
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
-  @Test
+  @Test(expected = ForbiddenException.class)
   public void shouldRejectStudyClosedToApprovedTransition() {
     Study studyToEdit =
         Study.builder()
@@ -440,18 +440,11 @@ public class StudyServiceTest {
     StudyDto studyDto =
         StudyDto.builder().name("Study is edited").status(StudyStatus.APPROVED).build();
 
-    Exception exception =
-        assertThrows(
-            BadRequestException.class,
-            () ->
-                studyService.updateStudy(
-                    studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER)));
-
-    String expectedMessage = "Study status transition from CLOSED to APPROVED not allowed";
-    assertThat(exception.getMessage(), is(expectedMessage));
+    studyService.updateStudy(
+        studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
   }
 
-  @Test
+  @Test(expected = ForbiddenException.class)
   public void shouldRejectStudyClosedToDraftTransition() {
     Study studyToEdit =
         Study.builder()
@@ -465,18 +458,11 @@ public class StudyServiceTest {
     StudyDto studyDto =
         StudyDto.builder().name("Study is edited").status(StudyStatus.DRAFT).build();
 
-    Exception exception =
-        assertThrows(
-            BadRequestException.class,
-            () ->
-                studyService.updateStudy(
-                    studyDto,
-                    1L,
-                    "approvedCoordinatorId",
-                    List.of(STUDY_COORDINATOR, STUDY_APPROVER)));
-
-    String expectedMessage = "Study status transition from CLOSED to DRAFT not allowed";
-    assertThat(exception.getMessage(), is(expectedMessage));
+    studyService.updateStudy(
+        studyDto,
+        1L,
+        "approvedCoordinatorId",
+        List.of(STUDY_COORDINATOR, STUDY_APPROVER));
   }
 
   @Test
@@ -801,6 +787,29 @@ public class StudyServiceTest {
     verify(studyRepository, times(1)).save(any());
   }
 
+  @Test(expected = ForbiddenException.class)
+  public void shouldRejectEditingClosedStudies() {
+    when(studyRepository.findById(1L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(1L)
+                    .status(StudyStatus.CLOSED)
+                    .coordinator(new UserDetails("approvedCoordinatorId", null, true))
+                    .build()));
+
+    StudyDto existingStudy =
+        StudyDto.builder()
+            .id(1L)
+            .name("existing study")
+            .financed(false)
+            .status(StudyStatus.CLOSED)
+            .build();
+    studyService.updateStudy(
+        existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    verify(studyRepository, times(1)).save(any());
+  }
+
   @Before
   public void setup() {
     UserDetails notApprovedCoordinator =
@@ -809,13 +818,13 @@ public class StudyServiceTest {
     UserDetails approvedCoordinator =
         UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
 
-    when(userDetailsService.validateAndReturnUserDetails("approvedCoordinatorId"))
+    when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
         .thenReturn(approvedCoordinator);
 
-    when(userDetailsService.validateAndReturnUserDetails("notApprovedCoordinatorId"))
+    when(userDetailsService.checkIsUserApproved("notApprovedCoordinatorId"))
         .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsService.validateAndReturnUserDetails("nonExistingCoordinatorId"))
+    when(userDetailsService.checkIsUserApproved("nonExistingCoordinatorId"))
         .thenThrow(new SystemException("User not found"));
 
     when(studyRepository.findById(3L))

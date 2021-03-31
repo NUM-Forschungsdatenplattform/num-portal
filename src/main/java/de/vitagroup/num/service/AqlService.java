@@ -47,7 +47,7 @@ public class AqlService {
   }
 
   public Aql getAqlById(Long id, String loggedInUserId) {
-    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    userDetailsService.checkIsUserApproved(loggedInUserId);
 
     Aql aql = aqlRepository.findById(id).orElseThrow(ResourceNotFound::new);
 
@@ -59,12 +59,12 @@ public class AqlService {
   }
 
   public List<Aql> getVisibleAqls(String loggedInUserId) {
-    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    userDetailsService.checkIsUserApproved(loggedInUserId);
     return aqlRepository.findAllOwnedOrPublic(loggedInUserId);
   }
 
   public Aql createAql(Aql aql, String loggedInUserId) {
-    UserDetails user = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (user.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
@@ -78,7 +78,7 @@ public class AqlService {
   }
 
   public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
-    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    userDetailsService.checkIsUserApproved(loggedInUserId);
 
     Aql aqlToEdit =
         aqlRepository
@@ -103,7 +103,7 @@ public class AqlService {
   }
 
   public void deleteById(Long id, String loggedInUserId) {
-    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    userDetailsService.checkIsUserApproved(loggedInUserId);
 
     Aql aql =
         aqlRepository
@@ -132,7 +132,7 @@ public class AqlService {
    */
   public List<Aql> searchAqls(String name, AqlSearchFilter filter, String loggedInUserId) {
 
-    UserDetails user = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (user.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
@@ -152,7 +152,7 @@ public class AqlService {
   }
 
   public String executeAql(Long aqlId, String userId) {
-    userDetailsService.validateAndReturnUserDetails(userId);
+    userDetailsService.checkIsUserApproved(userId);
     Aql aql =
         aqlRepository
             .findById(aqlId)

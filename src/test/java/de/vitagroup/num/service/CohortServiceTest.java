@@ -1,16 +1,13 @@
 package de.vitagroup.num.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -276,13 +273,13 @@ public class CohortServiceTest {
     UserDetails notApprovedUser =
         UserDetails.builder().userId("notApprovedUserId").approved(false).build();
 
-    when(userDetailsService.validateAndReturnUserDetails("notApprovedUserId"))
+    when(userDetailsService.checkIsUserApproved("notApprovedUserId"))
         .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsService.validateAndReturnUserDetails("missingUserID"))
+    when(userDetailsService.checkIsUserApproved("missingUserID"))
         .thenThrow(new SystemException("User not found"));
 
-    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+    when(userDetailsService.checkIsUserApproved("approvedUserId"))
         .thenReturn(approvedUser);
 
     when(studyRepository.findById(2L))

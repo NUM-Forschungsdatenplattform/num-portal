@@ -94,8 +94,7 @@ public class StudyService {
 
   private final UserService userService;
 
-  @Nullable
-  private final ZarsService zarsService;
+  @Nullable private final ZarsService zarsService;
 
   /**
    * Counts the number of projects existing in the platform
@@ -135,7 +134,7 @@ public class StudyService {
     QueryResponseData queryResponseData;
     Study study = null;
     try {
-      userDetailsService.validateAndReturnUserDetails(userId);
+      userDetailsService.checkIsUserApproved(userId);
 
       study =
           studyRepository
@@ -217,7 +216,7 @@ public class StudyService {
 
   public Study createStudy(StudyDto studyDto, String userId, List<String> roles) {
 
-    UserDetails coordinator = userDetailsService.validateAndReturnUserDetails(userId);
+    UserDetails coordinator = userDetailsService.checkIsUserApproved(userId);
 
     Study study = Study.builder().build();
 
@@ -230,6 +229,8 @@ public class StudyService {
     study.setStatus(studyDto.getStatus());
     study.setName(studyDto.getName());
     study.setDescription(studyDto.getDescription());
+    study.setSimpleDescription(studyDto.getSimpleDescription());
+    study.setUsedOutsideEu(studyDto.isUsedOutsideEu());
     study.setFirstHypotheses(studyDto.getFirstHypotheses());
     study.setSecondHypotheses(studyDto.getSecondHypotheses());
     study.setGoal(studyDto.getGoal());
@@ -253,32 +254,73 @@ public class StudyService {
 
   @Transactional
   public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
-
-    UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
+    UserDetails user = userDetailsService.checkIsUserApproved(userId);
 
     Study studyToEdit =
         studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
 
-    validateCoordinatorIsOwner(studyToEdit, userId);
+    if (CollectionUtils.isNotEmpty(roles)
+        && roles.contains(Roles.STUDY_COORDINATOR)
+        && studyToEdit.isCoordinator(userId)) {
+      return updateStudyAllFields(studyDto, roles, user, studyToEdit);
+    } else if (CollectionUtils.isNotEmpty(roles) && roles.contains(Roles.STUDY_APPROVER)) {
+      return updateStudyStatus(studyDto, roles, user, studyToEdit);
+    } else {
+      throw new ForbiddenException("No permissions to edit this study");
+    }
+  }
+
+  private Study updateStudyStatus(
+      StudyDto studyDto, List<String> roles, UserDetails user, Study studyToEdit) {
+
+    StudyStatus oldStudyStatus = studyToEdit.getStatus();
+
+    if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
+      throw new ForbiddenException("Update of closed study is not allowed");
+    }
+
+    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
+    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
+    studyToEdit.setStatus(studyDto.getStatus());
+
+    Study savedStudy = studyRepository.save(studyToEdit);
+
+    registerToZarsIfNecessary(
+        savedStudy, oldStudyStatus, savedStudy.getResearchers(), savedStudy.getResearchers());
+
+    return savedStudy;
+  }
+
+  private Study updateStudyAllFields(
+      StudyDto studyDto, List<String> roles, UserDetails user, Study studyToEdit) {
+
+    if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
+      throw new ForbiddenException("Update of closed study is not allowed");
+    }
+    StudyStatus oldStatus = studyToEdit.getStatus();
+
+    validateCoordinatorIsOwner(studyToEdit, user.getUserId());
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
 
     List<UserDetails> newResearchers = getResearchers(studyDto);
     List<UserDetails> oldResearchers = studyToEdit.getResearchers();
     studyToEdit.setResearchers(newResearchers);
 
+    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
+
     if (StudyStatus.APPROVED.equals(studyToEdit.getStatus())
         || StudyStatus.PUBLISHED.equals(studyToEdit.getStatus())) {
+      studyToEdit.setStatus(studyDto.getStatus());
       Study savedStudy = studyRepository.save(studyToEdit);
-      registerToZarsIfNecessary(savedStudy, savedStudy.getStatus(), oldResearchers, newResearchers);
+      registerToZarsIfNecessary(savedStudy, oldStatus, oldResearchers, newResearchers);
       return savedStudy;
     }
-
-    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
     setTemplates(studyToEdit, studyDto);
 
-    StudyStatus oldStatus = studyToEdit.getStatus();
     studyToEdit.setStatus(studyDto.getStatus());
     studyToEdit.setName(studyDto.getName());
+    studyToEdit.setSimpleDescription(studyDto.getSimpleDescription());
+    studyToEdit.setUsedOutsideEu(studyDto.isUsedOutsideEu());
     studyToEdit.setDescription(studyDto.getDescription());
     studyToEdit.setModifiedDate(OffsetDateTime.now());
     studyToEdit.setFirstHypotheses(studyDto.getFirstHypotheses());
@@ -318,19 +360,6 @@ public class StudyService {
         && newResearchers.containsAll(oldResearchers));
   }
 
-  public Study updateStudyStatus(StudyDto studyDto, Long id, String userId, List<String> roles) {
-    UserDetails user = userDetailsService.validateAndReturnUserDetails(userId);
-
-    Study studyToEdit =
-        studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
-
-    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
-    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
-    studyToEdit.setStatus(studyDto.getStatus());
-
-    return studyRepository.save(studyToEdit);
-  }
-
   public List<Study> getStudies(String userId, List<String> roles) {
 
     List<Study> studiesList = new ArrayList<>();
@@ -354,11 +383,11 @@ public class StudyService {
 
   public String getExportFilenameBody(Long studyId) {
     return String.format(
-        "Study_%d_%s",
-        studyId,
-        LocalDateTime.now()
-            .truncatedTo(ChronoUnit.MINUTES)
-            .format(DateTimeFormatter.ISO_LOCAL_DATE))
+            "Study_%d_%s",
+            studyId,
+            LocalDateTime.now()
+                .truncatedTo(ChronoUnit.MINUTES)
+                .format(DateTimeFormatter.ISO_LOCAL_DATE))
         .replace('-', '_');
   }
 
