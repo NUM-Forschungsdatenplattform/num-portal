@@ -1,5 +1,6 @@
 package de.vitagroup.num.domain;
 
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +13,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Cohort {
+public class Cohort implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
