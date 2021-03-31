@@ -400,15 +400,14 @@ public class StudyControllerIT extends IntegrationTest {
 
     String studyJson = mapper.writeValueAsString(updateStudy);
 
-    MvcResult result =
-        mockMvc
-            .perform(
-                put(String.format("%s/%s", STUDY_PATH, study.getId()))
-                    .with(csrf())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(studyJson))
-            .andReturn();
-    assertTrue(result.getResponse().getContentAsString().contains(StudyStatus.PENDING.name()));
-    assertTrue(result.getResponse().getContentAsString().contains("updateStudy"));
+    mockMvc
+        .perform(
+            put(String.format("%s/%s", STUDY_PATH, study.getId()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(studyJson))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("updateStudy"))
+        .andExpect(jsonPath("$.status").value(StudyStatus.PENDING.name()));
   }
 }

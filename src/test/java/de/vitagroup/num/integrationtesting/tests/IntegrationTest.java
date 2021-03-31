@@ -35,6 +35,7 @@ public abstract class IntegrationTest {
   private static final String IDENTITY_PROVIDER_TOKEN_ENDPOINT =
       "/auth/realms/Num/protocol/openid-connect/token";
   private static final String USER_ENDPOINT_USER1 = "/auth/admin/realms/Num/users/user1";
+  private static final String USER_ENDPOINT_USER2 = "/auth/admin/realms/Num/users/user2";
   private static final String EHR_BASE_URL = "/ehrbase/rest/openehr/v1/definition/template/adl1.4/";
 
   @ClassRule
@@ -53,6 +54,12 @@ public abstract class IntegrationTest {
             .willReturn(
                 okJson(
                     "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"User1\"}")));
+
+    stubFor(
+        WireMock.get(USER_ENDPOINT_USER2)
+            .willReturn(
+                okJson(
+                    "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"User2\"}")));
 
     stubFor(
         WireMock.post(IDENTITY_PROVIDER_TOKEN_ENDPOINT)
