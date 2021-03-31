@@ -417,6 +417,14 @@ public class StudyService {
   private void notifyResearchers(
       List<UserDetails> newResearchers, List<UserDetails> oldResearchers, Study study) {
 
+    if (CollectionUtils.isEmpty(newResearchers)) {
+      newResearchers = new LinkedList<>();
+    }
+
+    if (CollectionUtils.isEmpty(oldResearchers)) {
+      oldResearchers = new LinkedList<>();
+    }
+
     List<UserDetails> newResearchersCopy = new ArrayList<>(newResearchers);
     List<UserDetails> oldResearchersCopy = new ArrayList<>(oldResearchers);
 
