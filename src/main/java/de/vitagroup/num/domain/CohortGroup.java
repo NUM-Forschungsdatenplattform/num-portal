@@ -3,6 +3,7 @@ package de.vitagroup.num.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import de.vitagroup.num.domain.repository.MapConverter;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +21,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(exclude = "children")
-public class CohortGroup {
+public class CohortGroup implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

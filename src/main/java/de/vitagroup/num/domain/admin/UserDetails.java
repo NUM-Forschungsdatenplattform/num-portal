@@ -2,6 +2,7 @@ package de.vitagroup.num.domain.admin;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.vitagroup.num.domain.Organization;
+import java.io.Serializable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDetails {
+public class UserDetails implements Serializable {
 
   @Id private String userId;
 

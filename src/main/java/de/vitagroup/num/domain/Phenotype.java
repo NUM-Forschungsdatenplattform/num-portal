@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.ExpressionConverter;
 import io.swagger.annotations.ApiModel;
+import java.io.Serializable;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -23,7 +24,7 @@ import org.apache.commons.lang3.ObjectUtils;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Phenotype {
+public class Phenotype implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
