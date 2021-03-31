@@ -30,4 +30,7 @@ public interface KeycloakFeign {
 
   @GetMapping("/users")
   Set<User> searchUsers(@RequestParam(required = false) String search);
+
+  @GetMapping("/roles/{roleName}/users")
+  Set<User> getByRole(@PathVariable String roleName);
 }

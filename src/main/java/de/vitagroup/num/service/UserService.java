@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,7 @@ public class UserService {
    * @param userId External id of the user
    * @return User
    */
+  @Transactional
   public User getUserById(String userId, Boolean withRole) {
     try {
       User user = keycloakFeign.getUser(userId);
@@ -223,6 +225,14 @@ public class UserService {
     }
 
     return filterByCallerRole(users, callerRoles, loggedInUser);
+  }
+
+  @Transactional
+  public Set<User> getByRole(String role) {
+    Set<User> users = keycloakFeign.getByRole(role);
+    users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
+    users.forEach(this::addUserDetails);
+    return users;
   }
 
   private Set<User> filterByCallerRole(
