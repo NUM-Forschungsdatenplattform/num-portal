@@ -818,13 +818,13 @@ public class StudyServiceTest {
     UserDetails approvedCoordinator =
         UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
 
-    when(userDetailsService.validateAndReturnUserDetails("approvedCoordinatorId"))
+    when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
         .thenReturn(approvedCoordinator);
 
-    when(userDetailsService.validateAndReturnUserDetails("notApprovedCoordinatorId"))
+    when(userDetailsService.checkIsUserApproved("notApprovedCoordinatorId"))
         .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsService.validateAndReturnUserDetails("nonExistingCoordinatorId"))
+    when(userDetailsService.checkIsUserApproved("nonExistingCoordinatorId"))
         .thenThrow(new SystemException("User not found"));
 
     when(studyRepository.findById(3L))

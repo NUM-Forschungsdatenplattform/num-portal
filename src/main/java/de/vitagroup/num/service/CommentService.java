@@ -7,7 +7,6 @@ import de.vitagroup.num.domain.repository.CommentRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -23,7 +22,7 @@ public class CommentService {
   private final StudyService studyService;
 
   public List<Comment> getComments(Long studyId, String userId) {
-    userDetailsService.validateAndReturnUserDetails(userId);
+    userDetailsService.checkIsUserApproved(userId);
     if (!studyService.exists(studyId)) {
       throw new ResourceNotFound("Study does not exist");
     }
@@ -32,7 +31,7 @@ public class CommentService {
   }
 
   public Comment createComment(Comment comment, Long studyId, String loggedInUserId) {
-    UserDetails author = userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    UserDetails author = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     Study study =
         studyService
@@ -48,7 +47,7 @@ public class CommentService {
   public Comment updateComment(
       Comment comment, Long commentId, String loggedInUserId, Long studyId) {
 
-    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (!studyService.exists(studyId)) {
       throw new ResourceNotFound("Study not found: " + studyId);
@@ -73,7 +72,7 @@ public class CommentService {
   }
 
   public void deleteComment(Long commentId, Long studyId, String loggedInUserId) {
-    userDetailsService.validateAndReturnUserDetails(loggedInUserId);
+    userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (!studyService.exists(studyId)) {
       throw new ResourceNotFound("Study does not exist");

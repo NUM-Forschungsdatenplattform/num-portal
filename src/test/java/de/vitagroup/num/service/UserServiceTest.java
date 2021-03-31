@@ -104,7 +104,7 @@ public class UserServiceTest {
                         Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
-    when(userDetailsService.validateAndReturnUserDetails("4"))
+    when(userDetailsService.checkIsUserApproved("4"))
         .thenReturn(
             UserDetails.builder()
                 .userId("4")
@@ -120,7 +120,7 @@ public class UserServiceTest {
                         Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
-    when(userDetailsService.validateAndReturnUserDetails("5"))
+    when(userDetailsService.checkIsUserApproved("5"))
         .thenReturn(
             UserDetails.builder()
                 .userId("5")
@@ -156,7 +156,7 @@ public class UserServiceTest {
                     .build()));
     when(userDetailsService.getUserDetailsById("9"))
         .thenReturn(Optional.of(UserDetails.builder().userId("9").approved(true).build()));
-    when(userDetailsService.validateAndReturnUserDetails("9"))
+    when(userDetailsService.checkIsUserApproved("9"))
         .thenReturn(UserDetails.builder().userId("9").approved(true).build());
   }
 
@@ -177,7 +177,7 @@ public class UserServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleRolesBadRequest() {
-    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+    when(userDetailsService.checkIsUserApproved("approvedUserId"))
         .thenReturn(UserDetails.builder().userId("approvedUserId").approved(true).build());
 
     userService.getUserRoles("1", "approvedUserId");
@@ -185,7 +185,7 @@ public class UserServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleRolesError() {
-    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+    when(userDetailsService.checkIsUserApproved("approvedUserId"))
         .thenReturn(UserDetails.builder().userId("approvedUserId").approved(true).build());
 
     userService.getUserRoles("2", "approvedUserId");
@@ -193,7 +193,7 @@ public class UserServiceTest {
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleRolesNotFound() {
-    when(userDetailsService.validateAndReturnUserDetails("approvedUserId"))
+    when(userDetailsService.checkIsUserApproved("approvedUserId"))
         .thenReturn(UserDetails.builder().userId("approvedUserId").approved(true).build());
 
     userService.getUserRoles("3", "approvedUserId");

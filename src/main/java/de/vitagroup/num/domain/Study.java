@@ -118,4 +118,8 @@ public class Study {
     }
     return researchers.stream().anyMatch(r -> userId.equals(r.getUserId()));
   }
+
+  public boolean isCoordinator(String userId) {
+    return coordinator != null && coordinator.getUserId().equals(userId);
+  }
 }
