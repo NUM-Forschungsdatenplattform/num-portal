@@ -5,6 +5,7 @@ import static de.vitagroup.num.domain.Roles.RESEARCHER;
 import static de.vitagroup.num.domain.Roles.STUDY_APPROVER;
 import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
 import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -38,17 +39,13 @@ import org.springframework.test.web.servlet.MvcResult;
 public class StudyControllerIT extends IntegrationTest {
 
   private static final String STUDY_PATH = "/study";
-  @Autowired
-  public MockMvc mockMvc;
+  @Autowired public MockMvc mockMvc;
   UserDetails user1;
   UserDetails user2;
   UserDetails user3;
-  @Autowired
-  private ObjectMapper mapper;
-  @Autowired
-  private StudyRepository studyRepository;
-  @Autowired
-  private UserDetailsRepository userDetailsRepository;
+  @Autowired private ObjectMapper mapper;
+  @Autowired private StudyRepository studyRepository;
+  @Autowired private UserDetailsRepository userDetailsRepository;
 
   @Before
   public void setupStudies() {
@@ -194,7 +191,8 @@ public class StudyControllerIT extends IntegrationTest {
         .andExpect(status().isForbidden());
   }
 
-  @Ignore("Ignore until integration testing infrastructure includes keycloak dependency as container")
+  @Ignore(
+      "Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_COORDINATOR})
@@ -214,7 +212,8 @@ public class StudyControllerIT extends IntegrationTest {
         .andExpect(jsonPath("$.firstHypotheses").value(validStudy.getFirstHypotheses()));
   }
 
-  @Ignore("Ignore until integration testing infrastructure includes keycloak dependency as container")
+  @Ignore(
+      "Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -229,7 +228,8 @@ public class StudyControllerIT extends IntegrationTest {
     assertEquals(8, studies.length);
   }
 
-  @Ignore("Ignore until integration testing infrastructure includes keycloak dependency as container")
+  @Ignore(
+      "Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -268,7 +268,8 @@ public class StudyControllerIT extends IntegrationTest {
     assertEquals(0, studies.length);
   }
 
-  @Ignore("Ignore until integration testing infrastructure includes keycloak dependency as container")
+  @Ignore(
+      "Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -399,14 +400,15 @@ public class StudyControllerIT extends IntegrationTest {
 
     String studyJson = mapper.writeValueAsString(updateStudy);
 
-    mockMvc
-        .perform(
-            put(String.format("%s/%s", STUDY_PATH, study.getId()))
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(studyJson))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.name").value("updateStudy"))
-        .andExpect(jsonPath("$.status").value(StudyStatus.PENDING.name()));
+    MvcResult result =
+        mockMvc
+            .perform(
+                put(String.format("%s/%s", STUDY_PATH, study.getId()))
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(studyJson))
+            .andReturn();
+    assertTrue(result.getResponse().getContentAsString().contains(StudyStatus.PENDING.name()));
+    assertTrue(result.getResponse().getContentAsString().contains("updateStudy"));
   }
 }
