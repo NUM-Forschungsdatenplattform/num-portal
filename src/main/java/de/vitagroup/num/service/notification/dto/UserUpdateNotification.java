@@ -6,8 +6,8 @@ import lombok.Builder;
 
 public class UserUpdateNotification extends Notification {
 
-  private static final String SUBJECT_KEY = "mail.user-update.subject";
-  private static final String BODY_KEY = "mail.user-update.body";
+  private static final String USER_UPDATE_SUBJECT_KEY = "mail.user-update.subject";
+  private static final String USER_UPDATE_BODY_KEY = "mail.user-update.body";
 
   @Builder
   public UserUpdateNotification(
@@ -19,13 +19,13 @@ public class UserUpdateNotification extends Notification {
 
   @Override
   public String getNotificationSubject(MessageSourceWrapper messageSource) {
-    return messageSource.getMessage(SUBJECT_KEY);
+    return messageSource.getMessage(USER_UPDATE_SUBJECT_KEY);
   }
 
   @Override
   public String getNotificationBody(MessageSourceWrapper messageSource, String url) {
     String copyright = messageSource.getMessage(COPYRIGHT_KEY, Year.now());
     return messageSource.getMessage(
-        BODY_KEY, recipientFirstName, recipientLastName, copyright, url);
+        USER_UPDATE_BODY_KEY, recipientFirstName, recipientLastName, copyright, url);
   }
 }

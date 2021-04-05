@@ -6,12 +6,12 @@ import lombok.Builder;
 
 public class ProjectRequestNotification extends Notification {
 
-  private static final String SUBJECT_KEY = "mail.project-pending-approval.subject";
-  private static final String BODY_KEY = "mail.project-pending-approval.body";
+  private static final String PROJECT_REQUEST_SUBJECT_KEY = "mail.project-pending-approval.subject";
+  private static final String PROJECT_REQUEST_BODY_KEY = "mail.project-pending-approval.body";
 
-  private String coordinatorFirstName;
-  private String coordinatorLastName;
-  private String projectTitle;
+  private final String coordinatorFirstName;
+  private final String coordinatorLastName;
+  private final String projectTitle;
 
   @Builder
   public ProjectRequestNotification(
@@ -32,14 +32,14 @@ public class ProjectRequestNotification extends Notification {
 
   @Override
   public String getNotificationSubject(MessageSourceWrapper messageSource) {
-    return messageSource.getMessage(SUBJECT_KEY);
+    return messageSource.getMessage(PROJECT_REQUEST_SUBJECT_KEY);
   }
 
   @Override
   public String getNotificationBody(MessageSourceWrapper messageSource, String url) {
     String copyright = messageSource.getMessage(COPYRIGHT_KEY, Year.now());
     return messageSource.getMessage(
-        BODY_KEY,
+        PROJECT_REQUEST_BODY_KEY,
         recipientFirstName,
         recipientLastName,
         coordinatorFirstName,

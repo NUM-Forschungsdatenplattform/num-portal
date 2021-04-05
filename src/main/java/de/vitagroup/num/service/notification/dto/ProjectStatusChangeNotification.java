@@ -7,13 +7,13 @@ import lombok.Builder;
 
 public class ProjectStatusChangeNotification extends Notification {
 
-  private static final String SUBJECT_KEY = "mail.project-status-change.subject";
-  private static final String BODY_KEY = "mail.project-status-change.body";
+  private static final String PROJECT_STATUS_CHANGE_SUBJECT_KEY = "mail.project-status-change.subject";
+  private static final String PROJECT_STATUS_CHANGE_BODY_KEY = "mail.project-status-change.body";
 
-  private String approverFirstName;
-  private String approverLastName;
-  private String projectTitle;
-  private StudyStatus projectStatus;
+  private final String approverFirstName;
+  private final String approverLastName;
+  private final String projectTitle;
+  private final StudyStatus projectStatus;
 
   @Builder
   public ProjectStatusChangeNotification(
@@ -36,14 +36,14 @@ public class ProjectStatusChangeNotification extends Notification {
 
   @Override
   public String getNotificationSubject(MessageSourceWrapper messageSource) {
-    return messageSource.getMessage(SUBJECT_KEY);
+    return messageSource.getMessage(PROJECT_STATUS_CHANGE_SUBJECT_KEY);
   }
 
   @Override
   public String getNotificationBody(MessageSourceWrapper messageSource, String url) {
     String copyright = messageSource.getMessage(COPYRIGHT_KEY, Year.now());
     return messageSource.getMessage(
-        BODY_KEY,
+        PROJECT_STATUS_CHANGE_BODY_KEY,
         recipientFirstName,
         recipientLastName,
         projectTitle,

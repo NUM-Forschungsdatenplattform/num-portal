@@ -9,21 +9,21 @@ public class NewUserWithoutOrganizationNotification extends Notification {
   private static final String SUBJECT_KEY = "mail.user-without-organization.subject";
   private static final String BODY_KEY = "mail.user-without-organization.body";
 
-  private String newUserEmail;
-  private String newUserFirstName;
-  private String newUserLastName;
+  private final String userEmail;
+  private final String userFirstName;
+  private final String userLastName;
 
   @Builder
   public NewUserWithoutOrganizationNotification(
-      String newUserEmail,
-      String newUserFirstName,
-      String newUserLastName,
+      String userEmail,
+      String userFirstName,
+      String userLastName,
       String recipientEmail,
       String recipientFirstName,
       String recipientLastName){
-    this.newUserEmail = newUserEmail;
-    this.newUserFirstName = newUserFirstName;
-    this.newUserLastName = newUserLastName;
+    this.userEmail = userEmail;
+    this.userFirstName = userFirstName;
+    this.userLastName = userLastName;
 
     this.recipientEmail = recipientEmail;
     this.recipientFirstName = recipientFirstName;
@@ -42,9 +42,9 @@ public class NewUserWithoutOrganizationNotification extends Notification {
         BODY_KEY,
         recipientFirstName,
         recipientLastName,
-        newUserFirstName,
-        newUserLastName,
-        newUserEmail,
+        userFirstName,
+        userLastName,
+        userEmail,
         copyright,
         url);
   }

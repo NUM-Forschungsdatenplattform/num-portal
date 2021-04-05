@@ -6,12 +6,12 @@ import lombok.Builder;
 
 public class ProjectCloseNotification extends Notification {
 
-  private static final String SUBJECT_KEY = "mail.project-close.subject";
-  private static final String BODY_KEY = "mail.project-close.body";
+  private static final String PROJECT_CLOSE_SUBJECT_KEY = "mail.project-close.subject";
+  private static final String PROJECT_CLOSE_BODY_KEY = "mail.project-close.body";
 
-  private String coordinatorFirstName;
-  private String coordinatorLastName;
-  private String projectTitle;
+  private final String coordinatorFirstName;
+  private final String coordinatorLastName;
+  private final String projectTitle;
 
   @Builder
   public ProjectCloseNotification(
@@ -32,14 +32,14 @@ public class ProjectCloseNotification extends Notification {
 
   @Override
   public String getNotificationSubject(MessageSourceWrapper messageSource) {
-    return messageSource.getMessage(SUBJECT_KEY);
+    return messageSource.getMessage(PROJECT_CLOSE_SUBJECT_KEY);
   }
 
   @Override
   public String getNotificationBody(MessageSourceWrapper messageSource, String url) {
     String copyright = messageSource.getMessage(COPYRIGHT_KEY, Year.now());
     return messageSource.getMessage(
-        BODY_KEY,
+        PROJECT_CLOSE_BODY_KEY,
         recipientFirstName,
         recipientLastName,
         coordinatorFirstName,

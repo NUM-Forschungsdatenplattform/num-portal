@@ -185,9 +185,9 @@ public class UserDetailsService {
         admin -> {
           NewUserWithoutOrganizationNotification not =
               NewUserWithoutOrganizationNotification.builder()
-                  .newUserEmail(user.getEmail())
-                  .newUserFirstName(user.getFirstName())
-                  .newUserLastName(user.getLastName())
+                  .userEmail(user.getEmail())
+                  .userFirstName(user.getFirstName())
+                  .userLastName(user.getLastName())
                   .recipientEmail(admin.getEmail())
                   .recipientFirstName(admin.getFirstName())
                   .recipientLastName(admin.getLastName())
