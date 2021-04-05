@@ -4,7 +4,7 @@ import de.vitagroup.num.service.email.MessageSourceWrapper;
 
 public abstract class Notification {
 
-  protected final String copyrightKey = "num.copyright";
+  protected static final String COPYRIGHT_KEY = "num.copyright";
 
   protected String recipientEmail;
   protected String recipientFirstName;
