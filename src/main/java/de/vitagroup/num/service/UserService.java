@@ -5,6 +5,9 @@ import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.mapper.OrganizationMapper;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.UserUpdateNotification;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -14,6 +17,7 @@ import feign.FeignException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,8 +36,12 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
   private final KeycloakFeign keycloakFeign;
+
   private final UserDetailsService userDetailsService;
+
   private final OrganizationMapper organizationMapper;
+
+  private final NotificationService notificationService;
 
   public User getUserProfile(String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
@@ -152,6 +160,9 @@ public class UserService {
       if (addRoles.length > 0) {
         keycloakFeign.addRoles(userId, addRoles);
       }
+
+      notificationService.send(collectNotification(userId));
+
       return roleNames;
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
       throw new SystemException("An error has occurred, please try again later");
@@ -233,6 +244,22 @@ public class UserService {
     users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
     users.forEach(this::addUserDetails);
     return users;
+  }
+
+  private List<Notification> collectNotification(String userId) {
+    List<Notification> notifications = new LinkedList<>();
+    User user = getUserById(userId, false);
+
+    UserUpdateNotification not =
+        UserUpdateNotification.builder()
+            .recipientEmail(user.getEmail())
+            .recipientFirstName(user.getFirstName())
+            .recipientLastName(user.getLastName())
+            .build();
+
+    notifications.add(not);
+
+    return notifications;
   }
 
   private Set<User> filterByCallerRole(
