@@ -159,7 +159,7 @@ public class UserDetailsService {
 
     admins.forEach(
         admin -> {
-          NewUserNotification not =
+          NewUserNotification notification =
               NewUserNotification.builder()
                   .newUserEmail(user.getEmail())
                   .newUserFirstName(user.getFirstName())
@@ -169,7 +169,7 @@ public class UserDetailsService {
                   .recipientLastName(admin.getLastName())
                   .build();
 
-          notifications.add(not);
+          notifications.add(notification);
         });
 
     return notifications;
@@ -183,7 +183,7 @@ public class UserDetailsService {
 
     superAdmins.forEach(
         admin -> {
-          NewUserWithoutOrganizationNotification not =
+          NewUserWithoutOrganizationNotification notification =
               NewUserWithoutOrganizationNotification.builder()
                   .userEmail(user.getEmail())
                   .userFirstName(user.getFirstName())
@@ -192,7 +192,7 @@ public class UserDetailsService {
                   .recipientFirstName(admin.getFirstName())
                   .recipientLastName(admin.getLastName())
                   .build();
-          notifications.add(not);
+          notifications.add(notification);
         });
     return notifications;
   }

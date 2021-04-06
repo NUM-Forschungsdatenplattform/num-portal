@@ -250,14 +250,14 @@ public class UserService {
     List<Notification> notifications = new LinkedList<>();
     User user = getUserById(userId, false);
 
-    UserUpdateNotification not =
+    UserUpdateNotification notification =
         UserUpdateNotification.builder()
             .recipientEmail(user.getEmail())
             .recipientFirstName(user.getFirstName())
             .recipientLastName(user.getLastName())
             .build();
 
-    notifications.add(not);
+    notifications.add(notification);
 
     return notifications;
   }

@@ -413,7 +413,7 @@ public class StudyService {
 
       approvers.forEach(
           approver -> {
-            ProjectRequestNotification not =
+            ProjectRequestNotification notification =
                 ProjectRequestNotification.builder()
                     .coordinatorFirstName(coordinator.getFirstName())
                     .coordinatorLastName(coordinator.getLastName())
@@ -422,7 +422,7 @@ public class StudyService {
                     .recipientFirstName(approver.getFirstName())
                     .recipientLastName(approver.getLastName())
                     .build();
-            notifications.add(not);
+            notifications.add(notification);
           });
     }
 
@@ -430,7 +430,7 @@ public class StudyService {
 
       User approver = userService.getUserById(approverUserId, false);
 
-      ProjectStatusChangeNotification not =
+      ProjectStatusChangeNotification notification =
           ProjectStatusChangeNotification.builder()
               .recipientFirstName(coordinator.getFirstName())
               .recipientLastName(coordinator.getLastName())
@@ -440,7 +440,7 @@ public class StudyService {
               .approverFirstName(approver.getFirstName())
               .approverLastName(approver.getLastName())
               .build();
-      notifications.add(not);
+      notifications.add(notification);
     }
 
     if (isTransitionToPublished(oldStatus, newStatus)) {
@@ -451,7 +451,7 @@ public class StudyService {
         reasercherIds.forEach(
             r -> {
               User researcher = userService.getUserById(r, false);
-              ProjectStartNotification not =
+              ProjectStartNotification notification =
                   ProjectStartNotification.builder()
                       .recipientEmail(researcher.getEmail())
                       .recipientFirstName(researcher.getFirstName())
@@ -460,7 +460,7 @@ public class StudyService {
                       .coordinatorLastName(coordinator.getLastName())
                       .projectTitle(projectName)
                       .build();
-              notifications.add(not);
+              notifications.add(notification);
             });
       }
     }
@@ -486,7 +486,7 @@ public class StudyService {
       newResearcherIdsCopy.forEach(
           r -> {
             User researcher = userService.getUserById(r, false);
-            ProjectStartNotification not =
+            ProjectStartNotification notification =
                 ProjectStartNotification.builder()
                     .recipientEmail(researcher.getEmail())
                     .recipientFirstName(researcher.getFirstName())
@@ -495,13 +495,13 @@ public class StudyService {
                     .coordinatorLastName(coordinator.getLastName())
                     .projectTitle(projectName)
                     .build();
-            notifications.add(not);
+            notifications.add(notification);
           });
 
       oldResearcherIds.forEach(
           r -> {
             User researcher = userService.getUserById(r, false);
-            ProjectCloseNotification not =
+            ProjectCloseNotification notification =
                 ProjectCloseNotification.builder()
                     .recipientEmail(researcher.getEmail())
                     .recipientFirstName(researcher.getFirstName())
@@ -510,7 +510,7 @@ public class StudyService {
                     .coordinatorLastName(coordinator.getLastName())
                     .projectTitle(projectName)
                     .build();
-            notifications.add(not);
+            notifications.add(notification);
           });
     }
 
@@ -523,7 +523,7 @@ public class StudyService {
       researcherIds.forEach(
           r -> {
             User researcher = userService.getUserById(r, false);
-            ProjectCloseNotification not =
+            ProjectCloseNotification notification =
                 ProjectCloseNotification.builder()
                     .recipientEmail(researcher.getEmail())
                     .recipientFirstName(researcher.getFirstName())
@@ -532,7 +532,7 @@ public class StudyService {
                     .coordinatorLastName(coordinator.getLastName())
                     .projectTitle(projectName)
                     .build();
-            notifications.add(not);
+            notifications.add(notification);
           });
     }
 
@@ -540,21 +540,19 @@ public class StudyService {
   }
 
   private boolean isTransitionToPending(StudyStatus oldStatus, StudyStatus newStatus) {
-    return (oldStatus == null
-            || StudyStatus.DRAFT.equals(oldStatus)
-            || StudyStatus.CHANGE_REQUEST.equals(oldStatus))
-        && StudyStatus.PENDING.equals(newStatus);
+    return StudyStatus.PENDING.equals(newStatus) && !newStatus.equals(oldStatus);
   }
 
   private boolean isTransitionMadeByApprover(StudyStatus oldStatus, StudyStatus newStatus) {
-    return (StudyStatus.REVIEWING.equals(oldStatus)
-                && (StudyStatus.APPROVED.equals(newStatus) || StudyStatus.DENIED.equals(newStatus))
-            || StudyStatus.CHANGE_REQUEST.equals(newStatus))
-        || (StudyStatus.PENDING.equals(oldStatus) && StudyStatus.REVIEWING.equals(newStatus));
+    return (StudyStatus.APPROVED.equals(newStatus)
+            || StudyStatus.DENIED.equals(newStatus)
+            || StudyStatus.CHANGE_REQUEST.equals(newStatus)
+            || StudyStatus.REVIEWING.equals(newStatus))
+        && !newStatus.equals(oldStatus);
   }
 
   private boolean isTransitionToPublished(StudyStatus oldStatus, StudyStatus newStatus) {
-    return StudyStatus.APPROVED.equals(oldStatus) && StudyStatus.PUBLISHED.equals(newStatus);
+    return StudyStatus.PUBLISHED.equals(newStatus) && !newStatus.equals(oldStatus);
   }
 
   private boolean isTransitionToPublishedFromPublished(
