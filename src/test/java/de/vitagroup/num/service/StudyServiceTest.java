@@ -20,14 +20,15 @@ import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
+import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
-import de.vitagroup.num.service.email.NotificationService;
 import de.vitagroup.num.service.email.ZarsService;
+import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.SystemException;
@@ -92,13 +93,23 @@ public class StudyServiceTest {
       "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, c1 as openEHR_EHR_COMPOSITION_report_v1 FROM EHR e contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c2[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
 
   @Captor ArgumentCaptor<String> stringArgumentCaptor;
+
   @Mock private StudyRepository studyRepository;
+
   @Mock private UserDetailsService userDetailsService;
+
   @Mock private CohortService cohortService;
+
   @Mock private EhrBaseService ehrBaseService;
+
   @Mock private AtnaService atnaService;
+
   @Mock private ZarsService zarsService;
+
   @Mock private NotificationService notificationService;
+
+  @Mock private UserService userService;
+
   @InjectMocks private StudyService studyService;
 
   @Ignore(
@@ -442,8 +453,7 @@ public class StudyServiceTest {
     StudyDto studyDto =
         StudyDto.builder().name("Study is edited").status(StudyStatus.APPROVED).build();
 
-    studyService.updateStudy(
-        studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
+    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
   }
 
   @Test(expected = ForbiddenException.class)
@@ -461,10 +471,7 @@ public class StudyServiceTest {
         StudyDto.builder().name("Study is edited").status(StudyStatus.DRAFT).build();
 
     studyService.updateStudy(
-        studyDto,
-        1L,
-        "approvedCoordinatorId",
-        List.of(STUDY_COORDINATOR, STUDY_APPROVER));
+        studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR, STUDY_APPROVER));
   }
 
   @Test
@@ -814,11 +821,12 @@ public class StudyServiceTest {
 
   @Before
   public void setup() {
-    UserDetails notApprovedCoordinator =
-        UserDetails.builder().userId("notApprovedCoordinatorId").approved(false).build();
-
     UserDetails approvedCoordinator =
         UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
+
+    User approvedUser = User.builder().id("approvedCoordinatorId").approved(true).build();
+
+    when(userService.getUserById("approvedCoordinatorId", false)).thenReturn(approvedUser);
 
     when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
         .thenReturn(approvedCoordinator);

@@ -56,7 +56,10 @@ atna:
   host: ${ATNA_HOST}
   port: ${ATNA_PORT}
 
-
 zars:
   enabled: ${ZARS_ENABLED}
   email: ${ZARS_EMAIL}
+
+num:
+  url: ${NUM_URL}
+  locale: ${NUM_LOCALE}

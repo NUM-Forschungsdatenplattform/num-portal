@@ -2,13 +2,9 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
-import de.vitagroup.num.service.email.Notification;
-import de.vitagroup.num.service.email.NotificationService;
-import de.vitagroup.num.service.email.NotificationType;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
@@ -41,8 +37,6 @@ public class AdminController {
 
   private final UserDetailsService userDetailsService;
 
-  private final NotificationService notificationService;
-
   @AuditLog
   @GetMapping("/user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
@@ -68,15 +62,10 @@ public class AdminController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable String userId,
       @NotNull @RequestBody List<String> roles) {
-    List<String> assignedRoles =
+
+    return ResponseEntity.ok(
         userService.setUserRoles(
-            userId, roles, principal.getSubject(), Roles.extractRoles(principal));
-
-    User user = userService.getUserById(principal.getSubject(), false);
-    notificationService.notify(
-        Notification.builder().type(NotificationType.USER_UPDATE).userId(user.getId()).build());
-
-    return ResponseEntity.ok(assignedRoles);
+            userId, roles, principal.getSubject(), Roles.extractRoles(principal)));
   }
 
   @AuditLog
@@ -87,14 +76,8 @@ public class AdminController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable String userId,
       @NotNull @RequestBody OrganizationDto organization) {
-    UserDetails user =
-        userDetailsService.setOrganization(principal.getSubject(), userId, organization.getId());
 
-    if (user.getOrganization() != null) {
-      notificationService.notify(
-          Notification.builder().type(NotificationType.NEW_USER).userId(user.getUserId()).build());
-    }
-
+    userDetailsService.setOrganization(principal.getSubject(), userId, organization.getId());
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
@@ -103,20 +86,8 @@ public class AdminController {
   @ApiOperation(value = "Creates user details")
   public ResponseEntity<String> createUserOnFirstLogin(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
-    UserDetails user =
-        userDetailsService.createUserDetails(userId, principal.getClaimAsString(EMAIL_CLAIM));
 
-    if (user.getOrganization() != null) {
-      notificationService.notify(
-          Notification.builder().type(NotificationType.NEW_USER).userId(user.getUserId()).build());
-    } else {
-      notificationService.notify(
-          Notification.builder()
-              .type(NotificationType.NEW_USER_WITHOUT_ORGANIZATION)
-              .userId(user.getUserId())
-              .build());
-    }
-
+    userDetailsService.createUserDetails(userId, principal.getClaimAsString(EMAIL_CLAIM));
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
@@ -126,11 +97,7 @@ public class AdminController {
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<String> approveUser(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
-    UserDetails user = userDetailsService.approveUser(principal.getSubject(), userId);
-
-    notificationService.notify(
-        Notification.builder().type(NotificationType.USER_UPDATE).userId(user.getUserId()).build());
-
+    userDetailsService.approveUser(principal.getSubject(), userId);
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
