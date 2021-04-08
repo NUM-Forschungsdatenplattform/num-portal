@@ -11,15 +11,19 @@ import static org.mockito.Mockito.when;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlExpression;
 import de.vitagroup.num.domain.Phenotype;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.repository.CohortGroupRepository;
 import de.vitagroup.num.domain.repository.PhenotypeRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.PhenotypeExecutor;
+import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.PrivacyException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +42,8 @@ public class PhenotypeServiceTest {
 
   @Mock private PhenotypeRepository phenotypeRepository;
 
+  @Mock private CohortGroupRepository cohortGroupRepository;
+
   @Mock private UserDetailsService userDetailsService;
 
   @Mock private AqlService aqlService;
@@ -49,9 +55,63 @@ public class PhenotypeServiceTest {
   @Captor ArgumentCaptor<Phenotype> phenotypeArgumentCaptor;
 
   @Test
+  public void shouldHardDeleteOwnedNotUsedPhenotype() {
+    when(phenotypeRepository.findById(2L))
+        .thenReturn(
+            Optional.of(
+                Phenotype.builder()
+                    .id(2L)
+                    .owner(UserDetails.builder().userId("approvedUserId").build())
+                    .build()));
+    when(phenotypeRepository.existsById(2L)).thenReturn(true);
+    when(cohortGroupRepository.existsByPhenotypeId(2L)).thenReturn(false);
+
+    phenotypeService.deletePhenotypeById(2L, "approvedUserId", List.of(Role.STUDY_COORDINATOR));
+
+    verify(phenotypeRepository, times(1)).deleteById(2L);
+  }
+
+  @Test
+  public void shouldHardDeleteNotOwnedNotUsedPhenotypeIfAdmin() {
+    when(phenotypeRepository.findById(2L))
+        .thenReturn(
+            Optional.of(
+                Phenotype.builder()
+                    .id(2L)
+                    .owner(UserDetails.builder().userId("someOtherOwnerId").build())
+                    .build()));
+
+    when(phenotypeRepository.existsById(2L)).thenReturn(true);
+    when(cohortGroupRepository.existsByPhenotypeId(2L)).thenReturn(false);
+
+    phenotypeService.deletePhenotypeById(2L, "approvedUserId", List.of(Roles.SUPER_ADMIN));
+
+    verify(phenotypeRepository, times(1)).deleteById(2L);
+    verify(phenotypeRepository, times(0)).save(any());
+  }
+
+  @Test
+  public void shouldSoftDeleteOwnedUsedPhenotype() {
+    Phenotype phenotype =
+        Phenotype.builder()
+            .id(3L)
+            .owner(UserDetails.builder().userId("approvedUserId").build())
+            .build();
+    when(phenotypeRepository.findById(3L)).thenReturn(Optional.of(phenotype));
+    when(phenotypeRepository.existsById(3L)).thenReturn(true);
+    when(cohortGroupRepository.existsByPhenotypeId(3L)).thenReturn(true);
+
+    phenotypeService.deletePhenotypeById(3L, "approvedUserId", List.of(Role.STUDY_COORDINATOR));
+
+    verify(phenotypeRepository, times(0)).deleteById(3L);
+    verify(phenotypeRepository, times(1)).save(phenotype);
+  }
+
+  @Test
   public void shouldCallRepoWhenRetrievingAllPhenotypes() {
     phenotypeService.getAllPhenotypes("approvedUserId");
-    verify(phenotypeRepository, times(1)).findAll();
+    verify(phenotypeRepository, times(0)).findAll();
+    verify(phenotypeRepository, times(1)).findByDeletedFalse();
   }
 
   @Test
@@ -180,8 +240,7 @@ public class PhenotypeServiceTest {
     when(userDetailsService.checkIsUserApproved("notApprovedUserId"))
         .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
 
-    when(userDetailsService.checkIsUserApproved("approvedUserId"))
-        .thenReturn(approvedUser);
+    when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
 
     when(aqlService.getAqlById(1L))
         .thenReturn(Optional.of(Aql.builder().id(1L).publicAql(false).owner(approvedUser).build()));

@@ -9,8 +9,13 @@ public class Role {
   public static final String CONTENT_ADMIN = "hasRole('CONTENT_ADMIN')";
   public static final String STUDY_COORDINATOR_OR_RESEARCHER =
       "hasAnyRole('STUDY_COORDINATOR', 'RESEARCHER')";
+
   public static final String STUDY_COORDINATOR_OR_APPROVER =
       "hasAnyRole('STUDY_COORDINATOR', 'STUDY_APPROVER')";
+  public static final String STUDY_COORDINATOR_OR_APPROVER_OR_SUPER_ADMIN =
+      "hasAnyRole('STUDY_COORDINATOR', 'STUDY_APPROVER', 'SUPER_ADMIN')";
+
+
   public static final String STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER =
       "hasAnyRole('STUDY_COORDINATOR', 'RESEARCHER', 'STUDY_APPROVER')";
   public static final String STUDY_COORDINATOR_OR_SUPER_ADMIN =

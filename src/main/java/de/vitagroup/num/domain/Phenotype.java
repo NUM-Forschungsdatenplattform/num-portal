@@ -34,6 +34,8 @@ public class Phenotype implements Serializable {
 
   private String description;
 
+  private boolean deleted;
+
   @Convert(converter = ExpressionConverter.class)
   private Expression query;
 
