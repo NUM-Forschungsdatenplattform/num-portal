@@ -69,6 +69,7 @@ public class PhenotypeServiceTest {
     phenotypeService.deletePhenotypeById(2L, "approvedUserId", List.of(Role.STUDY_COORDINATOR));
 
     verify(phenotypeRepository, times(1)).deleteById(2L);
+    verify(phenotypeRepository, times(0)).save(any());
   }
 
   @Test
