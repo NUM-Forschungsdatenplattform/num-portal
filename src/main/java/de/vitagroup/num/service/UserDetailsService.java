@@ -58,7 +58,7 @@ public class UserDetailsService {
   public UserDetails createUserDetails(String userId, String emailAddress) {
     Optional<UserDetails> userDetails = userDetailsRepository.findByUserId(userId);
     if (userDetails.isPresent()) {
-      throw new ConflictException("User " + userId + " already exists.");
+      return userDetails.get();
     } else {
       UserDetails newUserDetails = UserDetails.builder().userId(userId).build();
       resolveOrganization(emailAddress).ifPresent(newUserDetails::setOrganization);

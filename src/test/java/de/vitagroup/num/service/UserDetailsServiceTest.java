@@ -41,7 +41,7 @@ public class UserDetailsServiceTest {
             Optional.of(UserDetails.builder().userId("existingUserId").approved(true).build()));
   }
 
-  @Test(expected = ConflictException.class)
+  @Test
   public void shouldHandleExistingUserDetails() {
     userDetailsService.createUserDetails("existingUserId", "unknownEmail");
   }
