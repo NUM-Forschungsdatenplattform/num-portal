@@ -31,6 +31,9 @@ public class PhenotypeDto {
   @NotBlank(message = "Phenotype description cannot be blank")
   private String description;
 
+  @ApiModelProperty(required = false, value = "Flag marking the phenotype as soft deleted")
+  private boolean deleted;
+
   @NotNull(message = "Query is mandatory")
   @ValidExpression(message = "Invalid phenotype definition")
   @ApiModelProperty(required = true, value = "The aql query tree defining the phenotype")
