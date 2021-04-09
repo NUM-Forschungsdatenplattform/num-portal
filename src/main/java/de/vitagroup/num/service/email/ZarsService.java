@@ -30,6 +30,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -58,6 +59,7 @@ public class ZarsService {
     }
   }
 
+  @Async
   public void registerToZars(@NotNull Study study) {
     try {
       String csv = generateCSV(study);
