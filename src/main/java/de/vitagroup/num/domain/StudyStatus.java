@@ -2,6 +2,7 @@ package de.vitagroup.num.domain;
 
 import static de.vitagroup.num.domain.Roles.STUDY_APPROVER;
 import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
+import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
 
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +57,9 @@ public enum StudyStatus {
   DENIED {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
-      return Map.of(DENIED, Arrays.asList(STUDY_COORDINATOR));
+      return Map.of(
+          DENIED, Arrays.asList(STUDY_COORDINATOR),
+          ARCHIVED, Arrays.asList(STUDY_COORDINATOR, SUPER_ADMIN));
     }
   },
 
@@ -84,7 +87,17 @@ public enum StudyStatus {
   CLOSED {
     @Override
     public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
-      return Map.of(CLOSED, Arrays.asList(STUDY_COORDINATOR));
+      return Map.of(
+          CLOSED, Arrays.asList(STUDY_COORDINATOR),
+          ARCHIVED, Arrays.asList(STUDY_COORDINATOR, SUPER_ADMIN));
+    }
+  },
+
+  /** Study is archived */
+  ARCHIVED {
+    @Override
+    public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
+      return Map.of();
     }
   };
 
