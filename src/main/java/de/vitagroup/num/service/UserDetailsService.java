@@ -13,7 +13,6 @@ import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.NewUserWithoutOrganizationNotification;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.UserUpdateNotification;
-import de.vitagroup.num.web.exception.ConflictException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
@@ -58,7 +57,7 @@ public class UserDetailsService {
   public UserDetails createUserDetails(String userId, String emailAddress) {
     Optional<UserDetails> userDetails = userDetailsRepository.findByUserId(userId);
     if (userDetails.isPresent()) {
-      throw new ConflictException("User " + userId + " already exists.");
+      return userDetails.get();
     } else {
       UserDetails newUserDetails = UserDetails.builder().userId(userId).build();
       resolveOrganization(emailAddress).ifPresent(newUserDetails::setOrganization);
