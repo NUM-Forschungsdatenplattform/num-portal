@@ -10,7 +10,6 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.web.exception.ConflictException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import java.util.Optional;
