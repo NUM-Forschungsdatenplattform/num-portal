@@ -182,7 +182,7 @@ public class AqlService {
   }
 
   public long getAqlSize(Long aqlId, String userId) {
-    userDetailsService.validateAndReturnUserDetails(userId);
+    userDetailsService.checkIsUserApproved(userId);
 
     Aql aql =
         aqlRepository
