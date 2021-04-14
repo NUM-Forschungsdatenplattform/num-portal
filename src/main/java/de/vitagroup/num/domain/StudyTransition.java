@@ -2,6 +2,7 @@ package de.vitagroup.num.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.vitagroup.num.domain.admin.UserDetails;
+import java.io.Serializable;
 import java.time.OffsetDateTime;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -21,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StudyTransition {
+public class StudyTransition implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

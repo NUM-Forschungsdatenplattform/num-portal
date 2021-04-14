@@ -35,33 +35,37 @@ public abstract class IntegrationTest {
   private static final String IDENTITY_PROVIDER_TOKEN_ENDPOINT =
       "/auth/realms/Num/protocol/openid-connect/token";
   private static final String USER_ENDPOINT_USER1 = "/auth/admin/realms/Num/users/user1";
+  private static final String USER_ENDPOINT_USER2 = "/auth/admin/realms/Num/users/user2";
+  private static final String USER_ENDPOINT_ALL_APPROVERS =
+      "/auth/admin/realms/Num/roles/STUDY_APPROVER/users";
   private static final String EHR_BASE_URL = "/ehrbase/rest/openehr/v1/definition/template/adl1.4/";
 
   @ClassRule
   public static PostgreSQLContainer postgreSQLContainer = NumPostgresqlContainer.getInstance();
 
-  @Autowired
-  public MockMvc mockMvc;
-  @Rule
-  public WireMockRule wireMockRule = new WireMockRule(8099);
+  @Autowired public MockMvc mockMvc;
+  @Rule public WireMockRule wireMockRule = new WireMockRule(8099);
 
   @Before
   @SneakyThrows
   public void setup() {
+    stubFor(WireMock.get(USER_ENDPOINT_ALL_APPROVERS).willReturn(okJson("[]")));
     stubFor(
         WireMock.get(USER_ENDPOINT_USER1)
             .willReturn(
                 okJson(
                     "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"User1\"}")));
-
+    stubFor(
+        WireMock.get(USER_ENDPOINT_USER2)
+            .willReturn(
+                okJson(
+                    "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"User2\"}")));
     stubFor(
         WireMock.post(IDENTITY_PROVIDER_TOKEN_ENDPOINT)
             .willReturn(
                 okJson(
                     "{\"token_type\": \"Bearer\",\"access_token\":\"{{randomValue length=20 type='ALPHANUMERIC'}}\"}")));
-
     stubFor(WireMock.get(IDENTITY_PROVIDER_URL).willReturn(okJson(TokenGenerator.pk)));
-
     stubFor(
         WireMock.get(EHR_BASE_URL)
             .willReturn(

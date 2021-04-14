@@ -5,9 +5,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
-import de.vitagroup.num.web.exception.ConflictException;
+import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import java.util.Optional;
@@ -25,22 +27,37 @@ public class UserDetailsServiceTest {
 
   @Mock private KeycloakFeign keycloakFeign;
 
+  @Mock private UserService userService;
+
+  @Mock private NotificationService notificationService;
+
   @InjectMocks UserDetailsService userDetailsService;
 
   @Before
   public void setup() {
     when(userDetailsRepository.findByUserId("existingUserId"))
-        .thenReturn(Optional.of(UserDetails.builder().userId("existingUserId").approved(true).build()));
+        .thenReturn(
+            Optional.of(UserDetails.builder().userId("existingUserId").approved(true).build()));
   }
 
-  @Test(expected = ConflictException.class)
+  @Test
   public void shouldHandleExistingUserDetails() {
     userDetailsService.createUserDetails("existingUserId", "unknownEmail");
   }
 
   @Test
   public void shouldCallRepoWhenCreatingUserDetails() {
+    User user =
+        User.builder()
+            .id("newUserId")
+            .organization(OrganizationDto.builder().id(1L).name("org 1").build())
+            .approved(true)
+            .build();
+    when(userDetailsRepository.save(any())).thenReturn(UserDetails.builder().build());
+    when(userService.getUserById("newUserId", false)).thenReturn(user);
+
     userDetailsService.createUserDetails("newUserId", "unknownEmail");
+
     verify(userDetailsRepository, times(1)).save(any());
   }
 
@@ -53,10 +70,5 @@ public class UserDetailsServiceTest {
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingUserWhenSettingOrganization() {
     userDetailsService.setOrganization("existingUserId", "nonExistingUserId", any());
-  }
-
-  @Test(expected = ResourceNotFound.class)
-  public void shouldHandleMissingUserWhenApproving() {
-    userDetailsService.approveUser("existingUserId", "nonExistingUserId");
   }
 }

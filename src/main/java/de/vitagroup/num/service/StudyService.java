@@ -17,6 +17,12 @@ import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.email.ZarsService;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
+import de.vitagroup.num.service.notification.dto.ProjectRequestNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStatusChangeNotification;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -93,6 +99,8 @@ public class StudyService {
   private final AtnaService atnaService;
 
   private final UserService userService;
+
+  private final NotificationService notificationService;
 
   @Nullable private final ZarsService zarsService;
 
@@ -249,6 +257,18 @@ public class StudyService {
       registerToZars(study);
     }
 
+    List<Notification> notifications =
+        collectNotifications(
+            savedStudy.getName(),
+            savedStudy.getStatus(),
+            null,
+            savedStudy.getCoordinator().getUserId(),
+            savedStudy.getResearchers(),
+            savedStudy.getResearchers(),
+            userId);
+
+    notificationService.send(notifications);
+
     return savedStudy;
   }
 
@@ -288,6 +308,18 @@ public class StudyService {
     registerToZarsIfNecessary(
         savedStudy, oldStudyStatus, savedStudy.getResearchers(), savedStudy.getResearchers());
 
+    List<Notification> notifications =
+        collectNotifications(
+            savedStudy.getName(),
+            savedStudy.getStatus(),
+            oldStudyStatus,
+            savedStudy.getCoordinator().getUserId(),
+            savedStudy.getResearchers(),
+            savedStudy.getResearchers(),
+            user.getUserId());
+
+    notificationService.send(notifications);
+
     return savedStudy;
   }
 
@@ -312,7 +344,20 @@ public class StudyService {
         || StudyStatus.PUBLISHED.equals(studyToEdit.getStatus())) {
       studyToEdit.setStatus(studyDto.getStatus());
       Study savedStudy = studyRepository.save(studyToEdit);
+
       registerToZarsIfNecessary(savedStudy, oldStatus, oldResearchers, newResearchers);
+
+      List<Notification> notifications =
+          collectNotifications(
+              savedStudy.getName(),
+              savedStudy.getStatus(),
+              oldStatus,
+              savedStudy.getCoordinator().getUserId(),
+              newResearchers,
+              oldResearchers,
+              user.getUserId());
+
+      notificationService.send(notifications);
       return savedStudy;
     }
     setTemplates(studyToEdit, studyDto);
@@ -334,7 +379,185 @@ public class StudyService {
 
     Study savedStudy = studyRepository.save(studyToEdit);
     registerToZarsIfNecessary(savedStudy, oldStatus, oldResearchers, newResearchers);
+
+    List<Notification> notifications =
+        collectNotifications(
+            savedStudy.getName(),
+            savedStudy.getStatus(),
+            oldStatus,
+            savedStudy.getCoordinator().getUserId(),
+            newResearchers,
+            oldResearchers,
+            user.getUserId());
+
+    notificationService.send(notifications);
+
     return savedStudy;
+  }
+
+  private List<Notification> collectNotifications(
+      String projectName,
+      StudyStatus newStatus,
+      StudyStatus oldStatus,
+      String coordinatorUserId,
+      List<UserDetails> newResearchers,
+      List<UserDetails> oldResearchers,
+      String approverUserId) {
+
+    List<Notification> notifications = new LinkedList<>();
+    User coordinator = userService.getUserById(coordinatorUserId, false);
+
+    if (isTransitionToPending(oldStatus, newStatus)) {
+
+      Set<User> approvers = userService.getByRole(Roles.STUDY_APPROVER);
+
+      approvers.forEach(
+          approver -> {
+            ProjectRequestNotification notification =
+                ProjectRequestNotification.builder()
+                    .coordinatorFirstName(coordinator.getFirstName())
+                    .coordinatorLastName(coordinator.getLastName())
+                    .projectTitle(projectName)
+                    .recipientEmail(approver.getEmail())
+                    .recipientFirstName(approver.getFirstName())
+                    .recipientLastName(approver.getLastName())
+                    .build();
+            notifications.add(notification);
+          });
+    }
+
+    if (isTransitionMadeByApprover(oldStatus, newStatus)) {
+
+      User approver = userService.getUserById(approverUserId, false);
+
+      ProjectStatusChangeNotification notification =
+          ProjectStatusChangeNotification.builder()
+              .recipientFirstName(coordinator.getFirstName())
+              .recipientLastName(coordinator.getLastName())
+              .recipientEmail(coordinator.getEmail())
+              .projectTitle(projectName)
+              .projectStatus(newStatus)
+              .approverFirstName(approver.getFirstName())
+              .approverLastName(approver.getLastName())
+              .build();
+      notifications.add(notification);
+    }
+
+    if (isTransitionToPublished(oldStatus, newStatus)) {
+      if (newResearchers != null) {
+        List<String> reasercherIds =
+            newResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
+
+        reasercherIds.forEach(
+            r -> {
+              User researcher = userService.getUserById(r, false);
+              ProjectStartNotification notification =
+                  ProjectStartNotification.builder()
+                      .recipientEmail(researcher.getEmail())
+                      .recipientFirstName(researcher.getFirstName())
+                      .recipientLastName(researcher.getLastName())
+                      .coordinatorFirstName(coordinator.getFirstName())
+                      .coordinatorLastName(coordinator.getLastName())
+                      .projectTitle(projectName)
+                      .build();
+              notifications.add(notification);
+            });
+      }
+    }
+
+    if (isTransitionToPublishedFromPublished(oldStatus, newStatus)) {
+      List<String> newResearcherIds = new LinkedList<>();
+      List<String> oldResearcherIds = new LinkedList<>();
+      if (newResearchers != null) {
+        newResearcherIds =
+            newResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
+      }
+
+      if (oldResearchers != null) {
+        oldResearcherIds =
+            oldResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
+      }
+
+      List<String> newResearcherIdsCopy = new ArrayList<>(newResearcherIds);
+
+      newResearcherIdsCopy.removeAll(oldResearcherIds);
+      oldResearcherIds.removeAll(newResearcherIds);
+
+      newResearcherIdsCopy.forEach(
+          r -> {
+            User researcher = userService.getUserById(r, false);
+            ProjectStartNotification notification =
+                ProjectStartNotification.builder()
+                    .recipientEmail(researcher.getEmail())
+                    .recipientFirstName(researcher.getFirstName())
+                    .recipientLastName(researcher.getLastName())
+                    .coordinatorFirstName(coordinator.getFirstName())
+                    .coordinatorLastName(coordinator.getLastName())
+                    .projectTitle(projectName)
+                    .build();
+            notifications.add(notification);
+          });
+
+      oldResearcherIds.forEach(
+          r -> {
+            User researcher = userService.getUserById(r, false);
+            ProjectCloseNotification notification =
+                ProjectCloseNotification.builder()
+                    .recipientEmail(researcher.getEmail())
+                    .recipientFirstName(researcher.getFirstName())
+                    .recipientLastName(researcher.getLastName())
+                    .coordinatorFirstName(coordinator.getFirstName())
+                    .coordinatorLastName(coordinator.getLastName())
+                    .projectTitle(projectName)
+                    .build();
+            notifications.add(notification);
+          });
+    }
+
+    if (StudyStatus.CLOSED.equals(newStatus)) {
+      List<String> researcherIds = new LinkedList<>();
+      if (oldResearchers != null) {
+        researcherIds =
+            oldResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
+      }
+      researcherIds.forEach(
+          r -> {
+            User researcher = userService.getUserById(r, false);
+            ProjectCloseNotification notification =
+                ProjectCloseNotification.builder()
+                    .recipientEmail(researcher.getEmail())
+                    .recipientFirstName(researcher.getFirstName())
+                    .recipientLastName(researcher.getLastName())
+                    .coordinatorFirstName(coordinator.getFirstName())
+                    .coordinatorLastName(coordinator.getLastName())
+                    .projectTitle(projectName)
+                    .build();
+            notifications.add(notification);
+          });
+    }
+
+    return notifications;
+  }
+
+  private boolean isTransitionToPending(StudyStatus oldStatus, StudyStatus newStatus) {
+    return StudyStatus.PENDING.equals(newStatus) && !newStatus.equals(oldStatus);
+  }
+
+  private boolean isTransitionMadeByApprover(StudyStatus oldStatus, StudyStatus newStatus) {
+    return (StudyStatus.APPROVED.equals(newStatus)
+            || StudyStatus.DENIED.equals(newStatus)
+            || StudyStatus.CHANGE_REQUEST.equals(newStatus)
+            || StudyStatus.REVIEWING.equals(newStatus))
+        && !newStatus.equals(oldStatus);
+  }
+
+  private boolean isTransitionToPublished(StudyStatus oldStatus, StudyStatus newStatus) {
+    return StudyStatus.PUBLISHED.equals(newStatus) && !newStatus.equals(oldStatus);
+  }
+
+  private boolean isTransitionToPublishedFromPublished(
+      StudyStatus oldStatus, StudyStatus newStatus) {
+    return StudyStatus.PUBLISHED.equals(oldStatus) && StudyStatus.PUBLISHED.equals(newStatus);
   }
 
   private void registerToZarsIfNecessary(

@@ -89,15 +89,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.NOT_FOUND);
   }
 
-  @ExceptionHandler({ConflictException.class})
-  public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
-    log.error(ex.getMessage(), ex);
-
-    ErrorResponse response =
-        ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
-    return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.CONFLICT);
-  }
-
   @ExceptionHandler({ForbiddenException.class, AccessDeniedException.class})
   public ResponseEntity<ErrorResponse> handleNotApprovedUser(Exception ex) {
     log.debug(ex.getMessage(), ex);

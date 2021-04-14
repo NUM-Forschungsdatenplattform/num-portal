@@ -34,6 +34,7 @@ public class AdminController {
   private static final String EMAIL_CLAIM = "email";
 
   private final UserService userService;
+
   private final UserDetailsService userDetailsService;
 
   @AuditLog
@@ -61,6 +62,7 @@ public class AdminController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable String userId,
       @NotNull @RequestBody List<String> roles) {
+
     return ResponseEntity.ok(
         userService.setUserRoles(
             userId, roles, principal.getSubject(), Roles.extractRoles(principal)));
@@ -74,6 +76,7 @@ public class AdminController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable String userId,
       @NotNull @RequestBody OrganizationDto organization) {
+
     userDetailsService.setOrganization(principal.getSubject(), userId, organization.getId());
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
@@ -83,6 +86,7 @@ public class AdminController {
   @ApiOperation(value = "Creates user details")
   public ResponseEntity<String> createUserOnFirstLogin(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
+
     userDetailsService.createUserDetails(userId, principal.getClaimAsString(EMAIL_CLAIM));
     return ResponseEntity.ok(SUCCESS_REPLY);
   }

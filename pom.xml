@@ -7,7 +7,7 @@
 
   <groupId>de.vitagroup.num-portal</groupId>
   <artifactId>num-portal</artifactId>
-  <version>v0.5.1</version>
+  <version>v1.0.1</version>
 
   <parent>
     <groupId>org.springframework.boot</groupId>

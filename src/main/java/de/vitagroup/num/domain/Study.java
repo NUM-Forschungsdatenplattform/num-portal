@@ -7,6 +7,7 @@ import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.StringSetConverter;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -45,7 +46,7 @@ import org.apache.commons.lang3.ObjectUtils;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(exclude = {"cohort", "transitions"})
-public class Study {
+public class Study implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
