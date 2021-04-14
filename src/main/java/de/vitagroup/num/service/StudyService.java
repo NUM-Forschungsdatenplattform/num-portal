@@ -134,7 +134,7 @@ public class StudyService {
             .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + projectId));
 
     if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
-      throw new ForbiddenException(format("Cannot archive project: %s", projectId));
+      throw new ForbiddenException(String.format("Cannot archive project: %s", projectId));
     }
 
     validateStatus(project.getStatus(), StudyStatus.ARCHIVED, roles);
