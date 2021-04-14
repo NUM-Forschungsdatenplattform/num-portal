@@ -1,7 +1,5 @@
 package de.vitagroup.num.service;
 
-import static java.lang.String.format;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.ExportType;
@@ -115,14 +113,14 @@ public class StudyService {
             .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + projectId));
 
     if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
-      throw new ForbiddenException(format("Cannot delete project: %s", projectId));
+      throw new ForbiddenException(String.format("Cannot delete project: %s", projectId));
     }
 
     if (project.isDeletable()) {
       studyRepository.deleteById(projectId);
     } else {
       throw new ForbiddenException(
-          format("Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
+          String.format("Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
     }
   }
 
@@ -325,7 +323,7 @@ public class StudyService {
     if (StudyStatus.ARCHIVED.equals(studyToEdit.getStatus())
         || StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
       throw new ForbiddenException(
-          format("Cannot update study: %s, invalid study status: %s", id, studyToEdit.getStatus()));
+          String.format("Cannot update study: %s, invalid study status: %s", id, studyToEdit.getStatus()));
     }
 
     if (CollectionUtils.isNotEmpty(roles)
@@ -647,7 +645,7 @@ public class StudyService {
   }
 
   public String getExportFilenameBody(Long studyId) {
-    return format(
+    return String.format(
             "Study_%d_%s",
             studyId,
             LocalDateTime.now()
@@ -980,7 +978,7 @@ public class StudyService {
     if (study.getCoordinator() != null) {
       User coordinator = userService.getUserById(study.getCoordinator().getUserId(), false);
       project.setCoordinator(
-          format("%s %s", coordinator.getFirstName(), coordinator.getLastName()));
+          String.format("%s %s", coordinator.getFirstName(), coordinator.getLastName()));
 
       if (study.getCoordinator().getOrganization() != null) {
         project.setOrganization(study.getCoordinator().getOrganization().getName());
