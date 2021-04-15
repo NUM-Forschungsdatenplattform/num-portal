@@ -213,7 +213,7 @@ public class AqlService {
       try {
         throw new BadRequestException(mapper.writeValueAsString(response));
       } catch (JsonProcessingException e) {
-        e.printStackTrace();
+        log.error("Could not serialize aql validation response", e);
       }
     }
   }
