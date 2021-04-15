@@ -3,6 +3,7 @@ package de.vitagroup.num.web.controller;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.service.logger.AuditLog;
@@ -113,12 +114,12 @@ public class AqlController {
   }
 
   @AuditLog
-  @PostMapping("{aqlId}/size")
-  @ApiOperation(value = "Executes an aql and returns the count of matching ehr ids in the phenotype")
+  @PostMapping("/size")
+  @ApiOperation(value = "Executes an aql and returns the count of matching ehr ids")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Long> getAqlSize(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @NotEmpty @PathVariable Long aqlId) {
-    return ResponseEntity.ok(aqlService.getAqlSize(aqlId, principal.getSubject()));
+      @Valid @RequestBody SlimAqlDto aql) {
+    return ResponseEntity.ok(aqlService.getAqlSize(aql, principal.getSubject()));
   }
 }
