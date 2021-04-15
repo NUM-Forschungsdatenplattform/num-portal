@@ -3,6 +3,7 @@ package de.vitagroup.num.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.ExportType;
+import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Study;
 import de.vitagroup.num.domain.StudyStatus;
@@ -13,10 +14,13 @@ import de.vitagroup.num.domain.dto.ProjectInfoDto;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
+import de.vitagroup.num.domain.dto.ZarsInfoDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.domain.repository.StudyTransitionRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.email.ZarsService;
+import de.vitagroup.num.service.executors.CohortQueryLister;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
@@ -38,6 +42,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -46,11 +52,14 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.ConditionDto;
@@ -66,6 +75,7 @@ import org.ehrbase.aql.dto.containment.ContainmentLogicalOperatorSymbol;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
@@ -75,6 +85,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @Service
+@Slf4j
 @AllArgsConstructor
 public class StudyService {
 
@@ -102,12 +113,18 @@ public class StudyService {
 
   private final NotificationService notificationService;
 
+  private final StudyTransitionRepository studyTransitionRepository;
+
+  private final CohortQueryLister cohortQueryLister;
+
+  private final ModelMapper modelMapper;
+
   @Nullable private final ZarsService zarsService;
 
   /**
    * Counts the number of projects existing in the platform
    *
-   * @return
+   * @return The count of projects in the platform
    */
   public long countProjects() {
     return studyRepository.count();
@@ -117,7 +134,7 @@ public class StudyService {
    * Retrieves a list of latest projects information
    *
    * @param count number of projects to be retrieved
-   * @return
+   * @return The list of max requested count of latest projects
    */
   public List<ProjectInfoDto> getLatestProjectsInfo(int count) {
 
@@ -445,10 +462,10 @@ public class StudyService {
 
     if (isTransitionToPublished(oldStatus, newStatus)) {
       if (newResearchers != null) {
-        List<String> reasercherIds =
+        List<String> researcherIds =
             newResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
 
-        reasercherIds.forEach(
+        researcherIds.forEach(
             r -> {
               User researcher = userService.getUserById(r, false);
               ProjectStartNotification notification =
@@ -740,9 +757,7 @@ public class StudyService {
     }
 
     matchesOperatorDtos.forEach(
-        matchesOperatorDto -> {
-          newWhere.getValues().add(matchesOperatorDto);
-        });
+        matchesOperatorDto -> newWhere.getValues().add(matchesOperatorDto));
 
     aql.setWhere(newWhere);
   }
@@ -949,7 +964,81 @@ public class StudyService {
 
   private void registerToZars(Study study) {
     if (zarsService != null) {
-      zarsService.registerToZars(study);
+      ZarsInfoDto zarsInfoDto = modelMapper.map(study, ZarsInfoDto.class);
+      zarsInfoDto.setCoordinator(getCoordinator(study));
+      zarsInfoDto.setQueries(getQueries(study));
+      zarsInfoDto.setApprovalDate(getApprovalDateIfExists(study));
+      zarsInfoDto.setPartners(getPartners(study));
+      zarsInfoDto.setClosedDate(getClosedDateIfExists(study));
+      zarsService.registerToZars(zarsInfoDto);
+    } else {
+      log.error("Project change should be registered to ZARS, but necessary info is not configured. Not registered!");
     }
   }
+
+  @NotNull
+  private String getCoordinator(@NotNull Study study) {
+    return userService.getUserById(study.getCoordinator().getUserId(), false).getUsername();
+  }
+
+  @NotNull
+  private String getQueries(Study study) {
+    if (study.getCohort() == null) {
+      return StringUtils.EMPTY;
+    }
+    return String.join(", ", cohortQueryLister.list(study.getCohort()));
+  }
+
+  @NotNull
+  private String getApprovalDateIfExists(Study study) {
+    List<StudyTransition> transitions =
+        studyTransitionRepository
+            .findAllByStudyIdAndFromStatusAndToStatus(
+                study.getId(), StudyStatus.REVIEWING, StudyStatus.APPROVED)
+            .orElse(Collections.emptyList());
+    if (transitions.size() > 1) {
+      log.error("More than one transition from REVIEWING to APPROVED for study " + study.getId());
+      return StringUtils.EMPTY;
+    }
+    if (transitions.size() == 1) {
+      return transitions.get(0).getCreateDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
+    }
+    return StringUtils.EMPTY;
+  }
+
+  @NotNull
+  private String getPartners(Study study) {
+    Set<Organization> organizations = new HashSet<>();
+
+    if (study.getCoordinator().getOrganization() != null) {
+      organizations.add(study.getCoordinator().getOrganization());
+    }
+    study
+        .getResearchers()
+        .forEach(
+            userDetails -> {
+              if (userDetails.getOrganization() != null) {
+                organizations.add(userDetails.getOrganization());
+              }
+            });
+    return organizations.stream().map(Organization::getName).collect(Collectors.joining(", "));
+  }
+
+  @NotNull
+  private String getClosedDateIfExists(Study study) {
+    List<StudyTransition> transitions =
+        studyTransitionRepository
+            .findAllByStudyIdAndFromStatusAndToStatus(
+                study.getId(), StudyStatus.PUBLISHED, StudyStatus.CLOSED)
+            .orElse(Collections.emptyList());
+    if (transitions.size() > 1) {
+      throw new SystemException(
+          "More than one transition from PUBLISHED to CLOSED for study " + study.getId());
+    }
+    if (transitions.size() == 1) {
+      return transitions.get(0).getCreateDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
+    }
+    return StringUtils.EMPTY;
+  }
+
 }
