@@ -5,17 +5,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlRepository;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
+import de.vitagroup.num.web.exception.PrivacyException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ehrbase.aql.parser.AqlParseException;
+import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
+import org.ehrbase.aqleditor.dto.aql.Result;
+import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
@@ -33,6 +43,10 @@ public class AqlService {
 
   private final UserDetailsService userDetailsService;
 
+  private final PrivacyProperties privacyProperties;
+
+  private final AqlEditorAqlService aqlEditorAqlService;
+
   /**
    * Counts the number of aql queries existing in the platform
    *
@@ -49,7 +63,8 @@ public class AqlService {
   public Aql getAqlById(Long id, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    Aql aql = aqlRepository.findById(id).orElseThrow(ResourceNotFound::new);
+    Aql aql =
+        aqlRepository.findById(id).orElseThrow(() -> new ResourceNotFound("Aql not found: " + id));
 
     if (aql.isViewable(loggedInUserId)) {
       return aql;
@@ -169,6 +184,37 @@ public class AqlService {
 
     } else {
       throw new ForbiddenException("Cannot access this resource.");
+    }
+  }
+
+  public long getAqlSize(SlimAqlDto aql, String userId) {
+    userDetailsService.checkIsUserApproved(userId);
+
+    validateQuery(aql.getQuery());
+
+    Set<String> ehrIds;
+    try {
+      ehrIds =
+          ehrBaseService.retrieveEligiblePatientIds(Aql.builder().query(aql.getQuery()).build());
+    } catch (AqlParseException e) {
+      throw new BadRequestException(e.getMessage());
+    }
+
+    if (ehrIds.size() < privacyProperties.getMinHits()) {
+      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
+    }
+    return ehrIds.size();
+  }
+
+  private void validateQuery(String query) {
+    QueryValidationResponse response =
+        aqlEditorAqlService.validateAql(Result.builder().q(query).build());
+    if (!response.isValid()) {
+      try {
+        throw new BadRequestException(mapper.writeValueAsString(response));
+      } catch (JsonProcessingException e) {
+        log.error("Could not serialize aql validation response", e);
+      }
     }
   }
 }

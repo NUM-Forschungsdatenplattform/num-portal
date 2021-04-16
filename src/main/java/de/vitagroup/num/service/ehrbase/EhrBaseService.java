@@ -20,6 +20,7 @@ import org.ehrbase.aql.dto.select.SelectDto;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aql.parser.AqlToDtoParser;
+import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.ehrbase.client.aql.field.EhrFields;
 import org.ehrbase.client.aql.query.EntityQuery;
 import org.ehrbase.client.aql.query.Query;
@@ -45,8 +46,9 @@ public class EhrBaseService {
   private static final String COMPOSITION_KEY = "_type";
 
   private final DefaultRestClient restClient;
-  public final ObjectMapper mapper;
-  public final CompositionResponseDataBuilder compositionResponseDataBuilder;
+  private final ObjectMapper mapper;
+  private final CompositionResponseDataBuilder compositionResponseDataBuilder;
+  private final AqlEditorAqlService aqlEditorAqlService;
 
   /**
    * Retrieves a distinct list of patient ids for the given aql
@@ -56,6 +58,7 @@ public class EhrBaseService {
    * @throws WrongStatusCodeException in case if a malformed aql
    */
   public Set<String> retrieveEligiblePatientIds(Aql aql) {
+
     AqlDto dto = new AqlToDtoParser().parse(aql.getQuery());
     SelectFieldDto selectStatementDto = new SelectFieldDto();
     selectStatementDto.setAqlPath(EhrFields.EHR_ID().getPath());
@@ -97,7 +100,7 @@ public class EhrBaseService {
 
     try {
 
-      QueryResponseData response =  restClient.aqlEndpoint().executeRaw(query);
+      QueryResponseData response = restClient.aqlEndpoint().executeRaw(query);
       return flattenIfCompositionPresent(response);
 
     } catch (WrongStatusCodeException e) {
@@ -133,10 +136,10 @@ public class EhrBaseService {
     List<Map<String, String>> compositions = new ArrayList<>();
 
     for (List<Object> row : response.getRows()) {
-      for(Object cell: row){
-        if(isComposition(cell)){
+      for (Object cell : row) {
+        if (isComposition(cell)) {
           compositions.add((Map<String, String>) cell);
-        }else{
+        } else {
           log.debug("Executing query containing mixed data types. Returning raw ehr response");
           return response;
         }
