@@ -120,7 +120,8 @@ public class StudyService {
       studyRepository.deleteById(projectId);
     } else {
       throw new ForbiddenException(
-          String.format("Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
+          String.format(
+              "Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
     }
   }
 
@@ -170,7 +171,7 @@ public class StudyService {
   }
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
-    QueryResponseData response = executeAql(query, studyId, userId);
+    List<QueryResponseData> response = executeAql(query, studyId, userId);
     try {
       return mapper.writeValueAsString(response);
     } catch (JsonProcessingException e) {
@@ -178,8 +179,8 @@ public class StudyService {
     }
   }
 
-  public QueryResponseData executeAql(String query, Long studyId, String userId) {
-    QueryResponseData queryResponseData;
+  public List<QueryResponseData> executeAql(String query, Long studyId, String userId) {
+    List<QueryResponseData> queryResponseData;
     Study study = null;
     try {
       userDetailsService.checkIsUserApproved(userId);
@@ -234,8 +235,10 @@ public class StudyService {
         outputStream.close();
       };
     }
-    QueryResponseData queryResponseData = executeAql(query, studyId, userId);
-    return outputStream -> streamResponseAsCsv(queryResponseData, outputStream);
+    List<QueryResponseData> queryResponseData = executeAql(query, studyId, userId);
+
+    // TODO: modify the download functionality to handle a list of QueryResponseData objects
+    return outputStream -> streamResponseAsCsv(queryResponseData.get(0), outputStream);
   }
 
   public MultiValueMap<String, String> getExportHeaders(ExportType format, Long studyId) {
@@ -323,7 +326,8 @@ public class StudyService {
     if (StudyStatus.ARCHIVED.equals(studyToEdit.getStatus())
         || StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
       throw new ForbiddenException(
-          String.format("Cannot update study: %s, invalid study status: %s", id, studyToEdit.getStatus()));
+          String.format(
+              "Cannot update study: %s, invalid study status: %s", id, studyToEdit.getStatus()));
     }
 
     if (CollectionUtils.isNotEmpty(roles)

@@ -176,7 +176,7 @@ public class AqlService {
     if (aql.isExecutable(userId)) {
 
       try {
-        QueryResponseData response = ehrBaseService.executeAql(aql);
+        List<QueryResponseData> response = ehrBaseService.executeAql(aql);
         return mapper.writeValueAsString(response);
       } catch (JsonProcessingException e) {
         throw new SystemException("An issue has occurred, cannot execute aql.");
