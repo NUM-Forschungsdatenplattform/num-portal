@@ -17,8 +17,8 @@ import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.email.ZarsService;
-import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
 import de.vitagroup.num.service.notification.dto.ProjectRequestNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
@@ -103,6 +103,46 @@ public class StudyService {
   private final NotificationService notificationService;
 
   @Nullable private final ZarsService zarsService;
+
+  public void deleteProject(Long projectId, String userId, List<String> roles) {
+    userDetailsService.checkIsUserApproved(userId);
+
+    Study project =
+        studyRepository
+            .findById(projectId)
+            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + projectId));
+
+    if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
+      throw new ForbiddenException(String.format("Cannot delete project: %s", projectId));
+    }
+
+    if (project.isDeletable()) {
+      studyRepository.deleteById(projectId);
+    } else {
+      throw new ForbiddenException(
+          String.format("Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
+    }
+  }
+
+  @Transactional
+  public void archiveProject(Long projectId, String userId, List<String> roles) {
+    UserDetails user = userDetailsService.checkIsUserApproved(userId);
+
+    Study project =
+        studyRepository
+            .findById(projectId)
+            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + projectId));
+
+    if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
+      throw new ForbiddenException(String.format("Cannot archive project: %s", projectId));
+    }
+
+    validateStatus(project.getStatus(), StudyStatus.ARCHIVED, roles);
+    persistTransition(project, project.getStatus(), StudyStatus.ARCHIVED, user);
+
+    project.setStatus(StudyStatus.ARCHIVED);
+    studyRepository.save(project);
+  }
 
   /**
    * Counts the number of projects existing in the platform
@@ -222,6 +262,7 @@ public class StudyService {
     return studyRepository.existsById(studyId);
   }
 
+  @Transactional
   public Study createStudy(StudyDto studyDto, String userId, List<String> roles) {
 
     UserDetails coordinator = userDetailsService.checkIsUserApproved(userId);
@@ -279,6 +320,12 @@ public class StudyService {
     Study studyToEdit =
         studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
 
+    if (StudyStatus.ARCHIVED.equals(studyToEdit.getStatus())
+        || StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
+      throw new ForbiddenException(
+          String.format("Cannot update study: %s, invalid study status: %s", id, studyToEdit.getStatus()));
+    }
+
     if (CollectionUtils.isNotEmpty(roles)
         && roles.contains(Roles.STUDY_COORDINATOR)
         && studyToEdit.isCoordinator(userId)) {
@@ -294,10 +341,6 @@ public class StudyService {
       StudyDto studyDto, List<String> roles, UserDetails user, Study studyToEdit) {
 
     StudyStatus oldStudyStatus = studyToEdit.getStatus();
-
-    if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
-      throw new ForbiddenException("Update of closed study is not allowed");
-    }
 
     validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
     persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
@@ -326,9 +369,6 @@ public class StudyService {
   private Study updateStudyAllFields(
       StudyDto studyDto, List<String> roles, UserDetails user, Study studyToEdit) {
 
-    if (StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
-      throw new ForbiddenException("Update of closed study is not allowed");
-    }
     StudyStatus oldStatus = studyToEdit.getStatus();
 
     validateCoordinatorIsOwner(studyToEdit, user.getUserId());

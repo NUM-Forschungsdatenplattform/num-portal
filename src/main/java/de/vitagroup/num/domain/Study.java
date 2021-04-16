@@ -123,4 +123,9 @@ public class Study implements Serializable {
   public boolean isCoordinator(String userId) {
     return coordinator != null && coordinator.getUserId().equals(userId);
   }
+
+  public boolean isDeletable() {
+    return StudyStatus.DRAFT.equals(status) || StudyStatus.CHANGE_REQUEST.equals(status);
+  }
+
 }
