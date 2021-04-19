@@ -45,8 +45,11 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.csv.CSVFormat;
@@ -75,6 +78,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @Service
+@Slf4j
 @AllArgsConstructor
 public class StudyService {
 
@@ -82,9 +86,10 @@ public class StudyService {
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
   private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
   private static final String STUDY_NOT_FOUND = "Study not found: ";
-  private static final String CSV_FILE_ENDING = ".csv";
+  private static final String CSV_FILE_ENDING = ".zip";
   private static final String JSON_FILE_ENDING = ".json";
-  private static final String CSV_MEDIA_TYPE = "text/csv";
+  private static final String ZIP_MEDIA_TYPE = "application/zip";
+  private static final String CSV_FILE_PATTERN = "%s_%d.csv";
 
   private final StudyRepository studyRepository;
 
@@ -206,22 +211,45 @@ public class StudyService {
     return queryResponseData;
   }
 
-  public void streamResponseAsCsv(QueryResponseData queryResponseData, OutputStream outputStream) {
-    List<String> paths = new ArrayList<>();
+  public void streamResponseAsCsv(
+      List<QueryResponseData> queryResponseDataList,
+      String filenameStart,
+      OutputStream outputStream) {
 
-    for (Map<String, String> column : queryResponseData.getColumns()) {
-      paths.add(column.get("path"));
-    }
-    try (CSVPrinter printer =
-        CSVFormat.EXCEL
-            .withHeader(paths.toArray(new String[] {}))
-            .print(new OutputStreamWriter(outputStream))) {
+    try {
+      ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
 
-      for (List<Object> row : queryResponseData.getRows()) {
-        printer.printRecord(row);
+      int index = 0;
+      for (QueryResponseData queryResponseData : queryResponseDataList) {
+
+        zipOutputStream.putNextEntry(new ZipEntry(String.format(CSV_FILE_PATTERN, filenameStart, index)));
+        List<String> paths = new ArrayList<>();
+
+        for (Map<String, String> column : queryResponseData.getColumns()) {
+          paths.add(column.get("path"));
+        }
+        CSVPrinter printer;
+        try {
+          printer =
+              CSVFormat.EXCEL
+                  .withHeader(paths.toArray(new String[] {}))
+                  .print(new OutputStreamWriter(zipOutputStream));
+
+          for (List<Object> row : queryResponseData.getRows()) {
+            printer.printRecord(row);
+          }
+          printer.flush();
+        } catch (IOException e) {
+          throw new SystemException("Error while creating the CSV file");
+        }
+        zipOutputStream.closeEntry();
+        index++;
       }
+      zipOutputStream.close();
     } catch (IOException e) {
-      throw new SystemException("Error while creating the CSV file");
+      log.error("Error creating a zip file for data export.", e);
+      throw new SystemException(
+          "Error creating a zip file for data export: " + e.getLocalizedMessage());
     }
   }
 
@@ -237,8 +265,7 @@ public class StudyService {
     }
     List<QueryResponseData> queryResponseData = executeAql(query, studyId, userId);
 
-    // TODO: modify the download functionality to handle a list of QueryResponseData objects
-    return outputStream -> streamResponseAsCsv(queryResponseData.get(0), outputStream);
+    return outputStream -> streamResponseAsCsv(queryResponseData, getExportFilenameBody(studyId), outputStream);
   }
 
   public MultiValueMap<String, String> getExportHeaders(ExportType format, Long studyId) {
@@ -249,7 +276,7 @@ public class StudyService {
       headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     } else {
       fileEnding = CSV_FILE_ENDING;
-      headers.add(HttpHeaders.CONTENT_TYPE, CSV_MEDIA_TYPE);
+      headers.add(HttpHeaders.CONTENT_TYPE, ZIP_MEDIA_TYPE);
     }
     headers.add(
         HttpHeaders.CONTENT_DISPOSITION,
@@ -650,7 +677,7 @@ public class StudyService {
 
   public String getExportFilenameBody(Long studyId) {
     return String.format(
-            "Study_%d_%s",
+            "Project_%d_%s",
             studyId,
             LocalDateTime.now()
                 .truncatedTo(ChronoUnit.MINUTES)
