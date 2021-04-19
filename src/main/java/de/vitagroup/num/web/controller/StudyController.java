@@ -208,7 +208,7 @@ public class StudyController {
   }
 
   @AuditLog
-  @PostMapping("/archive/{id}")
+  @PostMapping("/{id}/archive")
   @ApiOperation(value = "Archive a project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
   void archiveProject(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
