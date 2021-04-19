@@ -46,20 +46,20 @@ public class ZarsService {
   }
 
   @Async
-  public void registerToZars(@NotNull ZarsInfoDto study) {
+  public void registerToZars(@NotNull ZarsInfoDto zarsInfoDto) {
     try {
-      String csv = generateCSV(study);
-      String subject = "Projekt NUM-" + study.getId();
+      String csv = generateCSV(zarsInfoDto);
+      String subject = "Projekt NUM-" + zarsInfoDto.getId();
       String body =
           String.format(
               "NUM-%d%nTitel: %s%nProjektleiter: %s%nNeuer Status: %s",
-              study.getId(), study.getName(), study.getCoordinator(), study.getStatus().toString());
+              zarsInfoDto.getId(), zarsInfoDto.getName(), zarsInfoDto.getCoordinator(), zarsInfoDto.getStatus().toString());
       emailService.sendEmailWithAttachment(
           subject,
           body,
           zarsProperties.getEmail(),
           csv,
-          "NUM_" + study.getId() + ".csv",
+          "NUM_" + zarsInfoDto.getId() + ".csv",
           "text/csv");
       log.debug("Registration email successfully sent to " + zarsProperties.getEmail());
     } catch (Exception e) {
@@ -68,7 +68,7 @@ public class ZarsService {
   }
 
   @NotNull
-  private String generateCSV(@NotNull ZarsInfoDto study) {
+  private String generateCSV(@NotNull ZarsInfoDto zarsInfoDto) {
     if (zarsHeaders == null) {
       log.error("ZARS headers file reading has failed, can't send updates to ZARS!");
       return StringUtils.EMPTY;
@@ -76,7 +76,7 @@ public class ZarsService {
     StringWriter writer = new StringWriter();
     try (CSVPrinter printer = CSVFormat.EXCEL.withHeader(zarsHeaders).print(writer)) {
 
-      printer.printRecord(generateStudyRow(study));
+      printer.printRecord(generateStudyRow(zarsInfoDto));
       printer.flush();
     } catch (IOException e) {
       log.error("Error while creating the ZARS CSV file", e);
@@ -85,34 +85,34 @@ public class ZarsService {
     return writer.toString();
   }
 
-  private List<String> generateStudyRow(@NotNull ZarsInfoDto study) {
+  private List<String> generateStudyRow(@NotNull ZarsInfoDto zarsInfoDto) {
 
     List<String> values = new ArrayList<>();
-    values.add("NUM-" + study.getId()); // Local project id
-    values.add(study.getName()); // Project title
-    values.add(study.getCoordinator()); // Project leader
-    values.add(study.getStartDate().toString()); // Start date
-    values.add(study.getEndDate().toString()); // End date
-    values.add(study.getGoal()); // Goal
-    values.add(study.getDescription()); // Description
-    values.add(study.getSimpleDescription()); // Simple description
-    values.add(String.join(", ", study.getKeywords())); // Keywords
+    values.add("NUM-" + zarsInfoDto.getId()); // Local project id
+    values.add(zarsInfoDto.getName()); // Project title
+    values.add(zarsInfoDto.getCoordinator()); // Project leader
+    values.add(zarsInfoDto.getStartDate().toString()); // Start date
+    values.add(zarsInfoDto.getEndDate().toString()); // End date
+    values.add(zarsInfoDto.getGoal()); // Goal
+    values.add(zarsInfoDto.getDescription()); // Description
+    values.add(zarsInfoDto.getSimpleDescription()); // Simple description
+    values.add(String.join(", ", zarsInfoDto.getKeywords())); // Keywords
     values.add(
-        study.getCategories().stream()
+        zarsInfoDto.getCategories().stream()
             .map(StudyCategories::toString)
             .collect(Collectors.joining(", "))); // Categories
-    values.add(study.getQueries()); // One or more queries
-    values.add(study.getApprovalDate()); // Approval date
+    values.add(zarsInfoDto.getQueries()); // One or more queries
+    values.add(zarsInfoDto.getApprovalDate()); // Approval date
     values.add("NA"); // Contract end date
     values.add("NUM"); // Locations
-    values.add(study.getPartners()); // Project partners
-    values.add(study.isFinanced() ? "Ja" : "Nein"); // Private financing
+    values.add(zarsInfoDto.getPartners()); // Project partners
+    values.add(zarsInfoDto.isFinanced() ? "Ja" : "Nein"); // Private financing
     values.add("MII Broad Consent"); // Legal grounds
     values.add("NA"); // New end date
     values.add("NA"); // New query
     values.add("NA"); // Date of first data delivery
     values.add("Nein"); // Profitability report?
-    values.add(study.getClosedDate()); // Publication date
+    values.add(zarsInfoDto.getClosedDate()); // Publication date
     values.add("NA"); // Publication reference
     values.add("NA"); // Comments
 
