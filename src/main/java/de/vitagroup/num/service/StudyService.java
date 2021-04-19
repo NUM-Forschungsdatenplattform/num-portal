@@ -86,7 +86,7 @@ public class StudyService {
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
   private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
   private static final String STUDY_NOT_FOUND = "Study not found: ";
-  private static final String CSV_FILE_ENDING = ".zip";
+  private static final String ZIP_FILE_ENDING = ".zip";
   private static final String JSON_FILE_ENDING = ".json";
   private static final String ZIP_MEDIA_TYPE = "application/zip";
   private static final String CSV_FILE_PATTERN = "%s_%d.csv";
@@ -211,23 +211,22 @@ public class StudyService {
     return queryResponseData;
   }
 
-  public void streamResponseAsCsv(
+  public void streamResponseAsZip(
       List<QueryResponseData> queryResponseDataList,
       String filenameStart,
       OutputStream outputStream) {
 
-    try {
-      ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
+    try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
 
       int index = 0;
       for (QueryResponseData queryResponseData : queryResponseDataList) {
 
-        zipOutputStream.putNextEntry(new ZipEntry(String.format(CSV_FILE_PATTERN, filenameStart, index)));
+        zipOutputStream.putNextEntry(
+            new ZipEntry(String.format(CSV_FILE_PATTERN, filenameStart, index)));
         addResponseAsCsv(zipOutputStream, queryResponseData);
         zipOutputStream.closeEntry();
         index++;
       }
-      zipOutputStream.close();
     } catch (IOException e) {
       log.error("Error creating a zip file for data export.", e);
       throw new SystemException(
@@ -235,7 +234,8 @@ public class StudyService {
     }
   }
 
-  private void addResponseAsCsv(ZipOutputStream zipOutputStream, QueryResponseData queryResponseData) {
+  private void addResponseAsCsv(
+      ZipOutputStream zipOutputStream, QueryResponseData queryResponseData) {
     List<String> paths = new ArrayList<>();
 
     for (Map<String, String> column : queryResponseData.getColumns()) {
@@ -269,7 +269,8 @@ public class StudyService {
     }
     List<QueryResponseData> queryResponseData = executeAql(query, studyId, userId);
 
-    return outputStream -> streamResponseAsCsv(queryResponseData, getExportFilenameBody(studyId), outputStream);
+    return outputStream ->
+        streamResponseAsZip(queryResponseData, getExportFilenameBody(studyId), outputStream);
   }
 
   public MultiValueMap<String, String> getExportHeaders(ExportType format, Long studyId) {
@@ -279,7 +280,7 @@ public class StudyService {
       fileEnding = JSON_FILE_ENDING;
       headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     } else {
-      fileEnding = CSV_FILE_ENDING;
+      fileEnding = ZIP_FILE_ENDING;
       headers.add(HttpHeaders.CONTENT_TYPE, ZIP_MEDIA_TYPE);
     }
     headers.add(
