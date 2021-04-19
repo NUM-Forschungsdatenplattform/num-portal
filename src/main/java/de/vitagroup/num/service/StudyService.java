@@ -21,7 +21,6 @@ import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.service.executors.CohortQueryLister;
-import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
@@ -138,7 +137,8 @@ public class StudyService {
       studyRepository.deleteById(projectId);
     } else {
       throw new ForbiddenException(
-          String.format("Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
+          String.format(
+              "Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
     }
   }
 
@@ -341,7 +341,8 @@ public class StudyService {
     if (StudyStatus.ARCHIVED.equals(studyToEdit.getStatus())
         || StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
       throw new ForbiddenException(
-          String.format("Cannot update study: %s, invalid study status: %s", id, studyToEdit.getStatus()));
+          String.format(
+              "Cannot update study: %s, invalid study status: %s", id, studyToEdit.getStatus()));
     }
 
     if (CollectionUtils.isNotEmpty(roles)
@@ -797,8 +798,7 @@ public class StudyService {
       newWhere.setSymbol(ConditionLogicalOperatorSymbol.AND);
     }
 
-    matchesOperatorDtos.forEach(
-        matchesOperatorDto -> newWhere.getValues().add(matchesOperatorDto));
+    matchesOperatorDtos.forEach(matchesOperatorDto -> newWhere.getValues().add(matchesOperatorDto));
 
     aql.setWhere(newWhere);
   }
@@ -1013,7 +1013,8 @@ public class StudyService {
       zarsInfoDto.setClosedDate(getClosedDateIfExists(study));
       zarsService.registerToZars(zarsInfoDto);
     } else {
-      log.error("Project change should be registered to ZARS, but necessary info is not configured. Not registered!");
+      log.error(
+          "Project change should be registered to ZARS, but necessary info is not configured. Not registered!");
     }
   }
 
@@ -1081,5 +1082,4 @@ public class StudyService {
     }
     return StringUtils.EMPTY;
   }
-
 }
