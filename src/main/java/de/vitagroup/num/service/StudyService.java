@@ -223,25 +223,7 @@ public class StudyService {
       for (QueryResponseData queryResponseData : queryResponseDataList) {
 
         zipOutputStream.putNextEntry(new ZipEntry(String.format(CSV_FILE_PATTERN, filenameStart, index)));
-        List<String> paths = new ArrayList<>();
-
-        for (Map<String, String> column : queryResponseData.getColumns()) {
-          paths.add(column.get("path"));
-        }
-        CSVPrinter printer;
-        try {
-          printer =
-              CSVFormat.EXCEL
-                  .withHeader(paths.toArray(new String[] {}))
-                  .print(new OutputStreamWriter(zipOutputStream));
-
-          for (List<Object> row : queryResponseData.getRows()) {
-            printer.printRecord(row);
-          }
-          printer.flush();
-        } catch (IOException e) {
-          throw new SystemException("Error while creating the CSV file");
-        }
+        addResponseAsCsv(zipOutputStream, queryResponseData);
         zipOutputStream.closeEntry();
         index++;
       }
@@ -250,6 +232,28 @@ public class StudyService {
       log.error("Error creating a zip file for data export.", e);
       throw new SystemException(
           "Error creating a zip file for data export: " + e.getLocalizedMessage());
+    }
+  }
+
+  private void addResponseAsCsv(ZipOutputStream zipOutputStream, QueryResponseData queryResponseData) {
+    List<String> paths = new ArrayList<>();
+
+    for (Map<String, String> column : queryResponseData.getColumns()) {
+      paths.add(column.get("path"));
+    }
+    CSVPrinter printer;
+    try {
+      printer =
+          CSVFormat.EXCEL
+              .withHeader(paths.toArray(new String[] {}))
+              .print(new OutputStreamWriter(zipOutputStream));
+
+      for (List<Object> row : queryResponseData.getRows()) {
+        printer.printRecord(row);
+      }
+      printer.flush();
+    } catch (IOException e) {
+      throw new SystemException("Error while creating the CSV file");
     }
   }
 
