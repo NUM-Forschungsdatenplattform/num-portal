@@ -9,5 +9,5 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "consent")
 public class ConsentProperties {
 
-  private String nonEuOid;
+  private String allowUsageOutsideEuOid;
 }

@@ -110,7 +110,7 @@ num:
   locale: en
 
 consent:
-  non-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
+  allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
 
 ---
 spring:

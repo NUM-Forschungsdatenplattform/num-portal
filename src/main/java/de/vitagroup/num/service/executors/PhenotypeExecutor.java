@@ -80,7 +80,7 @@ public class PhenotypeExecutor {
   private void applyPolicy(AqlExpression aqlExpression) {
     AqlDto aql = new AqlToDtoParser().parse(aqlExpression.getAql().getQuery());
     projectPolicyService.apply(
-        aql, List.of(EuropeanConsentPolicy.builder().oid(consentProperties.getNonEuOid()).build()));
+        aql, List.of(EuropeanConsentPolicy.builder().oid(consentProperties.getAllowUsageOutsideEuOid()).build()));
 
     aqlExpression.getAql().setQuery(new AqlBinder().bind(aql).getLeft().buildAql());
   }

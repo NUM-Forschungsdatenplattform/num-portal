@@ -468,7 +468,7 @@ public class StudyService {
     policies.add(TemplatesPolicy.builder().templatesMap(templates).build());
 
     if (usedOutsideEu) {
-      policies.add(EuropeanConsentPolicy.builder().oid(consentProperties.getNonEuOid()).build());
+      policies.add(EuropeanConsentPolicy.builder().oid(consentProperties.getAllowUsageOutsideEuOid()).build());
     }
 
     return policies;

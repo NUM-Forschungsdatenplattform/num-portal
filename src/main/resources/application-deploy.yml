@@ -65,4 +65,4 @@ num:
   locale: ${NUM_LOCALE}
 
 consent:
-  non-eu-oid: ${NON_EU_OID}
+  allow-usage-outside-eu-oid: ${ALLOW_USAGE_OUTSIDE_EU_OID}
