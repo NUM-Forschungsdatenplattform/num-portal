@@ -4,11 +4,13 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.Value;
 
 /** Restricts the aql to a set of templates defined by the project */
+@Slf4j
 public class TemplatesPolicy extends Policy {
 
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
@@ -23,12 +25,13 @@ public class TemplatesPolicy extends Policy {
 
   @Override
   public void apply(AqlDto aql) {
-    if (aql == null) {
-      throw new SystemException(AQL_ERROR_MESSAGE);
+    if (MapUtils.isEmpty(templatesMap)) {
+      log.error("No templates attached to the study");
+      return;
     }
 
-    if (MapUtils.isEmpty(templatesMap)) {
-      throw new SystemException(ERROR_MESSAGE);
+    if (aql == null) {
+      throw new SystemException(AQL_ERROR_MESSAGE);
     }
 
     List<Value> templateValues = toSimpleValueList(templatesMap.keySet());

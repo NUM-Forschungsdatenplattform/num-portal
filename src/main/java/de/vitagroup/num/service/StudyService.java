@@ -89,11 +89,13 @@ public class StudyService {
   private final NotificationService notificationService;
 
   @Nullable private final ZarsService zarsService;
+
   private final ProjectPolicyService projectPolicyService;
 
   private final CohortService cohortService;
 
   private final ConsentProperties consentProperties;
+
   public void deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
@@ -110,7 +112,8 @@ public class StudyService {
       studyRepository.deleteById(projectId);
     } else {
       throw new ForbiddenException(
-          String.format("Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
+          String.format(
+              "Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
     }
   }
 
@@ -185,6 +188,10 @@ public class StudyService {
 
       if (study.getCohort() == null) {
         throw new BadRequestException(String.format("Study: %s cohort cannot be null", studyId));
+      }
+
+      if(study.getTemplates() == null){
+        throw new BadRequestException(String.format("Study: %s templates cannot be null", studyId));
       }
 
       Set<String> ehrIds = cohortService.executeCohort(study.getCohort().getId());
@@ -324,7 +331,8 @@ public class StudyService {
     if (StudyStatus.ARCHIVED.equals(studyToEdit.getStatus())
         || StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
       throw new ForbiddenException(
-          String.format("Cannot update study: %s, invalid study status: %s", id, studyToEdit.getStatus()));
+          String.format(
+              "Cannot update study: %s, invalid study status: %s", id, studyToEdit.getStatus()));
     }
 
     if (CollectionUtils.isNotEmpty(roles)

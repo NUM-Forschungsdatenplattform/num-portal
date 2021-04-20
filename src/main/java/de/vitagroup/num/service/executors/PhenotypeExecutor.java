@@ -70,31 +70,28 @@ public class PhenotypeExecutor {
     } else if (expression instanceof AqlExpression) {
 
       AqlExpression aqlExpression = (AqlExpression) expression;
-      addParameters(parameters, aqlExpression);
-
-      Aql aql = applyPolicy(aqlExpression.getAql());
-      return ehrBaseService.retrieveEligiblePatientIds(aql);
+      applyPolicy(aqlExpression);
+      addParameters(parameters, aqlExpression.getAql());
+      return ehrBaseService.retrieveEligiblePatientIds(aqlExpression.getAql());
     }
     return SetUtils.emptySet();
   }
 
-  private Aql applyPolicy(Aql query) {
-    AqlDto aql = new AqlToDtoParser().parse(query.getQuery());
+  private void applyPolicy(AqlExpression aqlExpression) {
+    AqlDto aql = new AqlToDtoParser().parse(aqlExpression.getAql().getQuery());
     projectPolicyService.apply(
         aql, List.of(EuropeanConsentPolicy.builder().oid(consentProperties.getNonEuOid()).build()));
 
-    String restrictedQuery = new AqlBinder().bind(aql).getLeft().buildAql();
-    return Aql.builder().query(restrictedQuery).build();
+    aqlExpression.getAql().setQuery(new AqlBinder().bind(aql).getLeft().buildAql());
   }
 
-  private void addParameters(Map<String, Object> parameters, AqlExpression aqlExpression) {
+  private void addParameters(Map<String, Object> parameters, Aql aql) {
     if (MapUtils.isNotEmpty(parameters)) {
 
-      if (aqlExpression.getAql() == null) {
+      if (aql == null) {
         return;
       }
 
-      Aql aql = aqlExpression.getAql();
       String query = aql.getQuery();
 
       if (StringUtils.isEmpty(query)) {

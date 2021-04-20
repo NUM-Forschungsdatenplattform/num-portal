@@ -26,14 +26,14 @@ public class EuropeanConsentPolicy extends Policy {
 
   @Override
   public void apply(AqlDto aql) {
-    if (aql == null) {
-      throw new SystemException(AQL_ERROR_MESSAGE);
-    }
-
     if (oid == null) {
       log.error(
           "Cannot check consent for data usage outside the European Union, oid not configured");
       return;
+    }
+
+    if (aql == null) {
+      throw new SystemException(AQL_ERROR_MESSAGE);
     }
 
     List<Value> oidValues = toSimpleValueList(List.of(oid));
