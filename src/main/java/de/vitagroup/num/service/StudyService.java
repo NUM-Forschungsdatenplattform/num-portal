@@ -16,6 +16,7 @@ import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.dto.ZarsInfoDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.domain.repository.StudyTransitionRepository;
 import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
