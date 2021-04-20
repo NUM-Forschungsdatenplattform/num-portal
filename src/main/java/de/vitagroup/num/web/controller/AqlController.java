@@ -7,6 +7,7 @@ import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.service.logger.AuditLog;
+import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -37,6 +38,7 @@ public class AqlController {
 
   private final AqlService aqlService;
   private final AqlMapper mapper;
+  private final ProjectPolicyService projectPolicyService;
 
   @AuditLog
   @GetMapping("/{id}")

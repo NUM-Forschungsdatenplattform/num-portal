@@ -17,6 +17,7 @@ import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.dto.ZarsInfoDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.domain.repository.StudyTransitionRepository;
+import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.email.ZarsService;
@@ -27,6 +28,11 @@ import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
 import de.vitagroup.num.service.notification.dto.ProjectRequestNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStatusChangeNotification;
+import de.vitagroup.num.service.policy.EhrPolicy;
+import de.vitagroup.num.service.policy.EuropeanConsentPolicy;
+import de.vitagroup.num.service.policy.Policy;
+import de.vitagroup.num.service.policy.ProjectPolicyService;
+import de.vitagroup.num.service.policy.TemplatesPolicy;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -39,16 +45,13 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
@@ -56,23 +59,11 @@ import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.MapUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.condition.ConditionDto;
-import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorDto;
-import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorSymbol;
-import org.ehrbase.aql.dto.condition.MatchesOperatorDto;
-import org.ehrbase.aql.dto.condition.SimpleValue;
-import org.ehrbase.aql.dto.condition.Value;
-import org.ehrbase.aql.dto.containment.ContainmentDto;
-import org.ehrbase.aql.dto.containment.ContainmentExpresionDto;
-import org.ehrbase.aql.dto.containment.ContainmentLogicalOperator;
-import org.ehrbase.aql.dto.containment.ContainmentLogicalOperatorSymbol;
-import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
@@ -89,9 +80,6 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @AllArgsConstructor
 public class StudyService {
 
-  private static final String EHR_ID_PATH = "/ehr_id/value";
-  private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
-  private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
   private static final String STUDY_NOT_FOUND = "Study not found: ";
   private static final String CSV_FILE_ENDING = ".csv";
   private static final String JSON_FILE_ENDING = ".json";
@@ -104,8 +92,6 @@ public class StudyService {
   private final EhrBaseService ehrBaseService;
 
   private final ObjectMapper mapper;
-
-  private final CohortService cohortService;
 
   private final AtnaService atnaService;
 
@@ -120,6 +106,12 @@ public class StudyService {
   private final ModelMapper modelMapper;
 
   @Nullable private final ZarsService zarsService;
+
+  private final ProjectPolicyService projectPolicyService;
+
+  private final CohortService cohortService;
+
+  private final ConsentProperties consentProperties;
 
   public void deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
@@ -211,8 +203,23 @@ public class StudyService {
         throw new ForbiddenException("Cannot access this study");
       }
 
-      String restrictedQuery = restrictQueryToStudy(query, study);
+      if (study.getCohort() == null) {
+        throw new BadRequestException(String.format("Study: %s cohort cannot be null", studyId));
+      }
 
+      if(study.getTemplates() == null){
+        throw new BadRequestException(String.format("Study: %s templates cannot be null", studyId));
+      }
+
+      Set<String> ehrIds = cohortService.executeCohort(study.getCohort().getId());
+
+      AqlDto aql = new AqlToDtoParser().parse(query);
+
+      List<Policy> policies =
+          collectProjectPolicies(ehrIds, study.getTemplates(), study.isUsedOutsideEu());
+      projectPolicyService.apply(aql, policies);
+
+      String restrictedQuery = new AqlBinder().bind(aql).getLeft().buildAql();
       queryResponseData = ehrBaseService.executeRawQuery(restrictedQuery);
 
     } catch (Exception e) {
@@ -454,6 +461,19 @@ public class StudyService {
     return savedStudy;
   }
 
+  private List<Policy> collectProjectPolicies(
+      Set<String> ehrIds, Map<String, String> templates, boolean usedOutsideEu) {
+    List<Policy> policies = new LinkedList<>();
+    policies.add(EhrPolicy.builder().cohortEhrIds(ehrIds).build());
+    policies.add(TemplatesPolicy.builder().templatesMap(templates).build());
+
+    if (usedOutsideEu) {
+      policies.add(EuropeanConsentPolicy.builder().oid(consentProperties.getAllowUsageOutsideEuOid()).build());
+    }
+
+    return policies;
+  }
+
   private List<Notification> collectNotifications(
       String projectName,
       StudyStatus newStatus,
@@ -671,220 +691,6 @@ public class StudyService {
                 .truncatedTo(ChronoUnit.MINUTES)
                 .format(DateTimeFormatter.ISO_LOCAL_DATE))
         .replace('-', '_');
-  }
-
-  private String restrictQueryToStudy(String query, Study study) {
-    return restrictToStudyTemplates(restrictToCohortEhrIds(query, study), study.getTemplates());
-  }
-
-  private String restrictToStudyTemplates(String query, Map<String, String> templatesMap) {
-
-    if (MapUtils.isEmpty(templatesMap)) {
-      throw new BadRequestException("No templates attached to this study");
-    }
-    AqlDto aql = new AqlToDtoParser().parse(query);
-
-    List<SelectFieldDto> whereClauseSelectFields = new LinkedList<>();
-
-    ContainmentExpresionDto contains = aql.getContains();
-    int nextContainmentId = findNextContainmentId(contains);
-
-    if (contains != null) {
-      List<Integer> compositions = findCompositions(contains);
-
-      if (CollectionUtils.isNotEmpty(compositions)) {
-        compositions.forEach(
-            id -> {
-              SelectFieldDto selectFieldDto = new SelectFieldDto();
-              selectFieldDto.setAqlPath(TEMPLATE_ID_PATH);
-              selectFieldDto.setContainmentId(id);
-              whereClauseSelectFields.add(selectFieldDto);
-            });
-
-      } else {
-        extendContainsClause(aql, whereClauseSelectFields, contains, nextContainmentId);
-      }
-    } else {
-      createContainsClause(aql, whereClauseSelectFields, nextContainmentId);
-    }
-
-    List<Value> templateValues = toSimpleValueList(templatesMap.keySet());
-    extendWhereClause(aql, whereClauseSelectFields, templateValues);
-
-    return new AqlBinder().bind(aql).getLeft().buildAql();
-  }
-
-  private void createContainsClause(
-      AqlDto aql, List<SelectFieldDto> whereClauseSelectFields, int nextContainmentId) {
-
-    SelectFieldDto select = new SelectFieldDto();
-    select.setAqlPath(TEMPLATE_ID_PATH);
-    select.setContainmentId(nextContainmentId);
-    whereClauseSelectFields.add(select);
-
-    ContainmentDto composition = new ContainmentDto();
-    composition.setId(nextContainmentId);
-    composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
-    aql.setContains(composition);
-  }
-
-  private void extendContainsClause(
-      AqlDto aql,
-      List<SelectFieldDto> whereClauseSelectFields,
-      ContainmentExpresionDto contains,
-      int nextContainmentId) {
-    SelectFieldDto select = new SelectFieldDto();
-    select.setAqlPath(TEMPLATE_ID_PATH);
-    select.setContainmentId(nextContainmentId);
-    whereClauseSelectFields.add(select);
-
-    ContainmentLogicalOperator newContains = new ContainmentLogicalOperator();
-    newContains.setValues(new ArrayList<>());
-
-    ContainmentDto composition = new ContainmentDto();
-    composition.setId(nextContainmentId);
-    composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
-
-    newContains.setSymbol(ContainmentLogicalOperatorSymbol.AND);
-    newContains.getValues().add(composition);
-    newContains.getValues().add(contains);
-
-    aql.setContains(newContains);
-  }
-
-  private String restrictToCohortEhrIds(String query, Study study) {
-    if (study.getCohort() == null) {
-      throw new BadRequestException("Study cohort cannot be empty");
-    }
-
-    Set<String> ehrIds = cohortService.executeCohort(study.getCohort().getId());
-
-    if (CollectionUtils.isEmpty(ehrIds)) {
-      throw new BadRequestException("Cohort size cannot be 0");
-    }
-
-    AqlDto aql = new AqlToDtoParser().parse(query);
-
-    SelectFieldDto select = new SelectFieldDto();
-    select.setAqlPath(EHR_ID_PATH);
-    select.setContainmentId(aql.getEhr().getContainmentId());
-
-    extendWhereClause(aql, List.of(select), toSimpleValueList(ehrIds));
-
-    return new AqlBinder().bind(aql).getLeft().buildAql();
-  }
-
-  private void extendWhereClause(AqlDto aql, List<SelectFieldDto> selects, List<Value> values) {
-    List<MatchesOperatorDto> matchesOperatorDtos = new LinkedList<>();
-
-    selects.forEach(
-        selectFieldDto -> {
-          MatchesOperatorDto matches = new MatchesOperatorDto();
-          matches.setStatement(selectFieldDto);
-          matches.setValues(values);
-          matchesOperatorDtos.add(matches);
-        });
-
-    ConditionLogicalOperatorDto newWhere = new ConditionLogicalOperatorDto();
-    newWhere.setValues(new ArrayList<>());
-    ConditionDto where = aql.getWhere();
-
-    if (where != null) {
-      newWhere.setSymbol(ConditionLogicalOperatorSymbol.AND);
-      newWhere.getValues().add(where);
-    }
-
-    if (CollectionUtils.isNotEmpty(matchesOperatorDtos) && matchesOperatorDtos.size() > 1) {
-      newWhere.setSymbol(ConditionLogicalOperatorSymbol.AND);
-    }
-
-    matchesOperatorDtos.forEach(matchesOperatorDto -> newWhere.getValues().add(matchesOperatorDto));
-
-    aql.setWhere(newWhere);
-  }
-
-  private List<Integer> findCompositions(ContainmentExpresionDto dto) {
-    if (dto == null) {
-      return null;
-    }
-
-    List<Integer> compositions = new LinkedList<>();
-
-    Queue<ContainmentExpresionDto> queue = new ArrayDeque<>();
-    queue.add(dto);
-
-    while (!queue.isEmpty()) {
-      ContainmentExpresionDto current = queue.remove();
-
-      if (current instanceof ContainmentLogicalOperator) {
-
-        ContainmentLogicalOperator containmentLogicalOperator =
-            (ContainmentLogicalOperator) current;
-
-        queue.addAll(containmentLogicalOperator.getValues());
-
-      } else if (current instanceof ContainmentDto) {
-
-        ContainmentDto containmentDto = (ContainmentDto) current;
-
-        if (containmentDto.getArchetypeId().contains(COMPOSITION_ARCHETYPE_ID)) {
-          compositions.add(containmentDto.getId());
-        }
-
-        if (containmentDto.getContains() != null) {
-          queue.add(containmentDto.getContains());
-        }
-      }
-    }
-    return compositions;
-  }
-
-  private Integer findNextContainmentId(ContainmentExpresionDto dto) {
-
-    if (dto == null) {
-      return 1;
-    }
-
-    Queue<ContainmentExpresionDto> queue = new ArrayDeque<>();
-    queue.add(dto);
-
-    int nextId = 0;
-
-    while (!queue.isEmpty()) {
-      ContainmentExpresionDto current = queue.remove();
-
-      if (current instanceof ContainmentLogicalOperator) {
-
-        ContainmentLogicalOperator containmentLogicalOperator =
-            (ContainmentLogicalOperator) current;
-
-        queue.addAll(containmentLogicalOperator.getValues());
-
-      } else if (current instanceof ContainmentDto) {
-
-        ContainmentDto containmentDto = (ContainmentDto) current;
-
-        if (containmentDto.getId() > nextId) {
-          nextId = containmentDto.getId();
-        }
-
-        if (containmentDto.getContains() != null) {
-          queue.add(containmentDto.getContains());
-        }
-      }
-    }
-    return nextId + 1;
-  }
-
-  private List<Value> toSimpleValueList(Collection<String> list) {
-    return list.stream()
-        .map(
-            s -> {
-              SimpleValue simpleValue = new SimpleValue();
-              simpleValue.setValue(s);
-              return simpleValue;
-            })
-        .collect(Collectors.toList());
   }
 
   private void setTemplates(Study study, StudyDto studyDto) {

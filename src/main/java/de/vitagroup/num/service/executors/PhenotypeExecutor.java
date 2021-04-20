@@ -5,8 +5,11 @@ import de.vitagroup.num.domain.AqlExpression;
 import de.vitagroup.num.domain.Expression;
 import de.vitagroup.num.domain.GroupExpression;
 import de.vitagroup.num.domain.Phenotype;
+import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
+import de.vitagroup.num.service.policy.EuropeanConsentPolicy;
+import de.vitagroup.num.service.policy.ProjectPolicyService;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ehrbase.aql.binder.AqlBinder;
+import org.ehrbase.aql.dto.AqlDto;
+import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.client.aql.parameter.ParameterValue;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +32,12 @@ import org.springframework.stereotype.Service;
 public class PhenotypeExecutor {
 
   private final SetOperationsService setOperations;
+
   private final EhrBaseService ehrBaseService;
+
+  private final ProjectPolicyService projectPolicyService;
+
+  private final ConsentProperties consentProperties;
 
   public Set<String> execute(Phenotype phenotype, Map<String, Object> parameters) {
     if (phenotype == null || phenotype.getQuery() == null) {
@@ -59,21 +70,28 @@ public class PhenotypeExecutor {
     } else if (expression instanceof AqlExpression) {
 
       AqlExpression aqlExpression = (AqlExpression) expression;
-      addParameters(parameters, aqlExpression);
-
+      applyPolicy(aqlExpression);
+      addParameters(parameters, aqlExpression.getAql());
       return ehrBaseService.retrieveEligiblePatientIds(aqlExpression.getAql());
     }
     return SetUtils.emptySet();
   }
 
-  private void addParameters(Map<String, Object> parameters, AqlExpression aqlExpression) {
+  private void applyPolicy(AqlExpression aqlExpression) {
+    AqlDto aql = new AqlToDtoParser().parse(aqlExpression.getAql().getQuery());
+    projectPolicyService.apply(
+        aql, List.of(EuropeanConsentPolicy.builder().oid(consentProperties.getAllowUsageOutsideEuOid()).build()));
+
+    aqlExpression.getAql().setQuery(new AqlBinder().bind(aql).getLeft().buildAql());
+  }
+
+  private void addParameters(Map<String, Object> parameters, Aql aql) {
     if (MapUtils.isNotEmpty(parameters)) {
 
-      if (aqlExpression.getAql() == null) {
+      if (aql == null) {
         return;
       }
 
-      Aql aql = aqlExpression.getAql();
       String query = aql.getQuery();
 
       if (StringUtils.isEmpty(query)) {

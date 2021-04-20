@@ -63,3 +63,6 @@ zars:
 num:
   url: ${NUM_URL}
   locale: ${NUM_LOCALE}
+
+consent:
+  allow-usage-outside-eu-oid: ${ALLOW_USAGE_OUTSIDE_EU_OID}
