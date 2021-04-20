@@ -29,6 +29,7 @@ import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.SystemException;
@@ -54,6 +55,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -109,6 +111,9 @@ public class StudyServiceTest {
   @Mock private NotificationService notificationService;
 
   @Mock private UserService userService;
+
+  @Spy
+  private ProjectPolicyService projectPolicyService;
 
   @InjectMocks private StudyService studyService;
 
@@ -242,7 +247,7 @@ public class StudyServiceTest {
 
   @Ignore(
       value =
-          "this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed")
+          "This test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed")
   @Test
   public void shouldCorrectlyRestrictQueryWithContainsAndNoComposition() {
     studyService.executeAql(QUERY_2, 4L, "approvedCoordinatorId");
@@ -266,7 +271,7 @@ public class StudyServiceTest {
 
   @Ignore(
       value =
-          "this test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed")
+          "This test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed")
   @Test
   public void shouldCorrectlyRestrictBasicQuery() {
     studyService.executeAql(QUERY_BASIC, 2L, "approvedCoordinatorId");
