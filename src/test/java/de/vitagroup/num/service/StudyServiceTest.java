@@ -27,7 +27,6 @@ import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
-import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -105,8 +104,6 @@ public class StudyServiceTest {
   @Mock private EhrBaseService ehrBaseService;
 
   @Mock private AtnaService atnaService;
-
-  @Mock private ZarsService zarsService;
 
   @Mock private NotificationService notificationService;
 
