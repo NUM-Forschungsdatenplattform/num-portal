@@ -222,6 +222,10 @@ public class StudyService {
       String restrictedQuery = new AqlBinder().bind(aql).getLeft().buildAql();
       queryResponseData = ehrBaseService.executeRawQuery(restrictedQuery);
 
+      if (queryResponseData != null) {
+        replaceEhrIds(List.of(queryResponseData), studyId);
+      }
+
     } catch (Exception e) {
       atnaService.logDataExport(userId, studyId, study, false);
       throw e;
@@ -468,7 +472,10 @@ public class StudyService {
     policies.add(TemplatesPolicy.builder().templatesMap(templates).build());
 
     if (usedOutsideEu) {
-      policies.add(EuropeanConsentPolicy.builder().oid(consentProperties.getAllowUsageOutsideEuOid()).build());
+      policies.add(
+          EuropeanConsentPolicy.builder()
+              .oid(consentProperties.getAllowUsageOutsideEuOid())
+              .build());
     }
 
     return policies;
@@ -887,5 +894,38 @@ public class StudyService {
       return transitions.get(0).getCreateDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
     }
     return StringUtils.EMPTY;
+  }
+
+  private void replaceEhrIds(List<QueryResponseData> queryResponseDataList, Long studyId) {
+    for (QueryResponseData queryResponseData : queryResponseDataList) {
+      if (queryResponseData == null) continue;
+      int columnCount = queryResponseData.getColumns().size();
+      for (int i = 0; i < columnCount; i++) {
+        Map<String, String> column = queryResponseData.getColumns().get(i);
+        String path = column.get("path");
+        if (path != null && path.contains("ehr_id/value")) {
+          for (List<Object> row : queryResponseData.getRows()) {
+            String ehrId = (String) row.get(i);
+            String pseudonym = getPseudonym(ehrId, studyId);
+            row.set(i, pseudonym);
+          }
+        }
+      }
+    }
+  }
+
+  public String getPseudonym(String uuid, Long studyId) {
+    return new DigestUtils("SHA3-256")
+        .digestAsHex(uuid + studyId + privacyProperties.getPseudonymitySecret());
+  }
+
+  public String getEhrIdFromPseudonym(@NotNull String pseudonym, Long studyId) {
+    Set<String> ehrIds = ehrBaseService.getAllPatientIds();
+    for (String ehrId : ehrIds) {
+      if (pseudonym.equals(getPseudonym(ehrId, studyId))) {
+        return ehrId;
+      }
+    }
+    throw new ResourceNotFound("Ehr Id matching the pseudonym was not found");
   }
 }

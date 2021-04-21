@@ -25,12 +25,14 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
+import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -108,6 +110,9 @@ public class StudyServiceTest {
   @Mock private NotificationService notificationService;
 
   @Mock private UserService userService;
+
+  @Spy
+  private PrivacyProperties privacyProperties;
 
   @Spy
   private ProjectPolicyService projectPolicyService;
@@ -821,6 +826,20 @@ public class StudyServiceTest {
     verify(studyRepository, times(1)).save(any());
   }
 
+  @Test
+  public void shouldPseudonymShouldBeReversible() {
+    when(ehrBaseService.getAllPatientIds()).thenReturn(Set.of("notTesttestttest", "testtesttest"));
+    String pseudonym = studyService.getPseudonym("testtesttest", 100L);
+    assertEquals("testtesttest", studyService.getEhrIdFromPseudonym(pseudonym, 100L));
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void shouldFailFindNonexistent() {
+    when(ehrBaseService.getAllPatientIds()).thenReturn(Set.of("notTesttestttest", "Also Nottesttesttest"));
+    String pseudonym = studyService.getPseudonym("testtesttest", 100L);
+    studyService.getEhrIdFromPseudonym(pseudonym, 100L);
+  }
+
   @Before
   public void setup() {
     UserDetails approvedCoordinator =
@@ -883,4 +902,5 @@ public class StudyServiceTest {
     when(cohortService.executeCohort(2L)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     //    when(cohortService.executeCohort(4L)).thenReturn(Set.of(EHR_ID_3));
   }
+
 }

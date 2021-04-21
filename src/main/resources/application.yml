@@ -187,6 +187,7 @@ ehrbase:
 
 privacy:
   minHits: 1
+  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
 
 atna:
   enabled: false
