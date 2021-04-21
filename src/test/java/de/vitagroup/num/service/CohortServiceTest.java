@@ -89,12 +89,6 @@ public class CohortServiceTest {
     verify(cohortExecutor, times(1)).execute(any());
   }
 
-  @Test
-  public void shouldExecuteCohortExactlyOnceWhenRetrievingSize() {
-    cohortService.getCohortSize(2L);
-    verify(cohortExecutor, times(1)).execute(any());
-  }
-
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedUserId() {
     CohortDto cohortDto = CohortDto.builder().build();

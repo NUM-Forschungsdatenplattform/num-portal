@@ -67,14 +67,6 @@ public class CohortController {
   }
 
   @AuditLog
-  @PostMapping("{cohortId}/execute")
-  @ApiOperation(value = "Executes the cohort")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<Set<String>> executeCohort(@PathVariable String cohortId) {
-    return ResponseEntity.ok(cohortService.executeCohort(Long.parseLong(cohortId)));
-  }
-
-  @AuditLog
   @PostMapping("size")
   @ApiOperation(value = "Retrieves the cohort group size without saving")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)

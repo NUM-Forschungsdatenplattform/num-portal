@@ -18,6 +18,7 @@ import de.vitagroup.num.domain.dto.ZarsInfoDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.domain.repository.StudyTransitionRepository;
 import de.vitagroup.num.properties.ConsentProperties;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.email.ZarsService;
@@ -58,6 +59,7 @@ import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -112,6 +114,8 @@ public class StudyService {
   private final CohortService cohortService;
 
   private final ConsentProperties consentProperties;
+
+  private final PrivacyProperties privacyProperties;
 
   public void deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
@@ -207,7 +211,7 @@ public class StudyService {
         throw new BadRequestException(String.format("Study: %s cohort cannot be null", studyId));
       }
 
-      if(study.getTemplates() == null){
+      if (study.getTemplates() == null) {
         throw new BadRequestException(String.format("Study: %s templates cannot be null", studyId));
       }
 
