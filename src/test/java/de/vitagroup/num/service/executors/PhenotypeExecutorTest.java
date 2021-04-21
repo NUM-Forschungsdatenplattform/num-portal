@@ -88,7 +88,8 @@ public class PhenotypeExecutorTest {
                 AqlExpression.builder().aql(Aql.builder().query(QUERY_WITH_PARAMS).build()).build())
             .build();
 
-    phenotypeExecutor.execute(phenotype, Map.of("systolicCriteria", "120", "otherCriteria", 45));
+    phenotypeExecutor.execute(
+        phenotype, Map.of("systolicCriteria", "120", "otherCriteria", 45), false);
     Mockito.verify(ehrBaseService, times(1))
         .retrieveEligiblePatientIds(aqlArgumentCaptor.capture());
 
@@ -124,7 +125,7 @@ public class PhenotypeExecutorTest {
 
     Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
 
-    Set<String> result = phenotypeExecutor.execute(phenotype);
+    Set<String> result = phenotypeExecutor.execute(phenotype, false);
 
     assertThat(result, notNullValue());
     assertThat(result.equals(Set.of("1", "5", "10")), is(true));
@@ -146,7 +147,7 @@ public class PhenotypeExecutorTest {
 
     Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
 
-    Set<String> result = phenotypeExecutor.execute(phenotype);
+    Set<String> result = phenotypeExecutor.execute(phenotype, false);
 
     assertThat(result, notNullValue());
     assertThat(result.equals(Set.of("1", "5", "10")), is(true));
@@ -172,7 +173,7 @@ public class PhenotypeExecutorTest {
 
     Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
 
-    Set<String> result = phenotypeExecutor.execute(phenotype);
+    Set<String> result = phenotypeExecutor.execute(phenotype, false);
 
     assertThat(result, notNullValue());
     assertThat(result.equals(Set.of("1", "2", "3", "4", "5", "6", "7")), is(true));
@@ -202,7 +203,7 @@ public class PhenotypeExecutorTest {
 
     Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
 
-    Set<String> result = phenotypeExecutor.execute(phenotype);
+    Set<String> result = phenotypeExecutor.execute(phenotype, false);
 
     assertThat(result, notNullValue());
     assertThat(result.equals(Set.of("1", "4", "5", "6", "7", "8", "9", "10")), is(true));
@@ -232,7 +233,7 @@ public class PhenotypeExecutorTest {
 
     Phenotype phenotype = Phenotype.builder().id(1L).name(PHENOTYPE_NAME).query(query).build();
 
-    Set<String> result = phenotypeExecutor.execute(phenotype);
+    Set<String> result = phenotypeExecutor.execute(phenotype, false);
 
     assertThat(result, notNullValue());
     assertThat(result.equals(Set.of("4")), is(true));
@@ -240,6 +241,6 @@ public class PhenotypeExecutorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldHandleNullPhenotype() {
-    phenotypeExecutor.execute(null);
+    phenotypeExecutor.execute(null, false);
   }
 }

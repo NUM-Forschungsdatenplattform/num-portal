@@ -15,7 +15,7 @@ import org.ehrbase.aql.dto.condition.Value;
 public class EuropeanConsentPolicy extends Policy {
 
   private static final String FEEDER_AUDIT_PATH =
-      "/feeder_audit/feeder_system_audit/other_details/items[at0002]/value/id";
+      "/feeder_audit/feeder_system_audit/other_details[openEHR-EHR-ITEM_TREE.generic.v1]/items[at0001]/value/id";
 
   private String oid;
 

@@ -207,11 +207,12 @@ public class StudyService {
         throw new BadRequestException(String.format("Study: %s cohort cannot be null", studyId));
       }
 
-      if(study.getTemplates() == null){
+      if (study.getTemplates() == null) {
         throw new BadRequestException(String.format("Study: %s templates cannot be null", studyId));
       }
 
-      Set<String> ehrIds = cohortService.executeCohort(study.getCohort().getId());
+      Set<String> ehrIds =
+          cohortService.executeCohort(study.getCohort().getId(), study.isUsedOutsideEu());
 
       AqlDto aql = new AqlToDtoParser().parse(query);
 
@@ -468,7 +469,10 @@ public class StudyService {
     policies.add(TemplatesPolicy.builder().templatesMap(templates).build());
 
     if (usedOutsideEu) {
-      policies.add(EuropeanConsentPolicy.builder().oid(consentProperties.getAllowUsageOutsideEuOid()).build());
+      policies.add(
+          EuropeanConsentPolicy.builder()
+              .oid(consentProperties.getAllowUsageOutsideEuOid())
+              .build());
     }
 
     return policies;

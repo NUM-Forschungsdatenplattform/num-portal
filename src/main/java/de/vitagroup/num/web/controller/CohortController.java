@@ -8,7 +8,6 @@ import de.vitagroup.num.service.CohortService;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
-import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -67,21 +67,15 @@ public class CohortController {
   }
 
   @AuditLog
-  @PostMapping("{cohortId}/execute")
-  @ApiOperation(value = "Executes the cohort")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<Set<String>> executeCohort(@PathVariable String cohortId) {
-    return ResponseEntity.ok(cohortService.executeCohort(Long.parseLong(cohortId)));
-  }
-
-  @AuditLog
   @PostMapping("size")
   @ApiOperation(value = "Retrieves the cohort group size without saving")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Long> getCohortGroupSize(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @RequestBody CohortGroupDto cohortGroupDto) {
+      @NotNull @RequestBody CohortGroupDto cohortGroupDto,
+      @RequestParam(required = false) Boolean allowUsageOutsideEu) {
     return ResponseEntity.ok(
-        cohortService.getCohortGroupSize(cohortGroupDto, principal.getSubject()));
+        cohortService.getCohortGroupSize(
+            cohortGroupDto, principal.getSubject(), allowUsageOutsideEu));
   }
 }

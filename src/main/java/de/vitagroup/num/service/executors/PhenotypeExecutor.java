@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.SetUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
@@ -39,30 +40,34 @@ public class PhenotypeExecutor {
 
   private final ConsentProperties consentProperties;
 
-  public Set<String> execute(Phenotype phenotype, Map<String, Object> parameters) {
+  public Set<String> execute(
+      Phenotype phenotype, Map<String, Object> parameters, Boolean allowUsageOutsideEu) {
     if (phenotype == null || phenotype.getQuery() == null) {
       throw new IllegalArgumentException("Cannot execute an empty phenotype");
     }
     Set<String> all = ehrBaseService.getAllPatientIds();
-    return execute(phenotype.getQuery(), all, parameters);
+    return execute(phenotype.getQuery(), all, parameters, allowUsageOutsideEu);
   }
 
-  public Set<String> execute(Phenotype phenotype) {
+  public Set<String> execute(Phenotype phenotype, Boolean allowUsageOutsideEu) {
 
     if (phenotype == null || phenotype.getQuery() == null) {
       throw new IllegalArgumentException("Cannot execute an empty phenotype");
     }
     Set<String> all = ehrBaseService.getAllPatientIds();
-    return execute(phenotype.getQuery(), all, Map.of());
+    return execute(phenotype.getQuery(), all, Map.of(), allowUsageOutsideEu);
   }
 
   private Set<String> execute(
-      Expression expression, Set<String> all, Map<String, Object> parameters) {
+      Expression expression,
+      Set<String> all,
+      Map<String, Object> parameters,
+      Boolean allowUsageOutsideEu) {
     if (expression instanceof GroupExpression) {
       GroupExpression groupExpression = (GroupExpression) expression;
       List<Set<String>> sets =
           groupExpression.getChildren().stream()
-              .map(e -> execute(e, all, parameters))
+              .map(e -> execute(e, all, parameters, allowUsageOutsideEu))
               .collect(Collectors.toList());
 
       return setOperations.apply(groupExpression.getOperator(), sets, all);
@@ -70,7 +75,11 @@ public class PhenotypeExecutor {
     } else if (expression instanceof AqlExpression) {
 
       AqlExpression aqlExpression = (AqlExpression) expression;
-      applyPolicy(aqlExpression);
+
+      if (BooleanUtils.isTrue(allowUsageOutsideEu) || allowUsageOutsideEu == null) {
+        applyPolicy(aqlExpression);
+      }
+
       addParameters(parameters, aqlExpression.getAql());
       return ehrBaseService.retrieveEligiblePatientIds(aqlExpression.getAql());
     }
@@ -80,7 +89,11 @@ public class PhenotypeExecutor {
   private void applyPolicy(AqlExpression aqlExpression) {
     AqlDto aql = new AqlToDtoParser().parse(aqlExpression.getAql().getQuery());
     projectPolicyService.apply(
-        aql, List.of(EuropeanConsentPolicy.builder().oid(consentProperties.getAllowUsageOutsideEuOid()).build()));
+        aql,
+        List.of(
+            EuropeanConsentPolicy.builder()
+                .oid(consentProperties.getAllowUsageOutsideEuOid())
+                .build()));
 
     aqlExpression.getAql().setQuery(new AqlBinder().bind(aql).getLeft().buildAql());
   }

@@ -7,6 +7,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -70,6 +71,7 @@ public class CohortServiceTest {
 
   @Captor ArgumentCaptor<CohortGroup> cohortGroupCaptor;
   @Captor ArgumentCaptor<Map<String, Object>> mapCaptor;
+  @Captor ArgumentCaptor<Boolean> booleanCaptor;
 
   UserDetails approvedUser = UserDetails.builder().userId("approvedUserId").approved(true).build();
 
@@ -80,19 +82,19 @@ public class CohortServiceTest {
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleMissingCohortWhenExecuting() {
-    cohortService.executeCohort(1L);
+    cohortService.executeCohort(1L, false);
   }
 
   @Test
   public void shouldExecuteCohortExactlyOnce() {
-    cohortService.executeCohort(2L);
-    verify(cohortExecutor, times(1)).execute(any());
+    cohortService.executeCohort(2L, false);
+    verify(cohortExecutor, times(1)).execute(any(), anyBoolean());
   }
 
   @Test
   public void shouldExecuteCohortExactlyOnceWhenRetrievingSize() {
-    cohortService.getCohortSize(2L);
-    verify(cohortExecutor, times(1)).execute(any());
+    cohortService.getCohortSize(2L, false);
+    verify(cohortExecutor, times(1)).execute(any(), anyBoolean());
   }
 
   @Test(expected = ForbiddenException.class)
@@ -230,9 +232,10 @@ public class CohortServiceTest {
             .children(List.of(first, second))
             .build();
 
-    long size = cohortService.getCohortGroupSize(orCohort, approvedUser.getUserId());
+    long size = cohortService.getCohortGroupSize(orCohort, approvedUser.getUserId(),
+        false);
     Mockito.verify(cohortExecutor, times(1))
-        .executeGroup(cohortGroupCaptor.capture(), mapCaptor.capture());
+        .executeGroup(cohortGroupCaptor.capture(), mapCaptor.capture(), booleanCaptor.capture());
 
     assertEquals(2, size);
     CohortGroup executedCohortGroup = cohortGroupCaptor.getValue();
@@ -376,7 +379,7 @@ public class CohortServiceTest {
     when(cohortRepository.findById(1L)).thenReturn(Optional.empty());
     when(cohortRepository.findById(2L)).thenReturn(Optional.of(Cohort.builder().id(2L).build()));
 
-    when(cohortExecutor.executeGroup(any(), anyMap())).thenReturn(Set.of("test1", "test2"));
+    when(cohortExecutor.executeGroup(any(), anyMap(), anyBoolean())).thenReturn(Set.of("test1", "test2"));
 
     when(privacyProperties.getMinHits()).thenReturn(2);
   }

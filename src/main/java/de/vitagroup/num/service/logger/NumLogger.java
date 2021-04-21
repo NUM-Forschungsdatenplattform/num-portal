@@ -98,7 +98,12 @@ public class NumLogger {
         continue;
       }
       String parameterName = signature.getParameterNames()[i];
-      builder.append(String.format("%s: %s ", parameterName, joinPoint.getArgs()[i].toString()));
+      Object parameterValue = joinPoint.getArgs()[i];
+
+      builder.append(
+          String.format(
+              "%s: %s ",
+              parameterName, parameterValue != null ? parameterValue.toString() : "null"));
     }
 
     return builder.toString();
