@@ -8,7 +8,6 @@ import de.vitagroup.num.service.CohortService;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
-import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
