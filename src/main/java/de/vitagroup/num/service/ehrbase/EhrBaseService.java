@@ -78,16 +78,6 @@ public class EhrBaseService {
   }
 
   /**
-   * Executes an aql query
-   *
-   * @param aql The aql query
-   * @return QueryResponseData
-   */
-  public QueryResponseData executeAql(Aql aql) {
-    return executeRawQuery(aql.getQuery());
-  }
-
-  /**
    * Executes a raw aql query
    *
    * @param queryString The aql query string
