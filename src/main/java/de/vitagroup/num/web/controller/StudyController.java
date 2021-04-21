@@ -19,7 +19,6 @@ import io.swagger.annotations.ApiParam;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -213,5 +212,16 @@ public class StudyController {
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
   void archiveProject(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
     projectService.archiveProject(id, principal.getSubject(), Roles.extractRoles(principal));
+  }
+
+  @AuditLog
+  @GetMapping("/{id}/resolve/{pseudonym}")
+  @ApiOperation(value = "Archive a project")
+  @PreAuthorize(Role.SUPER_ADMIN)
+  public ResponseEntity<String> resolvePseudonym(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @PathVariable Long id,
+      @NotEmpty @PathVariable String pseudonym) {
+    return ResponseEntity.ok(projectService.getEhrIdFromPseudonym(pseudonym, id));
   }
 }
