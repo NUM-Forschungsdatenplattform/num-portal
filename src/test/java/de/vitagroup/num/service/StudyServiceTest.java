@@ -826,20 +826,6 @@ public class StudyServiceTest {
     verify(studyRepository, times(1)).save(any());
   }
 
-  @Test
-  public void shouldPseudonymShouldBeReversible() {
-    when(ehrBaseService.getAllPatientIds()).thenReturn(Set.of("notTesttestttest", "testtesttest"));
-    String pseudonym = studyService.getPseudonym("testtesttest", 100L);
-    assertEquals("testtesttest", studyService.getEhrIdFromPseudonym(pseudonym, 100L));
-  }
-
-  @Test(expected = ResourceNotFound.class)
-  public void shouldFailFindNonexistent() {
-    when(ehrBaseService.getAllPatientIds()).thenReturn(Set.of("notTesttestttest", "Also Nottesttesttest"));
-    String pseudonym = studyService.getPseudonym("testtesttest", 100L);
-    studyService.getEhrIdFromPseudonym(pseudonym, 100L);
-  }
-
   @Before
   public void setup() {
     UserDetails approvedCoordinator =

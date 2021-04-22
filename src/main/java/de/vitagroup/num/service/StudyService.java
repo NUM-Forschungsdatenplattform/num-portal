@@ -18,7 +18,6 @@ import de.vitagroup.num.domain.dto.ZarsInfoDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
 import de.vitagroup.num.domain.repository.StudyTransitionRepository;
 import de.vitagroup.num.properties.ConsentProperties;
-import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.email.ZarsService;
@@ -59,7 +58,6 @@ import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -114,8 +112,6 @@ public class StudyService {
   private final CohortService cohortService;
 
   private final ConsentProperties consentProperties;
-
-  private final PrivacyProperties privacyProperties;
 
   public void deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
@@ -225,10 +221,6 @@ public class StudyService {
 
       String restrictedQuery = new AqlBinder().bind(aql).getLeft().buildAql();
       queryResponseData = ehrBaseService.executeRawQuery(restrictedQuery);
-
-      if (queryResponseData != null) {
-        replaceEhrIds(List.of(queryResponseData), studyId);
-      }
 
     } catch (Exception e) {
       atnaService.logDataExport(userId, studyId, study, false);
@@ -900,36 +892,4 @@ public class StudyService {
     return StringUtils.EMPTY;
   }
 
-  private void replaceEhrIds(List<QueryResponseData> queryResponseDataList, Long studyId) {
-    for (QueryResponseData queryResponseData : queryResponseDataList) {
-      if (queryResponseData == null) continue;
-      int columnCount = queryResponseData.getColumns().size();
-      for (int i = 0; i < columnCount; i++) {
-        Map<String, String> column = queryResponseData.getColumns().get(i);
-        String path = column.get("path");
-        if (path != null && path.contains("ehr_id/value")) {
-          for (List<Object> row : queryResponseData.getRows()) {
-            String ehrId = (String) row.get(i);
-            String pseudonym = getPseudonym(ehrId, studyId);
-            row.set(i, pseudonym);
-          }
-        }
-      }
-    }
-  }
-
-  public String getPseudonym(String uuid, Long studyId) {
-    return new DigestUtils("SHA3-256")
-        .digestAsHex(uuid + studyId + privacyProperties.getPseudonymitySecret());
-  }
-
-  public String getEhrIdFromPseudonym(@NotNull String pseudonym, Long studyId) {
-    Set<String> ehrIds = ehrBaseService.getAllPatientIds();
-    for (String ehrId : ehrIds) {
-      if (pseudonym.equals(getPseudonym(ehrId, studyId))) {
-        return ehrId;
-      }
-    }
-    throw new ResourceNotFound("Ehr Id matching the pseudonym was not found");
-  }
 }

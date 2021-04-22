@@ -11,6 +11,7 @@ import de.vitagroup.num.mapper.CommentMapper;
 import de.vitagroup.num.mapper.StudyMapper;
 import de.vitagroup.num.service.CommentService;
 import de.vitagroup.num.service.StudyService;
+import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -49,6 +50,7 @@ public class StudyController {
   private final CommentService commentService;
   private final StudyMapper studyMapper;
   private final CommentMapper commentMapper;
+  private final Pseudonymity pseudonymity;
 
   @AuditLog
   @GetMapping()
@@ -222,6 +224,6 @@ public class StudyController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable Long id,
       @NotEmpty @PathVariable String pseudonym) {
-    return ResponseEntity.ok(projectService.getEhrIdFromPseudonym(pseudonym, id));
+    return ResponseEntity.ok(pseudonymity.getEhrIdFromPseudonym(pseudonym, id));
   }
 }
