@@ -41,12 +41,12 @@ jobs:
       - run:
           name: Run unit tests
           command:  ./mvnw clean test
-#      - run:
-#          name: Run integration tests
-#          command: ./mvnw verify -P integration-tests
       - run:
-          name: Run CVE scan
-          command: ./mvnw dependency-check:check
+          name: Run integration tests
+          command: ./mvnw verify -P integration-tests
+#      - run:
+#          name: Run CVE scan
+#          command: ./mvnw dependency-check:check
       - run:
           name: Save test results
           command: |
