@@ -41,7 +41,7 @@ public class CompositionFlattener {
   private static final String OPERATIONAL_TEMPLATE_CACHE = "operationalTemplateCache";
   private static final String WEB_TEMPLATE_CACHE = "webTemplateCache";
 
-  public Map<String, String> flatten(Composition composition) {
+  public Map<String, Object> flatten(Composition composition) {
 
     validateComposition(composition);
 

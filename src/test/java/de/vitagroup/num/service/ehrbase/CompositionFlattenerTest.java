@@ -66,7 +66,7 @@ public class CompositionFlattenerTest {
 
     assertThat(composition, notNullValue());
 
-    Map<String, String> values = flattener.flatten(composition);
+    Map<String, Object> values = flattener.flatten(composition);
 
     assertThat(values, notNullValue());
 
