@@ -25,14 +25,12 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.StudyDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.StudyRepository;
-import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -111,11 +109,7 @@ public class StudyServiceTest {
 
   @Mock private UserService userService;
 
-  @Spy
-  private PrivacyProperties privacyProperties;
-
-  @Spy
-  private ProjectPolicyService projectPolicyService;
+  @Spy private ProjectPolicyService projectPolicyService;
 
   @InjectMocks private StudyService studyService;
 
@@ -888,5 +882,4 @@ public class StudyServiceTest {
     when(cohortService.executeCohort(2L)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     //    when(cohortService.executeCohort(4L)).thenReturn(Set.of(EHR_ID_3));
   }
-
 }

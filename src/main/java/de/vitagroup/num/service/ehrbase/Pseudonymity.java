@@ -2,6 +2,7 @@ package de.vitagroup.num.service.ehrbase;
 
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.web.exception.SystemException;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,9 @@ public class Pseudonymity {
   private final EhrBaseService ehrBaseService;
 
   public String getPseudonym(String uuid, Long studyId) {
+    if(privacyProperties.getPseudonymitySecret() == null) {
+      throw new SystemException("Pseudonymity secret is not configured");
+    }
     return new DigestUtils("SHA3-256")
         .digestAsHex(uuid + studyId + privacyProperties.getPseudonymitySecret());
   }
