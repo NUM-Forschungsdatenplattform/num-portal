@@ -83,7 +83,7 @@ public class EhrBaseService {
    * @param queryString The aql query string
    * @return QueryResponseData
    */
-  public QueryResponseData executeRawQuery(String queryString) {
+  public List<QueryResponseData> executeRawQuery(String queryString) {
 
     validateQuery(queryString);
     Query query = Query.buildNativeQuery(queryString);
@@ -122,28 +122,30 @@ public class EhrBaseService {
     }
   }
 
-  private QueryResponseData flattenIfCompositionPresent(QueryResponseData response) {
-    List<Map<String, String>> compositions = new ArrayList<>();
+  private List<QueryResponseData> flattenIfCompositionPresent(QueryResponseData response) {
+    List<Map<String, Object>> compositions = new ArrayList<>();
 
     for (List<Object> row : response.getRows()) {
       for (Object cell : row) {
         if (isComposition(cell)) {
-          compositions.add((Map<String, String>) cell);
+          compositions.add((Map<String, Object>) cell);
         } else {
           log.debug("Executing query containing mixed data types. Returning raw ehr response");
-          return response;
+          return List.of(response);
         }
       }
     }
 
     if (compositions.isEmpty()) {
       log.debug("No compositions in the response. Returning raw ehr response");
-      return response;
+      return List.of(response);
     }
 
-    QueryResponseData flattenedResponse = compositionResponseDataBuilder.build(compositions);
-    flattenedResponse.setQuery(response.getQuery());
-    return flattenedResponse;
+    List<QueryResponseData> listOfResponseData = compositionResponseDataBuilder.build(compositions);
+
+    listOfResponseData.forEach(responseData -> responseData.setQuery(response.getQuery()));
+
+    return listOfResponseData;
   }
 
   private boolean isComposition(Object object) {
