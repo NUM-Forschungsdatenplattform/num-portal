@@ -50,6 +50,10 @@ public class UserDetailsService {
     this.userDetailsRepository = userDetailsRepository;
   }
 
+  protected void deleteUserDetails(String userId) {
+    userDetailsRepository.deleteById(userId);
+  }
+
   public Optional<UserDetails> getUserDetailsById(String userId) {
     return userDetailsRepository.findByUserId(userId);
   }

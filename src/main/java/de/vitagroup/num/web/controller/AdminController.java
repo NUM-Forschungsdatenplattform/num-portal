@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/admin", produces = "application/json")
+@RequestMapping(value = "/admin/user", produces = "application/json")
 @AllArgsConstructor
 public class AdminController {
 
@@ -38,7 +39,14 @@ public class AdminController {
   private final UserDetailsService userDetailsService;
 
   @AuditLog
-  @GetMapping("/user/{userId}")
+  @DeleteMapping("/{userId}")
+  @PreAuthorize(Role.SUPER_ADMIN)
+  void deleteUser(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable String userId) {
+    userService.deleteUser(userId, principal.getSubject());
+  }
+
+  @AuditLog
+  @GetMapping("/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
   public ResponseEntity<User> getUser(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
@@ -46,7 +54,7 @@ public class AdminController {
   }
 
   @AuditLog
-  @GetMapping("/user/{userId}/role")
+  @GetMapping("/{userId}/role")
   @ApiOperation(value = "Retrieves the roles of the given user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<Set<de.vitagroup.num.domain.admin.Role>> getRolesOfUser(
@@ -55,7 +63,7 @@ public class AdminController {
   }
 
   @AuditLog
-  @PostMapping("/user/{userId}/role")
+  @PostMapping("/{userId}/role")
   @ApiOperation(value = "Updates the users roles to the given set.")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<List<String>> updateRoles(
@@ -69,7 +77,7 @@ public class AdminController {
   }
 
   @AuditLog
-  @PostMapping("/user/{userId}/organization")
+  @PostMapping("/{userId}/organization")
   @ApiOperation(value = "Sets the user's organization")
   @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<String> setOrganization(
@@ -82,7 +90,7 @@ public class AdminController {
   }
 
   @AuditLog
-  @PostMapping("/user/{userId}")
+  @PostMapping("/{userId}")
   @ApiOperation(value = "Creates user details")
   public ResponseEntity<String> createUserOnFirstLogin(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
@@ -92,7 +100,7 @@ public class AdminController {
   }
 
   @AuditLog
-  @PostMapping("/user/{userId}/approve")
+  @PostMapping("/{userId}/approve")
   @ApiOperation(value = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<String> approveUser(
@@ -102,7 +110,7 @@ public class AdminController {
   }
 
   @AuditLog
-  @GetMapping("/user")
+  @GetMapping()
   @ApiOperation(value = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
   public ResponseEntity<Set<User>> searchUsers(

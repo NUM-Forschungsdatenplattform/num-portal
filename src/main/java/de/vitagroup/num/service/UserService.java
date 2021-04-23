@@ -43,6 +43,24 @@ public class UserService {
 
   private final NotificationService notificationService;
 
+  @Transactional
+  public void deleteUser(String userId, String loggedInUserId) {
+    userDetailsService.checkIsUserApproved(loggedInUserId);
+    Optional<UserDetails> userDetails = userDetailsService.getUserDetailsById(userId);
+
+    if (userDetails.isEmpty()) {
+      deleteNotVerifiedUser(userId);
+    } else {
+      if (userDetails.get().isNotApproved()) {
+        deleteNotVerifiedUser(userId);
+        userDetailsService.deleteUserDetails(userId);
+      } else {
+        throw new BadRequestException(
+            String.format("Cannot delete user: %s; user is approved", userId));
+      }
+    }
+  }
+
   public User getUserProfile(String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
     return getUserById(loggedInUserId, true);
@@ -291,5 +309,20 @@ public class UserService {
     }
 
     return outputSet;
+  }
+
+  private void deleteNotVerifiedUser(String userId) {
+    try {
+      User user = keycloakFeign.getUser(userId);
+      if (user != null && BooleanUtils.isFalse(user.getEmailVerified())) {
+        keycloakFeign.deleteUser(userId);
+      } else {
+        throw new BadRequestException(
+            String.format("Cannot delete user. User is enabled and email address is verified"));
+      }
+    } catch (Exception e) {
+      throw new SystemException(
+          "An error has occurred while deleting user. Please try again later");
+    }
   }
 }
