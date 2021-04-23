@@ -210,7 +210,7 @@ public class StudyService {
         throw new BadRequestException(String.format("Study: %s cohort cannot be null", studyId));
       }
 
-      if(study.getTemplates() == null){
+      if (study.getTemplates() == null) {
         throw new BadRequestException(String.format("Study: %s templates cannot be null", studyId));
       }
 
@@ -500,7 +500,10 @@ public class StudyService {
     policies.add(TemplatesPolicy.builder().templatesMap(templates).build());
 
     if (usedOutsideEu) {
-      policies.add(EuropeanConsentPolicy.builder().oid(consentProperties.getAllowUsageOutsideEuOid()).build());
+      policies.add(
+          EuropeanConsentPolicy.builder()
+              .oid(consentProperties.getAllowUsageOutsideEuOid())
+              .build());
     }
 
     return policies;
@@ -920,4 +923,5 @@ public class StudyService {
     }
     return StringUtils.EMPTY;
   }
+
 }

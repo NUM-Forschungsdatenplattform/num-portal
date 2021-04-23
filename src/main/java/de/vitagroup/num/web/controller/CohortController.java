@@ -8,7 +8,6 @@ import de.vitagroup.num.service.CohortService;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
-import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -64,14 +63,6 @@ public class CohortController {
       @PathVariable("id") Long cohortId) {
     Cohort cohortEntity = cohortService.updateCohort(cohortDto, cohortId, principal.getSubject());
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
-  }
-
-  @AuditLog
-  @PostMapping("{cohortId}/execute")
-  @ApiOperation(value = "Executes the cohort")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<Set<String>> executeCohort(@PathVariable String cohortId) {
-    return ResponseEntity.ok(cohortService.executeCohort(Long.parseLong(cohortId)));
   }
 
   @AuditLog

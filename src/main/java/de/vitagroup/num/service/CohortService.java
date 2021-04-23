@@ -68,10 +68,6 @@ public class CohortService {
         cohort.orElseThrow(() -> new BadRequestException("Cohort not found: " + cohortId)));
   }
 
-  public long getCohortSize(long cohortId) {
-    return executeCohort(cohortId).size();
-  }
-
   public long getCohortGroupSize(CohortGroupDto cohortGroupDto, String userId) {
     userDetailsService.checkIsUserApproved(userId);
 

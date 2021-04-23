@@ -109,8 +109,7 @@ public class StudyServiceTest {
 
   @Mock private UserService userService;
 
-  @Spy
-  private ProjectPolicyService projectPolicyService;
+  @Spy private ProjectPolicyService projectPolicyService;
 
   @InjectMocks private StudyService studyService;
 
