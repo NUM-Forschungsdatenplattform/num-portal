@@ -103,7 +103,7 @@ cors:
   allowedOrigins:
     - "*"
 privacy:
-  minHits: 1
+  minHits: 30
 
 num:
   url: https://dev.num-codex.de/home
