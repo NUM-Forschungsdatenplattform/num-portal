@@ -64,6 +64,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.guieffect.qual.SafeType;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
@@ -178,7 +179,12 @@ public class StudyService {
       return List.of();
     }
 
-    List<Study> projects = studyRepository.findLatestProjects(count);
+    List<Study> projects =
+        studyRepository.findLatestProjects(
+            count,
+            StudyStatus.APPROVED.name(),
+            StudyStatus.PUBLISHED.name(),
+            StudyStatus.CLOSED.name());
     return projects.stream().map(this::toProjectInfo).collect(Collectors.toList());
   }
 
@@ -210,7 +216,7 @@ public class StudyService {
         throw new BadRequestException(String.format("Study: %s cohort cannot be null", studyId));
       }
 
-      if(study.getTemplates() == null){
+      if (study.getTemplates() == null) {
         throw new BadRequestException(String.format("Study: %s templates cannot be null", studyId));
       }
 
@@ -500,7 +506,10 @@ public class StudyService {
     policies.add(TemplatesPolicy.builder().templatesMap(templates).build());
 
     if (usedOutsideEu) {
-      policies.add(EuropeanConsentPolicy.builder().oid(consentProperties.getAllowUsageOutsideEuOid()).build());
+      policies.add(
+          EuropeanConsentPolicy.builder()
+              .oid(consentProperties.getAllowUsageOutsideEuOid())
+              .build());
     }
 
     return policies;
