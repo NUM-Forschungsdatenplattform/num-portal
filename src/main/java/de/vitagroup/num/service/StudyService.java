@@ -178,7 +178,12 @@ public class StudyService {
       return List.of();
     }
 
-    List<Study> projects = studyRepository.findLatestProjects(count);
+    List<Study> projects =
+        studyRepository.findLatestProjects(
+            count,
+            StudyStatus.APPROVED.name(),
+            StudyStatus.PUBLISHED.name(),
+            StudyStatus.CLOSED.name());
     return projects.stream().map(this::toProjectInfo).collect(Collectors.toList());
   }
 
