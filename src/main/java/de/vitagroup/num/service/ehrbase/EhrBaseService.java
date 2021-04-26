@@ -1,6 +1,5 @@
 package de.vitagroup.num.service.ehrbase;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.SystemException;
@@ -10,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.ehrbase.aql.binder.AqlBinder;
@@ -20,7 +18,6 @@ import org.ehrbase.aql.dto.select.SelectDto;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.dto.select.SelectStatementDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
-import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.ehrbase.client.aql.field.EhrFields;
 import org.ehrbase.client.aql.query.EntityQuery;
 import org.ehrbase.client.aql.query.Query;
@@ -47,27 +44,20 @@ public class EhrBaseService {
   private static final String COMPOSITION_KEY = "_type";
   private static final String NAME = "name";
   private static final String PATH = "path";
-  private static final String VALUE = "value";
   private static final String PSEUDONYM = "pseudonym";
   private static final String EHR_ID_PATH = "/ehr_id/value";
 
   private final DefaultRestClient restClient;
-  private final ObjectMapper mapper;
   private final CompositionResponseDataBuilder compositionResponseDataBuilder;
-  private final AqlEditorAqlService aqlEditorAqlService;
   private final Pseudonymity pseudonymity;
 
   @Autowired
   public EhrBaseService(
       DefaultRestClient restClient,
-      ObjectMapper mapper,
       CompositionResponseDataBuilder compositionResponseDataBuilder,
-      AqlEditorAqlService aqlEditorAqlService,
       @Lazy Pseudonymity pseudonymity) {
     this.restClient = restClient;
-    this.mapper = mapper;
     this.compositionResponseDataBuilder = compositionResponseDataBuilder;
-    this.aqlEditorAqlService = aqlEditorAqlService;
     this.pseudonymity = pseudonymity;
   }
 
