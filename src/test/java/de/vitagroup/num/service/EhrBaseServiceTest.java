@@ -12,12 +12,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.service.ehrbase.CompositionResponseDataBuilder;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
-import de.vitagroup.num.web.exception.BadRequestException;
+import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.web.exception.SystemException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.util.Lists;
 import org.ehrbase.aql.parser.AqlParseException;
+import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.client.aql.field.AqlFieldImp;
 import org.ehrbase.client.aql.query.EntityQuery;
 import org.ehrbase.client.aql.query.Query;
@@ -46,6 +48,9 @@ public class EhrBaseServiceTest {
   @Mock public ObjectMapper mapper;
 
   @Mock public CompositionResponseDataBuilder compositionResponseDataBuilder;
+
+  @Mock
+  private Pseudonymity pseudonymity;
 
   @InjectMocks private EhrBaseService ehr;
 
@@ -95,11 +100,11 @@ public class EhrBaseServiceTest {
   @Test
   public void shouldFlattenResultsWhenContainsComposition() {
     QueryResponseData compositionsQueryResponseData = new QueryResponseData();
-    List<Map<String, String>> columns = List.of(Map.of("uuid", "c/uuid"));
+    List<Map<String, String>> columns = new ArrayList<>(List.of(Map.of("path", "/ehr_id/value"), Map.of("uuid", "c/uuid")));
     List<List<Object>> rows =
         List.of(
-            List.of(Map.of("_type", "COMPOSITION", "uuid", "12345")),
-            List.of(Map.of("_type", "COMPOSITION", "uuid", "bla")));
+            new ArrayList<>(List.of("testehrId", Map.of("_type", "COMPOSITION", "uuid", "12345"))),
+            new ArrayList<>(List.of("testehrId2", Map.of("_type", "COMPOSITION", "uuid", "bla"))));
     compositionsQueryResponseData.setColumns(columns);
     compositionsQueryResponseData.setRows(rows);
 
@@ -108,7 +113,7 @@ public class EhrBaseServiceTest {
 
     when(compositionResponseDataBuilder.build(any())).thenReturn(List.of(compositionsQueryResponseData));
 
-    ehr.executeRawQuery(GOOD_QUERY);
+    ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
     verify(compositionResponseDataBuilder, times(1)).build(any());
   }
 
@@ -116,15 +121,15 @@ public class EhrBaseServiceTest {
   public void shouldNotFlattenResults() {
     QueryResponseData response = new QueryResponseData();
 
-    response.setColumns(List.of(Map.of("uuid", "c/uuid")));
+    response.setColumns(new ArrayList<>(List.of(Map.of("path", "/ehr_id/value"), Map.of("uuid", "c/uuid"))));
     response.setRows(  List.of(
-        List.of(Map.of("_type", "OBSERVATION", "uuid", "12345")),
-        List.of(Map.of("_type", "SECTION", "uuid", "bla"))));
+        new ArrayList<>(List.of("testehrid1", Map.of("_type", "OBSERVATION", "uuid", "12345"))),
+        new ArrayList<>(List.of("testehrid2", Map.of("_type", "SECTION", "uuid", "bla")))));
 
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
         .thenReturn(response);
 
-    ehr.executeRawQuery(GOOD_QUERY);
+    ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
     verify(compositionResponseDataBuilder, times(0)).build(any());
   }
 
@@ -132,12 +137,7 @@ public class EhrBaseServiceTest {
   public void shouldHandleClientExceptionWhenExecutingAql(){
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
         .thenThrow(ClientException.class);
-    ehr.executeRawQuery(GOOD_QUERY);
-  }
-
-  @Test(expected = BadRequestException.class)
-  public void shouldValidateQueryWhenExecuting(){
-    ehr.executeRawQuery(BAD_QUERY);
+    ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
   }
 
   @Before
