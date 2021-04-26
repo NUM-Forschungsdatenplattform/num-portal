@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 
 import lombok.AllArgsConstructor;
@@ -97,7 +98,7 @@ public class Study implements Serializable {
   @JoinColumn(name = "coordinator_id")
   private UserDetails coordinator;
 
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.EAGER)
   @JoinTable(
       name = "study_users",
       joinColumns = @JoinColumn(name = "study_id"),
@@ -127,5 +128,4 @@ public class Study implements Serializable {
   public boolean isDeletable() {
     return StudyStatus.DRAFT.equals(status) || StudyStatus.CHANGE_REQUEST.equals(status);
   }
-
 }
