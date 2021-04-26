@@ -160,19 +160,4 @@ public class AqlServiceTest {
         .modifiedDate(createdAndModifiedDate)
         .build();
   }
-
-  @Test(expected = ForbiddenException.class)
-  public void shouldHandleWrongOwnerWhenExecuting() {
-    UserDetails otherUser = UserDetails.builder().userId("otherUser").approved(true).build();
-
-    when(aqlRepository.findById(10L))
-        .thenReturn(Optional.ofNullable(Aql.builder().id(10L).owner(otherUser).build()));
-
-    aqlService.executeAql(10L, "approvedUserId");
-  }
-
-  @Test(expected = ForbiddenException.class)
-  public void shouldHandleNotApprovedOwnerWhenExecuting() {
-    aqlService.executeAql(11L, "notApprovedId");
-  }
 }

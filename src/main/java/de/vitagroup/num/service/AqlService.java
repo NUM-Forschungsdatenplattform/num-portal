@@ -9,24 +9,20 @@ import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
-
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.PrivacyException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
-import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
@@ -163,27 +159,6 @@ public class AqlService {
             user.getOrganization().getId(), user.getUserId(), name);
       default:
         return List.of();
-    }
-  }
-
-  public String executeAql(Long aqlId, String userId) {
-    userDetailsService.checkIsUserApproved(userId);
-    Aql aql =
-        aqlRepository
-            .findById(aqlId)
-            .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + aqlId));
-
-    if (aql.isExecutable(userId)) {
-
-      try {
-        QueryResponseData response = ehrBaseService.executeAql(aql);
-        return mapper.writeValueAsString(response);
-      } catch (JsonProcessingException e) {
-        throw new SystemException("An issue has occurred, cannot execute aql.");
-      }
-
-    } else {
-      throw new ForbiddenException("Cannot access this resource.");
     }
   }
 

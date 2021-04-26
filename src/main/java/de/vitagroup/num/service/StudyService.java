@@ -54,6 +54,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -81,9 +83,10 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 public class StudyService {
 
   private static final String STUDY_NOT_FOUND = "Study not found: ";
-  private static final String CSV_FILE_ENDING = ".csv";
+  private static final String ZIP_FILE_ENDING = ".zip";
   private static final String JSON_FILE_ENDING = ".json";
-  private static final String CSV_MEDIA_TYPE = "text/csv";
+  private static final String ZIP_MEDIA_TYPE = "application/zip";
+  private static final String CSV_FILE_PATTERN = "%s_%d.csv";
 
   private final StudyRepository studyRepository;
 
@@ -180,7 +183,7 @@ public class StudyService {
   }
 
   public String executeAqlAndJsonify(String query, Long studyId, String userId) {
-    QueryResponseData response = executeAql(query, studyId, userId);
+    List<QueryResponseData> response = executeAql(query, studyId, userId);
     try {
       return mapper.writeValueAsString(response);
     } catch (JsonProcessingException e) {
@@ -188,8 +191,8 @@ public class StudyService {
     }
   }
 
-  public QueryResponseData executeAql(String query, Long studyId, String userId) {
-    QueryResponseData queryResponseData;
+  public List<QueryResponseData> executeAql(String query, Long studyId, String userId) {
+    List<QueryResponseData> queryResponseData;
     Study study = null;
     try {
       userDetailsService.checkIsUserApproved(userId);
@@ -231,20 +234,47 @@ public class StudyService {
     return queryResponseData;
   }
 
-  public void streamResponseAsCsv(QueryResponseData queryResponseData, OutputStream outputStream) {
+  public void streamResponseAsZip(
+      List<QueryResponseData> queryResponseDataList,
+      String filenameStart,
+      OutputStream outputStream) {
+
+    try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+
+      int index = 0;
+      for (QueryResponseData queryResponseData : queryResponseDataList) {
+
+        zipOutputStream.putNextEntry(
+            new ZipEntry(String.format(CSV_FILE_PATTERN, filenameStart, index)));
+        addResponseAsCsv(zipOutputStream, queryResponseData);
+        zipOutputStream.closeEntry();
+        index++;
+      }
+    } catch (IOException e) {
+      log.error("Error creating a zip file for data export.", e);
+      throw new SystemException(
+          "Error creating a zip file for data export: " + e.getLocalizedMessage());
+    }
+  }
+
+  private void addResponseAsCsv(
+      ZipOutputStream zipOutputStream, QueryResponseData queryResponseData) {
     List<String> paths = new ArrayList<>();
 
     for (Map<String, String> column : queryResponseData.getColumns()) {
       paths.add(column.get("path"));
     }
-    try (CSVPrinter printer =
-        CSVFormat.EXCEL
-            .withHeader(paths.toArray(new String[] {}))
-            .print(new OutputStreamWriter(outputStream))) {
+    CSVPrinter printer;
+    try {
+      printer =
+          CSVFormat.EXCEL
+              .withHeader(paths.toArray(new String[] {}))
+              .print(new OutputStreamWriter(zipOutputStream));
 
       for (List<Object> row : queryResponseData.getRows()) {
         printer.printRecord(row);
       }
+      printer.flush();
     } catch (IOException e) {
       throw new SystemException("Error while creating the CSV file");
     }
@@ -260,8 +290,10 @@ public class StudyService {
         outputStream.close();
       };
     }
-    QueryResponseData queryResponseData = executeAql(query, studyId, userId);
-    return outputStream -> streamResponseAsCsv(queryResponseData, outputStream);
+    List<QueryResponseData> queryResponseData = executeAql(query, studyId, userId);
+
+    return outputStream ->
+        streamResponseAsZip(queryResponseData, getExportFilenameBody(studyId), outputStream);
   }
 
   public MultiValueMap<String, String> getExportHeaders(ExportType format, Long studyId) {
@@ -271,8 +303,8 @@ public class StudyService {
       fileEnding = JSON_FILE_ENDING;
       headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     } else {
-      fileEnding = CSV_FILE_ENDING;
-      headers.add(HttpHeaders.CONTENT_TYPE, CSV_MEDIA_TYPE);
+      fileEnding = ZIP_FILE_ENDING;
+      headers.add(HttpHeaders.CONTENT_TYPE, ZIP_MEDIA_TYPE);
     }
     headers.add(
         HttpHeaders.CONTENT_DISPOSITION,
@@ -689,7 +721,7 @@ public class StudyService {
 
   public String getExportFilenameBody(Long studyId) {
     return String.format(
-            "Study_%d_%s",
+            "Project_%d_%s",
             studyId,
             LocalDateTime.now()
                 .truncatedTo(ChronoUnit.MINUTES)
@@ -892,4 +924,5 @@ public class StudyService {
     }
     return StringUtils.EMPTY;
   }
+
 }
