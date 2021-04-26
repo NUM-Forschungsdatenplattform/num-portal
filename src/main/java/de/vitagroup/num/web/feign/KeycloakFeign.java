@@ -16,6 +16,9 @@ public interface KeycloakFeign {
   @GetMapping("/users/{userId}")
   User getUser(@PathVariable String userId);
 
+  @DeleteMapping("/users/{userId}")
+  User deleteUser(@PathVariable String userId);
+
   @GetMapping("/users/{userId}/role-mappings/realm")
   Set<Role> getRolesOfUser(@PathVariable String userId);
 

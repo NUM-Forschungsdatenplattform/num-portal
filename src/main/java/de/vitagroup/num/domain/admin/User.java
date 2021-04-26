@@ -63,6 +63,8 @@ public class User {
   @ApiModelProperty(value = "The organization")
   private OrganizationDto organization;
 
+  private Boolean emailVerified;
+
   @JsonIgnore
   public boolean isNotApproved() {
     return !approved;
