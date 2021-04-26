@@ -213,7 +213,8 @@ public class StudyService {
         throw new BadRequestException(String.format("Study: %s templates cannot be null", studyId));
       }
 
-      Set<String> ehrIds = cohortService.executeCohort(study.getCohort().getId());
+      Set<String> ehrIds =
+          cohortService.executeCohort(study.getCohort().getId(), study.isUsedOutsideEu());
 
       AqlDto aql = new AqlToDtoParser().parse(query);
 

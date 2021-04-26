@@ -46,7 +46,6 @@ import org.ehrbase.aql.dto.condition.MatchesOperatorDto;
 import org.ehrbase.aql.dto.condition.SimpleValue;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -113,9 +112,6 @@ public class StudyServiceTest {
 
   @InjectMocks private StudyService studyService;
 
-  @Ignore(
-      value =
-          "This test should pass when https://github.com/ehrbase/openEHR_SDK/issues/203 is fixed")
   @Test
   public void shouldBeConsistentInParsingAql() {
     String initialQuery =
@@ -167,7 +163,7 @@ public class StudyServiceTest {
 
     ConditionLogicalOperatorDto conditionDto = (ConditionLogicalOperatorDto) restrictedQuery.getWhere();
     assertThat(conditionDto.getSymbol(), is(ConditionLogicalOperatorSymbol.AND));
-    assertThat(conditionDto.getValues().size(), is(2));
+    assertThat(conditionDto.getValues().size(), is(3));
 
     conditionDto.getValues().stream()
         .anyMatch(
@@ -202,12 +198,10 @@ public class StudyServiceTest {
 
     ConditionLogicalOperatorDto conditionDto = (ConditionLogicalOperatorDto) restrictedQuery.getWhere();
     assertThat(conditionDto.getSymbol(), is(ConditionLogicalOperatorSymbol.AND));
-    assertThat(conditionDto.getValues().size(), is(2));
+    assertThat(conditionDto.getValues().size(), is(4));
 
     conditionDto.getValues().stream()
-        .anyMatch(
-            conditionDto1 ->
-                conditionDto1 instanceof MatchesOperatorDto); // TODO: should test the return value
+        .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto);
 
     MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
     assertThat(ehrMatches.getValues().size(), is(2));
@@ -236,9 +230,6 @@ public class StudyServiceTest {
     studyService.executeAql(QUERY_1, 3L, "approvedCoordinatorId");
   }
 
-  @Ignore(
-      value =
-          "This test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed")
   @Test
   public void shouldCorrectlyRestrictQueryWithContainsAndNoComposition() {
     studyService.executeAql(QUERY_2, 4L, "approvedCoordinatorId");
@@ -261,9 +252,6 @@ public class StudyServiceTest {
     assertEquals(restrictedQuery, expectedQuery);
   }
 
-  @Ignore(
-      value =
-          "This test should pass when https://github.com/ehrbase/openEHR_SDK/issues/176 is fixed")
   @Test
   public void shouldCorrectlyRestrictBasicQuery() {
     studyService.executeAql(QUERY_BASIC, 2L, "approvedCoordinatorId");
@@ -864,17 +852,17 @@ public class StudyServiceTest {
               return study;
             });
 
-    //    when(studyRepository.findById(4L))
-    //        .thenReturn(
-    //            Optional.of(
-    //                Study.builder()
-    //                    .id(4L)
-    //                    .cohort(Cohort.builder().id(4L).build())
-    //                    .researchers(List.of(approvedCoordinator))
-    //                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
-    //                    .build()));
+    when(studyRepository.findById(4L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(4L)
+                    .cohort(Cohort.builder().id(4L).build())
+                    .researchers(List.of(approvedCoordinator))
+                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+                    .build()));
 
-    when(cohortService.executeCohort(2L)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
-    //    when(cohortService.executeCohort(4L)).thenReturn(Set.of(EHR_ID_3));
+    when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
+    when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
   }
 }
