@@ -192,7 +192,7 @@ public class EhrBaseService {
     columns.remove(0);
     return compositions.getRows().stream()
         .map(row -> row.remove(0))
-        .map(object -> (String) object)
+        .map(String.class::cast)
         .collect(Collectors.toList());
   }
 
