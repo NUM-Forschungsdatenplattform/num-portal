@@ -17,6 +17,7 @@ import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -120,33 +121,33 @@ public class AqlServiceTest {
 
   @Test
   public void shouldCallRepoWhenDeleting() {
-    aqlService.deleteById(1L, "approvedUserId");
+    aqlService.deleteById(1L, "approvedUserId", List.of());
     verify(aqlRepository, times(1)).deleteById(1L);
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleMissingOwnerWhenDeleting() {
-    aqlService.deleteById(2L, "approvedUserId");
+    aqlService.deleteById(2L, "approvedUserId",  List.of());
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleMissingAqlOwnerWhenDeleting() {
-    aqlService.deleteById(3L, "approvedUserId");
+    aqlService.deleteById(3L, "approvedUserId",  List.of());
   }
 
   @Test(expected = SystemException.class)
   public void shouldHandleNonExistingUser() {
-    aqlService.deleteById(1L, "nonExistingUser");
+    aqlService.deleteById(1L, "nonExistingUser",  List.of());
   }
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleNonExistingAql() {
-    aqlService.deleteById(9L, "approvedUserId");
+    aqlService.deleteById(9L, "approvedUserId",  List.of());
   }
 
   @Test(expected = ResourceNotFound.class)
   public void shouldCallRepoWhenSearching() {
-    aqlService.deleteById(9L, "approvedUserId");
+    aqlService.deleteById(9L, "approvedUserId",  List.of());
   }
 
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {
