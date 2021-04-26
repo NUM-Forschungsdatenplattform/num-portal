@@ -64,7 +64,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
-import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
@@ -222,8 +221,7 @@ public class StudyService {
           collectProjectPolicies(ehrIds, study.getTemplates(), study.isUsedOutsideEu());
       projectPolicyService.apply(aql, policies);
 
-      String restrictedQuery = new AqlBinder().bind(aql).getLeft().buildAql();
-      queryResponseData = ehrBaseService.executeRawQuery(restrictedQuery);
+      queryResponseData = ehrBaseService.executeRawQuery(aql, studyId);
 
     } catch (Exception e) {
       atnaService.logDataExport(userId, studyId, study, false);
