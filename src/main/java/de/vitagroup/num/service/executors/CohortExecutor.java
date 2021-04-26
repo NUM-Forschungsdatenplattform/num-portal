@@ -20,24 +20,28 @@ import org.springframework.stereotype.Service;
 public class CohortExecutor {
 
   private final SetOperationsService setOperations;
+
   private final PhenotypeExecutor phenotypeExecutor;
+
   private final EhrBaseService ehrBaseService;
 
-  public Set<String> execute(Cohort cohort) {
+  public Set<String> execute(Cohort cohort, Boolean allowUsageOutsideEu) {
 
     if (cohort == null || cohort.getCohortGroup() == null) {
       throw new IllegalArgumentException("Cannot execute an empty cohort");
     }
 
-    return executeGroup(cohort.getCohortGroup(), cohort.getCohortGroup().getParameters());
+    return executeGroup(cohort.getCohortGroup(), cohort.getCohortGroup().getParameters(),
+        allowUsageOutsideEu);
   }
 
-  public Set<String> executeGroup(CohortGroup cohortGroup, Map<String, Object> parameters) {
+  public Set<String> executeGroup(CohortGroup cohortGroup, Map<String, Object> parameters,
+      Boolean allowUsageOutsideEu) {
     if (cohortGroup.getType() == Type.GROUP) {
 
       List<Set<String>> sets =
           cohortGroup.getChildren().stream()
-              .map(e -> executeGroup(e, parameters))
+              .map(e -> executeGroup(e, parameters, allowUsageOutsideEu))
               .collect(Collectors.toList());
 
       return setOperations.apply(
@@ -45,7 +49,7 @@ public class CohortExecutor {
 
     } else if (cohortGroup.getType() == Type.PHENOTYPE) {
 
-      return phenotypeExecutor.execute(cohortGroup.getPhenotype(), parameters);
+      return phenotypeExecutor.execute(cohortGroup.getPhenotype(), parameters, allowUsageOutsideEu);
     }
 
     return SetUtils.emptySet();

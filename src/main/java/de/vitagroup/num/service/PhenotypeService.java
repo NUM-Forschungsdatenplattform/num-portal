@@ -103,7 +103,7 @@ public class PhenotypeService {
 
     Set<String> ehrIds;
     try {
-      ehrIds = phenotypeExecutor.execute(phenotype);
+      ehrIds = phenotypeExecutor.execute(phenotype, false);
     } catch (AqlParseException e) {
       throw new BadRequestException(e.getMessage());
     }

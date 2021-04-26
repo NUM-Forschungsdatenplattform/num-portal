@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -71,8 +72,10 @@ public class CohortController {
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Long> getCohortGroupSize(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @RequestBody CohortGroupDto cohortGroupDto) {
+      @NotNull @RequestBody CohortGroupDto cohortGroupDto,
+      @RequestParam(required = false) Boolean allowUsageOutsideEu) {
     return ResponseEntity.ok(
-        cohortService.getCohortGroupSize(cohortGroupDto, principal.getSubject()));
+        cohortService.getCohortGroupSize(
+            cohortGroupDto, principal.getSubject(), allowUsageOutsideEu));
   }
 }

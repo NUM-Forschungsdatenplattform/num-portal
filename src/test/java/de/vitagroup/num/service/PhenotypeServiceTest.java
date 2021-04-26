@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -161,7 +162,7 @@ public class PhenotypeServiceTest {
 
     phenotypeService.getPhenotypeSize(Phenotype.builder().query(query).build(), "approvedUserId");
 
-    verify(phenotypeExecutor, times(1)).execute(any());
+    verify(phenotypeExecutor, times(1)).execute(any(), anyBoolean());
   }
 
   @Test(expected = PrivacyException.class)
@@ -268,6 +269,6 @@ public class PhenotypeServiceTest {
                     .build()));
 
     when(aqlService.getAqlById(2L)).thenReturn(Optional.empty());
-    when(phenotypeExecutor.execute(any(Phenotype.class))).thenReturn(new HashSet<>());
+    when(phenotypeExecutor.execute(any(Phenotype.class), anyBoolean())).thenReturn(new HashSet<>());
   }
 }

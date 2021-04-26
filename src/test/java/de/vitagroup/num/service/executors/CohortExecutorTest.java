@@ -56,8 +56,8 @@ public class CohortExecutorTest {
     Phenotype phenotype2 =
         Phenotype.builder().id(2L).name(PHENOTYPE_NAME).query(aqlExpression2).build();
 
-    when(phenotypeExecutor.execute(phenotype1, Map.of("p1", 1))).thenReturn(Set.of("1", "2", "5", "10"));
-    when(phenotypeExecutor.execute(phenotype2, Map.of("p1", 1))).thenReturn(Set.of("1", "2", "4", "5", "6", "10"));
+    when(phenotypeExecutor.execute(phenotype1, Map.of("p1", 1), false)).thenReturn(Set.of("1", "2", "5", "10"));
+    when(phenotypeExecutor.execute(phenotype2, Map.of("p1", 1), false)).thenReturn(Set.of("1", "2", "4", "5", "6", "10"));
 
     CohortGroup first = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype1).build();
     CohortGroup second = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype2).build();
@@ -72,7 +72,7 @@ public class CohortExecutorTest {
 
     Cohort cohort = Cohort.builder().name(COHORT_NAME).cohortGroup(andCohort).build();
 
-    Set<String> result = cohortExecutor.execute(cohort);
+    Set<String> result = cohortExecutor.execute(cohort, false);
 
     assertThat(result, notNullValue());
     assertThat(result.equals(Set.of("1", "2", "5", "10")), is(true));
@@ -92,8 +92,8 @@ public class CohortExecutorTest {
     Phenotype phenotype2 =
         Phenotype.builder().id(2L).name(PHENOTYPE_NAME).query(aqlExpression2).build();
 
-    when(phenotypeExecutor.execute(phenotype1, Map.of("p1", 1))).thenReturn(Set.of("1", "2", "5", "10"));
-    when(phenotypeExecutor.execute(phenotype2, Map.of("p1", 1)))
+    when(phenotypeExecutor.execute(phenotype1, Map.of("p1", 1), false)).thenReturn(Set.of("1", "2", "5", "10"));
+    when(phenotypeExecutor.execute(phenotype2, Map.of("p1", 1), false))
         .thenReturn(Set.of("4", "5", "6", "7", "8", "9", "10"));
 
     CohortGroup first = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype1).build();
@@ -109,7 +109,7 @@ public class CohortExecutorTest {
 
     Cohort cohort = Cohort.builder().name(COHORT_NAME).cohortGroup(orCohort).build();
 
-    Set<String> result = cohortExecutor.execute(cohort);
+    Set<String> result = cohortExecutor.execute(cohort, false);
 
     assertThat(result, notNullValue());
     assertThat(result.equals(Set.of("1", "2", "4", "5", "6", "7", "8", "9", "10")), is(true));
@@ -117,12 +117,12 @@ public class CohortExecutorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldHandleNullCohort() {
-    cohortExecutor.execute(null);
+    cohortExecutor.execute(null, false);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldHandleNullCohortGroup() {
     Cohort cohort = Cohort.builder().name(COHORT_NAME).cohortGroup(null).build();
-    cohortExecutor.execute(cohort);
+    cohortExecutor.execute(cohort, false);
   }
 }
