@@ -3,6 +3,7 @@ package de.vitagroup.num.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
@@ -113,7 +114,7 @@ public class AqlService {
     return aqlRepository.save(aqlToEdit);
   }
 
-  public void deleteById(Long id, String loggedInUserId) {
+  public void deleteById(Long id, String loggedInUserId, List<String> roles) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
     Aql aql =
@@ -121,14 +122,12 @@ public class AqlService {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + id));
 
-    if (aql.hasEmptyOrDifferentOwner(loggedInUserId)) {
+    if ((aql.isPublicAql()
+            && (roles.contains(Roles.STUDY_COORDINATOR) || roles.contains(Roles.SUPER_ADMIN)))
+        || !aql.hasEmptyOrDifferentOwner(loggedInUserId)) {
+      deleteAql(id);
+    } else {
       throw new ForbiddenException("Cannot delete aql: " + id);
-    }
-
-    try {
-      aqlRepository.deleteById(id);
-    } catch (EmptyResultDataAccessException e) {
-      throw new BadRequestException(String.format("%s: %s", "Invalid aql id", id));
     }
   }
 
@@ -190,6 +189,14 @@ public class AqlService {
       } catch (JsonProcessingException e) {
         log.error("Could not serialize aql validation response", e);
       }
+    }
+  }
+
+  private void deleteAql(Long id) {
+    try {
+      aqlRepository.deleteById(id);
+    } catch (EmptyResultDataAccessException e) {
+      throw new BadRequestException(String.format("%s: %s", "Invalid aql id", id));
     }
   }
 }

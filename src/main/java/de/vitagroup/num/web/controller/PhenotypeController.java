@@ -111,7 +111,7 @@ public class PhenotypeController {
   @ApiOperation(
       value = "Deletes a phenotype")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER_OR_SUPER_ADMIN)
-  void deleteAql(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
+  void deletePhenotype(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
     phenotypeService.deletePhenotypeById(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
