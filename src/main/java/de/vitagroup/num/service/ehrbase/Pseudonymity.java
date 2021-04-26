@@ -7,7 +7,6 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 public class Pseudonymity {
 
   private final PrivacyProperties privacyProperties;
-  @Lazy
   private final EhrBaseService ehrBaseService;
 
   public String getPseudonym(String uuid, Long studyId) {

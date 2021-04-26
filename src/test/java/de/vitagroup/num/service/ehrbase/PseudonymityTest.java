@@ -7,17 +7,18 @@ import static org.mockito.Mockito.when;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import java.util.Set;
+import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class PseudonymityTest {
 
-  @Spy private PrivacyProperties privacyProperties;
+  @Mock private PrivacyProperties privacyProperties;
 
   @Mock private EhrBaseService ehrBaseService;
 
@@ -36,5 +37,10 @@ public class PseudonymityTest {
         .thenReturn(Set.of("notTesttestttest", "Also Nottesttesttest"));
     String pseudonym = pseudonymity.getPseudonym("testtesttest", 100L);
     assertThrows(ResourceNotFound.class, () -> pseudonymity.getEhrIdFromPseudonym(pseudonym, 100L));
+  }
+
+  @BeforeEach
+  public void setup() {
+    when(privacyProperties.getPseudonymitySecret()).thenReturn("testSecret123");
   }
 }
