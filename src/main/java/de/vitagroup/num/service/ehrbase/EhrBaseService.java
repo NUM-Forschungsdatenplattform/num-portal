@@ -3,13 +3,14 @@ package de.vitagroup.num.service.ehrbase;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.SystemException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
@@ -132,33 +133,52 @@ public class EhrBaseService {
     return templateResponseData.get();
   }
 
-  private List<QueryResponseData> flattenIfCompositionPresent(
-      QueryResponseData response, Long studyId) {
-    List<Map<String, Object>> compositions = new ArrayList<>();
+  public List<QueryResponseData> flattenIfCompositionPresent(
+      QueryResponseData responseData, Long studyId) {
+    List<String> ehrIds = getAndRemoveEhrIdColumn(responseData);
+    List<QueryResponseData> listOfResponseData = flattenCompositions(responseData);
+    addPseudonyms(ehrIds, listOfResponseData, studyId);
+    return listOfResponseData;
+  }
 
-    List<String> ehrIds = getAndRemoveEhrIdColumn(response);
+  private List<QueryResponseData> flattenCompositions(QueryResponseData responseData) {
+    Map<String, List<Map<String, Object>>> compositions = new HashMap<>();
+    responseData.setQuery(StringUtils.EMPTY);
 
-    for (List<Object> row : response.getRows()) {
-      for (Object cell : row) {
+    for (List<Object> row : responseData.getRows()) {
+      for (int i = 0; i < row.size(); i++) {
+        Object cell = row.get(i);
+        String name = responseData.getColumns().get(i).get(NAME);
+
         if (isComposition(cell)) {
-          compositions.add((Map<String, Object>) cell);
+          if (compositions.containsKey(name)) {
+            compositions.get(name).add((Map<String, Object>) cell);
+          } else {
+            List<Map<String, Object>> list = new LinkedList<>();
+            list.add((Map<String, Object>) cell);
+            compositions.put(name, list);
+          }
+        } else {
+          log.debug("Executing query containing mixed data types. Returning raw ehr response");
+          return List.of(responseData);
         }
       }
     }
 
-    List<QueryResponseData> listOfResponseData;
+    List<QueryResponseData> aggregatedFlattenedCompositions = new LinkedList<>();
 
     if (compositions.isEmpty()) {
       log.debug("No compositions in the response. Returning raw ehr response");
-      listOfResponseData = List.of(response);
+      aggregatedFlattenedCompositions = List.of(responseData);
     } else {
-
-      listOfResponseData = compositionResponseDataBuilder.build(compositions);
+      for (Map.Entry<String, List<Map<String, Object>>> entry : compositions.entrySet()) {
+        QueryResponseData data = compositionResponseDataBuilder.build(entry.getValue());
+        data.setName(entry.getKey());
+        aggregatedFlattenedCompositions.add(data);
+      }
     }
 
-    addPseudonyms(ehrIds, listOfResponseData, studyId);
-
-    return listOfResponseData;
+    return aggregatedFlattenedCompositions;
   }
 
   private void addPseudonyms(

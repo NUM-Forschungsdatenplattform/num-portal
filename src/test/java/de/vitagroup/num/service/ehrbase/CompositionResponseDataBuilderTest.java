@@ -7,9 +7,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
+import org.apache.commons.io.IOUtils;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,43 +64,17 @@ public class CompositionResponseDataBuilderTest {
   public void shouldCorrectlyComputeQueryResponseData() {
     doReturn(createCompositionsList()).when(builder).createCompositionsMap(any());
 
-    List<QueryResponseData> response = builder.build(List.of(Map.of()));
-
+    QueryResponseData response = builder.build(List.of(Map.of()));
     assertThat(response, notNullValue());
-    assertEquals(3, response.size());
+    assertThat(response, notNullValue());
+    assertEquals(10, (response.getColumns().size()));
+    assertEquals(3, response.getRows().size());
 
-    QueryResponseData one = response.get(0);
-    assertEquals(1, one.getRows().size());
-    assertEquals(7, one.getColumns().size());
-
-
-    for (int i = 0; i < one.getRows().size(); i++) {
-      Map<String, String> header = one.getColumns().get(i);
-      Object cell = one.getRows().get(0).get(i);
-      assertEquals(cell, COMP_1.get(header.get(PATH)));
-    }
-
-    QueryResponseData two = response.get(1);
-    assertEquals(1, two.getRows().size());
-    assertEquals(8, two.getColumns().size());
-
-
-    for (int i = 0; i < two.getRows().size(); i++) {
-      Map<String, String> header = two.getColumns().get(i);
-      Object cell = two.getRows().get(0).get(i);
-      assertEquals(cell, COMP_2.get(header.get(PATH)));
-    }
-
-    QueryResponseData three = response.get(2);
-    assertEquals(1, three.getRows().size());
-    assertEquals(8, three.getColumns().size());
-
-
-    for (int i = 0; i < three.getRows().size(); i++) {
-      Map<String, String> header = three.getColumns().get(i);
-      Object cell = three.getRows().get(0).get(i);
-      assertEquals(cell, COMP_3.get(header.get(PATH)));
-    }
+    String result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+    assertEquals(
+        IOUtils.toString(
+            getClass().getResourceAsStream("/testdata/expected.json"), StandardCharsets.UTF_8),
+        result);
   }
 
   private List<Map<String, String>> createCompositionsList() {
