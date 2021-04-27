@@ -3,7 +3,6 @@ package de.vitagroup.num.service.ehrbase;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.SystemException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -133,51 +132,51 @@ public class EhrBaseService {
     return templateResponseData.get();
   }
 
-  private List<QueryResponseData> flattenIfCompositionPresent(
-      QueryResponseData response, Long studyId) {
+  public List<QueryResponseData> flattenIfCompositionPresent(
+      QueryResponseData responseData, Long studyId) {
+    List<String> ehrIds = getAndRemoveEhrIdColumn(responseData);
+    List<QueryResponseData> listOfResponseData = flattenCompositions(responseData);
+    addPseudonyms(ehrIds, listOfResponseData, studyId);
+    return listOfResponseData;
+  }
 
-    List<String> ehrIds = getAndRemoveEhrIdColumn(response);
+  private List<QueryResponseData> flattenCompositions(QueryResponseData responseData) {
+    Map<String, List<Map<String, Object>>> compositions = new HashMap<>();
 
-    Map<String, List<Map<String, Object>>> compositionValues = new HashMap<>();
-
-    for (List<Object> row : response.getRows()) {
+    for (List<Object> row : responseData.getRows()) {
       for (int i = 0; i < row.size(); i++) {
         Object cell = row.get(i);
-        String name = response.getColumns().get(i).get(NAME);
+        String name = responseData.getColumns().get(i).get(NAME);
 
         if (isComposition(cell)) {
-          if (compositionValues.containsKey(name)) {
-            compositionValues.get(name).add((Map<String, Object>) cell);
+          if (compositions.containsKey(name)) {
+            compositions.get(name).add((Map<String, Object>) cell);
           } else {
             List<Map<String, Object>> list = new LinkedList<>();
             list.add((Map<String, Object>) cell);
-            compositionValues.put(name, list);
+            compositions.put(name, list);
           }
         } else {
           log.debug("Executing query containing mixed data types. Returning raw ehr response");
-          return List.of(response);
+          return List.of(responseData);
         }
       }
     }
 
-    List<QueryResponseData> listOfResponseData = new LinkedList<>();
+    List<QueryResponseData> aggregatedFlattenedCompositions = new LinkedList<>();
 
-    if (compositionValues.isEmpty()) {
+    if (compositions.isEmpty()) {
       log.debug("No compositions in the response. Returning raw ehr response");
-      listOfResponseData = List.of(response);
+      aggregatedFlattenedCompositions = List.of(responseData);
     } else {
-
-      for (Map.Entry<String, List<Map<String, Object>>> entry : compositionValues.entrySet()) {
+      for (Map.Entry<String, List<Map<String, Object>>> entry : compositions.entrySet()) {
         QueryResponseData data = compositionResponseDataBuilder.build(entry.getValue());
         data.setName(entry.getKey());
-        listOfResponseData.add(data);
+        aggregatedFlattenedCompositions.add(data);
       }
-
     }
 
-    addPseudonyms(ehrIds, listOfResponseData, studyId);
-
-    return listOfResponseData;
+    return aggregatedFlattenedCompositions;
   }
 
   private void addPseudonyms(
