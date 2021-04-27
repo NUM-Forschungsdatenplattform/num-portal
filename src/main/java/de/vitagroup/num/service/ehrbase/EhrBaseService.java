@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
@@ -142,6 +143,7 @@ public class EhrBaseService {
 
   private List<QueryResponseData> flattenCompositions(QueryResponseData responseData) {
     Map<String, List<Map<String, Object>>> compositions = new HashMap<>();
+    responseData.setQuery(StringUtils.EMPTY);
 
     for (List<Object> row : responseData.getRows()) {
       for (int i = 0; i < row.size(); i++) {
