@@ -5,6 +5,7 @@ import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.SystemException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -134,26 +135,44 @@ public class EhrBaseService {
 
   private List<QueryResponseData> flattenIfCompositionPresent(
       QueryResponseData response, Long studyId) {
-    List<Map<String, Object>> compositions = new ArrayList<>();
 
     List<String> ehrIds = getAndRemoveEhrIdColumn(response);
 
+    Map<String, List<Map<String, Object>>> compositionValues = new HashMap<>();
+
     for (List<Object> row : response.getRows()) {
-      for (Object cell : row) {
+      for (int i = 0; i < row.size(); i++) {
+        Object cell = row.get(i);
+        String name = response.getColumns().get(i).get(NAME);
+
         if (isComposition(cell)) {
-          compositions.add((Map<String, Object>) cell);
+          if (compositionValues.containsKey(name)) {
+            compositionValues.get(name).add((Map<String, Object>) cell);
+          } else {
+            List<Map<String, Object>> list = new LinkedList<>();
+            list.add((Map<String, Object>) cell);
+            compositionValues.put(name, list);
+          }
+        } else {
+          log.debug("Executing query containing mixed data types. Returning raw ehr response");
+          return List.of(response);
         }
       }
     }
 
-    List<QueryResponseData> listOfResponseData;
+    List<QueryResponseData> listOfResponseData = new LinkedList<>();
 
-    if (compositions.isEmpty()) {
+    if (compositionValues.isEmpty()) {
       log.debug("No compositions in the response. Returning raw ehr response");
       listOfResponseData = List.of(response);
     } else {
 
-      listOfResponseData = compositionResponseDataBuilder.build(compositions);
+      for (Map.Entry<String, List<Map<String, Object>>> entry : compositionValues.entrySet()) {
+        QueryResponseData data = compositionResponseDataBuilder.build(entry.getValue());
+        data.setName(entry.getKey());
+        listOfResponseData.add(data);
+      }
+
     }
 
     addPseudonyms(ehrIds, listOfResponseData, studyId);

@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nedap.archie.rm.composition.Composition;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.ehrbase.serialisation.jsonencoding.CanonicalJson;
@@ -22,37 +23,55 @@ public class CompositionResponseDataBuilder {
   private static final String COLUMN_NAME = "name";
   private static final String COLUMN_PATH = "path";
 
-  public List<QueryResponseData> build(List<Map<String, Object>> compositions) {
+  public QueryResponseData build(List<Map<String, Object>> compositions) {
     List<Map<String, Object>> flatCompositionsList = createCompositionsMap(compositions);
-    List<QueryResponseData> responseData = new LinkedList<>();
+    Set<String> allKeys = new HashSet<>();
+    flatCompositionsList.forEach(map -> allKeys.addAll(map.keySet()));
 
-    flatCompositionsList.forEach(
-        flatComposition -> {
-          responseData.add(buildQueryResponseData(flatComposition));
-        });
-    return responseData;
-  }
-
-  private QueryResponseData buildQueryResponseData(Map<String, Object> composition) {
+    Map<String, List<Object>> aggregatedResultsMap = new HashMap<>();
+    List<List<Object>> rows = new ArrayList<>();
     List<Map<String, String>> columns = new ArrayList<>();
-    List<Object> row = new ArrayList<>();
 
-    composition.forEach(
-        (k, v) -> {
-          Map<String, String> header = new HashMap<>();
-          header.put(COLUMN_NAME, k);
-          header.put(COLUMN_PATH, k);
-          columns.add(header);
-          row.add(v);
+    allKeys.forEach(
+        k -> {
+          aggregatedResultsMap.put(k, new ArrayList<>());
+
+          flatCompositionsList.forEach(
+              map -> {
+                if (map.containsKey(k)) {
+                  aggregatedResultsMap.get(k).add(map.get(k));
+                } else {
+                  aggregatedResultsMap.get(k).add(null);
+                }
+              });
+          createColumn(columns, k);
         });
 
-    List<List<Object>> rows = List.of(row);
+    createRow(rows, aggregatedResultsMap, allKeys, flatCompositionsList.size());
 
     QueryResponseData queryResponseData = new QueryResponseData();
     queryResponseData.setColumns(columns);
     queryResponseData.setRows(rows);
 
     return queryResponseData;
+  }
+
+  private void createRow(List<List<Object>> rows, Map<String, List<Object>> aggregatedResultsMap, Set<String> allKeys, int rowsCount) {
+    for (int i = 0; i < rowsCount; i++) {
+      List<Object> values = new ArrayList<>();
+      for (String k : allKeys) {
+        List<Object> cols = aggregatedResultsMap.get(k);
+        values.add(cols.get(i));
+      }
+      rows.add(values);
+    }
+  }
+
+  private void createColumn(List<Map<String, String>> columns, String path) {
+    Map<String, String> header = new HashMap<>();
+    header.put(COLUMN_NAME, path);
+    header.put(COLUMN_PATH, path);
+    columns.add(header);
   }
 
   public List<Map<String, Object>> createCompositionsMap(List<Map<String, Object>> compositions) {
@@ -74,3 +93,4 @@ public class CompositionResponseDataBuilder {
     return compositionsMap;
   }
 }
+

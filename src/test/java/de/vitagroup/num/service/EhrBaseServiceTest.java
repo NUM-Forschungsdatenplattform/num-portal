@@ -111,7 +111,7 @@ public class EhrBaseServiceTest {
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
         .thenReturn(compositionsQueryResponseData);
 
-    when(compositionResponseDataBuilder.build(any())).thenReturn(List.of(compositionsQueryResponseData));
+    when(compositionResponseDataBuilder.build(any())).thenReturn(compositionsQueryResponseData);
 
     ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
     verify(compositionResponseDataBuilder, times(1)).build(any());
