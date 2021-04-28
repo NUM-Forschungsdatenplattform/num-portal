@@ -135,7 +135,7 @@ public class StudyService {
               "Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
     }
   }
-  
+
   @Transactional
   public void archiveProject(Long projectId, String userId, List<String> roles) {
     UserDetails user = userDetailsService.checkIsUserApproved(userId);
@@ -206,12 +206,12 @@ public class StudyService {
               .findById(studyId)
               .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + studyId));
 
-      if (!study.isStudyResearcher(userId) && study.hasEmptyOrDifferentOwner(userId)) {
-        throw new ForbiddenException("Cannot access this study");
-      }
-
       if(study.getStatus() == null || !study.getStatus().equals(StudyStatus.PUBLISHED)){
         throw new ForbiddenException("Data explorer available for published studies only");
+      }
+
+      if (!study.isStudyResearcher(userId) && study.hasEmptyOrDifferentOwner(userId)) {
+        throw new ForbiddenException("Cannot access this study");
       }
 
       if (study.getCohort() == null) {
