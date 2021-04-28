@@ -152,6 +152,19 @@ public class StudyServiceTest {
     assertThat(restrictedQuery.getWhere(), notNullValue());
   }
 
+  @Test(expected = ForbiddenException.class)
+  public void shouldNotExecuteIfStudyNotPublished() {
+    when(studyRepository.findById(7L))
+        .thenReturn(
+            Optional.of(
+                Study.builder()
+                    .id(7L)
+                    .status(StudyStatus.DENIED)
+                    .cohort(Cohort.builder().id(4L).build())
+                    .build()));
+    studyService.executeAql(QUERY_5, 7L, "approvedCoordinatorId");
+  }
+
   @Test
   public void shouldHandleQuery3() {
     studyService.executeAql(QUERY_3, 2L, "approvedCoordinatorId");
@@ -834,13 +847,19 @@ public class StudyServiceTest {
 
     when(studyRepository.findById(3L))
         .thenReturn(
-            Optional.of(Study.builder().id(3L).researchers(List.of(approvedCoordinator)).build()));
+            Optional.of(
+                Study.builder()
+                    .id(3L)
+                    .status(StudyStatus.PUBLISHED)
+                    .researchers(List.of(approvedCoordinator))
+                    .build()));
 
     when(studyRepository.findById(1L))
         .thenReturn(
             Optional.of(
                 Study.builder()
                     .id(1L)
+                    .status(StudyStatus.PUBLISHED)
                     .cohort(Cohort.builder().id(2L).build())
                     .researchers(List.of(approvedCoordinator))
                     .build()));
@@ -850,6 +869,7 @@ public class StudyServiceTest {
             Optional.of(
                 Study.builder()
                     .id(2L)
+                    .status(StudyStatus.PUBLISHED)
                     .cohort(Cohort.builder().id(2L).build())
                     .researchers(List.of(approvedCoordinator))
                     .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
@@ -868,6 +888,7 @@ public class StudyServiceTest {
             Optional.of(
                 Study.builder()
                     .id(4L)
+                    .status(StudyStatus.PUBLISHED)
                     .cohort(Cohort.builder().id(4L).build())
                     .researchers(List.of(approvedCoordinator))
                     .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
