@@ -11,6 +11,7 @@ import de.vitagroup.num.mapper.CommentMapper;
 import de.vitagroup.num.mapper.StudyMapper;
 import de.vitagroup.num.service.CommentService;
 import de.vitagroup.num.service.StudyService;
+import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -45,10 +46,11 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @RequestMapping(value = "/study", produces = "application/json")
 public class StudyController {
 
-  private final StudyService studyService;
+  private final StudyService projectService;
   private final CommentService commentService;
   private final StudyMapper studyMapper;
   private final CommentMapper commentMapper;
+  private final Pseudonymity pseudonymity;
 
   @AuditLog
   @GetMapping()
@@ -57,7 +59,7 @@ public class StudyController {
   public ResponseEntity<List<StudyDto>> getStudies(
       @AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(
-        studyService.getStudies(principal.getSubject(), Roles.extractRoles(principal)).stream()
+        projectService.getStudies(principal.getSubject(), Roles.extractRoles(principal)).stream()
             .map(studyMapper::convertToDto)
             .collect(Collectors.toList()));
   }
@@ -67,7 +69,7 @@ public class StudyController {
   @ApiOperation(value = "Retrieves a study by id")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<StudyDto> getStudyById(@NotNull @NotEmpty @PathVariable Long id) {
-    Optional<Study> study = studyService.getStudyById(id);
+    Optional<Study> study = projectService.getStudyById(id);
 
     if (study.isEmpty()) {
       throw new ResourceNotFound("Study not found");
@@ -86,7 +88,7 @@ public class StudyController {
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
     Study study =
-        studyService.createStudy(studyDto, principal.getSubject(), Roles.extractRoles(principal));
+        projectService.createStudy(studyDto, principal.getSubject(), Roles.extractRoles(principal));
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
   }
@@ -103,7 +105,7 @@ public class StudyController {
       @Valid @NotNull @RequestBody StudyDto studyDto) {
 
     Study study =
-        studyService.updateStudy(
+        projectService.updateStudy(
             studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
 
     return ResponseEntity.ok(studyMapper.convertToDto(study));
@@ -118,7 +120,7 @@ public class StudyController {
       @RequestBody @Valid RawQueryDto query,
       @NotNull @NotEmpty @PathVariable Long studyId) {
     return ResponseEntity.ok(
-        studyService.executeAqlAndJsonify(query.getQuery(), studyId, principal.getSubject()));
+        projectService.executeAqlAndJsonify(query.getQuery(), studyId, principal.getSubject()));
   }
 
   @AuditLog
@@ -135,9 +137,9 @@ public class StudyController {
                   "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
           ExportType format) {
     StreamingResponseBody streamingResponseBody =
-        studyService.getExportResponseBody(
+        projectService.getExportResponseBody(
             query.getQuery(), studyId, principal.getSubject(), format);
-    MultiValueMap<String, String> headers = studyService.getExportHeaders(format, studyId);
+    MultiValueMap<String, String> headers = projectService.getExportHeaders(format, studyId);
 
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }
@@ -196,5 +198,32 @@ public class StudyController {
       @NotNull @NotEmpty @PathVariable Long studyId,
       @NotNull @NotEmpty @PathVariable Long commentId) {
     commentService.deleteComment(commentId, studyId, principal.getSubject());
+  }
+
+  @AuditLog
+  @DeleteMapping("/{id}")
+  @ApiOperation(value = "Deletes a project")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
+  void deleteProject(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
+    projectService.deleteProject(id, principal.getSubject(), Roles.extractRoles(principal));
+  }
+
+  @AuditLog
+  @PostMapping("/{id}/archive")
+  @ApiOperation(value = "Archive a project")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
+  void archiveProject(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
+    projectService.archiveProject(id, principal.getSubject(), Roles.extractRoles(principal));
+  }
+
+  @AuditLog
+  @GetMapping("/{id}/resolve/{pseudonym}")
+  @ApiOperation(value = "Archive a project")
+  @PreAuthorize(Role.SUPER_ADMIN)
+  public ResponseEntity<String> resolvePseudonym(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @PathVariable Long id,
+      @NotEmpty @PathVariable String pseudonym) {
+    return ResponseEntity.ok(pseudonymity.getEhrIdFromPseudonym(pseudonym, id));
   }
 }

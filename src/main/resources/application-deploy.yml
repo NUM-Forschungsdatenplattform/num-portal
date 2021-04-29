@@ -50,13 +50,20 @@ ehrbase:
 
 privacy:
   minHits: ${PRIVACY_MIN_HITS}
+  pseudonymity-secret: ${PSEUDONYMITY_SECRET}
 
 atna:
   enabled: ${ATNA_ENABLED}
   host: ${ATNA_HOST}
   port: ${ATNA_PORT}
 
-
 zars:
   enabled: ${ZARS_ENABLED}
   email: ${ZARS_EMAIL}
+
+num:
+  url: ${NUM_URL}
+  locale: ${NUM_LOCALE}
+
+consent:
+  allow-usage-outside-eu-oid: ${ALLOW_USAGE_OUTSIDE_EU_OID}

@@ -103,7 +103,15 @@ cors:
   allowedOrigins:
     - "*"
 privacy:
-  minHits: 20
+  minHits: 30
+  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
+
+num:
+  url: https://dev.num-codex.de/home
+  locale: en
+
+consent:
+  allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
 
 ---
 spring:
@@ -180,6 +188,7 @@ ehrbase:
 
 privacy:
   minHits: 1
+  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
 
 atna:
   enabled: false
@@ -189,3 +198,7 @@ atna:
 zars:
   enabled: false
   email: foo@foo.bar
+
+num:
+  url: https://dev.num-codex.de/home
+  locale: en

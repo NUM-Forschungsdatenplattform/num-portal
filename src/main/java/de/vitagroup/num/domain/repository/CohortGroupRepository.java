@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CohortGroupRepository extends JpaRepository<CohortGroup, Long> {
+
+  boolean existsByPhenotypeId(Long phenotypeId);
+
 }

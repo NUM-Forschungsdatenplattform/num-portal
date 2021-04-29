@@ -62,21 +62,24 @@ public class CohortService {
     return cohortRepository.save(cohort);
   }
 
-  public Set<String> executeCohort(long cohortId) {
+  public Set<String> executeCohort(long cohortId, Boolean allowUsageOutsideEu) {
     Optional<Cohort> cohort = cohortRepository.findById(cohortId);
     return cohortExecutor.execute(
-        cohort.orElseThrow(() -> new BadRequestException("Cohort not found: " + cohortId)));
+        cohort.orElseThrow(() -> new BadRequestException("Cohort not found: " + cohortId)),
+        allowUsageOutsideEu);
   }
 
-  public long getCohortSize(long cohortId) {
-    return executeCohort(cohortId).size();
+  public long getCohortSize(long cohortId, Boolean allowUsageOutsideEu) {
+    return executeCohort(cohortId, allowUsageOutsideEu).size();
   }
 
-  public long getCohortGroupSize(CohortGroupDto cohortGroupDto, String userId) {
+  public long getCohortGroupSize(
+      CohortGroupDto cohortGroupDto, String userId, Boolean allowUsageOutsideEu) {
     userDetailsService.checkIsUserApproved(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
-    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, cohortGroup.getParameters());
+    Set<String> ehrIds =
+        cohortExecutor.executeGroup(cohortGroup, cohortGroup.getParameters(), allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
       throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
     }

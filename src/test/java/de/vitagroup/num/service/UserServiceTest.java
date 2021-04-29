@@ -20,7 +20,9 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
+import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -49,6 +51,8 @@ public class UserServiceTest {
   @Mock private KeycloakFeign keycloakFeign;
 
   @Mock private UserDetailsService userDetailsService;
+
+  @Mock private NotificationService notificationService;
 
   @Spy private final ModelMapper modelMapper = new ModelMapper();
 
@@ -104,6 +108,28 @@ public class UserServiceTest {
                         Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
+
+    User user4 =
+        User.builder()
+            .id("4")
+            .organization(OrganizationDto.builder().id(1L).name("org 1").build())
+            .approved(true)
+            .build();
+
+    User user5 =
+        User.builder()
+            .id("5")
+            .organization(OrganizationDto.builder().id(1L).name("org 1").build())
+            .approved(true)
+            .build();
+
+    User user6 =
+        User.builder()
+            .id("6")
+            .organization(OrganizationDto.builder().id(1L).name("org 1").build())
+            .approved(true)
+            .build();
+
     when(userDetailsService.checkIsUserApproved("4"))
         .thenReturn(
             UserDetails.builder()
@@ -111,6 +137,11 @@ public class UserServiceTest {
                 .organization(Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                 .approved(true)
                 .build());
+
+    when(keycloakFeign.getUser("4")).thenReturn(user4);
+    when(keycloakFeign.getUser("5")).thenReturn(user5);
+    when(keycloakFeign.getUser("6")).thenReturn(user6);
+
     when(userDetailsService.getUserDetailsById("5"))
         .thenReturn(
             Optional.of(
@@ -120,6 +151,7 @@ public class UserServiceTest {
                         Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
+
     when(userDetailsService.checkIsUserApproved("5"))
         .thenReturn(
             UserDetails.builder()
@@ -127,6 +159,7 @@ public class UserServiceTest {
                 .organization(Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                 .approved(true)
                 .build());
+
     when(userDetailsService.getUserDetailsById("6"))
         .thenReturn(
             Optional.of(
@@ -136,6 +169,7 @@ public class UserServiceTest {
                         Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
+
     when(userDetailsService.getUserDetailsById("7"))
         .thenReturn(
             Optional.of(
@@ -215,6 +249,7 @@ public class UserServiceTest {
         Collections.singletonList("SUPER_ADMIN"),
         "4",
         Collections.singletonList(Roles.SUPER_ADMIN));
+
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R1", "SUPER_ADMIN")});
   }

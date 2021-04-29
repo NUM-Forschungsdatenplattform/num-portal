@@ -23,8 +23,8 @@ public class CompositionResponseDataBuilder {
   private static final String COLUMN_NAME = "name";
   private static final String COLUMN_PATH = "path";
 
-  public QueryResponseData build(List<Map<String, String>> compositions) {
-    List<Map<String, String>> flatCompositionsList = createCompositionsMap(compositions);
+  public QueryResponseData build(List<Map<String, Object>> compositions) {
+    List<Map<String, Object>> flatCompositionsList = createCompositionsMap(compositions);
     Set<String> allKeys = new HashSet<>();
     flatCompositionsList.forEach(map -> allKeys.addAll(map.keySet()));
 
@@ -74,8 +74,8 @@ public class CompositionResponseDataBuilder {
     columns.add(header);
   }
 
-  public List<Map<String, String>> createCompositionsMap(List<Map<String, String>> compositions) {
-    List<Map<String, String>> compositionsMap = new ArrayList<>();
+  public List<Map<String, Object>> createCompositionsMap(List<Map<String, Object>> compositions) {
+    List<Map<String, Object>> compositionsMap = new ArrayList<>();
 
     compositions.forEach(
         compositionMap -> {
@@ -93,3 +93,4 @@ public class CompositionResponseDataBuilder {
     return compositionsMap;
   }
 }
+

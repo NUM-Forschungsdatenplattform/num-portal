@@ -1,11 +1,14 @@
 package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.service.logger.AuditLog;
+import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -36,6 +39,7 @@ public class AqlController {
 
   private final AqlService aqlService;
   private final AqlMapper mapper;
+  private final ProjectPolicyService projectPolicyService;
 
   @AuditLog
   @GetMapping("/{id}")
@@ -75,9 +79,9 @@ public class AqlController {
 
   @AuditLog
   @DeleteMapping("/{id}")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_SUPER_ADMIN)
   void deleteAql(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
-    aqlService.deleteById(id, principal.getSubject());
+    aqlService.deleteById(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
   @AuditLog
@@ -113,12 +117,11 @@ public class AqlController {
   }
 
   @AuditLog
-  @PostMapping("{aqlId}/execute")
-  @ApiOperation(value = "Executes the aql")
+  @PostMapping("/size")
+  @ApiOperation(value = "Executes an aql and returns the count of matching ehr ids")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
-  public ResponseEntity<String> executeAql(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @NotEmpty @PathVariable Long aqlId) {
-    return ResponseEntity.ok(aqlService.executeAql(aqlId, principal.getSubject()));
+  public ResponseEntity<Long> getAqlSize(
+      @AuthenticationPrincipal @NotNull Jwt principal, @Valid @RequestBody SlimAqlDto aql) {
+    return ResponseEntity.ok(aqlService.getAqlSize(aql, principal.getSubject()));
   }
 }
