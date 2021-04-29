@@ -102,6 +102,15 @@ public class EhrBaseService {
 
     try {
 
+      try {
+        log.info(
+            String.format(
+                "[AQL QUERY] EHR request query: %s ",
+                new AqlBinder().bind(aqlDto).getLeft().buildAql()));
+      } catch (Exception e) {
+        log.error("Error parsing query while logging", e);
+      }
+
       QueryResponseData response = restClient.aqlEndpoint().executeRaw(query);
       return flattenIfCompositionPresent(response, studyId);
 

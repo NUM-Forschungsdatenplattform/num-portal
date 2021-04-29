@@ -121,7 +121,8 @@ public class StudyServiceTest {
 
   @Spy private AqlEditorAqlService aqlEditorAqlService;
 
-  @Ignore(value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/217 is fixed")
+  @Ignore(
+      value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/217 is fixed")
   @Test(expected = AqlParseException.class)
   public void shouldCorrectlyValidateInvalidQuery() {
     String query =
@@ -130,7 +131,8 @@ public class StudyServiceTest {
   }
 
   @Test
-  @Ignore(value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/216 is fixed")
+  @Ignore(
+      value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/216 is fixed")
   public void shouldCorrectlyGenerateAliases() {
     String query =
         "Select c0 as F1 from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
