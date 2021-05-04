@@ -21,6 +21,7 @@ import org.ehrbase.aql.dto.select.SelectStatementDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.client.aql.field.EhrFields;
 import org.ehrbase.client.aql.query.EntityQuery;
+import org.ehrbase.client.aql.query.NativeQuery;
 import org.ehrbase.client.aql.query.Query;
 import org.ehrbase.client.aql.record.Record;
 import org.ehrbase.client.exception.ClientException;
@@ -86,6 +87,9 @@ public class EhrBaseService {
     } catch (WrongStatusCodeException e) {
       log.error("Malformed query exception", e);
       throw e;
+    } catch (ClientException e) {
+      log.error("An error has occurred while calling ehrbase", e);
+      throw new SystemException("An error has occurred, cannot execute aql");
     }
   }
 
@@ -116,6 +120,21 @@ public class EhrBaseService {
 
     } catch (WrongStatusCodeException e) {
       log.error("An error has occurred while calling ehrbase", e);
+      throw e;
+    } catch (ClientException e) {
+      log.error("An error has occurred while calling ehrbase", e);
+      throw new SystemException("An error has occurred, cannot execute aql");
+    }
+  }
+
+  public QueryResponseData executePlainQuery(String queryString) {
+
+    NativeQuery<Record> query = Query.buildNativeQuery(queryString);
+
+    try {
+      return restClient.aqlEndpoint().executeRaw(query);
+    } catch (WrongStatusCodeException e) {
+      log.error("Malformed query exception", e);
       throw e;
     } catch (ClientException e) {
       log.error("An error has occurred while calling ehrbase", e);
