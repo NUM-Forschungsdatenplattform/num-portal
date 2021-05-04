@@ -166,7 +166,7 @@ userstore:
   url: ${keycloak.url}/auth/admin/realms/Num
 
 keycloak:
-  url: https://keycloak.dev.num-codex.de
+  url: http://localhost:8180
 
 feign:
   client:
