@@ -1,9 +1,7 @@
 package de.vitagroup.num.web.feign.config;
 
-import feign.Client;
 import java.util.ArrayList;
 import java.util.List;
-import javax.net.ssl.HttpsURLConnection;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesRegistrationAdapter;
@@ -43,12 +41,5 @@ public class OAuth2Configuration {
     manager.setAuthorizedClientProvider(authorizedClientProvider);
 
     return manager;
-  }
-
-  @Bean
-  public Client feignClient() {
-    return new Client.Default(
-        HttpsURLConnection.getDefaultSSLSocketFactory(),
-        HttpsURLConnection.getDefaultHostnameVerifier());
   }
 }
