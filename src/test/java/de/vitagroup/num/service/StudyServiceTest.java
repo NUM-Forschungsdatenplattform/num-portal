@@ -38,14 +38,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorDto;
 import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorSymbol;
 import org.ehrbase.aql.dto.condition.MatchesOperatorDto;
 import org.ehrbase.aql.dto.condition.SimpleValue;
+import org.ehrbase.aql.dto.select.SelectFieldDto;
+import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aql.parser.AqlToDtoParser;
+import org.ehrbase.aqleditor.service.AqlEditorAqlService;
+import org.ehrbase.client.aql.field.EhrFields;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -111,6 +118,43 @@ public class StudyServiceTest {
   @Spy private ProjectPolicyService projectPolicyService;
 
   @InjectMocks private StudyService studyService;
+
+  @Spy private AqlEditorAqlService aqlEditorAqlService;
+
+  @Ignore(
+      value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/217 is fixed")
+  @Test(expected = AqlParseException.class)
+  public void shouldCorrectlyValidateInvalidQuery() {
+    String query =
+        "Select e/ehr_id/value as F1, c0 as F1 from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
+    new AqlToDtoParser().parse(query);
+  }
+
+  @Test
+  @Ignore(
+      value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/216 is fixed")
+  public void shouldCorrectlyGenerateAliases() {
+    String query =
+        "Select c0 as F1 from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
+
+    AqlDto dto = new AqlToDtoParser().parse(query);
+
+    SelectFieldDto selectFieldDto = new SelectFieldDto();
+    selectFieldDto.setAqlPath(EhrFields.EHR_ID().getPath());
+    selectFieldDto.setContainmentId(dto.getEhr().getContainmentId());
+    dto.getSelect().getStatement().add(0, selectFieldDto);
+
+    String editedQuery = new AqlBinder().bind(dto).getLeft().buildAql();
+
+    Matcher matcher = Pattern.compile("F1").matcher(editedQuery);
+
+    int count = 0;
+    while (matcher.find()) {
+      count++;
+    }
+
+    assertThat(count, is(1));
+  }
 
   @Test
   public void shouldBeConsistentInParsingAql() {

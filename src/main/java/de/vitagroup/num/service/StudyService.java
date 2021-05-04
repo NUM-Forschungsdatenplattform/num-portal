@@ -206,7 +206,7 @@ public class StudyService {
               .findById(studyId)
               .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + studyId));
 
-      if(study.getStatus() == null || !study.getStatus().equals(StudyStatus.PUBLISHED)){
+      if (study.getStatus() == null || !study.getStatus().equals(StudyStatus.PUBLISHED)) {
         throw new ForbiddenException("Data explorer available for published studies only");
       }
 
@@ -931,5 +931,4 @@ public class StudyService {
     }
     return StringUtils.EMPTY;
   }
-
 }
