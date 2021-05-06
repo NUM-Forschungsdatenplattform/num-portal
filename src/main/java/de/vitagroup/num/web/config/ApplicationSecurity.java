@@ -45,5 +45,6 @@ public class ApplicationSecurity extends WebSecurityConfigurerAdapter {
     web.ignoring().mvcMatchers(HttpMethod.GET, "/content/navigation");
     web.ignoring().mvcMatchers(HttpMethod.GET, "/content/cards");
     web.ignoring().mvcMatchers(HttpMethod.GET, "/content/metrics");
+    web.ignoring().mvcMatchers(HttpMethod.GET, "/content/graphs/**");
   }
 }
