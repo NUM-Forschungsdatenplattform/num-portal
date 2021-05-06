@@ -49,19 +49,19 @@ public class ContentController {
     return ResponseEntity.ok(contentService.getMetrics());
   }
 
-  @GetMapping("/graphs/clinics")
+  @GetMapping("/graph/clinic")
   @ApiOperation(value = "Retrieves the list of participating clinics")
   public ResponseEntity<List<String>> getClinics() {
     return ResponseEntity.ok(contentService.getClinics());
   }
 
-  @GetMapping("/graphs/clinic/{name}/sofaDistribution")
+  @GetMapping("/graph/clinic/{name}/sofaDistribution")
   @ApiOperation(value = "Retrieves sofa distribution of a clinic")
   public ResponseEntity<Map<String, Integer>> getClinicDistributions(@PathVariable String name) {
     return ResponseEntity.ok(contentService.getClinicDistributions(name));
   }
 
-  @GetMapping("/graphs/clinics/sofaAverage")
+  @GetMapping("/graph/clinic/sofaAverage")
   @ApiOperation(value = "Retrieves the sofa averages of participating clinics")
   public ResponseEntity<Map<String, Double>> getClinicAverages() {
     return ResponseEntity.ok(contentService.getClinicAverages());
