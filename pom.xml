@@ -28,7 +28,7 @@
     <openfeign.version>3.0.1</openfeign.version>
     <commons-csv.version>1.8</commons-csv.version>
     <jacoco.version>0.8.6</jacoco.version>
-    <dependency-check.version>6.1.1</dependency-check.version>
+    <dependency-check.version>6.1.6</dependency-check.version>
     <failsafe.version>2.22.2</failsafe.version>
     <surefire.version>2.22.2</surefire.version>
     <ehcache.version>3.9.2</ehcache.version>
