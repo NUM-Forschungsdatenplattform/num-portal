@@ -33,6 +33,10 @@ spring:
             enabled: ${EMAIL_STARTTLS_ENABLED}
             required: ${EMAIL_STARTTLS_REQUIRED}
 
+management:
+  server:
+    port: ${MANAGEMENT_PORT}
+
 userstore:
   url: ${KEYCLOAK_ENDPOINT}/auth/admin/realms/${KEYCLOAK_REALM}
 

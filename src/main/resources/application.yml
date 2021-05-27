@@ -47,6 +47,10 @@ spring:
             enabled: true
             required: true
 
+management:
+  server:
+    port: 8091
+
 swagger:
   oauth2:
     token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
