@@ -48,6 +48,21 @@ spring:
             required: true
 
 management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      enabled: true
+      probes:
+        enabled: true
+    info:
+      enabled: true
+  health:
+    mail:
+      enabled: false
   server:
     port: 8091
 
