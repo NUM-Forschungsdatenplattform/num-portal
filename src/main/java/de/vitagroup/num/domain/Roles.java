@@ -9,6 +9,7 @@ public class Roles {
   public static final String SUPER_ADMIN = "SUPER_ADMIN";
   public static final String CONTENT_ADMIN = "CONTENT_ADMIN";
   public static final String ORGANIZATION_ADMIN = "ORGANIZATION_ADMIN";
+  public static final String MANAGER = "MANAGER";
   public static final String STUDY_COORDINATOR = "STUDY_COORDINATOR";
   public static final String STUDY_APPROVER = "STUDY_APPROVER";
   public static final String RESEARCHER = "RESEARCHER";
@@ -18,6 +19,7 @@ public class Roles {
           SUPER_ADMIN,
           CONTENT_ADMIN,
           ORGANIZATION_ADMIN,
+          MANAGER,
           STUDY_COORDINATOR,
           STUDY_APPROVER,
           RESEARCHER);

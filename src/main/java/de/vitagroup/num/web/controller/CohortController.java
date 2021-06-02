@@ -36,7 +36,7 @@ public class CohortController {
   @AuditLog
   @GetMapping("{cohortId}")
   @ApiOperation(value = "Retrieves a single cohort.")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<CohortDto> getCohort(
       @AuthenticationPrincipal @NotNull Jwt principal, @PathVariable String cohortId) {
     Cohort cohort = cohortService.getCohort(Long.parseLong(cohortId), principal.getSubject());
@@ -46,7 +46,7 @@ public class CohortController {
   @AuditLog
   @PostMapping
   @ApiOperation(value = "Stores a cohort")
-  @PreAuthorize(Role.STUDY_COORDINATOR)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
   public ResponseEntity<CohortDto> createCohort(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @Valid @NotNull @RequestBody CohortDto cohortDto) {
@@ -57,7 +57,7 @@ public class CohortController {
   @AuditLog
   @PutMapping(value = "/{id}")
   @ApiOperation(value = "Updates a cohort")
-  @PreAuthorize(Role.STUDY_COORDINATOR)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
   public ResponseEntity<CohortDto> updateCohort(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @Valid @NotNull @RequestBody CohortDto cohortDto,
@@ -69,7 +69,7 @@ public class CohortController {
   @AuditLog
   @PostMapping("size")
   @ApiOperation(value = "Retrieves the cohort group size without saving")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Long> getCohortGroupSize(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @RequestBody CohortGroupDto cohortGroupDto,

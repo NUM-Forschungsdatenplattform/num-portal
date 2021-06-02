@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -119,20 +120,32 @@ public class AqlServiceTest {
     verify(aqlRepository, times(1)).findById(any());
   }
 
+  @Test(expected = ForbiddenException.class)
+  public void shouldFailWhenDeletingIfCoordinator() {
+    aqlService.deleteById(1L, "approvedUserId", List.of(Roles.STUDY_COORDINATOR));
+    verify(aqlRepository, times(1)).deleteById(1L);
+  }
+
   @Test
-  public void shouldCallRepoWhenDeleting() {
-    aqlService.deleteById(1L, "approvedUserId", List.of());
+  public void shouldCallRepoWhenDeletingIfManager() {
+    aqlService.deleteById(1L, "approvedUserId", List.of(Roles.MANAGER));
+    verify(aqlRepository, times(1)).deleteById(1L);
+  }
+
+  @Test
+  public void shouldCallRepoWhenDeletingIfSuperAdmin() {
+    aqlService.deleteById(1L, "approvedUserId", List.of(Roles.SUPER_ADMIN));
     verify(aqlRepository, times(1)).deleteById(1L);
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleMissingOwnerWhenDeleting() {
-    aqlService.deleteById(2L, "approvedUserId",  List.of());
+    aqlService.deleteById(2L, "approvedUserId",  List.of(Roles.MANAGER));
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleMissingAqlOwnerWhenDeleting() {
-    aqlService.deleteById(3L, "approvedUserId",  List.of());
+    aqlService.deleteById(3L, "approvedUserId",  List.of(Roles.MANAGER));
   }
 
   @Test(expected = SystemException.class)
