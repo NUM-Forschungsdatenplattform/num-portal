@@ -75,7 +75,7 @@ public class PhenotypeController {
     @ApiResponse(code = 404, message = "Not found"),
     @ApiResponse(code = 500, message = "Internal server error")
   })
-  @PreAuthorize(Role.MANAGER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
   public ResponseEntity<PhenotypeDto> createPhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @Valid @RequestBody PhenotypeDto phenotypeDto) {
