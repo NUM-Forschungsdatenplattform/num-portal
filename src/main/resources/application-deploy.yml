@@ -35,7 +35,7 @@ spring:
 
 management:
   server:
-    port: ${MANAGEMENT_PORT}
+    port: 8091
 
 userstore:
   url: ${KEYCLOAK_ENDPOINT}/auth/admin/realms/${KEYCLOAK_REALM}
