@@ -44,7 +44,7 @@ public class AqlController {
   @AuditLog
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves public or owned aql query by id.")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<AqlDto> getAqlById(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @NotEmpty @PathVariable Long id) {
     return ResponseEntity.ok(
@@ -54,7 +54,7 @@ public class AqlController {
   @AuditLog
   @PostMapping()
   @ApiOperation(value = "Creates an aql; the logged in user is assigned as owner of the aql.")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER)
   public ResponseEntity<AqlDto> createAql(
       @AuthenticationPrincipal @NotNull Jwt principal, @Valid @NotNull @RequestBody AqlDto aqlDto) {
 
@@ -66,7 +66,7 @@ public class AqlController {
   @PutMapping(value = "/{id}")
   @ApiOperation(
       value = "Updates an aql; the logged in user is assigned as owner of the aql at creation time")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER)
   public ResponseEntity<AqlDto> updateAql(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @PathVariable("id") Long aqlId,
@@ -79,7 +79,7 @@ public class AqlController {
 
   @AuditLog
   @DeleteMapping("/{id}")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_SUPER_ADMIN)
+  @PreAuthorize(Role.MANAGER_OR_SUPER_ADMIN)
   void deleteAql(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
     aqlService.deleteById(id, principal.getSubject(), Roles.extractRoles(principal));
   }
@@ -87,7 +87,7 @@ public class AqlController {
   @AuditLog
   @GetMapping("/search")
   @ApiOperation(value = "Retrieves a list of aqls based on a search string and search type")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<List<AqlDto>> searchAqls(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @ApiParam(value = "A string contained in the name of the aqls", required = false)
@@ -108,7 +108,7 @@ public class AqlController {
   @GetMapping()
   @ApiOperation(
       value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<List<AqlDto>> getAqls(@AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(
         aqlService.getVisibleAqls(principal.getSubject()).stream()
@@ -119,7 +119,7 @@ public class AqlController {
   @AuditLog
   @PostMapping("/size")
   @ApiOperation(value = "Executes an aql and returns the count of matching ehr ids")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Long> getAqlSize(
       @AuthenticationPrincipal @NotNull Jwt principal, @Valid @RequestBody SlimAqlDto aql) {
     return ResponseEntity.ok(aqlService.getAqlSize(aql, principal.getSubject()));

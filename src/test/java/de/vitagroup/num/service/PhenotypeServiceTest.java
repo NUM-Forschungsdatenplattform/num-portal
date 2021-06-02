@@ -18,7 +18,6 @@ import de.vitagroup.num.domain.repository.CohortGroupRepository;
 import de.vitagroup.num.domain.repository.PhenotypeRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.PhenotypeExecutor;
-import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.PrivacyException;
@@ -56,7 +55,7 @@ public class PhenotypeServiceTest {
   @Captor ArgumentCaptor<Phenotype> phenotypeArgumentCaptor;
 
   @Test
-  public void shouldHardDeleteOwnedNotUsedPhenotype() {
+  public void shouldHardDeleteOwnedNotUsedPhenotypeIfManager() {
     when(phenotypeRepository.findById(2L))
         .thenReturn(
             Optional.of(
@@ -67,7 +66,7 @@ public class PhenotypeServiceTest {
     when(phenotypeRepository.existsById(2L)).thenReturn(true);
     when(cohortGroupRepository.existsByPhenotypeId(2L)).thenReturn(false);
 
-    phenotypeService.deletePhenotypeById(2L, "approvedUserId", List.of(Role.STUDY_COORDINATOR));
+    phenotypeService.deletePhenotypeById(2L, "approvedUserId", List.of(Roles.MANAGER));
 
     verify(phenotypeRepository, times(1)).deleteById(2L);
     verify(phenotypeRepository, times(0)).save(any());
@@ -92,8 +91,24 @@ public class PhenotypeServiceTest {
     verify(phenotypeRepository, times(0)).save(any());
   }
 
+  @Test(expected = ForbiddenException.class)
+  public void shouldFailDeleteNotOwnedNotUsedPhenotypeIfManager() {
+    when(phenotypeRepository.findById(2L))
+        .thenReturn(
+            Optional.of(
+                Phenotype.builder()
+                    .id(2L)
+                    .owner(UserDetails.builder().userId("someOtherOwnerId").build())
+                    .build()));
+
+    phenotypeService.deletePhenotypeById(2L, "approvedUserId", List.of(Roles.MANAGER));
+
+    verify(phenotypeRepository, times(1)).deleteById(2L);
+    verify(phenotypeRepository, times(0)).save(any());
+  }
+
   @Test
-  public void shouldSoftDeleteOwnedUsedPhenotype() {
+  public void shouldSoftDeleteUsedPhenotype() {
     Phenotype phenotype =
         Phenotype.builder()
             .id(3L)
@@ -103,7 +118,7 @@ public class PhenotypeServiceTest {
     when(phenotypeRepository.existsById(3L)).thenReturn(true);
     when(cohortGroupRepository.existsByPhenotypeId(3L)).thenReturn(true);
 
-    phenotypeService.deletePhenotypeById(3L, "approvedUserId", List.of(Role.STUDY_COORDINATOR));
+    phenotypeService.deletePhenotypeById(3L, "approvedUserId", List.of(Roles.MANAGER));
 
     verify(phenotypeRepository, times(0)).deleteById(3L);
     verify(phenotypeRepository, times(1)).save(phenotype);

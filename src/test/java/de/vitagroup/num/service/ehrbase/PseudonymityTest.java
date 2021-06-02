@@ -25,7 +25,7 @@ public class PseudonymityTest {
   @InjectMocks private Pseudonymity pseudonymity;
 
   @Test
-  public void shouldPseudonymShouldBeReversible() {
+  public void pseudonymShouldBeReversible() {
     when(ehrBaseService.getAllPatientIds()).thenReturn(Set.of("notTesttestttest", "testtesttest"));
     String pseudonym = pseudonymity.getPseudonym("testtesttest", 100L);
     assertEquals("testtesttest", pseudonymity.getEhrIdFromPseudonym(pseudonym, 100L));

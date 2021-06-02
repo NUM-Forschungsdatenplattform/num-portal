@@ -46,7 +46,7 @@ public class PhenotypeController {
     @ApiResponse(code = 404, message = "Not found"),
     @ApiResponse(code = 500, message = "Internal server error")
   })
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<PhenotypeDto>> getAllPhenotypes(
       @AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(
@@ -58,7 +58,7 @@ public class PhenotypeController {
   @AuditLog
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves a phenotype by id.")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<PhenotypeDto> getPhenotypeById(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @NotEmpty @PathVariable Long id) {
     return ResponseEntity.ok(
@@ -75,7 +75,7 @@ public class PhenotypeController {
     @ApiResponse(code = 404, message = "Not found"),
     @ApiResponse(code = 500, message = "Internal server error")
   })
-  @PreAuthorize(Role.STUDY_COORDINATOR)
+  @PreAuthorize(Role.MANAGER)
   public ResponseEntity<PhenotypeDto> createPhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @Valid @RequestBody PhenotypeDto phenotypeDto) {
@@ -97,7 +97,7 @@ public class PhenotypeController {
     @ApiResponse(code = 451, message = "Too few matchers, withheld for privacy reasons"),
     @ApiResponse(code = 500, message = "Internal server error")
   })
-  @PreAuthorize(Role.STUDY_COORDINATOR)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
   public ResponseEntity<Long> executePhenotype(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @Valid @RequestBody ExpressionDto expressionDto) {
@@ -108,11 +108,9 @@ public class PhenotypeController {
 
   @AuditLog
   @DeleteMapping("/{id}")
-  @ApiOperation(
-      value = "Deletes a phenotype")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER_OR_SUPER_ADMIN)
+  @ApiOperation(value = "Deletes a phenotype")
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_SUPER_ADMIN)
   void deletePhenotype(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
     phenotypeService.deletePhenotypeById(id, principal.getSubject(), Roles.extractRoles(principal));
   }
-
 }

@@ -47,7 +47,7 @@ public class AqlService {
   /**
    * Counts the number of aql queries existing in the platform
    *
-   * @return
+   * @return The number of existing AQL queries in the platform
    */
   public long countAqls() {
     return aqlRepository.count();
@@ -123,8 +123,8 @@ public class AqlService {
             .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + id));
 
     if ((aql.isPublicAql()
-            && (roles.contains(Roles.STUDY_COORDINATOR) || roles.contains(Roles.SUPER_ADMIN)))
-        || !aql.hasEmptyOrDifferentOwner(loggedInUserId)) {
+            && (roles.contains(Roles.MANAGER) || roles.contains(Roles.SUPER_ADMIN)))
+        || (!aql.hasEmptyOrDifferentOwner(loggedInUserId) && roles.contains(Roles.MANAGER))) {
       deleteAql(id);
     } else {
       throw new ForbiddenException("Cannot delete aql: " + id);
