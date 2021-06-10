@@ -20,6 +20,15 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
+import org.ehrbase.aql.binder.AqlBinder;
+import org.ehrbase.aql.dto.AqlDto;
+import org.ehrbase.aql.dto.EhrDto;
+import org.ehrbase.aql.dto.containment.ContainmentDto;
+import org.ehrbase.aql.dto.select.SelectDto;
+import org.ehrbase.aql.dto.select.SelectFieldDto;
+import org.ehrbase.aql.dto.select.SelectStatementDto;
+import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,6 +45,61 @@ public class AqlServiceTest {
   @Mock private UserDetailsService userDetailsService;
 
   @InjectMocks private AqlService aqlService;
+
+  public void getParameterValues(
+      String userId, String aqlPath, String identifier, String archetypeId) {
+    userDetailsService.checkIsUserApproved(userId);
+
+    AqlDto aql = new AqlDto();
+
+    SelectFieldDto selectFieldDto = new SelectFieldDto();
+    selectFieldDto.setAqlPath(aqlPath);
+    selectFieldDto.setContainmentId(1);
+
+    SelectDto select = new SelectDto();
+    select.setStatement(List.of(selectFieldDto));
+
+    ContainmentDto contains = new ContainmentDto();
+    contains.setArchetypeId(archetypeId);
+    contains.setId(1);
+
+    aql.setSelect(select);
+    aql.setContains(contains);
+
+    String finalAql = new AqlBinder().bind(aql).getLeft().buildAql();
+    int a = 1;
+  }
+
+  private static final String SELECT = "Select";
+  private static final String SELECT_DISTINCT = "Select distinct";
+
+  private String insertSelect(String query) {
+    String result = StringUtils.substringAfter(query, SELECT);
+    return new StringBuilder(result).insert(0, SELECT_DISTINCT).toString();
+  }
+
+  @Test
+  public void test() {
+
+    String aql =
+        "SELECT o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value as Beurteilung "
+            + "FROM EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.clinical_frailty_scale.v1]";
+
+    AqlDto initialDto = new AqlToDtoParser().parse(aql);
+    String again = new AqlBinder().bind(initialDto).getLeft().buildAql();
+
+    String altered = insertSelect(again);
+
+
+
+    getParameterValues(
+        "",
+        "/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value",
+        "o0",
+        "openEHR-EHR-OBSERVATION.clinical_frailty_scale.v1");
+
+    int a = 1;
+  }
 
   @Before
   public void setup() {
@@ -140,27 +204,27 @@ public class AqlServiceTest {
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleMissingOwnerWhenDeleting() {
-    aqlService.deleteById(2L, "approvedUserId",  List.of(Roles.MANAGER));
+    aqlService.deleteById(2L, "approvedUserId", List.of(Roles.MANAGER));
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleMissingAqlOwnerWhenDeleting() {
-    aqlService.deleteById(3L, "approvedUserId",  List.of(Roles.MANAGER));
+    aqlService.deleteById(3L, "approvedUserId", List.of(Roles.MANAGER));
   }
 
   @Test(expected = SystemException.class)
   public void shouldHandleNonExistingUser() {
-    aqlService.deleteById(1L, "nonExistingUser",  List.of());
+    aqlService.deleteById(1L, "nonExistingUser", List.of());
   }
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleNonExistingAql() {
-    aqlService.deleteById(9L, "approvedUserId",  List.of());
+    aqlService.deleteById(9L, "approvedUserId", List.of());
   }
 
   @Test(expected = ResourceNotFound.class)
   public void shouldCallRepoWhenSearching() {
-    aqlService.deleteById(9L, "approvedUserId",  List.of());
+    aqlService.deleteById(9L, "approvedUserId", List.of());
   }
 
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {

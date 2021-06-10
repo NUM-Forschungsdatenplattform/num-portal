@@ -122,4 +122,17 @@ public class AqlController {
       @AuthenticationPrincipal @NotNull Jwt principal, @Valid @RequestBody SlimAqlDto aql) {
     return ResponseEntity.ok(aqlService.getAqlSize(aql, principal.getSubject()));
   }
+
+  @AuditLog
+  @GetMapping("/parameter/values")
+  @ApiOperation(
+      value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
+  public ResponseEntity<String> getParameterValues(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @RequestParam String aqlPath,
+      @RequestParam String archetypeId) {
+    aqlService.getParameterValues(principal.getId(), aqlPath, archetypeId);
+    return ResponseEntity.ok("");
+  }
 }

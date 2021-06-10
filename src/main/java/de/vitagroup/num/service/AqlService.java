@@ -18,14 +18,24 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ehrbase.aql.binder.AqlBinder;
+import org.ehrbase.aql.dto.AqlDto;
+import org.ehrbase.aql.dto.containment.ContainmentDto;
+import org.ehrbase.aql.dto.select.SelectDto;
+import org.ehrbase.aql.dto.select.SelectFieldDto;
+import org.ehrbase.aql.dto.select.SelectStatementDto;
 import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Slf4j
 @Service
@@ -122,8 +132,7 @@ public class AqlService {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + id));
 
-    if ((aql.isPublicAql()
-            && (roles.contains(Roles.MANAGER) || roles.contains(Roles.SUPER_ADMIN)))
+    if ((aql.isPublicAql() && (roles.contains(Roles.MANAGER) || roles.contains(Roles.SUPER_ADMIN)))
         || (!aql.hasEmptyOrDifferentOwner(loggedInUserId) && roles.contains(Roles.MANAGER))) {
       deleteAql(id);
     } else {
@@ -178,6 +187,28 @@ public class AqlService {
       throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
     }
     return ehrIds.size();
+  }
+
+  public void getParameterValues(String userId, String aqlPath, String archetypeId) {
+    userDetailsService.checkIsUserApproved(userId);
+
+    AqlDto aql = new AqlDto();
+
+    SelectFieldDto selectFieldDto = new SelectFieldDto();
+    selectFieldDto.setAqlPath(aqlPath);
+    selectFieldDto.setContainmentId(1);
+
+    SelectDto select = new SelectDto();
+    select.setStatement(List.of(selectFieldDto));
+
+    ContainmentDto contains = new ContainmentDto();
+    contains.setArchetypeId(archetypeId);
+    contains.setId(1);
+
+    aql.setSelect(select);
+    aql.setContains(contains);
+
+    String query = new AqlBinder().bind(aql).getLeft().buildAql();
   }
 
   private void validateQuery(String query) {
