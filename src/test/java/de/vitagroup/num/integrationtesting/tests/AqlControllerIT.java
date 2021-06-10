@@ -2,6 +2,7 @@ package de.vitagroup.num.integrationtesting.tests;
 
 import static de.vitagroup.num.domain.Roles.RESEARCHER;
 import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
+import static de.vitagroup.num.domain.Roles.MANAGER;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -160,4 +161,16 @@ public class AqlControllerIT extends IntegrationTest {
             post(AQL_PATH).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(aqlJson))
         .andExpect(status().isBadRequest());
   }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {MANAGER})
+  public void shouldGetAllCategories() {
+
+    mockMvc
+        .perform(
+            get(AQL_PATH+"/category").with(csrf()))
+        .andExpect(status().isOk());
+  }
+
 }
