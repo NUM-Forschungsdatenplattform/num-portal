@@ -3,10 +3,12 @@ package de.vitagroup.num.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
+import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
@@ -18,6 +20,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.aql.parser.AqlParseException;
@@ -33,6 +36,8 @@ import org.springframework.stereotype.Service;
 public class AqlService {
 
   private final AqlRepository aqlRepository;
+
+  private final AqlCategoryRepository aqlCategoryRepository;
 
   private final EhrBaseService ehrBaseService;
 
@@ -110,6 +115,7 @@ public class AqlService {
     aqlToEdit.setModifiedDate(OffsetDateTime.now());
     aqlToEdit.setQuery(aql.getQuery());
     aqlToEdit.setPublicAql(aql.isPublicAql());
+    aqlToEdit.setCategory(aql.getCategory());
 
     return aqlRepository.save(aqlToEdit);
   }
@@ -198,5 +204,38 @@ public class AqlService {
     } catch (EmptyResultDataAccessException e) {
       throw new BadRequestException(String.format("%s: %s", "Invalid aql id", id));
     }
+  }
+
+  public List<AqlCategory> getAqlCategories() {
+    return aqlCategoryRepository.findAll();
+  }
+
+  public AqlCategory createAqlCategory(AqlCategory aqlCategory) {
+    return aqlCategoryRepository.save(aqlCategory);
+  }
+
+  public AqlCategory updateAqlCategory(AqlCategory aqlCategory, Long categoryId) {
+    if(categoryId == null) {
+      throw new BadRequestException("Category id can't be null");
+    }
+    if(!aqlCategoryRepository.existsById(categoryId)){
+      throw new ResourceNotFound("Category by id " + categoryId + "Not found");
+    }
+    aqlCategory.setId(categoryId);
+    return aqlCategoryRepository.save(aqlCategory);
+  }
+
+  @Transactional
+  public void deleteCategoryById(Long id) {
+    if(aqlRepository.findByCategoryId(id).isEmpty()) {
+      if (aqlCategoryRepository.existsById(id)) {
+        aqlCategoryRepository.deleteById(id);
+      } else {
+        throw new ResourceNotFound("Category with id " + id + " does not exist.");
+      }
+    } else {
+      throw new BadRequestException("The category is not empty, can't delete it.");
+    }
+
   }
 }

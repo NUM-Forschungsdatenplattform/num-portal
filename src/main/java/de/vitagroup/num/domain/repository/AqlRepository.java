@@ -36,4 +36,6 @@ public interface AqlRepository extends JpaRepository<Aql, Long> {
       @Param("ownerId") String ownerId,
       @Param("name") String name);
 
+  List<Aql> findByCategoryId(Long id);
+
 }

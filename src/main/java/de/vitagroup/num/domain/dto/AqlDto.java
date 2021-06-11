@@ -42,6 +42,9 @@ public class AqlDto {
   @ApiModelProperty(value = "The owner of the aql")
   private User owner;
 
+  @ApiModelProperty(value = "The owner of the aql")
+  private Long categoryId;
+
   @ApiModelProperty private OffsetDateTime createDate;
 
   @ApiModelProperty private OffsetDateTime modifiedDate;
