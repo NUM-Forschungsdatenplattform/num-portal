@@ -10,6 +10,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.util.List;
+import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -19,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,6 +47,24 @@ public class ContentController {
   @ApiOperation(value = "Retrieves platform metrics")
   public ResponseEntity<MetricsDto> getMetrics() {
     return ResponseEntity.ok(contentService.getMetrics());
+  }
+
+  @GetMapping("/graph/clinic")
+  @ApiOperation(value = "Retrieves the list of participating clinics")
+  public ResponseEntity<List<String>> getClinics() {
+    return ResponseEntity.ok(contentService.getClinics());
+  }
+
+  @GetMapping("/graph/clinic/{name}/sofaDistribution")
+  @ApiOperation(value = "Retrieves sofa distribution of a clinic")
+  public ResponseEntity<Map<String, Integer>> getClinicDistributions(@PathVariable String name) {
+    return ResponseEntity.ok(contentService.getClinicDistributions(name));
+  }
+
+  @GetMapping("/graph/clinic/sofaAverage")
+  @ApiOperation(value = "Retrieves the sofa averages of participating clinics")
+  public ResponseEntity<Map<String, Double>> getClinicAverages() {
+    return ResponseEntity.ok(contentService.getClinicAverages());
   }
 
   @GetMapping("/latest-projects")
