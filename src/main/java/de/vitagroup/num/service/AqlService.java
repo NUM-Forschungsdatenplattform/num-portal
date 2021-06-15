@@ -6,10 +6,12 @@ import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.ehrbase.ParameterService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.PrivacyException;
@@ -18,24 +20,17 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ehrbase.aql.binder.AqlBinder;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.containment.ContainmentDto;
-import org.ehrbase.aql.dto.select.SelectDto;
-import org.ehrbase.aql.dto.select.SelectFieldDto;
-import org.ehrbase.aql.dto.select.SelectStatementDto;
 import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
+import org.ehrbase.response.openehr.QueryResponseData;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Slf4j
 @Service
@@ -53,6 +48,8 @@ public class AqlService {
   private final PrivacyProperties privacyProperties;
 
   private final AqlEditorAqlService aqlEditorAqlService;
+
+  private final ParameterService parameterService;
 
   /**
    * Counts the number of aql queries existing in the platform
@@ -189,26 +186,23 @@ public class AqlService {
     return ehrIds.size();
   }
 
-  public void getParameterValues(String userId, String aqlPath, String archetypeId) {
+  @Cacheable(value = "aqlParameters", key = "#aqlPath")
+  public ParameterOptionsDto getParameterValues(String userId, String aqlPath, String archetypeId) {
     userDetailsService.checkIsUserApproved(userId);
 
-    AqlDto aql = new AqlDto();
+    String query = parameterService.createQuery(aqlPath, archetypeId);
 
-    SelectFieldDto selectFieldDto = new SelectFieldDto();
-    selectFieldDto.setAqlPath(aqlPath);
-    selectFieldDto.setContainmentId(1);
+    try {
+      log.info(
+          String.format(
+              "[AQL QUERY] Getting parameter %s options with query: %s ", aqlPath, query));
+    } catch (Exception e) {
+      log.error("Error parsing query while logging", e);
+    }
 
-    SelectDto select = new SelectDto();
-    select.setStatement(List.of(selectFieldDto));
+    QueryResponseData response = ehrBaseService.executePlainQuery(query);
 
-    ContainmentDto contains = new ContainmentDto();
-    contains.setArchetypeId(archetypeId);
-    contains.setId(1);
-
-    aql.setSelect(select);
-    aql.setContains(contains);
-
-    String query = new AqlBinder().bind(aql).getLeft().buildAql();
+    return parameterService.getParameterOptions(response, aqlPath, archetypeId);
   }
 
   private void validateQuery(String query) {

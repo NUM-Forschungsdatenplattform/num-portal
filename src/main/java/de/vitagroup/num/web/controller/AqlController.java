@@ -4,6 +4,7 @@ import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
@@ -128,11 +129,11 @@ public class AqlController {
   @ApiOperation(
       value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
-  public ResponseEntity<String> getParameterValues(
+  public ResponseEntity<ParameterOptionsDto> getParameterValues(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @RequestParam String aqlPath,
-      @RequestParam String archetypeId) {
-    aqlService.getParameterValues(principal.getId(), aqlPath, archetypeId);
-    return ResponseEntity.ok("");
+      @RequestParam @NotNull @NotEmpty String aqlPath,
+      @RequestParam @NotNull @NotEmpty String archetypeId) {
+    return ResponseEntity.ok(
+        aqlService.getParameterValues(principal.getId(), aqlPath, archetypeId));
   }
 }
