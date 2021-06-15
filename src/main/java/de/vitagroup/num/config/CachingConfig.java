@@ -1,7 +1,6 @@
 package de.vitagroup.num.config;
 
 import java.util.Arrays;
-import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
@@ -16,8 +15,7 @@ public class CachingConfig {
   @Bean
   public CacheManager cacheManager() {
     SimpleCacheManager cacheManager = new SimpleCacheManager();
-    cacheManager.setCaches(Arrays.asList(new ConcurrentMapCache("aqlParameters")));
+    cacheManager.setCaches(Arrays.asList(new ConcurrentMapCache("aqlParameters", false)));
     return cacheManager;
   }
-
 }

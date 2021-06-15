@@ -27,9 +27,11 @@ import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.ehrbase.response.openehr.QueryResponseData;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -50,6 +52,10 @@ public class AqlService {
   private final AqlEditorAqlService aqlEditorAqlService;
 
   private final ParameterService parameterService;
+
+  private final CacheManager cacheManager;
+
+  private static final String PARAMETERS_CACHE = "aqlParameters";
 
   /**
    * Counts the number of aql queries existing in the platform
@@ -186,9 +192,10 @@ public class AqlService {
     return ehrIds.size();
   }
 
-  @Cacheable(value = "aqlParameters", key = "#aqlPath")
+  @CachePut(value = PARAMETERS_CACHE, key = "#aqlPath")
   public ParameterOptionsDto getParameterValues(String userId, String aqlPath, String archetypeId) {
-    userDetailsService.checkIsUserApproved(userId);
+    // userDetailsService.checkIsUserApproved(userId);
+    System.out.println("in the begining");
 
     String query = parameterService.createQuery(aqlPath, archetypeId);
 
@@ -201,8 +208,9 @@ public class AqlService {
     }
 
     QueryResponseData response = ehrBaseService.executePlainQuery(query);
-
-    return parameterService.getParameterOptions(response, aqlPath, archetypeId);
+    System.out.println("in the end");
+    ParameterOptionsDto p = parameterService.getParameterOptions(response, aqlPath, archetypeId);
+    return p;
   }
 
   private void validateQuery(String query) {
@@ -222,6 +230,15 @@ public class AqlService {
       aqlRepository.deleteById(id);
     } catch (EmptyResultDataAccessException e) {
       throw new BadRequestException(String.format("%s: %s", "Invalid aql id", id));
+    }
+  }
+
+  @Scheduled(fixedRate = 60000)
+  public void evictParametersCache() {
+    System.out.println("Evicting...");
+    Cache cache = cacheManager.getCache(PARAMETERS_CACHE);
+    if (cache != null) {
+      cache.clear();
     }
   }
 }
