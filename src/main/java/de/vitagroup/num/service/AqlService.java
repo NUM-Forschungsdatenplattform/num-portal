@@ -194,9 +194,7 @@ public class AqlService {
 
   @CachePut(value = PARAMETERS_CACHE, key = "#aqlPath")
   public ParameterOptionsDto getParameterValues(String userId, String aqlPath, String archetypeId) {
-    // userDetailsService.checkIsUserApproved(userId);
-    System.out.println("in the begining");
-
+    userDetailsService.checkIsUserApproved(userId);
     String query = parameterService.createQuery(aqlPath, archetypeId);
 
     try {
@@ -208,9 +206,8 @@ public class AqlService {
     }
 
     QueryResponseData response = ehrBaseService.executePlainQuery(query);
-    System.out.println("in the end");
-    ParameterOptionsDto p = parameterService.getParameterOptions(response, aqlPath, archetypeId);
-    return p;
+
+    return parameterService.getParameterOptions(response, aqlPath, archetypeId);
   }
 
   private void validateQuery(String query) {
@@ -233,11 +230,11 @@ public class AqlService {
     }
   }
 
-  @Scheduled(fixedRate = 60000)
+  @Scheduled(fixedRate = 3600000)
   public void evictParametersCache() {
-    System.out.println("Evicting...");
     Cache cache = cacheManager.getCache(PARAMETERS_CACHE);
     if (cache != null) {
+      log.trace("Evicting aql parameters opetions cache");
       cache.clear();
     }
   }

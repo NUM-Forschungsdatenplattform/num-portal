@@ -12,6 +12,7 @@ import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -133,7 +134,6 @@ public class AqlController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestParam @NotNull @NotEmpty String aqlPath,
       @RequestParam @NotNull @NotEmpty String archetypeId) {
-    return ResponseEntity.ok(
-        aqlService.getParameterValues(principal.getId(), aqlPath, archetypeId));
+    return ResponseEntity.ok(aqlService.getParameterValues(principal.getId(), aqlPath, archetypeId));
   }
 }
