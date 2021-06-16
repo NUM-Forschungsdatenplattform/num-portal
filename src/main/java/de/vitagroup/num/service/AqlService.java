@@ -7,11 +7,13 @@ import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.ehrbase.ParameterService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.PrivacyException;
@@ -27,7 +29,12 @@ import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
+import org.ehrbase.response.openehr.QueryResponseData;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -48,6 +55,12 @@ public class AqlService {
   private final PrivacyProperties privacyProperties;
 
   private final AqlEditorAqlService aqlEditorAqlService;
+
+  private final ParameterService parameterService;
+
+  private final CacheManager cacheManager;
+
+  private static final String PARAMETERS_CACHE = "aqlParameters";
 
   /**
    * Counts the number of aql queries existing in the platform
@@ -128,8 +141,7 @@ public class AqlService {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + id));
 
-    if ((aql.isPublicAql()
-            && (roles.contains(Roles.MANAGER) || roles.contains(Roles.SUPER_ADMIN)))
+    if ((aql.isPublicAql() && (roles.contains(Roles.MANAGER) || roles.contains(Roles.SUPER_ADMIN)))
         || (!aql.hasEmptyOrDifferentOwner(loggedInUserId) && roles.contains(Roles.MANAGER))) {
       deleteAql(id);
     } else {
@@ -186,6 +198,24 @@ public class AqlService {
     return ehrIds.size();
   }
 
+  @CachePut(value = PARAMETERS_CACHE, key = "#aqlPath")
+  public ParameterOptionsDto getParameterValues(String userId, String aqlPath, String archetypeId) {
+    userDetailsService.checkIsUserApproved(userId);
+    String query = parameterService.createQuery(aqlPath, archetypeId);
+
+    try {
+      log.info(
+          String.format(
+              "[AQL QUERY] Getting parameter %s options with query: %s ", aqlPath, query));
+    } catch (Exception e) {
+      log.error("Error parsing query while logging", e);
+    }
+
+    QueryResponseData response = ehrBaseService.executePlainQuery(query);
+
+    return parameterService.getParameterOptions(response, aqlPath, archetypeId);
+  }
+
   private void validateQuery(String query) {
     QueryValidationResponse response =
         aqlEditorAqlService.validateAql(Result.builder().q(query).build());
@@ -206,6 +236,15 @@ public class AqlService {
     }
   }
 
+  @Scheduled(fixedRate = 3600000)
+  public void evictParametersCache() {
+    Cache cache = cacheManager.getCache(PARAMETERS_CACHE);
+    if (cache != null) {
+      log.trace("Evicting aql parameters opetions cache");
+      cache.clear();
+    }
+  }
+
   public List<AqlCategory> getAqlCategories() {
     return aqlCategoryRepository.findAll();
   }
@@ -215,10 +254,10 @@ public class AqlService {
   }
 
   public AqlCategory updateAqlCategory(AqlCategory aqlCategory, Long categoryId) {
-    if(categoryId == null) {
+    if (categoryId == null) {
       throw new BadRequestException("Category id can't be null");
     }
-    if(!aqlCategoryRepository.existsById(categoryId)){
+    if (!aqlCategoryRepository.existsById(categoryId)) {
       throw new ResourceNotFound("Category by id " + categoryId + "Not found");
     }
     aqlCategory.setId(categoryId);
@@ -227,7 +266,7 @@ public class AqlService {
 
   @Transactional
   public void deleteCategoryById(Long id) {
-    if(aqlRepository.findByCategoryId(id).isEmpty()) {
+    if (aqlRepository.findByCategoryId(id).isEmpty()) {
       if (aqlCategoryRepository.existsById(id)) {
         aqlCategoryRepository.deleteById(id);
       } else {
@@ -236,6 +275,5 @@ public class AqlService {
     } else {
       throw new BadRequestException("The category is not empty, can't delete it.");
     }
-
   }
 }

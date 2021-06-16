@@ -6,6 +6,7 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.AqlCategoryDto;
 import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
@@ -13,6 +14,7 @@ import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -131,21 +133,25 @@ public class AqlController {
   @PostMapping(value = "/category")
   @ApiOperation(value = "Creates a category. If there is an id in the DTO, it is ignored.")
   @PreAuthorize(Role.MANAGER)
-  public ResponseEntity<AqlCategoryDto> createCategory(@Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
+  public ResponseEntity<AqlCategoryDto> createCategory(
+      @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
 
-    AqlCategory aqlCategory = aqlService.createAqlCategory(AqlCategory.builder().name(aqlCategoryDto.getName()).build());
+    AqlCategory aqlCategory =
+        aqlService.createAqlCategory(AqlCategory.builder().name(aqlCategoryDto.getName()).build());
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
 
   @AuditLog
   @PutMapping(value = "/category/{id}")
-  @ApiOperation(
-      value = "Updates a category. If present, the id in the DTO is ignored.")
+  @ApiOperation(value = "Updates a category. If present, the id in the DTO is ignored.")
   @PreAuthorize(Role.MANAGER)
-  public ResponseEntity<AqlCategoryDto> updateCategory(@PathVariable("id") Long categoryId,
+  public ResponseEntity<AqlCategoryDto> updateCategory(
+      @PathVariable("id") Long categoryId,
       @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
 
-    AqlCategory aqlCategory = aqlService.updateAqlCategory(AqlCategory.builder().name(aqlCategoryDto.getName()).build(), categoryId);
+    AqlCategory aqlCategory =
+        aqlService.updateAqlCategory(
+            AqlCategory.builder().name(aqlCategoryDto.getName()).build(), categoryId);
 
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
@@ -159,12 +165,23 @@ public class AqlController {
 
   @AuditLog
   @GetMapping(value = "/category")
-  @ApiOperation(
-      value = "Retrieves the list of categories.")
+  @ApiOperation(value = "Retrieves the list of categories.")
   public ResponseEntity<List<AqlCategoryDto>> getAqlCategories() {
     return ResponseEntity.ok(
         aqlService.getAqlCategories().stream()
             .map(category -> modelMapper.map(category, AqlCategoryDto.class))
             .collect(Collectors.toList()));
+  }
+
+  @AuditLog
+  @GetMapping("/parameter/values")
+  @ApiOperation(value = "Retrieves a list of possible values for an aql path")
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
+  public ResponseEntity<ParameterOptionsDto> getParameterValues(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @RequestParam @NotNull @NotEmpty String aqlPath,
+      @RequestParam @NotNull @NotEmpty String archetypeId) {
+    return ResponseEntity.ok(
+        aqlService.getParameterValues(principal.getId(), aqlPath, archetypeId));
   }
 }
