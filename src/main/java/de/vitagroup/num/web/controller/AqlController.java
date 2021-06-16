@@ -175,8 +175,7 @@ public class AqlController {
 
   @AuditLog
   @GetMapping("/parameter/values")
-  @ApiOperation(
-      value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
+  @ApiOperation(value = "Retrieves a list of possible values for an aql path")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<ParameterOptionsDto> getParameterValues(
       @AuthenticationPrincipal @NotNull Jwt principal,

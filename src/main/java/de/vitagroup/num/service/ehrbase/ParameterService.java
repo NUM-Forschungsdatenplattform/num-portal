@@ -2,7 +2,6 @@ package de.vitagroup.num.service.ehrbase;
 
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
@@ -21,7 +20,10 @@ import org.springframework.stereotype.Service;
 public class ParameterService {
 
   private static final String SELECT = "Select";
+  private static final String SYMBOL = "symbol";
   private static final String SELECT_DISTINCT = "Select distinct";
+  private static final String DV_BOOLEAN = "DV_BOOLEAN";
+  private static final String DV_CODED_TEXT = "DV_CODED_TEXT";
 
   /**
    * Create the aql query for retrieving all distinct existing values of a certain aql path
@@ -60,23 +62,13 @@ public class ParameterService {
 
   public ParameterOptionsDto getParameterOptions(
       QueryResponseData response, String aqlPath, String archetypeId) {
-    List<Object> options = new LinkedList<>();
-    if (response != null && CollectionUtils.isNotEmpty(response.getRows())) {
-      List<List<Object>> rows = response.getRows();
-      rows.forEach(
-          row -> {
-            if (CollectionUtils.isNotEmpty(row) && (row.get(0) instanceof HashMap)) {
-              LinkedHashMap rowData = (LinkedHashMap) row.get(0);
 
-              if (isDvText(rowData) || isDvBoolean(rowData)) {
-                Object value = getValue(rowData);
-                if (value != null) {
-                  options.add(value);
-                }
-              }
-            }
-          });
+    List<Object> options = new LinkedList<>();
+
+    if (response != null && CollectionUtils.isNotEmpty(response.getRows())) {
+      response.getRows().forEach(row -> processResponseRow(options, row));
     }
+
     return ParameterOptionsDto.builder()
         .options(options)
         .aqlPath(aqlPath)
@@ -84,7 +76,20 @@ public class ParameterService {
         .build();
   }
 
-  private Object getValue(LinkedHashMap rowData) {
+  private void processResponseRow(List<Object> options, List<Object> row) {
+    if (CollectionUtils.isNotEmpty(row) && (row.get(0) instanceof HashMap)) {
+      HashMap rowData = (HashMap) row.get(0);
+
+      if (isDvText(rowData) || isDvBoolean(rowData)) {
+        Object value = getValue(rowData);
+        if (value != null) {
+          options.add(value);
+        }
+      }
+    }
+  }
+
+  private Object getValue(HashMap rowData) {
     if (rowData.containsKey("value")) {
       return rowData.get("value");
     } else {
@@ -92,20 +97,19 @@ public class ParameterService {
     }
   }
 
-  private boolean isDvText(LinkedHashMap rowData) {
-    return isType(rowData, "DV_CODED_TEXT");
+  private boolean isDvText(HashMap rowData) {
+    return isType(rowData, DV_CODED_TEXT);
   }
 
-  private boolean isDvBoolean(LinkedHashMap rowData) {
-    return isType(rowData, "DV_BOOLEAN");
+  private boolean isDvBoolean(HashMap rowData) {
+    return isType(rowData, DV_BOOLEAN);
   }
 
-  private boolean isType(LinkedHashMap rowData, String ehrType) {
-    if (rowData.containsKey("symbol")) {
-      if (rowData.get("symbol") instanceof HashMap) {
-        LinkedHashMap symbolData = (LinkedHashMap) rowData.get("symbol");
+  private boolean isType(HashMap rowData, String ehrType) {
+    if (rowData.containsKey(SYMBOL)) {
+      if (rowData.get(SYMBOL) instanceof HashMap) {
+        HashMap symbolData = (HashMap) rowData.get(SYMBOL);
         if (symbolData.containsKey("_type") && symbolData.get("_type").equals(ehrType)) {
-          System.out.println("It's a _type -> " + ehrType);
           return true;
         }
       }

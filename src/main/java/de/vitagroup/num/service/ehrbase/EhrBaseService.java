@@ -138,7 +138,7 @@ public class EhrBaseService {
       throw e;
     } catch (ClientException e) {
       log.error("An error has occurred while calling ehrbase", e);
-      throw new SystemException("An error has occurred, cannot execute aql");
+      throw new SystemException("An error has occurred, cannot execute aql", e);
     }
   }
 
