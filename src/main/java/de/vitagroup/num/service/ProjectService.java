@@ -7,7 +7,7 @@ import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
-import de.vitagroup.num.domain.ProjectTransitions;
+import de.vitagroup.num.domain.ProjectTransition;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.ProjectInfoDto;
@@ -807,8 +807,8 @@ public class ProjectService {
       return;
     }
 
-    ProjectTransitions projectTransitions =
-        ProjectTransitions.builder()
+    ProjectTransition projectTransition =
+        ProjectTransition.builder()
             .toStatus(toStatus)
             .project(project)
             .user(user)
@@ -816,13 +816,13 @@ public class ProjectService {
             .build();
 
     if (fromStatus != null) {
-      projectTransitions.setFromStatus(fromStatus);
+      projectTransition.setFromStatus(fromStatus);
     }
 
     if (project.getTransitions() != null) {
-      project.getTransitions().add(projectTransitions);
+      project.getTransitions().add(projectTransition);
     } else {
-      project.setTransitions(Set.of(projectTransitions));
+      project.setTransitions(Set.of(projectTransition));
     }
   }
 
@@ -882,7 +882,7 @@ public class ProjectService {
 
   @NotNull
   private String getApprovalDateIfExists(Project project) {
-    List<ProjectTransitions> transitions =
+    List<ProjectTransition> transitions =
         projectTransitionRepository
             .findAllByProjectIdAndFromStatusAndToStatus(
                 project.getId(), ProjectStatus.REVIEWING, ProjectStatus.APPROVED)
@@ -917,7 +917,7 @@ public class ProjectService {
 
   @NotNull
   private String getClosedDateIfExists(Project project) {
-    List<ProjectTransitions> transitions =
+    List<ProjectTransition> transitions =
         projectTransitionRepository
             .findAllByProjectIdAndFromStatusAndToStatus(
                 project.getId(), ProjectStatus.PUBLISHED, ProjectStatus.CLOSED)

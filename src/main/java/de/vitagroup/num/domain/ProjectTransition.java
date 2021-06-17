@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProjectTransitions implements Serializable {
+public class ProjectTransition implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

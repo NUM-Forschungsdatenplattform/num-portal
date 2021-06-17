@@ -108,7 +108,7 @@ public class Project implements Serializable {
   @ToString.Exclude
   @JsonManagedReference
   @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<ProjectTransitions> transitions = new HashSet<>();
+  private Set<ProjectTransition> transitions = new HashSet<>();
 
   public boolean hasEmptyOrDifferentOwner(String userId) {
     return ObjectUtils.isEmpty(coordinator) || !coordinator.getUserId().equals(userId);
