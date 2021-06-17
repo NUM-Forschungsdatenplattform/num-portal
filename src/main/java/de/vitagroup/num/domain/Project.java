@@ -47,7 +47,7 @@ import org.apache.commons.lang3.ObjectUtils;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(exclude = {"cohort", "transitions"})
-public class Study implements Serializable {
+public class Project implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,10 +68,10 @@ public class Study implements Serializable {
   private String goal;
 
   @Enumerated(EnumType.STRING)
-  private StudyStatus status;
+  private ProjectStatus status;
 
   @Convert(converter = CategorySetConverter.class)
-  private Set<StudyCategories> categories;
+  private Set<ProjectCategories> categories;
 
   @Convert(converter = StringSetConverter.class)
   private Set<String> keywords;
@@ -100,21 +100,21 @@ public class Study implements Serializable {
 
   @ManyToMany(fetch = FetchType.EAGER)
   @JoinTable(
-      name = "study_users",
-      joinColumns = @JoinColumn(name = "study_id"),
+      name = "project_users",
+      joinColumns = @JoinColumn(name = "project_id"),
       inverseJoinColumns = @JoinColumn(name = "user_details_id"))
   private List<UserDetails> researchers;
 
   @ToString.Exclude
   @JsonManagedReference
-  @OneToMany(mappedBy = "study", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<StudyTransition> transitions = new HashSet<>();
+  @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<ProjectTransitions> transitions = new HashSet<>();
 
   public boolean hasEmptyOrDifferentOwner(String userId) {
     return ObjectUtils.isEmpty(coordinator) || !coordinator.getUserId().equals(userId);
   }
 
-  public boolean isStudyResearcher(String userId) {
+  public boolean isProjectResearcher(String userId) {
     if (CollectionUtils.isEmpty(researchers)) {
       return false;
     }
@@ -126,6 +126,6 @@ public class Study implements Serializable {
   }
 
   public boolean isDeletable() {
-    return StudyStatus.DRAFT.equals(status) || StudyStatus.CHANGE_REQUEST.equals(status);
+    return ProjectStatus.DRAFT.equals(status) || ProjectStatus.CHANGE_REQUEST.equals(status);
   }
 }

@@ -19,13 +19,13 @@ import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortGroup;
 import de.vitagroup.num.domain.Operator;
 import de.vitagroup.num.domain.Phenotype;
-import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
-import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -59,7 +59,7 @@ public class CohortServiceTest {
 
   @Mock private UserDetailsService userDetailsService;
 
-  @Mock private StudyRepository studyRepository;
+  @Mock private ProjectRepository projectRepository;
 
   @Mock private PhenotypeService phenotypeService;
 
@@ -123,26 +123,26 @@ public class CohortServiceTest {
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingStudy() {
-    CohortDto cohortDto = CohortDto.builder().studyId(1L).build();
+    CohortDto cohortDto = CohortDto.builder().projectId(1L).build();
     cohortService.createCohort(cohortDto, "approvedUserId");
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleStudyWithDifferentOwner() {
-    CohortDto cohortDto = CohortDto.builder().studyId(2L).build();
+    CohortDto cohortDto = CohortDto.builder().projectId(2L).build();
     cohortService.createCohort(cohortDto, "approvedUserId");
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleNullCohortGroup() {
     CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").studyId(3L).cohortGroup(null).build();
+        CohortDto.builder().name("Cohort name").projectId(3L).cohortGroup(null).build();
     cohortService.createCohort(cohortDto, "approvedUserId");
   }
 
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingCohortWhenEditing() {
-    CohortDto cohortDto = CohortDto.builder().name("Cohort name").studyId(3L).build();
+    CohortDto cohortDto = CohortDto.builder().name("Cohort name").projectId(3L).build();
     cohortService.updateCohort(cohortDto, 3L, "approvedUserId");
   }
 
@@ -159,7 +159,7 @@ public class CohortServiceTest {
             .build();
 
     CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").studyId(3L).cohortGroup(andCohort).build();
+        CohortDto.builder().name("Cohort name").projectId(3L).cohortGroup(andCohort).build();
 
     cohortService.createCohort(cohortDto, "approvedUserId");
     Mockito.verify(cohortRepository).save(cohortCaptor.capture());
@@ -167,9 +167,9 @@ public class CohortServiceTest {
     Cohort savedCohort = cohortCaptor.getValue();
 
     assertThat(savedCohort, notNullValue());
-    assertThat(savedCohort.getStudy(), notNullValue());
-    assertThat(savedCohort.getStudy().getId(), is(3L));
-    assertThat(savedCohort.getStudy().getName(), is("Study name"));
+    assertThat(savedCohort.getProject(), notNullValue());
+    assertThat(savedCohort.getProject().getId(), is(3L));
+    assertThat(savedCohort.getProject().getName(), is("Study name"));
     assertThat(savedCohort.getCohortGroup().getOperator(), is(Operator.AND));
     assertThat(savedCohort.getCohortGroup().getType(), is(Type.GROUP));
     assertThat(savedCohort.getCohortGroup().getChildren().size(), is(2));
@@ -198,7 +198,7 @@ public class CohortServiceTest {
         CohortDto.builder()
             .name("New cohort name")
             .description("New cohort description")
-            .studyId(4L)
+            .projectId(4L)
             .cohortGroup(simpleCohort)
             .build();
 
@@ -211,9 +211,9 @@ public class CohortServiceTest {
     assertThat(editedCohort.getId(), is(4L));
     assertThat(editedCohort.getName(), is("New cohort name"));
     assertThat(editedCohort.getDescription(), is("New cohort description"));
-    assertThat(editedCohort.getStudy(), notNullValue());
-    assertThat(editedCohort.getStudy().getId(), is(3L));
-    assertThat(editedCohort.getStudy().getName(), is("Study name"));
+    assertThat(editedCohort.getProject(), notNullValue());
+    assertThat(editedCohort.getProject().getId(), is(3L));
+    assertThat(editedCohort.getProject().getName(), is("Study name"));
     assertThat(editedCohort.getCohortGroup().getOperator(), nullValue());
     assertThat(editedCohort.getCohortGroup().getType(), is(Type.PHENOTYPE));
     assertThat(editedCohort.getCohortGroup().getChildren(), nullValue());
@@ -285,10 +285,10 @@ public class CohortServiceTest {
     when(userDetailsService.checkIsUserApproved("approvedUserId"))
         .thenReturn(approvedUser);
 
-    when(studyRepository.findById(2L))
+    when(projectRepository.findById(2L))
         .thenReturn(
             Optional.of(
-                Study.builder()
+                Project.builder()
                     .name("Study")
                     .id(2L)
                     .name("Study name")
@@ -296,10 +296,10 @@ public class CohortServiceTest {
                         UserDetails.builder().userId("someOtherUser").approved(true).build())
                     .build()));
 
-    Study ownedStudy =
-        Study.builder().name("Study").id(3L).name("Study name").coordinator(approvedUser).build();
+    Project ownedProject =
+        Project.builder().name("Study").id(3L).name("Study name").coordinator(approvedUser).build();
 
-    when(studyRepository.findById(3L)).thenReturn(Optional.of(ownedStudy));
+    when(projectRepository.findById(3L)).thenReturn(Optional.of(ownedProject));
 
     Aql aql1 =
         Aql.builder()
@@ -371,7 +371,7 @@ public class CohortServiceTest {
             .name("Cohort to edit")
             .name("Cohort to edit description")
             .id(4L)
-            .study(ownedStudy)
+            .project(ownedProject)
             .cohortGroup(andCohort)
             .build();
 

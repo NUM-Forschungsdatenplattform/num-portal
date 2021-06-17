@@ -36,8 +36,8 @@ public class Comment implements Serializable {
 
   @ManyToOne
   @JsonBackReference
-  @JoinColumn(name = "study_id")
-  private Study study;
+  @JoinColumn(name = "project_id")
+  private Project project;
 
   private OffsetDateTime createDate;
 

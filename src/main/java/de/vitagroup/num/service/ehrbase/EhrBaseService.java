@@ -99,7 +99,7 @@ public class EhrBaseService {
    * @param aqlDto The aql query
    * @return QueryResponseData
    */
-  public List<QueryResponseData> executeRawQuery(AqlDto aqlDto, Long studyId) {
+  public List<QueryResponseData> executeRawQuery(AqlDto aqlDto, Long projectId) {
 
     addSelectEhrId(aqlDto);
     Query<Record> query = new AqlBinder().bind(aqlDto).getLeft();
@@ -116,7 +116,7 @@ public class EhrBaseService {
       }
 
       QueryResponseData response = restClient.aqlEndpoint().executeRaw(query);
-      return flattenIfCompositionPresent(response, studyId);
+      return flattenIfCompositionPresent(response, projectId);
 
     } catch (WrongStatusCodeException e) {
       log.error("An error has occurred while calling ehrbase", e);
@@ -162,10 +162,10 @@ public class EhrBaseService {
   }
 
   public List<QueryResponseData> flattenIfCompositionPresent(
-      QueryResponseData responseData, Long studyId) {
+      QueryResponseData responseData, Long projectId) {
     List<String> ehrIds = getAndRemoveEhrIdColumn(responseData);
     List<QueryResponseData> listOfResponseData = flattenCompositions(responseData);
-    addPseudonyms(ehrIds, listOfResponseData, studyId);
+    addPseudonyms(ehrIds, listOfResponseData, projectId);
     return listOfResponseData;
   }
 
@@ -210,10 +210,10 @@ public class EhrBaseService {
   }
 
   private void addPseudonyms(
-      List<String> ehrIds, List<QueryResponseData> listOfResponseData, Long studyId) {
+      List<String> ehrIds, List<QueryResponseData> listOfResponseData, Long projectId) {
     List<String> pseudonyms =
         ehrIds.stream()
-            .map(ehrId -> pseudonymity.getPseudonym(ehrId, studyId))
+            .map(ehrId -> pseudonymity.getPseudonym(ehrId, projectId))
             .collect(Collectors.toList());
     Map<String, String> pseudonymityColumn = new HashMap<>();
     pseudonymityColumn.put(PATH, PSEUDONYM);

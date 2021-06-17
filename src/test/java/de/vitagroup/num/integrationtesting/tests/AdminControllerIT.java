@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.StudyStatus;
-import de.vitagroup.num.domain.dto.StudyDto;
+import de.vitagroup.num.domain.ProjectStatus;
+import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import lombok.SneakyThrows;
 import org.junit.Ignore;
@@ -25,7 +25,7 @@ public class AdminControllerIT extends IntegrationTest {
   @Autowired private ObjectMapper mapper;
 
   private static final String ADMIN_PATH = "/admin/user";
-  private static final String STUDY_PATH = "/study";
+  private static final String PROJECT_PATH = "/project";
 
   private static final String USER_ID = "b59e5edb-3121-4e0a-8ccb-af6798207a79";
 
@@ -50,18 +50,18 @@ public class AdminControllerIT extends IntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk());
 
-    StudyDto validStudy =
-        StudyDto.builder().name("s1").firstHypotheses("fh1").status(StudyStatus.PENDING).build();
-    String studyJson = mapper.writeValueAsString(validStudy);
+    ProjectDto validProject =
+        ProjectDto.builder().name("s1").firstHypotheses("fh1").status(ProjectStatus.PENDING).build();
+    String studyJson = mapper.writeValueAsString(validProject);
 
     mockMvc
         .perform(
-            post(STUDY_PATH)
+            post(PROJECT_PATH)
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(studyJson))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.name").value(validStudy.getName()))
-        .andExpect(jsonPath("$.firstHypotheses").value(validStudy.getFirstHypotheses()));
+        .andExpect(jsonPath("$.name").value(validProject.getName()))
+        .andExpect(jsonPath("$.firstHypotheses").value(validProject.getFirstHypotheses()));
   }
 }

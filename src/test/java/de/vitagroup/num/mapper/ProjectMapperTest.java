@@ -4,17 +4,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.Study;
-import de.vitagroup.num.domain.StudyStatus;
+import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.StudyDto;
+import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
-import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
 import java.util.List;
 import java.util.Map;
@@ -28,20 +26,20 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
 
 @RunWith(MockitoJUnitRunner.class)
-public class StudyMapperTest {
+public class ProjectMapperTest {
 
   @Spy private ModelMapper modelMapper;
 
   @Mock private TemplateMapper templateMapper;
 
-  @InjectMocks private StudyMapper studyMapper;
+  @InjectMocks private ProjectMapper projectMapper;
 
   @Mock
   private UserService userService;
 
   @Before
   public void setup() {
-    studyMapper.initialize();
+    projectMapper.initialize();
     when(templateMapper.convertToTemplateInfoDtoList(any()))
         .thenReturn(
             List.of(
@@ -52,33 +50,33 @@ public class StudyMapperTest {
   }
 
   @Test
-  public void shouldCorrectlyConvertStudyToStudyDto() {
+  public void shouldCorrectlyConvertProjectToProjectDto() {
     Cohort cohort = Cohort.builder().id(1L).build();
 
-    Study study =
-        Study.builder()
+    Project project =
+        Project.builder()
             .id(1L)
             .name("Study name")
             .cohort(cohort)
             .description("Study description")
             .firstHypotheses("first")
             .secondHypotheses("second")
-            .status(StudyStatus.DRAFT)
+            .status(ProjectStatus.DRAFT)
             .coordinator(UserDetails.builder().userId("123").build())
             .templates(Map.of("param1", "value1", "param2", "value2"))
             .build();
 
-    StudyDto dto = studyMapper.convertToDto(study);
+    ProjectDto dto = projectMapper.convertToDto(project);
 
     assertThat(dto, notNullValue());
 
-    assertThat(dto.getName(), is(study.getName()));
-    assertThat(dto.getDescription(), is(study.getDescription()));
-    assertThat(dto.getFirstHypotheses(), is(study.getFirstHypotheses()));
-    assertThat(dto.getSecondHypotheses(), is(study.getSecondHypotheses()));
+    assertThat(dto.getName(), is(project.getName()));
+    assertThat(dto.getDescription(), is(project.getDescription()));
+    assertThat(dto.getFirstHypotheses(), is(project.getFirstHypotheses()));
+    assertThat(dto.getSecondHypotheses(), is(project.getSecondHypotheses()));
     assertThat(dto.getCohortId(), is(cohort.getId()));
     assertThat(dto.getTemplates().stream().anyMatch(c -> c.getTemplateId() == "param1"), is(true));
     assertThat(dto.getTemplates().stream().anyMatch(c -> c.getTemplateId() == "param2"), is(true));
-    assertThat(dto.getId(), is(study.getId()));
+    assertThat(dto.getId(), is(project.getId()));
   }
 }

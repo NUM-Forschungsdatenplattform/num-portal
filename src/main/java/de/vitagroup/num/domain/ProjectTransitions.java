@@ -22,17 +22,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StudyTransition implements Serializable {
+public class ProjectTransitions implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @Enumerated(EnumType.STRING)
-  private StudyStatus fromStatus;
+  private ProjectStatus fromStatus;
 
   @Enumerated(EnumType.STRING)
-  private StudyStatus toStatus;
+  private ProjectStatus toStatus;
 
   private OffsetDateTime createDate;
 
@@ -43,7 +43,7 @@ public class StudyTransition implements Serializable {
 
   @ManyToOne
   @JsonBackReference
-  @JoinColumn(name = "study_id")
-  private Study study;
+  @JoinColumn(name = "project_id")
+  private Project project;
 
 }

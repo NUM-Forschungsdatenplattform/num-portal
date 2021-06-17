@@ -29,7 +29,7 @@ public class ContentService {
 
   private final ObjectMapper mapper;
 
-  private final StudyService projectService;
+  private final ProjectService projectService;
 
   private final AqlService aqlService;
 
