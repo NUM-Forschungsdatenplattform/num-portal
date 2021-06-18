@@ -8,21 +8,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public enum StudyStatus {
-  /** Study creation in progress */
+public enum ProjectStatus {
+  /** Project creation in progress */
   DRAFT {
     @Override
-    public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
+    public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
           DRAFT, Arrays.asList(STUDY_COORDINATOR),
           PENDING, Arrays.asList(STUDY_COORDINATOR));
     }
   },
 
-  /** Study is finalized and send for approval but still editable */
+  /** Project is finalized and send for approval but still editable */
   PENDING {
     @Override
-    public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
+    public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
           PENDING, Arrays.asList(STUDY_COORDINATOR),
           REVIEWING, Arrays.asList(STUDY_APPROVER),
@@ -30,10 +30,10 @@ public enum StudyStatus {
     }
   },
 
-  /** Study is being review and cannot be edited */
+  /** Project is being review and cannot be edited */
   REVIEWING {
     @Override
-    public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
+    public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
           REVIEWING, Arrays.asList(STUDY_APPROVER),
           APPROVED, Arrays.asList(STUDY_APPROVER),
@@ -45,7 +45,7 @@ public enum StudyStatus {
   /** Pending requests from the reviewer */
   CHANGE_REQUEST {
     @Override
-    public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
+    public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
           CHANGE_REQUEST, Arrays.asList(STUDY_COORDINATOR),
           DRAFT, Arrays.asList(STUDY_COORDINATOR),
@@ -53,53 +53,53 @@ public enum StudyStatus {
     }
   },
 
-  /** Study is denied */
+  /** Project is denied */
   DENIED {
     @Override
-    public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
+    public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
           DENIED, Arrays.asList(STUDY_COORDINATOR),
           ARCHIVED, Arrays.asList(STUDY_COORDINATOR, SUPER_ADMIN));
     }
   },
 
-  /** Study is approved */
+  /** Project is approved */
   APPROVED {
     @Override
-    public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
+    public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
           APPROVED, Arrays.asList(STUDY_COORDINATOR),
           PUBLISHED, Arrays.asList(STUDY_COORDINATOR));
     }
   },
 
-  /** Study is published and cannot be edited anymore */
+  /** Project is published and cannot be edited anymore */
   PUBLISHED {
     @Override
-    public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
+    public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
           PUBLISHED, Arrays.asList(STUDY_COORDINATOR),
           CLOSED, Arrays.asList(STUDY_COORDINATOR));
     }
   },
 
-  /** Study is finished */
+  /** Project is finished */
   CLOSED {
     @Override
-    public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
+    public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
           CLOSED, Arrays.asList(STUDY_COORDINATOR),
           ARCHIVED, Arrays.asList(STUDY_COORDINATOR, SUPER_ADMIN));
     }
   },
 
-  /** Study is archived */
+  /** Project is archived */
   ARCHIVED {
     @Override
-    public Map<StudyStatus, List<String>> nextStatusesAndRoles() {
+    public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of();
     }
   };
 
-  public abstract Map<StudyStatus, List<String>> nextStatusesAndRoles();
+  public abstract Map<ProjectStatus, List<String>> nextStatusesAndRoles();
 }

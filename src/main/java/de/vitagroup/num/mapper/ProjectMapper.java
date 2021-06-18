@@ -1,8 +1,8 @@
 package de.vitagroup.num.mapper;
 
-import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.dto.StudyDto;
+import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.service.UserService;
 import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
-public class StudyMapper {
+public class ProjectMapper {
 
   private final ModelMapper modelMapper;
   private final TemplateMapper templateMapper;
@@ -21,7 +21,7 @@ public class StudyMapper {
   @PostConstruct
   public void initialize() {
     modelMapper.getConfiguration().setAmbiguityIgnored(true);
-    PropertyMap<Study, StudyDto> templatePropertyMap =
+    PropertyMap<Project, ProjectDto> templatePropertyMap =
         new PropertyMap<>() {
           protected void configure() {
             map().setCohortId(source.getCohort().getId());
@@ -31,11 +31,11 @@ public class StudyMapper {
     modelMapper.addMappings(templatePropertyMap);
   }
 
-  public StudyDto convertToDto(Study study) {
-    StudyDto studyDto = modelMapper.map(study, StudyDto.class);
-    studyDto.setTemplates(templateMapper.convertToTemplateInfoDtoList(study.getTemplates()));
-    User coordinator = userService.getUserById(study.getCoordinator().getUserId(), false);
-    studyDto.setCoordinator(coordinator);
-    return studyDto;
+  public ProjectDto convertToDto(Project project) {
+    ProjectDto projectDto = modelMapper.map(project, ProjectDto.class);
+    projectDto.setTemplates(templateMapper.convertToTemplateInfoDtoList(project.getTemplates()));
+    User coordinator = userService.getUserById(project.getCoordinator().getUserId(), false);
+    projectDto.setCoordinator(coordinator);
+    return projectDto;
   }
 }

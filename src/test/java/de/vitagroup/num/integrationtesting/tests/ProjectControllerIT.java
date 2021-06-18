@@ -5,7 +5,6 @@ import static de.vitagroup.num.domain.Roles.RESEARCHER;
 import static de.vitagroup.num.domain.Roles.STUDY_APPROVER;
 import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
 import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -17,11 +16,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import de.vitagroup.num.domain.Study;
-import de.vitagroup.num.domain.StudyStatus;
+import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.StudyDto;
-import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.domain.dto.ProjectDto;
+import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import java.time.LocalDate;
@@ -36,117 +35,117 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-public class StudyControllerIT extends IntegrationTest {
+public class ProjectControllerIT extends IntegrationTest {
 
-  private static final String STUDY_PATH = "/study";
+  private static final String PROJECT_PATH = "/project";
   @Autowired public MockMvc mockMvc;
   UserDetails user1;
   UserDetails user2;
   UserDetails user3;
   @Autowired private ObjectMapper mapper;
-  @Autowired private StudyRepository studyRepository;
+  @Autowired private ProjectRepository projectRepository;
   @Autowired private UserDetailsRepository userDetailsRepository;
 
   @Before
-  public void setupStudies() {
-    studyRepository.deleteAll();
+  public void setupProjects() {
+    projectRepository.deleteAll();
     user1 = UserDetails.builder().userId("user1").approved(true).build();
     userDetailsRepository.save(user1);
     user2 = UserDetails.builder().userId("user2").approved(true).build();
     userDetailsRepository.save(user2);
-    Study draftStudy =
-        Study.builder()
+    Project draftProject =
+        Project.builder()
             .name("draft")
             .goal("Default")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
-            .status(StudyStatus.DRAFT)
+            .status(ProjectStatus.DRAFT)
             .build();
-    studyRepository.save(draftStudy);
-    Study pendingStudy =
-        Study.builder()
+    projectRepository.save(draftProject);
+    Project pendingProject =
+        Project.builder()
             .name("pending")
             .goal("Default")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
-            .status(StudyStatus.PENDING)
+            .status(ProjectStatus.PENDING)
             .build();
-    studyRepository.save(pendingStudy);
-    Study reviewingStudy =
-        Study.builder()
+    projectRepository.save(pendingProject);
+    Project reviewingProject =
+        Project.builder()
             .name("reviewing")
             .goal("Default")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
-            .status(StudyStatus.REVIEWING)
+            .status(ProjectStatus.REVIEWING)
             .build();
-    studyRepository.save(reviewingStudy);
-    Study changeRegStudy =
-        Study.builder()
+    projectRepository.save(reviewingProject);
+    Project changeRegProject =
+        Project.builder()
             .name("changeRequest")
             .goal("Default")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
-            .status(StudyStatus.CHANGE_REQUEST)
+            .status(ProjectStatus.CHANGE_REQUEST)
             .build();
-    studyRepository.save(changeRegStudy);
-    Study deniedStudy =
-        Study.builder()
+    projectRepository.save(changeRegProject);
+    Project deniedProject =
+        Project.builder()
             .name("denied")
             .goal("Default")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
-            .status(StudyStatus.DENIED)
+            .status(ProjectStatus.DENIED)
             .build();
-    studyRepository.save(deniedStudy);
-    Study approvedStudy =
-        Study.builder()
+    projectRepository.save(deniedProject);
+    Project approvedProject =
+        Project.builder()
             .name("approved")
             .goal("Default")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
-            .status(StudyStatus.APPROVED)
+            .status(ProjectStatus.APPROVED)
             .build();
-    studyRepository.save(approvedStudy);
-    Study publishedStudy =
-        Study.builder()
+    projectRepository.save(approvedProject);
+    Project publishedProject =
+        Project.builder()
             .name("published")
             .goal("Default")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
-            .status(StudyStatus.PUBLISHED)
+            .status(ProjectStatus.PUBLISHED)
             .build();
-    studyRepository.save(publishedStudy);
-    Study closedStudy =
-        Study.builder()
+    projectRepository.save(publishedProject);
+    Project closedProject =
+        Project.builder()
             .name("closed")
             .goal("Default")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user2))
-            .status(StudyStatus.CLOSED)
+            .status(ProjectStatus.CLOSED)
             .build();
-    studyRepository.save(closedStudy);
+    projectRepository.save(closedProject);
   }
 
   @After
-  public void clearStudies() {
-    studyRepository.deleteAll();
+  public void clearProjects() {
+    projectRepository.deleteAll();
     userDetailsRepository.deleteById("user1");
     userDetailsRepository.deleteById("user2");
   }
@@ -154,13 +153,13 @@ public class StudyControllerIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
-  public void shouldValidateStudy() {
-    StudyDto invalidStudy = StudyDto.builder().build();
-    String studyJson = mapper.writeValueAsString(invalidStudy);
+  public void shouldValidateProject() {
+    ProjectDto invalidProject = ProjectDto.builder().build();
+    String studyJson = mapper.writeValueAsString(invalidProject);
 
     mockMvc
         .perform(
-            post(STUDY_PATH)
+            post(PROJECT_PATH)
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(studyJson))
@@ -170,21 +169,21 @@ public class StudyControllerIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
-  public void shouldNotAccessStudyApiWithWrongRole() {
-    StudyDto validStudy =
-        StudyDto.builder()
+  public void shouldNotAccessProjectApiWithWrongRole() {
+    ProjectDto validProject =
+        ProjectDto.builder()
             .name("s1")
             .goal("Default")
             .endDate(LocalDate.now())
             .startDate(LocalDate.now())
             .firstHypotheses("fh1")
-            .status(StudyStatus.DRAFT)
+            .status(ProjectStatus.DRAFT)
             .build();
-    String studyJson = mapper.writeValueAsString(validStudy);
+    String studyJson = mapper.writeValueAsString(validProject);
 
     mockMvc
         .perform(
-            post(STUDY_PATH)
+            post(PROJECT_PATH)
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(studyJson))
@@ -196,20 +195,20 @@ public class StudyControllerIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_COORDINATOR})
-  public void shouldCreateStudy() {
-    StudyDto validStudy =
-        StudyDto.builder().name("s1").firstHypotheses("fh1").status(StudyStatus.DRAFT).build();
-    String studyJson = mapper.writeValueAsString(validStudy);
+  public void shouldCreateProject() {
+    ProjectDto validProject =
+        ProjectDto.builder().name("s1").firstHypotheses("fh1").status(ProjectStatus.DRAFT).build();
+    String studyJson = mapper.writeValueAsString(validProject);
 
     mockMvc
         .perform(
-            post(STUDY_PATH)
+            post(PROJECT_PATH)
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(studyJson))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.name").value(validStudy.getName()))
-        .andExpect(jsonPath("$.firstHypotheses").value(validStudy.getFirstHypotheses()));
+        .andExpect(jsonPath("$.name").value(validProject.getName()))
+        .andExpect(jsonPath("$.firstHypotheses").value(validProject.getFirstHypotheses()));
   }
 
   @Ignore(
@@ -219,13 +218,13 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(
       roles = {STUDY_COORDINATOR},
       userId = "user1")
-  public void studyCoordinatorShouldGetAllHisStudies() {
+  public void studyCoordinatorShouldGetAllHisProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(STUDY_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    StudyDto[] studies =
-        mapper.readValue(result.getResponse().getContentAsString(), StudyDto[].class);
-    assertEquals(8, studies.length);
+        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
+    ProjectDto[] projects =
+        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
+    assertEquals(8, projects.length);
   }
 
   @Ignore(
@@ -235,21 +234,21 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(
       roles = {RESEARCHER},
       userId = "user2")
-  public void researcherInAStudyShouldGetPublicAndClosedStudies() {
+  public void researcherInAStudyShouldGetPublicAndClosedProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(STUDY_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    StudyDto[] studies =
-        mapper.readValue(result.getResponse().getContentAsString(), StudyDto[].class);
-    assertEquals(2, studies.length);
+        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
+    ProjectDto[] projects =
+        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
+    assertEquals(2, projects.length);
     assertNotNull(
-        Arrays.stream(studies)
-            .filter(studyDto -> studyDto.getName().equals("closed"))
+        Arrays.stream(projects)
+            .filter(projectDto -> projectDto.getName().equals("closed"))
             .findFirst()
             .orElse(null));
     assertNotNull(
-        Arrays.stream(studies)
-            .filter(studyDto -> studyDto.getName().equals("published"))
+        Arrays.stream(projects)
+            .filter(projectDto -> projectDto.getName().equals("published"))
             .findFirst()
             .orElse(null));
   }
@@ -259,13 +258,13 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(
       roles = {RESEARCHER},
       userId = "user1")
-  public void researcherNotInAStudyShouldNotGetStudies() {
+  public void researcherNotInAStudyShouldNotGetProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(STUDY_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    StudyDto[] studies =
-        mapper.readValue(result.getResponse().getContentAsString(), StudyDto[].class);
-    assertEquals(0, studies.length);
+        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
+    ProjectDto[] projects =
+        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
+    assertEquals(0, projects.length);
   }
 
   @Ignore(
@@ -275,21 +274,21 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(
       roles = {STUDY_APPROVER},
       userId = "user1")
-  public void studyApproverShouldGetPendingAndReviewingStudies() {
+  public void studyApproverShouldGetPendingAndReviewingProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(STUDY_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    StudyDto[] studies =
-        mapper.readValue(result.getResponse().getContentAsString(), StudyDto[].class);
-    assertEquals(2, studies.length);
+        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
+    ProjectDto[] projects =
+        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
+    assertEquals(2, projects.length);
     assertNotNull(
-        Arrays.stream(studies)
-            .filter(studyDto -> studyDto.getName().equals("pending"))
+        Arrays.stream(projects)
+            .filter(projectDto -> projectDto.getName().equals("pending"))
             .findFirst()
             .orElse(null));
     assertNotNull(
-        Arrays.stream(studies)
-            .filter(studyDto -> studyDto.getName().equals("reviewing"))
+        Arrays.stream(projects)
+            .filter(projectDto -> projectDto.getName().equals("reviewing"))
             .findFirst()
             .orElse(null));
   }
@@ -299,9 +298,9 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(
       roles = {SUPER_ADMIN},
       userId = "user1")
-  public void superAdminShouldNotGetStudies() {
+  public void superAdminShouldNotGetProjects() {
 
-    mockMvc.perform(get(STUDY_PATH).with(csrf())).andExpect(status().is4xxClientError());
+    mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().is4xxClientError());
   }
 
   @Test
@@ -309,9 +308,9 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(
       roles = {ORGANIZATION_ADMIN},
       userId = "user1")
-  public void orgAdminShouldNotBeAllowedToGetStudies() {
+  public void orgAdminShouldNotBeAllowedToGetProjects() {
 
-    mockMvc.perform(get(STUDY_PATH).with(csrf())).andExpect(status().is4xxClientError());
+    mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().is4xxClientError());
   }
 
   @Test
@@ -319,13 +318,13 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(
       roles = {STUDY_COORDINATOR},
       userId = "user2")
-  public void studyCoordinatorShouldNotGetOtherCoordinatorsStudies() {
+  public void studyCoordinatorShouldNotGetOtherCoordinatorsProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(STUDY_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    StudyDto[] studies =
-        mapper.readValue(result.getResponse().getContentAsString(), StudyDto[].class);
-    assertEquals(0, studies.length);
+        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
+    ProjectDto[] projects =
+        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
+    assertEquals(0, projects.length);
   }
 
   @Test
@@ -334,41 +333,41 @@ public class StudyControllerIT extends IntegrationTest {
       roles = {STUDY_APPROVER},
       userId = "user2")
   public void shouldOnlyAllowUpdatingStatusForApproverRole() {
-    String studyName = "unchanged";
+    String name = "unchanged";
 
-    Study unchangedStudy =
-        Study.builder()
-            .name(studyName)
+    Project unchangedProject =
+        Project.builder()
+            .name(name)
             .goal("Default")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user1))
-            .status(StudyStatus.REVIEWING)
+            .status(ProjectStatus.REVIEWING)
             .build();
-    Study study = studyRepository.save(unchangedStudy);
+    Project project = projectRepository.save(unchangedProject);
 
-    StudyDto updateStudy =
-        StudyDto.builder()
+    ProjectDto updateProject =
+        ProjectDto.builder()
             .name("s1")
             .goal("goal")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now().plusDays(5))
             .firstHypotheses("fh1")
-            .status(StudyStatus.APPROVED)
+            .status(ProjectStatus.APPROVED)
             .build();
 
-    String studyJson = mapper.writeValueAsString(updateStudy);
+    String studyJson = mapper.writeValueAsString(updateProject);
 
     mockMvc
         .perform(
-            put(String.format("%s/%s", STUDY_PATH, study.getId()))
+            put(String.format("%s/%s", PROJECT_PATH, project.getId()))
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(studyJson))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.name").value(studyName))
-        .andExpect(jsonPath("$.status").value(StudyStatus.APPROVED.name()));
+        .andExpect(jsonPath("$.name").value(name))
+        .andExpect(jsonPath("$.status").value(ProjectStatus.APPROVED.name()));
   }
 
   @Test
@@ -376,38 +375,38 @@ public class StudyControllerIT extends IntegrationTest {
   @WithMockNumUser(
       roles = {STUDY_COORDINATOR},
       userId = "user1")
-  public void shouldUpdateStudySuccessfully() {
-    Study createStudy =
-        Study.builder()
-            .name("createStudy")
+  public void shouldUpdateProjectSuccessfully() {
+    Project createProject =
+        Project.builder()
+            .name("createProject")
             .goal("Default")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user1))
             .build();
-    Study study = studyRepository.save(createStudy);
+    Project project = projectRepository.save(createProject);
 
-    StudyDto updateStudy =
-        StudyDto.builder()
-            .name("updateStudy")
+    ProjectDto updateStudy =
+        ProjectDto.builder()
+            .name("updateProject")
             .goal("goal")
             .startDate(LocalDate.now())
             .endDate(LocalDate.now().plusDays(5))
             .firstHypotheses("fh1")
-            .status(StudyStatus.PENDING)
+            .status(ProjectStatus.PENDING)
             .build();
 
-    String studyJson = mapper.writeValueAsString(updateStudy);
+    String projectJson = mapper.writeValueAsString(updateStudy);
 
     mockMvc
         .perform(
-            put(String.format("%s/%s", STUDY_PATH, study.getId()))
+            put(String.format("%s/%s", PROJECT_PATH, project.getId()))
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(studyJson))
+                .content(projectJson))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.name").value("updateStudy"))
-        .andExpect(jsonPath("$.status").value(StudyStatus.PENDING.name()));
+        .andExpect(jsonPath("$.name").value("updateProject"))
+        .andExpect(jsonPath("$.status").value(ProjectStatus.PENDING.name()));
   }
 }

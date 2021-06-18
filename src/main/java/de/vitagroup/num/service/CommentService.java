@@ -1,7 +1,7 @@
 package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.Comment;
-import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.CommentRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -19,38 +19,38 @@ public class CommentService {
 
   private final CommentRepository commentRepository;
   private final UserDetailsService userDetailsService;
-  private final StudyService studyService;
+  private final ProjectService projectService;
 
-  public List<Comment> getComments(Long studyId, String userId) {
+  public List<Comment> getComments(Long projectId, String userId) {
     userDetailsService.checkIsUserApproved(userId);
-    if (!studyService.exists(studyId)) {
-      throw new ResourceNotFound("Study does not exist");
+    if (!projectService.exists(projectId)) {
+      throw new ResourceNotFound("Project does not exist");
     }
 
-    return commentRepository.findByStudyId(studyId);
+    return commentRepository.findByProjectId(projectId);
   }
 
-  public Comment createComment(Comment comment, Long studyId, String loggedInUserId) {
+  public Comment createComment(Comment comment, Long projectId, String loggedInUserId) {
     UserDetails author = userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    Study study =
-        studyService
-            .getStudyById(studyId)
-            .orElseThrow(() -> new ResourceNotFound("Study not found " + studyId));
+    Project project =
+        projectService
+            .getProjectById(projectId)
+            .orElseThrow(() -> new ResourceNotFound("Project not found " + projectId));
 
-    comment.setStudy(study);
+    comment.setProject(project);
     comment.setAuthor(author);
     comment.setCreateDate(OffsetDateTime.now());
     return commentRepository.save(comment);
   }
 
   public Comment updateComment(
-      Comment comment, Long commentId, String loggedInUserId, Long studyId) {
+      Comment comment, Long commentId, String loggedInUserId, Long projectId) {
 
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    if (!studyService.exists(studyId)) {
-      throw new ResourceNotFound("Study not found: " + studyId);
+    if (!projectService.exists(projectId)) {
+      throw new ResourceNotFound("Project not found: " + projectId);
     }
 
     Comment commentToEdit =
@@ -71,11 +71,11 @@ public class CommentService {
     return commentRepository.save(commentToEdit);
   }
 
-  public void deleteComment(Long commentId, Long studyId, String loggedInUserId) {
+  public void deleteComment(Long commentId, Long projectId, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    if (!studyService.exists(studyId)) {
-      throw new ResourceNotFound("Study does not exist");
+    if (!projectService.exists(projectId)) {
+      throw new ResourceNotFound("Project does not exist");
     }
 
     Comment comment =

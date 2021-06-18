@@ -16,22 +16,21 @@ public class Pseudonymity {
   private final PrivacyProperties privacyProperties;
   private final EhrBaseService ehrBaseService;
 
-  public String getPseudonym(String uuid, Long studyId) {
-    if(privacyProperties.getPseudonymitySecret() == null) {
+  public String getPseudonym(String uuid, Long projectId) {
+    if (privacyProperties.getPseudonymitySecret() == null) {
       throw new SystemException("Pseudonymity secret is not configured");
     }
     return new DigestUtils("SHA3-256")
-        .digestAsHex(uuid + studyId + privacyProperties.getPseudonymitySecret());
+        .digestAsHex(uuid + projectId + privacyProperties.getPseudonymitySecret());
   }
 
-  public String getEhrIdFromPseudonym(@NotNull String pseudonym, Long studyId) {
+  public String getEhrIdFromPseudonym(@NotNull String pseudonym, Long projectId) {
     Set<String> ehrIds = ehrBaseService.getAllPatientIds();
     for (String ehrId : ehrIds) {
-      if (pseudonym.equals(getPseudonym(ehrId, studyId))) {
+      if (pseudonym.equals(getPseudonym(ehrId, projectId))) {
         return ehrId;
       }
     }
     throw new ResourceNotFound("Ehr Id matching the pseudonym was not found");
   }
-
 }

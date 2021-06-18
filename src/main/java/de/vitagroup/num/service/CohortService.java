@@ -3,11 +3,11 @@ package de.vitagroup.num.service;
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortGroup;
 import de.vitagroup.num.domain.Phenotype;
-import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
-import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -30,7 +30,7 @@ public class CohortService {
   private final UserDetailsService userDetailsService;
   private final ModelMapper modelMapper;
   private final PhenotypeService phenotypeService;
-  private final StudyRepository studyRepository;
+  private final ProjectRepository projectRepository;
   private final PrivacyProperties privacyProperties;
 
   public Cohort getCohort(Long cohortId, String userId) {
@@ -41,12 +41,12 @@ public class CohortService {
   public Cohort createCohort(CohortDto cohortDto, String userId) {
     userDetailsService.checkIsUserApproved(userId);
 
-    Study study =
-        studyRepository
-            .findById(cohortDto.getStudyId())
-            .orElseThrow(() -> new ResourceNotFound("Study not found: " + cohortDto.getStudyId()));
+    Project project =
+        projectRepository
+            .findById(cohortDto.getProjectId())
+            .orElseThrow(() -> new ResourceNotFound("Project not found: " + cohortDto.getProjectId()));
 
-    if (study.hasEmptyOrDifferentOwner(userId)) {
+    if (project.hasEmptyOrDifferentOwner(userId)) {
       throw new ForbiddenException("Not allowed");
     }
 
@@ -54,11 +54,11 @@ public class CohortService {
         Cohort.builder()
             .name(cohortDto.getName())
             .description(cohortDto.getDescription())
-            .study(study)
+            .project(project)
             .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()))
             .build();
 
-    study.setCohort(cohort);
+    project.setCohort(cohort);
     return cohortRepository.save(cohort);
   }
 
@@ -94,7 +94,7 @@ public class CohortService {
             .findById(cohortId)
             .orElseThrow(() -> new ResourceNotFound("Cohort not found: " + cohortId));
 
-    if (cohortToEdit.getStudy().hasEmptyOrDifferentOwner(userId)) {
+    if (cohortToEdit.getProject().hasEmptyOrDifferentOwner(userId)) {
       throw new ForbiddenException("Not allowed");
     }
 

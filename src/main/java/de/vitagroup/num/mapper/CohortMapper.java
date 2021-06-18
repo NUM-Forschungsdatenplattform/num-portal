@@ -31,7 +31,7 @@ public class CohortMapper {
     PropertyMap<Cohort, CohortDto> cohortDtoMap =
         new PropertyMap<>() {
           protected void configure() {
-            map().setStudyId(source.getStudy().getId());
+            map().setProjectId(source.getProject().getId());
           }
         };
 

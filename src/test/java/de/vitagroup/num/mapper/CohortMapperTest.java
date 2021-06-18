@@ -10,11 +10,11 @@ import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortGroup;
 import de.vitagroup.num.domain.Operator;
 import de.vitagroup.num.domain.Phenotype;
-import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.service.PhenotypeService;
-import de.vitagroup.num.service.StudyService;
+import de.vitagroup.num.service.ProjectService;
 import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +30,7 @@ public class CohortMapperTest {
 
   @Mock private PhenotypeService phenotypeService;
 
-  @Mock private StudyService studyService;
+  @Mock private ProjectService projectService;
 
   @Spy private ModelMapper modelMapper;
 
@@ -40,8 +40,8 @@ public class CohortMapperTest {
   public void setup() {
     cohortMapper.initialize();
 
-    Study study =
-        Study.builder().id(1L).name("Study name").description("Study description").build();
+    Project project =
+        Project.builder().id(1L).name("Project name").description("Project description").build();
 
     Aql aql1 =
         Aql.builder()
@@ -77,8 +77,8 @@ public class CohortMapperTest {
 
   @Test
   public void shouldCorrectlyConvertCohortToCohortDto() {
-    Study study =
-        Study.builder().id(1L).name("Study name").description("Study description").build();
+    Project project =
+        Project.builder().id(1L).name("Project name").description("Project description").build();
 
     Aql aql1 =
         Aql.builder()
@@ -122,13 +122,13 @@ public class CohortMapperTest {
             .build();
 
     Cohort cohort =
-        Cohort.builder().name("Cohort name").study(study).cohortGroup(andCohort).build();
+        Cohort.builder().name("Cohort name").project(project).cohortGroup(andCohort).build();
     CohortDto cohortDto = cohortMapper.convertToDto(cohort);
 
     assertThat(cohortDto.getName(), notNullValue());
     assertThat(cohortDto.getName(), is("Cohort name"));
 
-    assertThat(cohortDto.getStudyId(), is(study.getId()));
+    assertThat(cohortDto.getProjectId(), is(project.getId()));
 
     assertThat(cohortDto.getCohortGroup(), notNullValue());
     assertThat(cohortDto.getCohortGroup().getType(), is(Type.GROUP));
@@ -161,7 +161,7 @@ public class CohortMapperTest {
             .build();
 
     Cohort cohort =
-        Cohort.builder().name("Cohort name").id(17L).study(null).cohortGroup(andCohort).build();
+        Cohort.builder().name("Cohort name").id(17L).project(null).cohortGroup(andCohort).build();
     CohortDto cohortDto = cohortMapper.convertToDto(cohort);
 
     assertThat(cohortDto, notNullValue());

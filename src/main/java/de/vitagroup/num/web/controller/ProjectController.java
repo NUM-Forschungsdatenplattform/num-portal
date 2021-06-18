@@ -3,14 +3,14 @@ package de.vitagroup.num.web.controller;
 import de.vitagroup.num.domain.Comment;
 import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.dto.CommentDto;
 import de.vitagroup.num.domain.dto.RawQueryDto;
-import de.vitagroup.num.domain.dto.StudyDto;
+import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.mapper.CommentMapper;
-import de.vitagroup.num.mapper.StudyMapper;
+import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.service.CommentService;
-import de.vitagroup.num.service.StudyService;
+import de.vitagroup.num.service.ProjectService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
@@ -43,94 +43,94 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 @RestController
 @AllArgsConstructor
-@RequestMapping(value = "/study", produces = "application/json")
-public class StudyController {
+@RequestMapping(value = "/project", produces = "application/json")
+public class ProjectController {
 
-  private final StudyService projectService;
+  private final ProjectService projectService;
   private final CommentService commentService;
-  private final StudyMapper studyMapper;
+  private final ProjectMapper projectMapper;
   private final CommentMapper commentMapper;
   private final Pseudonymity pseudonymity;
 
   @AuditLog
   @GetMapping()
-  @ApiOperation(value = "Retrieves a list of studies the user is allowed to see")
+  @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<List<StudyDto>> getStudies(
+  public ResponseEntity<List<ProjectDto>> getProjects(
       @AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(
-        projectService.getStudies(principal.getSubject(), Roles.extractRoles(principal)).stream()
-            .map(studyMapper::convertToDto)
+        projectService.getProjects(principal.getSubject(), Roles.extractRoles(principal)).stream()
+            .map(projectMapper::convertToDto)
             .collect(Collectors.toList()));
   }
 
   @AuditLog
   @GetMapping("/{id}")
-  @ApiOperation(value = "Retrieves a study by id")
+  @ApiOperation(value = "Retrieves a project by id")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<StudyDto> getStudyById(@NotNull @NotEmpty @PathVariable Long id) {
-    Optional<Study> study = projectService.getStudyById(id);
+  public ResponseEntity<ProjectDto> getProjectById(@NotNull @NotEmpty @PathVariable Long id) {
+    Optional<Project> project = projectService.getProjectById(id);
 
-    if (study.isEmpty()) {
-      throw new ResourceNotFound("Study not found");
+    if (project.isEmpty()) {
+      throw new ResourceNotFound("Project not found");
     }
 
-    return ResponseEntity.ok(studyMapper.convertToDto(study.get()));
+    return ResponseEntity.ok(projectMapper.convertToDto(project.get()));
   }
 
   @AuditLog
   @PostMapping()
   @ApiOperation(
-      value = "Creates a study; the logged in user is assigned as coordinator of the study")
+      value = "Creates a project; the logged in user is assigned as coordinator of the project")
   @PreAuthorize(Role.STUDY_COORDINATOR)
-  public ResponseEntity<StudyDto> createStudy(
+  public ResponseEntity<ProjectDto> createProject(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @Valid @NotNull @RequestBody StudyDto studyDto) {
+      @Valid @NotNull @RequestBody ProjectDto projectDto) {
 
-    Study study =
-        projectService.createStudy(studyDto, principal.getSubject(), Roles.extractRoles(principal));
+    Project project =
+        projectService.createProject(projectDto, principal.getSubject(), Roles.extractRoles(principal));
 
-    return ResponseEntity.ok(studyMapper.convertToDto(study));
+    return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
   @AuditLog
   @PutMapping(value = "/{id}")
   @ApiOperation(
       value =
-          "Updates a study; the logged in user is assigned as coordinator of the study at creation time")
+          "Updates a project; the logged in user is assigned as coordinator of the project at creation time")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
-  public ResponseEntity<StudyDto> updateStudy(
+  public ResponseEntity<ProjectDto> updateProject(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @PathVariable("id") Long studyId,
-      @Valid @NotNull @RequestBody StudyDto studyDto) {
+      @PathVariable("id") Long projectId,
+      @Valid @NotNull @RequestBody ProjectDto projectDto) {
 
-    Study study =
-        projectService.updateStudy(
-            studyDto, studyId, principal.getSubject(), Roles.extractRoles(principal));
+    Project project =
+        projectService.updateProject(
+            projectDto, projectId, principal.getSubject(), Roles.extractRoles(principal));
 
-    return ResponseEntity.ok(studyMapper.convertToDto(study));
+    return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
   @AuditLog
-  @PostMapping("/{studyId}/execute")
+  @PostMapping("/{projectId}/execute")
   @ApiOperation(value = "Executes the aql")
   @PreAuthorize(Role.RESEARCHER)
   public ResponseEntity<String> executeAql(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid RawQueryDto query,
-      @NotNull @NotEmpty @PathVariable Long studyId) {
+      @NotNull @NotEmpty @PathVariable Long projectId) {
     return ResponseEntity.ok(
-        projectService.executeAqlAndJsonify(query.getQuery(), studyId, principal.getSubject()));
+        projectService.executeAqlAndJsonify(query.getQuery(), projectId, principal.getSubject()));
   }
 
   @AuditLog
-  @PostMapping(value = "/{studyId}/export")
+  @PostMapping(value = "/{projectId}/export")
   @ApiOperation(value = "Executes the aql and returns the result as a csv file attachment")
   @PreAuthorize(Role.RESEARCHER)
   public ResponseEntity<StreamingResponseBody> exportResults(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid RawQueryDto query,
-      @NotNull @NotEmpty @PathVariable Long studyId,
+      @NotNull @NotEmpty @PathVariable Long projectId,
       @RequestParam(required = false)
           @ApiParam(
               value =
@@ -138,66 +138,66 @@ public class StudyController {
           ExportType format) {
     StreamingResponseBody streamingResponseBody =
         projectService.getExportResponseBody(
-            query.getQuery(), studyId, principal.getSubject(), format);
-    MultiValueMap<String, String> headers = projectService.getExportHeaders(format, studyId);
+            query.getQuery(), projectId, principal.getSubject(), format);
+    MultiValueMap<String, String> headers = projectService.getExportHeaders(format, projectId);
 
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }
 
   @AuditLog
-  @GetMapping("/{studyId}/comment")
-  @ApiOperation(value = "Retrieves the list of attached comments to a particular study")
+  @GetMapping("/{projectId}/comment")
+  @ApiOperation(value = "Retrieves the list of attached comments to a particular project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<CommentDto>> getComments(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @NotEmpty @PathVariable Long studyId) {
+      @NotNull @NotEmpty @PathVariable Long projectId) {
     return ResponseEntity.ok(
-        commentService.getComments(studyId, principal.getSubject()).stream()
+        commentService.getComments(projectId, principal.getSubject()).stream()
             .map(commentMapper::convertToDto)
             .collect(Collectors.toList()));
   }
 
   @AuditLog
-  @PostMapping("/{studyId}/comment")
-  @ApiOperation(value = "Adds a comment to a particular study")
+  @PostMapping("/{projectId}/comment")
+  @ApiOperation(value = "Adds a comment to a particular project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<CommentDto> addComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @NotEmpty @PathVariable Long studyId,
+      @NotNull @NotEmpty @PathVariable Long projectId,
       @Valid @NotNull @RequestBody CommentDto commentDto) {
 
     Comment comment =
         commentService.createComment(
-            commentMapper.convertToEntity(commentDto), studyId, principal.getSubject());
+            commentMapper.convertToEntity(commentDto), projectId, principal.getSubject());
 
     return ResponseEntity.ok(commentMapper.convertToDto(comment));
   }
 
   @AuditLog
-  @PutMapping("/{studyId}/comment/{commentId}")
+  @PutMapping("/{projectId}/comment/{commentId}")
   @ApiOperation(value = "Updates a comment")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<CommentDto> updateComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @NotEmpty @PathVariable Long studyId,
+      @NotNull @NotEmpty @PathVariable Long projectId,
       @NotNull @NotEmpty @PathVariable Long commentId,
       @Valid @NotNull @RequestBody CommentDto commentDto) {
 
     Comment comment =
         commentService.updateComment(
-            commentMapper.convertToEntity(commentDto), commentId, principal.getSubject(), studyId);
+            commentMapper.convertToEntity(commentDto), commentId, principal.getSubject(), projectId);
 
     return ResponseEntity.ok(commentMapper.convertToDto(comment));
   }
 
   @AuditLog
-  @DeleteMapping("/{studyId}/comment/{commentId}")
+  @DeleteMapping("/{projectId}/comment/{commentId}")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public void deleteComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @NotEmpty @PathVariable Long studyId,
+      @NotNull @NotEmpty @PathVariable Long projectId,
       @NotNull @NotEmpty @PathVariable Long commentId) {
-    commentService.deleteComment(commentId, studyId, principal.getSubject());
+    commentService.deleteComment(commentId, projectId, principal.getSubject());
   }
 
   @AuditLog

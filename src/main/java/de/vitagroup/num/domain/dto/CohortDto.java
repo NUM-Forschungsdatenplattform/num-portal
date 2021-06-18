@@ -36,9 +36,9 @@ public class CohortDto {
 
     @ApiModelProperty(
             required = true,
-            value = "Reference to the study")
-    @NotNull(message = "Id of the study is mandatory")
-    private Long studyId;
+            value = "Reference to the project")
+    @NotNull(message = "Id of the project is mandatory")
+    private Long projectId;
 
     @ApiModelProperty(
             required = true,

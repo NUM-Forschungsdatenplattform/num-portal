@@ -1,6 +1,6 @@
 package de.vitagroup.num.domain;
 
-public enum StudyCategories {
+public enum ProjectCategories {
   PEDIATRICS,
   SYMPTOMATOLOGY,
   CLASSIFICATION_OF_DISEASE_PROGRESSION,

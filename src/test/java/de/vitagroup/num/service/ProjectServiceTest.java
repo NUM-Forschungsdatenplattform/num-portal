@@ -18,13 +18,13 @@ import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.Study;
-import de.vitagroup.num.domain.StudyStatus;
+import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.StudyDto;
+import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
-import de.vitagroup.num.domain.repository.StudyRepository;
+import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.notification.NotificationService;
@@ -64,7 +64,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class StudyServiceTest {
+public class ProjectServiceTest {
 
   private static final String CORONA_TEMPLATE = "Corona_Anamnese";
   private static final String EHR_ID_1 = "f4da8646-8e36-4d9d-869c-af9dce5935c7";
@@ -101,7 +101,7 @@ public class StudyServiceTest {
 
   @Captor ArgumentCaptor<AqlDto> aqlDtoArgumentCaptor;
 
-  @Mock private StudyRepository studyRepository;
+  @Mock private ProjectRepository projectRepository;
 
   @Mock private UserDetailsService userDetailsService;
 
@@ -117,7 +117,7 @@ public class StudyServiceTest {
 
   @Spy private ProjectPolicyService projectPolicyService;
 
-  @InjectMocks private StudyService studyService;
+  @InjectMocks private ProjectService projectService;
 
   @Spy private AqlEditorAqlService aqlEditorAqlService;
 
@@ -186,7 +186,7 @@ public class StudyServiceTest {
     assertThat(initialQueryDto, notNullValue());
     assertThat(initialQueryDto.getWhere(), nullValue());
 
-    studyService.executeAql(QUERY_5, 2L, "approvedCoordinatorId");
+    projectService.executeAql(QUERY_5, 2L, "approvedCoordinatorId");
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
     AqlDto restrictedQuery = aqlDtoArgumentCaptor.getValue();
 
@@ -197,21 +197,21 @@ public class StudyServiceTest {
   }
 
   @Test(expected = ForbiddenException.class)
-  public void shouldNotExecuteIfStudyNotPublished() {
-    when(studyRepository.findById(7L))
+  public void shouldNotExecuteIfProjectNotPublished() {
+    when(projectRepository.findById(7L))
         .thenReturn(
             Optional.of(
-                Study.builder()
+                Project.builder()
                     .id(7L)
-                    .status(StudyStatus.DENIED)
+                    .status(ProjectStatus.DENIED)
                     .cohort(Cohort.builder().id(4L).build())
                     .build()));
-    studyService.executeAql(QUERY_5, 7L, "approvedCoordinatorId");
+    projectService.executeAql(QUERY_5, 7L, "approvedCoordinatorId");
   }
 
   @Test
   public void shouldHandleQuery3() {
-    studyService.executeAql(QUERY_3, 2L, "approvedCoordinatorId");
+    projectService.executeAql(QUERY_3, 2L, "approvedCoordinatorId");
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
     AqlDto restrictedQuery = aqlDtoArgumentCaptor.getValue();
 
@@ -249,7 +249,7 @@ public class StudyServiceTest {
 
   @Test
   public void shouldHandleQuery4() {
-    studyService.executeAql(QUERY_4, 2L, "approvedCoordinatorId");
+    projectService.executeAql(QUERY_4, 2L, "approvedCoordinatorId");
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
     AqlDto restrictedQuery = aqlDtoArgumentCaptor.getValue();
 
@@ -287,17 +287,17 @@ public class StudyServiceTest {
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleStudyWithoutTemplates() {
-    studyService.executeAql(QUERY_1, 1L, "approvedCoordinatorId");
+    projectService.executeAql(QUERY_1, 1L, "approvedCoordinatorId");
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleStudyWithoutCohort() {
-    studyService.executeAql(QUERY_1, 3L, "approvedCoordinatorId");
+    projectService.executeAql(QUERY_1, 3L, "approvedCoordinatorId");
   }
 
   @Test
   public void shouldCorrectlyRestrictQueryWithContainsAndNoComposition() {
-    studyService.executeAql(QUERY_2, 4L, "approvedCoordinatorId");
+    projectService.executeAql(QUERY_2, 4L, "approvedCoordinatorId");
 
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
     AqlDto restrictedQueryDto = aqlDtoArgumentCaptor.getValue();
@@ -319,7 +319,7 @@ public class StudyServiceTest {
 
   @Test
   public void shouldCorrectlyRestrictBasicQuery() {
-    studyService.executeAql(QUERY_BASIC, 2L, "approvedCoordinatorId");
+    projectService.executeAql(QUERY_BASIC, 2L, "approvedCoordinatorId");
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
     AqlDto restrictedQueryDto = aqlDtoArgumentCaptor.getValue();
     String restrictedQuery = new AqlBinder().bind(restrictedQueryDto).getLeft().buildAql();
@@ -329,7 +329,7 @@ public class StudyServiceTest {
 
   @Test
   public void shouldCorrectlyRestrictQuery() {
-    studyService.executeAql(QUERY_1, 2L, "approvedCoordinatorId");
+    projectService.executeAql(QUERY_1, 2L, "approvedCoordinatorId");
 
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
     AqlDto restrictedQuery = aqlDtoArgumentCaptor.getValue();
@@ -370,7 +370,7 @@ public class StudyServiceTest {
         "Select o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Systolic__magnitude, e/ehr_id/value as ehr_id from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.sample_blood_pressure.v1] where (o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude >= $magnitude and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude < 1.1)";
     Exception exception = null;
     try {
-      studyService.executeAql(query, 1L, "notApprovedCoordinatorId");
+      projectService.executeAql(query, 1L, "notApprovedCoordinatorId");
     } catch (Exception e) {
       exception = e;
     }
@@ -383,442 +383,442 @@ public class StudyServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleMissingCoordinator() {
-    StudyDto study = StudyDto.builder().name("Study").status(StudyStatus.APPROVED).build();
+    ProjectDto project = ProjectDto.builder().name("Project").status(ProjectStatus.APPROVED).build();
 
-    studyService.createStudy(study, "nonExistingCoordinatorId", List.of());
+    projectService.createProject(project, "nonExistingCoordinatorId", List.of());
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedCoordinator() {
-    StudyDto studyDto = StudyDto.builder().name("Study").build();
+    ProjectDto projectDto = ProjectDto.builder().name("Project").build();
 
-    studyService.createStudy(studyDto, "notApprovedCoordinatorId", List.of());
+    projectService.createProject(projectDto, "notApprovedCoordinatorId", List.of());
   }
 
   @Test
   public void shouldFilterWhenSearchingStudiesWithCoordinator() {
     List<String> roles = new ArrayList<>();
     roles.add(Roles.STUDY_COORDINATOR);
-    studyService.getStudies("coordinatorId", roles);
+    projectService.getProjects("coordinatorId", roles);
 
-    verify(studyRepository, times(1)).findByCoordinatorUserId("coordinatorId");
-    verify(studyRepository, times(0)).findAll();
+    verify(projectRepository, times(1)).findByCoordinatorUserId("coordinatorId");
+    verify(projectRepository, times(0)).findAll();
   }
 
   @Test
-  public void shouldHandleMissingStudy() {
-    Optional<Study> study = studyService.getStudyById(19L);
+  public void shouldHandleMissingProject() {
+    Optional<Project> project = projectService.getProjectById(19L);
 
-    assertThat(study, notNullValue());
-    assertThat(study.isEmpty(), is(true));
+    assertThat(project, notNullValue());
+    assertThat(project.isEmpty(), is(true));
   }
 
   @Test
   public void shouldRejectStudyDraftToApprovedTransition() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.DRAFT)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.DRAFT)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder().name("Study is edited").status(StudyStatus.APPROVED).build();
+    ProjectDto projectDto =
+        ProjectDto.builder().name("Project is edited").status(ProjectStatus.APPROVED).build();
 
     Exception exception =
         assertThrows(
             BadRequestException.class,
             () ->
-                studyService.updateStudy(
-                    studyDto,
+                projectService.updateProject(
+                    projectDto,
                     1L,
                     "approvedCoordinatorId",
                     List.of(STUDY_COORDINATOR, STUDY_APPROVER, RESEARCHER)));
 
-    String expectedMessage = "Study status transition from DRAFT to APPROVED not allowed";
+    String expectedMessage = "Project status transition from DRAFT to APPROVED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
   @Test
   public void shouldRejectStudyDraftToPublishedTransition() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.DRAFT)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.DRAFT)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder().name("Study is edited").status(StudyStatus.PUBLISHED).build();
+    ProjectDto projectDto =
+        ProjectDto.builder().name("Project is edited").status(ProjectStatus.PUBLISHED).build();
 
     Exception exception =
         assertThrows(
             BadRequestException.class,
             () ->
-                studyService.updateStudy(
-                    studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
+                projectService.updateProject(
+                    projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Study status transition from DRAFT to PUBLISHED not allowed";
+    String expectedMessage = "Project status transition from DRAFT to PUBLISHED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
   @Test
   public void shouldRejectStudyDraftToClosedTransition() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.DRAFT)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.DRAFT)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder().name("Study is edited").status(StudyStatus.CLOSED).build();
+    ProjectDto projectDto =
+        ProjectDto.builder().name("Project is edited").status(ProjectStatus.CLOSED).build();
 
     Exception exception =
         assertThrows(
             BadRequestException.class,
             () ->
-                studyService.updateStudy(
-                    studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
+                projectService.updateProject(
+                    projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Study status transition from DRAFT to CLOSED not allowed";
+    String expectedMessage = "Project status transition from DRAFT to CLOSED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldRejectStudyClosedToApprovedTransition() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.CLOSED)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.CLOSED)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder().name("Study is edited").status(StudyStatus.APPROVED).build();
+    ProjectDto projectDto =
+        ProjectDto.builder().name("Project is edited").status(ProjectStatus.APPROVED).build();
 
-    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
+    projectService.updateProject(projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldRejectStudyClosedToDraftTransition() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.CLOSED)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.CLOSED)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder().name("Study is edited").status(StudyStatus.DRAFT).build();
+    ProjectDto projectDto =
+        ProjectDto.builder().name("Project is edited").status(ProjectStatus.DRAFT).build();
 
-    studyService.updateStudy(
-        studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR, STUDY_APPROVER));
+    projectService.updateProject(
+        projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR, STUDY_APPROVER));
   }
 
   @Test
   public void shouldAllowStudyDraftToPendingTransition() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.DRAFT)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.DRAFT)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder().name("Study is edited").status(StudyStatus.PENDING).build();
+    ProjectDto projectDto =
+        ProjectDto.builder().name("Project is edited").status(ProjectStatus.PENDING).build();
 
-    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    projectService.updateProject(projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
   }
 
   @Test
   public void shouldAllowStudyPendingToDraftTransition() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.PENDING)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.PENDING)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder().name("Study is edited").status(StudyStatus.DRAFT).build();
+    ProjectDto projectDto =
+        ProjectDto.builder().name("Project is edited").status(ProjectStatus.DRAFT).build();
 
-    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    projectService.updateProject(projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
   }
 
   @Test
   public void shouldAllowStudyPendingToReviewingTransitionToApprover() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.PENDING)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.PENDING)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder().name("Study is edited").status(StudyStatus.REVIEWING).build();
+    ProjectDto projectDto =
+        ProjectDto.builder().name("Project is edited").status(ProjectStatus.REVIEWING).build();
 
-    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
+    projectService.updateProject(projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
   }
 
   @Test
   public void shouldDenyStudyPendingToReviewingTransitionToCoordinator() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.PENDING)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.PENDING)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder().name("Study is edited").status(StudyStatus.REVIEWING).build();
+    ProjectDto projectDto =
+        ProjectDto.builder().name("Project is edited").status(ProjectStatus.REVIEWING).build();
 
     Exception exception =
         assertThrows(
             ForbiddenException.class,
             () ->
-                studyService.updateStudy(
-                    studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
+                projectService.updateProject(
+                    projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Study status transition from PENDING to REVIEWING not allowed";
+    String expectedMessage = "Project status transition from PENDING to REVIEWING not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
   @Test
   public void shouldAllowStudyReviewingToApprovedTransitionToApprover() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.REVIEWING)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.REVIEWING)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
-            .status(StudyStatus.APPROVED)
+    ProjectDto projectDto =
+        ProjectDto.builder()
+            .name("Project is edited")
+            .status(ProjectStatus.APPROVED)
             .financed(false)
             .build();
 
-    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
+    projectService.updateProject(projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
   }
 
   @Test
   public void shouldAllowStudyReviewingToApprovedTransitionToCoordinator() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.REVIEWING)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.REVIEWING)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
+    ProjectDto projectDto =
+        ProjectDto.builder()
+            .name("Project is edited")
             .financed(false)
-            .status(StudyStatus.APPROVED)
+            .status(ProjectStatus.APPROVED)
             .build();
 
     Exception exception =
         assertThrows(
             ForbiddenException.class,
             () ->
-                studyService.updateStudy(
-                    studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
+                projectService.updateProject(
+                    projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Study status transition from REVIEWING to APPROVED not allowed";
+    String expectedMessage = "Project status transition from REVIEWING to APPROVED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
   @Test
   public void shouldAllowStudyReviewingToChangeRequestTransition() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.REVIEWING)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.REVIEWING)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
+    ProjectDto projectDto =
+        ProjectDto.builder()
+            .name("Project is edited")
             .financed(false)
-            .status(StudyStatus.CHANGE_REQUEST)
+            .status(ProjectStatus.CHANGE_REQUEST)
             .build();
 
-    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
+    projectService.updateProject(projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
   }
 
   @Test
   public void shouldAllowStudyReviewingToDeniedTransitionToApprover() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.REVIEWING)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.REVIEWING)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
+    ProjectDto projectDto =
+        ProjectDto.builder()
+            .name("Project is edited")
             .financed(false)
-            .status(StudyStatus.DENIED)
+            .status(ProjectStatus.DENIED)
             .build();
 
-    studyService.updateStudy(studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
+    projectService.updateProject(projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
   }
 
   @Test
   public void shouldDenyStudyReviewingToDeniedTransitionToCoordinatorAndResearcher() {
-    Study studyToEdit =
-        Study.builder()
-            .name("Study")
-            .status(StudyStatus.REVIEWING)
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .status(ProjectStatus.REVIEWING)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
-    when(studyRepository.findById(1L)).thenReturn(Optional.of(studyToEdit));
+    when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
-    StudyDto studyDto =
-        StudyDto.builder()
-            .name("Study is edited")
+    ProjectDto projectDto =
+        ProjectDto.builder()
+            .name("Project is edited")
             .financed(false)
-            .status(StudyStatus.DENIED)
+            .status(ProjectStatus.DENIED)
             .build();
 
     Exception exception =
         assertThrows(
             ForbiddenException.class,
             () ->
-                studyService.updateStudy(
-                    studyDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR, RESEARCHER)));
+                projectService.updateProject(
+                    projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR, RESEARCHER)));
 
-    String expectedMessage = "Study status transition from REVIEWING to DENIED not allowed";
+    String expectedMessage = "Project status transition from REVIEWING to DENIED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
   @Test
   public void shouldRejectInitialClosedStudyStatus() {
-    StudyDto newStudy =
-        StudyDto.builder().name("new study").financed(false).status(StudyStatus.CLOSED).build();
+    ProjectDto newStudy =
+        ProjectDto.builder().name("new project").financed(false).status(ProjectStatus.CLOSED).build();
 
     Exception exception =
         assertThrows(
             BadRequestException.class,
-            () -> studyService.createStudy(newStudy, "approvedCoordinatorId", List.of()));
+            () -> projectService.createProject(newStudy, "approvedCoordinatorId", List.of()));
 
-    String expectedMessage = "Invalid study status: CLOSED";
+    String expectedMessage = "Invalid project status: CLOSED";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
   @Test
   public void shouldRejectInitialApprovedStudyStatus() {
-    StudyDto newStudy =
-        StudyDto.builder().name("new study").financed(false).status(StudyStatus.APPROVED).build();
+    ProjectDto newStudy =
+        ProjectDto.builder().name("new project").financed(false).status(ProjectStatus.APPROVED).build();
 
     Exception exception =
         assertThrows(
             BadRequestException.class,
-            () -> studyService.createStudy(newStudy, "approvedCoordinatorId", List.of()));
+            () -> projectService.createProject(newStudy, "approvedCoordinatorId", List.of()));
 
-    String expectedMessage = "Invalid study status: APPROVED";
+    String expectedMessage = "Invalid project status: APPROVED";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
   @Test
   public void shouldAllowInitialDraftStudyStatus() {
-    StudyDto newStudy =
-        StudyDto.builder().name("new study").financed(false).status(StudyStatus.DRAFT).build();
-    studyService.createStudy(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
-    verify(studyRepository, times(1)).save(any());
+    ProjectDto newStudy =
+        ProjectDto.builder().name("new project").financed(false).status(ProjectStatus.DRAFT).build();
+    projectService.createProject(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    verify(projectRepository, times(1)).save(any());
   }
 
   @Test
   public void shouldAllowInitialPendingStudyStatus() {
-    StudyDto newStudy =
-        StudyDto.builder().name("new study").financed(false).status(StudyStatus.PENDING).build();
-    studyService.createStudy(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
-    verify(studyRepository, times(1)).save(any());
+    ProjectDto newStudy =
+        ProjectDto.builder().name("new Project").financed(false).status(ProjectStatus.PENDING).build();
+    projectService.createProject(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    verify(projectRepository, times(1)).save(any());
   }
 
   @Test
   public void shouldAllowEditingOwnedStudy() {
-    when(studyRepository.findById(1L))
+    when(projectRepository.findById(1L))
         .thenReturn(
             Optional.of(
-                Study.builder()
+                Project.builder()
                     .id(1L)
                     .coordinator(new UserDetails("approvedCoordinatorId", null, true))
                     .build()));
 
-    StudyDto existingStudy =
-        StudyDto.builder()
+    ProjectDto existingStudy =
+        ProjectDto.builder()
             .id(1L)
-            .name("existing study")
+            .name("existing Project")
             .financed(false)
-            .status(StudyStatus.PENDING)
+            .status(ProjectStatus.PENDING)
             .build();
-    studyService.updateStudy(
+    projectService.updateProject(
         existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
-    verify(studyRepository, times(1)).save(any());
+    verify(projectRepository, times(1)).save(any());
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldRejectEditingNotOwnedStudy() {
-    when(studyRepository.findById(1L))
+    when(projectRepository.findById(1L))
         .thenReturn(
             Optional.of(
-                Study.builder()
+                Project.builder()
                     .id(1L)
                     .coordinator(new UserDetails("ownerCoordinatorId", null, true))
                     .build()));
 
-    StudyDto existingStudy =
-        StudyDto.builder()
+    ProjectDto existingStudy =
+        ProjectDto.builder()
             .id(1L)
-            .name("existing study")
+            .name("existing Project")
             .financed(false)
-            .status(StudyStatus.PENDING)
+            .status(ProjectStatus.PENDING)
             .build();
-    studyService.updateStudy(
+    projectService.updateProject(
         existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
   }
 
   @Test
   public void shouldOnlyAllowEditingOfResearchersAfterApprovedState() {
-    when(studyRepository.findById(1L))
+    when(projectRepository.findById(1L))
         .thenReturn(
             Optional.of(
-                Study.builder()
+                Project.builder()
                     .id(1L)
                     .name("oldName")
-                    .status(StudyStatus.APPROVED)
+                    .status(ProjectStatus.APPROVED)
                     .researchers(
                         Collections.singletonList(
                             UserDetails.builder().userId("2").approved(true).build()))
@@ -828,47 +828,47 @@ public class StudyServiceTest {
     when(userDetailsService.getUserDetailsById("1"))
         .thenReturn(Optional.of(UserDetails.builder().userId("1").approved(true).build()));
 
-    StudyDto existingStudy =
-        StudyDto.builder()
+    ProjectDto existingStudy =
+        ProjectDto.builder()
             .id(1L)
-            .name("existing study")
-            .status(StudyStatus.APPROVED)
+            .name("existing Project")
+            .status(ProjectStatus.APPROVED)
             .researchers(
                 Collections.singletonList(
                     UserDetailsDto.builder().userId("1").approved(true).build()))
             .financed(false)
             .build();
-    Study returnedStudy =
-        studyService.updateStudy(
+    Project returnedProject =
+        projectService.updateProject(
             existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
 
-    assertThat(returnedStudy.getName(), is("oldName"));
-    assertThat(returnedStudy.getResearchers().get(0).getUserId(), is("1"));
+    assertThat(returnedProject.getName(), is("oldName"));
+    assertThat(returnedProject.getResearchers().get(0).getUserId(), is("1"));
 
-    verify(studyRepository, times(1)).save(any());
+    verify(projectRepository, times(1)).save(any());
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldRejectEditingClosedStudies() {
-    when(studyRepository.findById(1L))
+    when(projectRepository.findById(1L))
         .thenReturn(
             Optional.of(
-                Study.builder()
+                Project.builder()
                     .id(1L)
-                    .status(StudyStatus.CLOSED)
+                    .status(ProjectStatus.CLOSED)
                     .coordinator(new UserDetails("approvedCoordinatorId", null, true))
                     .build()));
 
-    StudyDto existingStudy =
-        StudyDto.builder()
+    ProjectDto existingStudy =
+        ProjectDto.builder()
             .id(1L)
-            .name("existing study")
+            .name("existing Project")
             .financed(false)
-            .status(StudyStatus.CLOSED)
+            .status(ProjectStatus.CLOSED)
             .build();
-    studyService.updateStudy(
+    projectService.updateProject(
         existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
-    verify(studyRepository, times(1)).save(any());
+    verify(projectRepository, times(1)).save(any());
   }
 
   @Before
@@ -889,50 +889,50 @@ public class StudyServiceTest {
     when(userDetailsService.checkIsUserApproved("nonExistingCoordinatorId"))
         .thenThrow(new SystemException("User not found"));
 
-    when(studyRepository.findById(3L))
+    when(projectRepository.findById(3L))
         .thenReturn(
             Optional.of(
-                Study.builder()
+                Project.builder()
                     .id(3L)
-                    .status(StudyStatus.PUBLISHED)
+                    .status(ProjectStatus.PUBLISHED)
                     .researchers(List.of(approvedCoordinator))
                     .build()));
 
-    when(studyRepository.findById(1L))
+    when(projectRepository.findById(1L))
         .thenReturn(
             Optional.of(
-                Study.builder()
+                Project.builder()
                     .id(1L)
-                    .status(StudyStatus.PUBLISHED)
+                    .status(ProjectStatus.PUBLISHED)
                     .cohort(Cohort.builder().id(2L).build())
                     .researchers(List.of(approvedCoordinator))
                     .build()));
 
-    when(studyRepository.findById(2L))
+    when(projectRepository.findById(2L))
         .thenReturn(
             Optional.of(
-                Study.builder()
+                Project.builder()
                     .id(2L)
-                    .status(StudyStatus.PUBLISHED)
+                    .status(ProjectStatus.PUBLISHED)
                     .cohort(Cohort.builder().id(2L).build())
                     .researchers(List.of(approvedCoordinator))
                     .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
                     .build()));
 
-    when(studyRepository.save(any()))
+    when(projectRepository.save(any()))
         .thenAnswer(
             invocation -> {
-              Study study = invocation.getArgument(0, Study.class);
-              study.setId(1L);
-              return study;
+              Project project = invocation.getArgument(0, Project.class);
+              project.setId(1L);
+              return project;
             });
 
-    when(studyRepository.findById(4L))
+    when(projectRepository.findById(4L))
         .thenReturn(
             Optional.of(
-                Study.builder()
+                Project.builder()
                     .id(4L)
-                    .status(StudyStatus.PUBLISHED)
+                    .status(ProjectStatus.PUBLISHED)
                     .cohort(Cohort.builder().id(4L).build())
                     .researchers(List.of(approvedCoordinator))
                     .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))

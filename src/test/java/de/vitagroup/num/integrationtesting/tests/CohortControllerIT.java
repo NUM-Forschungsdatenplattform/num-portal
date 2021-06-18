@@ -44,7 +44,7 @@ public class CohortControllerIT extends IntegrationTest {
     CohortDto cohortDto =
         CohortDto.builder()
             .name("name")
-            .studyId(1L)
+            .projectId(1L)
             .cohortGroup(CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build())
             .build();
     String cohortDtoJson = mapper.writeValueAsString(cohortDto);
@@ -66,7 +66,7 @@ public class CohortControllerIT extends IntegrationTest {
     CohortDto cohortDto =
         CohortDto.builder()
             .name("name")
-            .studyId(1L)
+            .projectId(1L)
             .cohortGroup(CohortGroupDto.builder().type(Type.PHENOTYPE).build())
             .build();
     String cohortDtoJson = mapper.writeValueAsString(cohortDto);

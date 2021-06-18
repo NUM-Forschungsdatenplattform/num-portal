@@ -1,7 +1,7 @@
 package de.vitagroup.num.service.email;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.StudyCategories;
+import de.vitagroup.num.domain.ProjectCategories;
 import de.vitagroup.num.domain.dto.ZarsInfoDto;
 import java.io.File;
 import java.io.IOException;
@@ -76,7 +76,7 @@ public class ZarsService {
     StringWriter writer = new StringWriter();
     try (CSVPrinter printer = CSVFormat.EXCEL.withHeader(zarsHeaders).print(writer)) {
 
-      printer.printRecord(generateStudyRow(zarsInfoDto));
+      printer.printRecord(generateProjectRow(zarsInfoDto));
       printer.flush();
     } catch (IOException e) {
       log.error("Error while creating the ZARS CSV file", e);
@@ -85,7 +85,7 @@ public class ZarsService {
     return writer.toString();
   }
 
-  private List<String> generateStudyRow(@NotNull ZarsInfoDto zarsInfoDto) {
+  private List<String> generateProjectRow(@NotNull ZarsInfoDto zarsInfoDto) {
 
     List<String> values = new ArrayList<>();
     values.add("NUM-" + zarsInfoDto.getId()); // Local project id
@@ -99,7 +99,7 @@ public class ZarsService {
     values.add(String.join(", ", zarsInfoDto.getKeywords())); // Keywords
     values.add(
         zarsInfoDto.getCategories().stream()
-            .map(StudyCategories::toString)
+            .map(ProjectCategories::toString)
             .collect(Collectors.joining(", "))); // Categories
     values.add(zarsInfoDto.getQueries()); // One or more queries
     values.add(zarsInfoDto.getApprovalDate()); // Approval date

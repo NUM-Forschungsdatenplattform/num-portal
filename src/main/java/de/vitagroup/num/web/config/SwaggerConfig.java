@@ -37,8 +37,8 @@ public class SwaggerConfig {
   }
 
   @Bean
-  public Docket studyApi() {
-    return getDocket("Study", "/study.*");
+  public Docket projectApi() {
+    return getDocket("Project", "/project.*");
   }
 
   @Bean

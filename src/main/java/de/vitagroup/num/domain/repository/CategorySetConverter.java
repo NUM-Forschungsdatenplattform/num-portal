@@ -2,7 +2,7 @@ package de.vitagroup.num.domain.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.StudyCategories;
+import de.vitagroup.num.domain.ProjectCategories;
 import java.io.IOException;
 import java.util.Set;
 import javax.persistence.AttributeConverter;
@@ -13,12 +13,12 @@ import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @AllArgsConstructor
-public class CategorySetConverter implements AttributeConverter<Set<StudyCategories>, String> {
+public class CategorySetConverter implements AttributeConverter<Set<ProjectCategories>, String> {
 
   private final ObjectMapper mapper;
 
   @Override
-  public String convertToDatabaseColumn(Set<StudyCategories> categories) {
+  public String convertToDatabaseColumn(Set<ProjectCategories> categories) {
 
     String categoriesJson = null;
     try {
@@ -32,13 +32,13 @@ public class CategorySetConverter implements AttributeConverter<Set<StudyCategor
 
   @Override
   @NotNull
-  public Set<StudyCategories> convertToEntityAttribute(String categoriesJson) {
+  public Set<ProjectCategories> convertToEntityAttribute(String categoriesJson) {
 
     if (StringUtils.isEmpty(categoriesJson)) {
       return Set.of();
     }
 
-    Set<StudyCategories> categories = null;
+    Set<ProjectCategories> categories = null;
     try {
       categories = mapper.readValue(categoriesJson, Set.class);
     } catch (final IOException e) {

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-/** Dto for template information linked to a study */
+/** Dto for template information linked to a project */
 @Data
 @Builder
 @ApiModel

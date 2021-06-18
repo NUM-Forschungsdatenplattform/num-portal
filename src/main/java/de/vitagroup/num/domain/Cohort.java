@@ -24,7 +24,7 @@ public class Cohort implements Serializable {
   private String description;
 
   @OneToOne(mappedBy = "cohort")
-  private Study study;
+  private Project project;
 
   @OneToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "cohort_group_id", referencedColumnName = "id")

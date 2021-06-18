@@ -5,18 +5,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.Study;
-import de.vitagroup.num.domain.StudyStatus;
-import de.vitagroup.num.domain.StudyTransition;
+import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.ProjectStatus;
+import de.vitagroup.num.domain.ProjectTransition;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.ProjectInfoDto;
-import de.vitagroup.num.domain.dto.StudyDto;
+import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.dto.ZarsInfoDto;
-import de.vitagroup.num.domain.repository.StudyRepository;
-import de.vitagroup.num.domain.repository.StudyTransitionRepository;
+import de.vitagroup.num.domain.repository.ProjectRepository;
+import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
 import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
@@ -79,15 +79,15 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @Service
 @Slf4j
 @AllArgsConstructor
-public class StudyService {
+public class ProjectService {
 
-  private static final String STUDY_NOT_FOUND = "Study not found: ";
+  private static final String PROJECT_NOT_FOUND = "Project not found: ";
   private static final String ZIP_FILE_ENDING = ".zip";
   private static final String JSON_FILE_ENDING = ".json";
   private static final String ZIP_MEDIA_TYPE = "application/zip";
   private static final String CSV_FILE_PATTERN = "%s_%d.csv";
 
-  private final StudyRepository studyRepository;
+  private final ProjectRepository projectRepository;
 
   private final UserDetailsService userDetailsService;
 
@@ -101,7 +101,7 @@ public class StudyService {
 
   private final NotificationService notificationService;
 
-  private final StudyTransitionRepository studyTransitionRepository;
+  private final ProjectTransitionRepository projectTransitionRepository;
 
   private final CohortQueryLister cohortQueryLister;
 
@@ -118,17 +118,17 @@ public class StudyService {
   public void deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
-    Study project =
-        studyRepository
+    Project project =
+        projectRepository
             .findById(projectId)
-            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + projectId));
+            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
 
     if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
       throw new ForbiddenException(String.format("Cannot delete project: %s", projectId));
     }
 
     if (project.isDeletable()) {
-      studyRepository.deleteById(projectId);
+      projectRepository.deleteById(projectId);
     } else {
       throw new ForbiddenException(
           String.format(
@@ -140,20 +140,20 @@ public class StudyService {
   public void archiveProject(Long projectId, String userId, List<String> roles) {
     UserDetails user = userDetailsService.checkIsUserApproved(userId);
 
-    Study project =
-        studyRepository
+    Project project =
+        projectRepository
             .findById(projectId)
-            .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + projectId));
+            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
 
     if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
       throw new ForbiddenException(String.format("Cannot archive project: %s", projectId));
     }
 
-    validateStatus(project.getStatus(), StudyStatus.ARCHIVED, roles);
-    persistTransition(project, project.getStatus(), StudyStatus.ARCHIVED, user);
+    validateStatus(project.getStatus(), ProjectStatus.ARCHIVED, roles);
+    persistTransition(project, project.getStatus(), ProjectStatus.ARCHIVED, user);
 
-    project.setStatus(StudyStatus.ARCHIVED);
-    studyRepository.save(project);
+    project.setStatus(ProjectStatus.ARCHIVED);
+    projectRepository.save(project);
   }
 
   /**
@@ -162,7 +162,7 @@ public class StudyService {
    * @return The count of projects in the platform
    */
   public long countProjects() {
-    return studyRepository.count();
+    return projectRepository.count();
   }
 
   /**
@@ -177,17 +177,17 @@ public class StudyService {
       return List.of();
     }
 
-    List<Study> projects =
-        studyRepository.findLatestProjects(
+    List<Project> projects =
+        projectRepository.findLatestProjects(
             count,
-            StudyStatus.APPROVED.name(),
-            StudyStatus.PUBLISHED.name(),
-            StudyStatus.CLOSED.name());
+            ProjectStatus.APPROVED.name(),
+            ProjectStatus.PUBLISHED.name(),
+            ProjectStatus.CLOSED.name());
     return projects.stream().map(this::toProjectInfo).collect(Collectors.toList());
   }
 
-  public String executeAqlAndJsonify(String query, Long studyId, String userId) {
-    List<QueryResponseData> response = executeAql(query, studyId, userId);
+  public String executeAqlAndJsonify(String query, Long projectId, String userId) {
+    List<QueryResponseData> response = executeAql(query, projectId, userId);
     try {
       return mapper.writeValueAsString(response);
     } catch (JsonProcessingException e) {
@@ -195,49 +195,49 @@ public class StudyService {
     }
   }
 
-  public List<QueryResponseData> executeAql(String query, Long studyId, String userId) {
+  public List<QueryResponseData> executeAql(String query, Long projectId, String userId) {
     List<QueryResponseData> queryResponseData;
-    Study study = null;
+    Project project = null;
     try {
       userDetailsService.checkIsUserApproved(userId);
 
-      study =
-          studyRepository
-              .findById(studyId)
-              .orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + studyId));
+      project =
+          projectRepository
+              .findById(projectId)
+              .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
 
-      if (study.getStatus() == null || !study.getStatus().equals(StudyStatus.PUBLISHED)) {
-        throw new ForbiddenException("Data explorer available for published studies only");
+      if (project.getStatus() == null || !project.getStatus().equals(ProjectStatus.PUBLISHED)) {
+        throw new ForbiddenException("Data explorer available for published projects only");
       }
 
-      if (!study.isStudyResearcher(userId) && study.hasEmptyOrDifferentOwner(userId)) {
-        throw new ForbiddenException("Cannot access this study");
+      if (!project.isProjectResearcher(userId) && project.hasEmptyOrDifferentOwner(userId)) {
+        throw new ForbiddenException("Cannot access this project");
       }
 
-      if (study.getCohort() == null) {
-        throw new BadRequestException(String.format("Study: %s cohort cannot be null", studyId));
+      if (project.getCohort() == null) {
+        throw new BadRequestException(String.format("Project: %s cohort cannot be null", projectId));
       }
 
-      if (study.getTemplates() == null) {
-        throw new BadRequestException(String.format("Study: %s templates cannot be null", studyId));
+      if (project.getTemplates() == null) {
+        throw new BadRequestException(String.format("Project: %s templates cannot be null", projectId));
       }
 
       Set<String> ehrIds =
-          cohortService.executeCohort(study.getCohort().getId(), study.isUsedOutsideEu());
+          cohortService.executeCohort(project.getCohort().getId(), project.isUsedOutsideEu());
 
       AqlDto aql = new AqlToDtoParser().parse(query);
 
       List<Policy> policies =
-          collectProjectPolicies(ehrIds, study.getTemplates(), study.isUsedOutsideEu());
+          collectProjectPolicies(ehrIds, project.getTemplates(), project.isUsedOutsideEu());
       projectPolicyService.apply(aql, policies);
 
-      queryResponseData = ehrBaseService.executeRawQuery(aql, studyId);
+      queryResponseData = ehrBaseService.executeRawQuery(aql, projectId);
 
     } catch (Exception e) {
-      atnaService.logDataExport(userId, studyId, study, false);
+      atnaService.logDataExport(userId, projectId, project, false);
       throw e;
     }
-    atnaService.logDataExport(userId, studyId, study, true);
+    atnaService.logDataExport(userId, projectId, project, true);
     return queryResponseData;
   }
 
@@ -288,22 +288,22 @@ public class StudyService {
   }
 
   public StreamingResponseBody getExportResponseBody(
-      String query, Long studyId, String userId, ExportType format) {
+      String query, Long projectId, String userId, ExportType format) {
     if (format == ExportType.json) {
-      String jsonResponse = executeAqlAndJsonify(query, studyId, userId);
+      String jsonResponse = executeAqlAndJsonify(query, projectId, userId);
       return outputStream -> {
         outputStream.write(jsonResponse.getBytes(StandardCharsets.UTF_8));
         outputStream.flush();
         outputStream.close();
       };
     }
-    List<QueryResponseData> queryResponseData = executeAql(query, studyId, userId);
+    List<QueryResponseData> queryResponseData = executeAql(query, projectId, userId);
 
     return outputStream ->
-        streamResponseAsZip(queryResponseData, getExportFilenameBody(studyId), outputStream);
+        streamResponseAsZip(queryResponseData, getExportFilenameBody(projectId), outputStream);
   }
 
-  public MultiValueMap<String, String> getExportHeaders(ExportType format, Long studyId) {
+  public MultiValueMap<String, String> getExportHeaders(ExportType format, Long projectId) {
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     String fileEnding;
     if (format == ExportType.json) {
@@ -315,190 +315,190 @@ public class StudyService {
     }
     headers.add(
         HttpHeaders.CONTENT_DISPOSITION,
-        "attachment; filename=" + getExportFilenameBody(studyId) + fileEnding);
+        "attachment; filename=" + getExportFilenameBody(projectId) + fileEnding);
     return headers;
   }
 
-  public Optional<Study> getStudyById(Long studyId) {
-    return studyRepository.findById(studyId);
+  public Optional<Project> getProjectById(Long projectId) {
+    return projectRepository.findById(projectId);
   }
 
-  public boolean exists(Long studyId) {
-    return studyRepository.existsById(studyId);
+  public boolean exists(Long id) {
+    return projectRepository.existsById(id);
   }
 
   @Transactional
-  public Study createStudy(StudyDto studyDto, String userId, List<String> roles) {
+  public Project createProject(ProjectDto projectDto, String userId, List<String> roles) {
 
     UserDetails coordinator = userDetailsService.checkIsUserApproved(userId);
 
-    Study study = Study.builder().build();
+    Project project = Project.builder().build();
 
-    validateStatus(null, studyDto.getStatus(), roles);
-    persistTransition(study, study.getStatus(), studyDto.getStatus(), coordinator);
+    validateStatus(null, projectDto.getStatus(), roles);
+    persistTransition(project, project.getStatus(), projectDto.getStatus(), coordinator);
 
-    setTemplates(study, studyDto);
-    study.setResearchers(getResearchers(studyDto));
+    setTemplates(project, projectDto);
+    project.setResearchers(getResearchers(projectDto));
 
-    study.setStatus(studyDto.getStatus());
-    study.setName(studyDto.getName());
-    study.setDescription(studyDto.getDescription());
-    study.setSimpleDescription(studyDto.getSimpleDescription());
-    study.setUsedOutsideEu(studyDto.isUsedOutsideEu());
-    study.setFirstHypotheses(studyDto.getFirstHypotheses());
-    study.setSecondHypotheses(studyDto.getSecondHypotheses());
-    study.setGoal(studyDto.getGoal());
-    study.setCategories(studyDto.getCategories());
-    study.setKeywords(studyDto.getKeywords());
-    study.setCoordinator(coordinator);
-    study.setCreateDate(OffsetDateTime.now());
-    study.setModifiedDate(OffsetDateTime.now());
-    study.setStartDate(studyDto.getStartDate());
-    study.setEndDate(studyDto.getEndDate());
-    study.setFinanced(studyDto.isFinanced());
+    project.setStatus(projectDto.getStatus());
+    project.setName(projectDto.getName());
+    project.setDescription(projectDto.getDescription());
+    project.setSimpleDescription(projectDto.getSimpleDescription());
+    project.setUsedOutsideEu(projectDto.isUsedOutsideEu());
+    project.setFirstHypotheses(projectDto.getFirstHypotheses());
+    project.setSecondHypotheses(projectDto.getSecondHypotheses());
+    project.setGoal(projectDto.getGoal());
+    project.setCategories(projectDto.getCategories());
+    project.setKeywords(projectDto.getKeywords());
+    project.setCoordinator(coordinator);
+    project.setCreateDate(OffsetDateTime.now());
+    project.setModifiedDate(OffsetDateTime.now());
+    project.setStartDate(projectDto.getStartDate());
+    project.setEndDate(projectDto.getEndDate());
+    project.setFinanced(projectDto.isFinanced());
 
-    Study savedStudy = studyRepository.save(study);
+    Project savedProject = projectRepository.save(project);
 
-    if (savedStudy.getStatus() == StudyStatus.PENDING) {
-      registerToZars(study);
+    if (savedProject.getStatus() == ProjectStatus.PENDING) {
+      registerToZars(project);
     }
 
     List<Notification> notifications =
         collectNotifications(
-            savedStudy.getName(),
-            savedStudy.getStatus(),
+            savedProject.getName(),
+            savedProject.getStatus(),
             null,
-            savedStudy.getCoordinator().getUserId(),
-            savedStudy.getResearchers(),
-            savedStudy.getResearchers(),
+            savedProject.getCoordinator().getUserId(),
+            savedProject.getResearchers(),
+            savedProject.getResearchers(),
             userId);
 
     notificationService.send(notifications);
 
-    return savedStudy;
+    return savedProject;
   }
 
   @Transactional
-  public Study updateStudy(StudyDto studyDto, Long id, String userId, List<String> roles) {
+  public Project updateProject(ProjectDto projectDto, Long id, String userId, List<String> roles) {
     UserDetails user = userDetailsService.checkIsUserApproved(userId);
 
-    Study studyToEdit =
-        studyRepository.findById(id).orElseThrow(() -> new ResourceNotFound(STUDY_NOT_FOUND + id));
+    Project projectToEdit =
+        projectRepository.findById(id).orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + id));
 
-    if (StudyStatus.ARCHIVED.equals(studyToEdit.getStatus())
-        || StudyStatus.CLOSED.equals(studyToEdit.getStatus())) {
+    if (ProjectStatus.ARCHIVED.equals(projectToEdit.getStatus())
+        || ProjectStatus.CLOSED.equals(projectToEdit.getStatus())) {
       throw new ForbiddenException(
           String.format(
-              "Cannot update study: %s, invalid study status: %s", id, studyToEdit.getStatus()));
+              "Cannot update project: %s, invalid project status: %s", id, projectToEdit.getStatus()));
     }
 
     if (CollectionUtils.isNotEmpty(roles)
         && roles.contains(Roles.STUDY_COORDINATOR)
-        && studyToEdit.isCoordinator(userId)) {
-      return updateStudyAllFields(studyDto, roles, user, studyToEdit);
+        && projectToEdit.isCoordinator(userId)) {
+      return updateProjectAllFields(projectDto, roles, user, projectToEdit);
     } else if (CollectionUtils.isNotEmpty(roles) && roles.contains(Roles.STUDY_APPROVER)) {
-      return updateStudyStatus(studyDto, roles, user, studyToEdit);
+      return updateProjectStatus(projectDto, roles, user, projectToEdit);
     } else {
-      throw new ForbiddenException("No permissions to edit this study");
+      throw new ForbiddenException("No permissions to edit this project");
     }
   }
 
-  private Study updateStudyStatus(
-      StudyDto studyDto, List<String> roles, UserDetails user, Study studyToEdit) {
+  private Project updateProjectStatus(
+      ProjectDto projectDto, List<String> roles, UserDetails user, Project projectToEdit) {
 
-    StudyStatus oldStudyStatus = studyToEdit.getStatus();
+    ProjectStatus oldProjectStatus = projectToEdit.getStatus();
 
-    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
-    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
-    studyToEdit.setStatus(studyDto.getStatus());
+    validateStatus(projectToEdit.getStatus(), projectDto.getStatus(), roles);
+    persistTransition(projectToEdit, projectToEdit.getStatus(), projectDto.getStatus(), user);
+    projectToEdit.setStatus(projectDto.getStatus());
 
-    Study savedStudy = studyRepository.save(studyToEdit);
+    Project savedProject = projectRepository.save(projectToEdit);
 
     registerToZarsIfNecessary(
-        savedStudy, oldStudyStatus, savedStudy.getResearchers(), savedStudy.getResearchers());
+        savedProject, oldProjectStatus, savedProject.getResearchers(), savedProject.getResearchers());
 
     List<Notification> notifications =
         collectNotifications(
-            savedStudy.getName(),
-            savedStudy.getStatus(),
-            oldStudyStatus,
-            savedStudy.getCoordinator().getUserId(),
-            savedStudy.getResearchers(),
-            savedStudy.getResearchers(),
+            savedProject.getName(),
+            savedProject.getStatus(),
+            oldProjectStatus,
+            savedProject.getCoordinator().getUserId(),
+            savedProject.getResearchers(),
+            savedProject.getResearchers(),
             user.getUserId());
 
     notificationService.send(notifications);
 
-    return savedStudy;
+    return savedProject;
   }
 
-  private Study updateStudyAllFields(
-      StudyDto studyDto, List<String> roles, UserDetails user, Study studyToEdit) {
+  private Project updateProjectAllFields(
+      ProjectDto projectDto, List<String> roles, UserDetails user, Project projectToEdit) {
 
-    StudyStatus oldStatus = studyToEdit.getStatus();
+    ProjectStatus oldStatus = projectToEdit.getStatus();
 
-    validateCoordinatorIsOwner(studyToEdit, user.getUserId());
-    validateStatus(studyToEdit.getStatus(), studyDto.getStatus(), roles);
+    validateCoordinatorIsOwner(projectToEdit, user.getUserId());
+    validateStatus(projectToEdit.getStatus(), projectDto.getStatus(), roles);
 
-    List<UserDetails> newResearchers = getResearchers(studyDto);
-    List<UserDetails> oldResearchers = studyToEdit.getResearchers();
-    studyToEdit.setResearchers(newResearchers);
+    List<UserDetails> newResearchers = getResearchers(projectDto);
+    List<UserDetails> oldResearchers = projectToEdit.getResearchers();
+    projectToEdit.setResearchers(newResearchers);
 
-    persistTransition(studyToEdit, studyToEdit.getStatus(), studyDto.getStatus(), user);
+    persistTransition(projectToEdit, projectToEdit.getStatus(), projectDto.getStatus(), user);
 
-    if (StudyStatus.APPROVED.equals(studyToEdit.getStatus())
-        || StudyStatus.PUBLISHED.equals(studyToEdit.getStatus())) {
-      studyToEdit.setStatus(studyDto.getStatus());
-      Study savedStudy = studyRepository.save(studyToEdit);
+    if (ProjectStatus.APPROVED.equals(projectToEdit.getStatus())
+        || ProjectStatus.PUBLISHED.equals(projectToEdit.getStatus())) {
+      projectToEdit.setStatus(projectDto.getStatus());
+      Project savedProject = projectRepository.save(projectToEdit);
 
-      registerToZarsIfNecessary(savedStudy, oldStatus, oldResearchers, newResearchers);
+      registerToZarsIfNecessary(savedProject, oldStatus, oldResearchers, newResearchers);
 
       List<Notification> notifications =
           collectNotifications(
-              savedStudy.getName(),
-              savedStudy.getStatus(),
+              savedProject.getName(),
+              savedProject.getStatus(),
               oldStatus,
-              savedStudy.getCoordinator().getUserId(),
+              savedProject.getCoordinator().getUserId(),
               newResearchers,
               oldResearchers,
               user.getUserId());
 
       notificationService.send(notifications);
-      return savedStudy;
+      return savedProject;
     }
-    setTemplates(studyToEdit, studyDto);
+    setTemplates(projectToEdit, projectDto);
 
-    studyToEdit.setStatus(studyDto.getStatus());
-    studyToEdit.setName(studyDto.getName());
-    studyToEdit.setSimpleDescription(studyDto.getSimpleDescription());
-    studyToEdit.setUsedOutsideEu(studyDto.isUsedOutsideEu());
-    studyToEdit.setDescription(studyDto.getDescription());
-    studyToEdit.setModifiedDate(OffsetDateTime.now());
-    studyToEdit.setFirstHypotheses(studyDto.getFirstHypotheses());
-    studyToEdit.setSecondHypotheses(studyDto.getSecondHypotheses());
-    studyToEdit.setGoal(studyDto.getGoal());
-    studyToEdit.setCategories(studyDto.getCategories());
-    studyToEdit.setKeywords(studyDto.getKeywords());
-    studyToEdit.setStartDate(studyDto.getStartDate());
-    studyToEdit.setEndDate(studyDto.getEndDate());
-    studyToEdit.setFinanced(studyDto.isFinanced());
+    projectToEdit.setStatus(projectDto.getStatus());
+    projectToEdit.setName(projectDto.getName());
+    projectToEdit.setSimpleDescription(projectDto.getSimpleDescription());
+    projectToEdit.setUsedOutsideEu(projectDto.isUsedOutsideEu());
+    projectToEdit.setDescription(projectDto.getDescription());
+    projectToEdit.setModifiedDate(OffsetDateTime.now());
+    projectToEdit.setFirstHypotheses(projectDto.getFirstHypotheses());
+    projectToEdit.setSecondHypotheses(projectDto.getSecondHypotheses());
+    projectToEdit.setGoal(projectDto.getGoal());
+    projectToEdit.setCategories(projectDto.getCategories());
+    projectToEdit.setKeywords(projectDto.getKeywords());
+    projectToEdit.setStartDate(projectDto.getStartDate());
+    projectToEdit.setEndDate(projectDto.getEndDate());
+    projectToEdit.setFinanced(projectDto.isFinanced());
 
-    Study savedStudy = studyRepository.save(studyToEdit);
-    registerToZarsIfNecessary(savedStudy, oldStatus, oldResearchers, newResearchers);
+    Project savedProject = projectRepository.save(projectToEdit);
+    registerToZarsIfNecessary(savedProject, oldStatus, oldResearchers, newResearchers);
 
     List<Notification> notifications =
         collectNotifications(
-            savedStudy.getName(),
-            savedStudy.getStatus(),
+            savedProject.getName(),
+            savedProject.getStatus(),
             oldStatus,
-            savedStudy.getCoordinator().getUserId(),
+            savedProject.getCoordinator().getUserId(),
             newResearchers,
             oldResearchers,
             user.getUserId());
 
     notificationService.send(notifications);
 
-    return savedStudy;
+    return savedProject;
   }
 
   private List<Policy> collectProjectPolicies(
@@ -519,8 +519,8 @@ public class StudyService {
 
   private List<Notification> collectNotifications(
       String projectName,
-      StudyStatus newStatus,
-      StudyStatus oldStatus,
+      ProjectStatus newStatus,
+      ProjectStatus oldStatus,
       String coordinatorUserId,
       List<UserDetails> newResearchers,
       List<UserDetails> oldResearchers,
@@ -636,7 +636,7 @@ public class StudyService {
           });
     }
 
-    if (StudyStatus.CLOSED.equals(newStatus)) {
+    if (ProjectStatus.CLOSED.equals(newStatus)) {
       List<String> researcherIds = new LinkedList<>();
       if (oldResearchers != null) {
         researcherIds =
@@ -661,41 +661,41 @@ public class StudyService {
     return notifications;
   }
 
-  private boolean isTransitionToPending(StudyStatus oldStatus, StudyStatus newStatus) {
-    return StudyStatus.PENDING.equals(newStatus) && !newStatus.equals(oldStatus);
+  private boolean isTransitionToPending(ProjectStatus oldStatus, ProjectStatus newStatus) {
+    return ProjectStatus.PENDING.equals(newStatus) && !newStatus.equals(oldStatus);
   }
 
-  private boolean isTransitionMadeByApprover(StudyStatus oldStatus, StudyStatus newStatus) {
-    return (StudyStatus.APPROVED.equals(newStatus)
-            || StudyStatus.DENIED.equals(newStatus)
-            || StudyStatus.CHANGE_REQUEST.equals(newStatus)
-            || StudyStatus.REVIEWING.equals(newStatus))
+  private boolean isTransitionMadeByApprover(ProjectStatus oldStatus, ProjectStatus newStatus) {
+    return (ProjectStatus.APPROVED.equals(newStatus)
+            || ProjectStatus.DENIED.equals(newStatus)
+            || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
+            || ProjectStatus.REVIEWING.equals(newStatus))
         && !newStatus.equals(oldStatus);
   }
 
-  private boolean isTransitionToPublished(StudyStatus oldStatus, StudyStatus newStatus) {
-    return StudyStatus.PUBLISHED.equals(newStatus) && !newStatus.equals(oldStatus);
+  private boolean isTransitionToPublished(ProjectStatus oldStatus, ProjectStatus newStatus) {
+    return ProjectStatus.PUBLISHED.equals(newStatus) && !newStatus.equals(oldStatus);
   }
 
   private boolean isTransitionToPublishedFromPublished(
-      StudyStatus oldStatus, StudyStatus newStatus) {
-    return StudyStatus.PUBLISHED.equals(oldStatus) && StudyStatus.PUBLISHED.equals(newStatus);
+      ProjectStatus oldStatus, ProjectStatus newStatus) {
+    return ProjectStatus.PUBLISHED.equals(oldStatus) && ProjectStatus.PUBLISHED.equals(newStatus);
   }
 
   private void registerToZarsIfNecessary(
-      Study study,
-      StudyStatus oldStatus,
+      Project project,
+      ProjectStatus oldStatus,
       List<UserDetails> oldResearchers,
       List<UserDetails> newResearchers) {
-    StudyStatus newStatus = study.getStatus();
-    if (((newStatus == StudyStatus.PENDING
-                || newStatus == StudyStatus.APPROVED
-                || newStatus == StudyStatus.PUBLISHED
-                || newStatus == StudyStatus.CLOSED)
+    ProjectStatus newStatus = project.getStatus();
+    if (((newStatus == ProjectStatus.PENDING
+                || newStatus == ProjectStatus.APPROVED
+                || newStatus == ProjectStatus.PUBLISHED
+                || newStatus == ProjectStatus.CLOSED)
             && newStatus != oldStatus)
-        || (newStatus == StudyStatus.PUBLISHED
+        || (newStatus == ProjectStatus.PUBLISHED
             && researchersAreDifferent(oldResearchers, newResearchers))) {
-      registerToZars(study);
+      registerToZars(project);
     }
   }
 
@@ -705,54 +705,54 @@ public class StudyService {
         && newResearchers.containsAll(oldResearchers));
   }
 
-  public List<Study> getStudies(String userId, List<String> roles) {
+  public List<Project> getProjects(String userId, List<String> roles) {
 
-    List<Study> studiesList = new ArrayList<>();
+    List<Project> projects = new ArrayList<>();
 
     if (roles.contains(Roles.STUDY_COORDINATOR)) {
-      studiesList.addAll(studyRepository.findByCoordinatorUserId(userId));
+      projects.addAll(projectRepository.findByCoordinatorUserId(userId));
     }
     if (roles.contains(Roles.RESEARCHER)) {
-      studiesList.addAll(
-          studyRepository.findByResearchers_UserIdAndStatusIn(
-              userId, new StudyStatus[] {StudyStatus.PUBLISHED, StudyStatus.CLOSED}));
+      projects.addAll(
+          projectRepository.findByResearchers_UserIdAndStatusIn(
+              userId, new ProjectStatus[] {ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
-      studiesList.addAll(
-          studyRepository.findByStatusIn(
-              new StudyStatus[] {StudyStatus.PENDING, StudyStatus.REVIEWING}));
+      projects.addAll(
+          projectRepository.findByStatusIn(
+              new ProjectStatus[] {ProjectStatus.PENDING, ProjectStatus.REVIEWING}));
     }
 
-    return studiesList.stream().distinct().collect(Collectors.toList());
+    return projects.stream().distinct().collect(Collectors.toList());
   }
 
-  public String getExportFilenameBody(Long studyId) {
+  public String getExportFilenameBody(Long projectId) {
     return String.format(
             "Project_%d_%s",
-            studyId,
+            projectId,
             LocalDateTime.now()
                 .truncatedTo(ChronoUnit.MINUTES)
                 .format(DateTimeFormatter.ISO_LOCAL_DATE))
         .replace('-', '_');
   }
 
-  private void setTemplates(Study study, StudyDto studyDto) {
-    if (studyDto.getTemplates() != null) {
+  private void setTemplates(Project project, ProjectDto projectDto) {
+    if (projectDto.getTemplates() != null) {
       Map<String, String> map =
-          studyDto.getTemplates().stream()
+          projectDto.getTemplates().stream()
               .collect(
                   Collectors.toMap(
                       TemplateInfoDto::getTemplateId, TemplateInfoDto::getName, (t1, t2) -> t1));
 
-      study.setTemplates(map);
+      project.setTemplates(map);
     }
   }
 
-  private List<UserDetails> getResearchers(StudyDto studyDto) {
+  private List<UserDetails> getResearchers(ProjectDto projectDto) {
     List<UserDetails> newResearchersList = new LinkedList<>();
 
-    if (studyDto.getResearchers() != null) {
-      for (UserDetailsDto dto : studyDto.getResearchers()) {
+    if (projectDto.getResearchers() != null) {
+      for (UserDetailsDto dto : projectDto.getResearchers()) {
         Optional<UserDetails> researcher = userDetailsService.getUserDetailsById(dto.getUserId());
 
         if (researcher.isEmpty()) {
@@ -770,15 +770,15 @@ public class StudyService {
   }
 
   private void validateStatus(
-      StudyStatus initialStatus, StudyStatus nextStatus, List<String> roles) {
+      ProjectStatus initialStatus, ProjectStatus nextStatus, List<String> roles) {
 
     if (nextStatus == null) {
-      throw new BadRequestException("Invalid study status");
+      throw new BadRequestException("Invalid project status");
     }
 
     if (initialStatus == null) {
       if (!isValidInitialStatus(nextStatus)) {
-        throw new BadRequestException("Invalid study status: " + nextStatus);
+        throw new BadRequestException("Invalid project status: " + nextStatus);
       }
     } else if (initialStatus.nextStatusesAndRoles().containsKey(nextStatus)) {
       List<String> allowedRoles = initialStatus.nextStatusesAndRoles().get(nextStatus);
@@ -788,78 +788,78 @@ public class StudyService {
 
       if (intersectionSet.isEmpty()) {
         throw new ForbiddenException(
-            "Study status transition from " + initialStatus + " to " + nextStatus + " not allowed");
+            "Project status transition from " + initialStatus + " to " + nextStatus + " not allowed");
       }
     } else {
       throw new BadRequestException(
-          "Study status transition from " + initialStatus + " to " + nextStatus + " not allowed");
+          "Project status transition from " + initialStatus + " to " + nextStatus + " not allowed");
     }
   }
 
-  private boolean isValidInitialStatus(StudyStatus status) {
-    return status.equals(StudyStatus.DRAFT) || status.equals(StudyStatus.PENDING);
+  private boolean isValidInitialStatus(ProjectStatus status) {
+    return status.equals(ProjectStatus.DRAFT) || status.equals(ProjectStatus.PENDING);
   }
 
   private void persistTransition(
-      Study study, StudyStatus fromStatus, StudyStatus toStatus, UserDetails user) {
+      Project project, ProjectStatus fromStatus, ProjectStatus toStatus, UserDetails user) {
 
     if (fromStatus != null && fromStatus.equals(toStatus)) {
       return;
     }
 
-    StudyTransition studyTransition =
-        StudyTransition.builder()
+    ProjectTransition projectTransition =
+        ProjectTransition.builder()
             .toStatus(toStatus)
-            .study(study)
+            .project(project)
             .user(user)
             .createDate(OffsetDateTime.now())
             .build();
 
     if (fromStatus != null) {
-      studyTransition.setFromStatus(fromStatus);
+      projectTransition.setFromStatus(fromStatus);
     }
 
-    if (study.getTransitions() != null) {
-      study.getTransitions().add(studyTransition);
+    if (project.getTransitions() != null) {
+      project.getTransitions().add(projectTransition);
     } else {
-      study.setTransitions(Set.of(studyTransition));
+      project.setTransitions(Set.of(projectTransition));
     }
   }
 
-  private void validateCoordinatorIsOwner(Study study, String loggedInUser) {
-    if (study.hasEmptyOrDifferentOwner(loggedInUser)) {
+  private void validateCoordinatorIsOwner(Project project, String loggedInUser) {
+    if (project.hasEmptyOrDifferentOwner(loggedInUser)) {
       throw new ForbiddenException("Cannot access this resource. User is not owner.");
     }
   }
 
-  private ProjectInfoDto toProjectInfo(Study study) {
-    if (study == null) {
+  private ProjectInfoDto toProjectInfo(Project project) {
+    if (project == null) {
       return null;
     }
 
-    ProjectInfoDto project =
-        ProjectInfoDto.builder().createDate(study.getCreateDate()).title(study.getName()).build();
+    ProjectInfoDto projectInfoDto =
+        ProjectInfoDto.builder().createDate(project.getCreateDate()).title(project.getName()).build();
 
-    if (study.getCoordinator() != null) {
-      User coordinator = userService.getUserById(study.getCoordinator().getUserId(), false);
-      project.setCoordinator(
+    if (project.getCoordinator() != null) {
+      User coordinator = userService.getUserById(project.getCoordinator().getUserId(), false);
+      projectInfoDto.setCoordinator(
           String.format("%s %s", coordinator.getFirstName(), coordinator.getLastName()));
 
-      if (study.getCoordinator().getOrganization() != null) {
-        project.setOrganization(study.getCoordinator().getOrganization().getName());
+      if (project.getCoordinator().getOrganization() != null) {
+        projectInfoDto.setOrganization(project.getCoordinator().getOrganization().getName());
       }
     }
-    return project;
+    return projectInfoDto;
   }
 
-  private void registerToZars(Study study) {
+  private void registerToZars(Project project) {
     if (zarsService != null) {
-      ZarsInfoDto zarsInfoDto = modelMapper.map(study, ZarsInfoDto.class);
-      zarsInfoDto.setCoordinator(getCoordinator(study));
-      zarsInfoDto.setQueries(getQueries(study));
-      zarsInfoDto.setApprovalDate(getApprovalDateIfExists(study));
-      zarsInfoDto.setPartners(getPartners(study));
-      zarsInfoDto.setClosedDate(getClosedDateIfExists(study));
+      ZarsInfoDto zarsInfoDto = modelMapper.map(project, ZarsInfoDto.class);
+      zarsInfoDto.setCoordinator(getCoordinator(project));
+      zarsInfoDto.setQueries(getQueries(project));
+      zarsInfoDto.setApprovalDate(getApprovalDateIfExists(project));
+      zarsInfoDto.setPartners(getPartners(project));
+      zarsInfoDto.setClosedDate(getClosedDateIfExists(project));
       zarsService.registerToZars(zarsInfoDto);
     } else {
       log.error(
@@ -868,27 +868,27 @@ public class StudyService {
   }
 
   @NotNull
-  private String getCoordinator(@NotNull Study study) {
-    return userService.getUserById(study.getCoordinator().getUserId(), false).getUsername();
+  private String getCoordinator(@NotNull Project project) {
+    return userService.getUserById(project.getCoordinator().getUserId(), false).getUsername();
   }
 
   @NotNull
-  private String getQueries(Study study) {
-    if (study.getCohort() == null) {
+  private String getQueries(Project project) {
+    if (project.getCohort() == null) {
       return StringUtils.EMPTY;
     }
-    return String.join(", ", cohortQueryLister.list(study.getCohort()));
+    return String.join(", ", cohortQueryLister.list(project.getCohort()));
   }
 
   @NotNull
-  private String getApprovalDateIfExists(Study study) {
-    List<StudyTransition> transitions =
-        studyTransitionRepository
-            .findAllByStudyIdAndFromStatusAndToStatus(
-                study.getId(), StudyStatus.REVIEWING, StudyStatus.APPROVED)
+  private String getApprovalDateIfExists(Project project) {
+    List<ProjectTransition> transitions =
+        projectTransitionRepository
+            .findAllByProjectIdAndFromStatusAndToStatus(
+                project.getId(), ProjectStatus.REVIEWING, ProjectStatus.APPROVED)
             .orElse(Collections.emptyList());
     if (transitions.size() > 1) {
-      log.error("More than one transition from REVIEWING to APPROVED for study " + study.getId());
+      log.error("More than one transition from REVIEWING to APPROVED for project " + project.getId());
       return StringUtils.EMPTY;
     }
     if (transitions.size() == 1) {
@@ -898,13 +898,13 @@ public class StudyService {
   }
 
   @NotNull
-  private String getPartners(Study study) {
+  private String getPartners(Project project) {
     Set<Organization> organizations = new HashSet<>();
 
-    if (study.getCoordinator().getOrganization() != null) {
-      organizations.add(study.getCoordinator().getOrganization());
+    if (project.getCoordinator().getOrganization() != null) {
+      organizations.add(project.getCoordinator().getOrganization());
     }
-    study
+    project
         .getResearchers()
         .forEach(
             userDetails -> {
@@ -916,15 +916,15 @@ public class StudyService {
   }
 
   @NotNull
-  private String getClosedDateIfExists(Study study) {
-    List<StudyTransition> transitions =
-        studyTransitionRepository
-            .findAllByStudyIdAndFromStatusAndToStatus(
-                study.getId(), StudyStatus.PUBLISHED, StudyStatus.CLOSED)
+  private String getClosedDateIfExists(Project project) {
+    List<ProjectTransition> transitions =
+        projectTransitionRepository
+            .findAllByProjectIdAndFromStatusAndToStatus(
+                project.getId(), ProjectStatus.PUBLISHED, ProjectStatus.CLOSED)
             .orElse(Collections.emptyList());
     if (transitions.size() > 1) {
       throw new SystemException(
-          "More than one transition from PUBLISHED to CLOSED for study " + study.getId());
+          "More than one transition from PUBLISHED to CLOSED for project " + project.getId());
     }
     if (transitions.size() == 1) {
       return transitions.get(0).getCreateDate().format(DateTimeFormatter.ISO_LOCAL_DATE);

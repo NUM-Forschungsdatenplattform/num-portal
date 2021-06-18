@@ -1,6 +1,6 @@
 package de.vitagroup.num.service.notification.dto;
 
-import de.vitagroup.num.domain.StudyStatus;
+import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.service.email.MessageSourceWrapper;
 import java.time.Year;
 import lombok.Builder;
@@ -13,7 +13,7 @@ public class ProjectStatusChangeNotification extends Notification {
   private final String approverFirstName;
   private final String approverLastName;
   private final String projectTitle;
-  private final StudyStatus projectStatus;
+  private final ProjectStatus projectStatus;
 
   @Builder
   public ProjectStatusChangeNotification(
@@ -23,7 +23,7 @@ public class ProjectStatusChangeNotification extends Notification {
       String approverFirstName,
       String approverLastName,
       String projectTitle,
-      StudyStatus projectStatus) {
+      ProjectStatus projectStatus) {
 
     this.recipientEmail = recipientEmail;
     this.recipientFirstName = recipientFirstName;
