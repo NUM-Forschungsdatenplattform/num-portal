@@ -28,7 +28,6 @@ public class CohortService {
   private final CohortExecutor cohortExecutor;
   private final UserDetailsService userDetailsService;
   private final ModelMapper modelMapper;
-  private final PhenotypeService phenotypeService;
   private final AqlService aqlService;
   private final ProjectRepository projectRepository;
   private final PrivacyProperties privacyProperties;

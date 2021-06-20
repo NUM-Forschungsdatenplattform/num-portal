@@ -88,9 +88,9 @@ public class CohortValidatorTest {
 
   @Test
   public void correctlyValidatesNotOperation() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).phenotypeId(1L).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).phenotypeId(2L).build();
-    CohortGroupDto third = CohortGroupDto.builder().type(Type.AQL).phenotypeId(3L).build();
+    CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(CohortAqlDto.builder().id(1L).build()).build();
+    CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(CohortAqlDto.builder().id(2L).build()).build();
+    CohortGroupDto third = CohortGroupDto.builder().type(Type.AQL).query(CohortAqlDto.builder().id(3L).build()).build();
 
     CohortGroupDto notCohort =
         CohortGroupDto.builder()

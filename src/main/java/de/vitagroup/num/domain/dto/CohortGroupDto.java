@@ -42,11 +42,6 @@ public class CohortGroupDto {
           "Children of the cohort group in case the type of the group is: GROUP; can be other groups or aqls")
   private List<CohortGroupDto> children;
 
-  @ApiModelProperty(
-      value = "Reference to phenotype in case the type of the group is: PHENOTYPE",
-      example = "2")
-  private Long phenotypeId;
-
   @Convert(converter = AqlConverter.class)
   private CohortAqlDto query;
 
