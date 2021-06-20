@@ -2,7 +2,6 @@ package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortGroup;
-import de.vitagroup.num.domain.Phenotype;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
@@ -30,6 +29,7 @@ public class CohortService {
   private final UserDetailsService userDetailsService;
   private final ModelMapper modelMapper;
   private final PhenotypeService phenotypeService;
+  private final AqlService aqlService;
   private final ProjectRepository projectRepository;
   private final PrivacyProperties privacyProperties;
 
@@ -44,7 +44,8 @@ public class CohortService {
     Project project =
         projectRepository
             .findById(cohortDto.getProjectId())
-            .orElseThrow(() -> new ResourceNotFound("Project not found: " + cohortDto.getProjectId()));
+            .orElseThrow(
+                () -> new ResourceNotFound("Project not found: " + cohortDto.getProjectId()));
 
     if (project.hasEmptyOrDifferentOwner(userId)) {
       throw new ForbiddenException("Not allowed");
@@ -106,19 +107,19 @@ public class CohortService {
 
   private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto) {
     if (cohortGroupDto == null) {
-      throw new BadRequestException("Cohort groups cannot be empty");
+      throw new BadRequestException("Cohort group cannot be empty");
     }
 
     CohortGroup cohortGroup = modelMapper.map(cohortGroupDto, CohortGroup.class);
     cohortGroup.setId(null);
-    if (cohortGroupDto.isPhenotype()) {
-      Optional<Phenotype> phenotype =
-          phenotypeService.getPhenotypeById(cohortGroupDto.getPhenotypeId());
 
-      if (phenotype.isPresent()) {
-        cohortGroup.setPhenotype(phenotype.get());
+    if (cohortGroupDto.isAql()) {
+      if (cohortGroupDto.getQuery() != null && cohortGroupDto.getQuery().getId() != null) {
+        aqlService
+            .getAqlById(cohortGroupDto.getQuery().getId())
+            .orElseThrow(() -> new BadRequestException("Invalid aql id"));
       } else {
-        throw new BadRequestException("Invalid phenotype id");
+        throw new BadRequestException("Invalid cohort group. Aql missing.");
       }
     }
 

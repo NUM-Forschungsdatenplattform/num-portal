@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.dto.CohortAqlDto;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import org.junit.Before;
@@ -28,8 +29,16 @@ public class CohortValidatorTest {
 
   @Test
   public void correctlyValidatesSimpleCohort() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
+    CohortGroupDto first =
+        CohortGroupDto.builder()
+            .type(Type.AQL)
+            .query(CohortAqlDto.builder().id(1L).query("select...").build())
+            .build();
+    CohortGroupDto second =
+        CohortGroupDto.builder()
+            .type(Type.AQL)
+            .query(CohortAqlDto.builder().id(2L).query("select...").build())
+            .build();
 
     CohortGroupDto andCohort =
         CohortGroupDto.builder()
@@ -47,9 +56,21 @@ public class CohortValidatorTest {
 
   @Test
   public void supportsOrOperation() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
-    CohortGroupDto third = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(3L).build();
+    CohortGroupDto first =
+        CohortGroupDto.builder()
+            .type(Type.AQL)
+            .query(CohortAqlDto.builder().id(1L).query("select...").build())
+            .build();
+    CohortGroupDto second =
+        CohortGroupDto.builder()
+            .type(Type.AQL)
+            .query(CohortAqlDto.builder().id(2L).query("select...").build())
+            .build();
+    CohortGroupDto third =
+        CohortGroupDto.builder()
+            .type(Type.AQL)
+            .query(CohortAqlDto.builder().id(3L).query("select...").build())
+            .build();
 
     CohortGroupDto orCohort =
         CohortGroupDto.builder()
@@ -67,9 +88,9 @@ public class CohortValidatorTest {
 
   @Test
   public void correctlyValidatesNotOperation() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
-    CohortGroupDto third = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(3L).build();
+    CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).phenotypeId(1L).build();
+    CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).phenotypeId(2L).build();
+    CohortGroupDto third = CohortGroupDto.builder().type(Type.AQL).phenotypeId(3L).build();
 
     CohortGroupDto notCohort =
         CohortGroupDto.builder()
@@ -89,7 +110,11 @@ public class CohortValidatorTest {
 
   @Test
   public void correctlyValidatesOrOperation() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
+    CohortGroupDto first =
+        CohortGroupDto.builder()
+            .type(Type.AQL)
+            .query(CohortAqlDto.builder().id(1L).query("select...").build())
+            .build();
 
     CohortGroupDto singlePhenotypeOrGroup =
         CohortGroupDto.builder()
@@ -99,7 +124,11 @@ public class CohortValidatorTest {
             .build();
 
     CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").projectId(1L).cohortGroup(singlePhenotypeOrGroup).build();
+        CohortDto.builder()
+            .name("Cohort name")
+            .projectId(1L)
+            .cohortGroup(singlePhenotypeOrGroup)
+            .build();
 
     Set<ConstraintViolation<CohortDto>> violations = validator.validate(cohortDto);
 
@@ -108,7 +137,11 @@ public class CohortValidatorTest {
 
   @Test
   public void correctlyValidatesCohortName() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
+    CohortGroupDto first =
+        CohortGroupDto.builder()
+            .type(Type.AQL)
+            .query(CohortAqlDto.builder().id(1L).query("select...").build())
+            .build();
     CohortGroupDto notCohort =
         CohortGroupDto.builder()
             .type(Type.GROUP)
@@ -132,7 +165,11 @@ public class CohortValidatorTest {
 
   @Test
   public void correctlyValidatesCohortStudy() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
+    CohortGroupDto first =
+        CohortGroupDto.builder()
+            .type(Type.AQL)
+            .query(CohortAqlDto.builder().id(1L).query("select...").build())
+            .build();
     CohortGroupDto notCohort =
         CohortGroupDto.builder()
             .type(Type.GROUP)
@@ -187,14 +224,19 @@ public class CohortValidatorTest {
 
   @Test
   public void shouldCorrectlyValidateCohortParameters() {
-    CohortGroupDto simpleCohort =
-        CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).parameters(null).build();
+    CohortGroupDto simpleCohortGroup =
+        CohortGroupDto.builder()
+            .type(Type.AQL)
+            .query(CohortAqlDto.builder().id(1L).query("select...").build())
+            .parameters(null)
+            .build();
+
     CohortDto cohortDto =
         CohortDto.builder()
             .name("Cohort name")
             .description("Cohort parameters are optional")
             .projectId(1L)
-            .cohortGroup(simpleCohort)
+            .cohortGroup(simpleCohortGroup)
             .build();
 
     Set<ConstraintViolation<CohortDto>> violations = validator.validate(cohortDto);

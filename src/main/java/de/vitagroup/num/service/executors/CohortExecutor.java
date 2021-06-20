@@ -21,7 +21,7 @@ public class CohortExecutor {
 
   private final SetOperationsService setOperations;
 
-  private final PhenotypeExecutor phenotypeExecutor;
+  private final AqlExecutor aqlExecutor;
 
   private final EhrBaseService ehrBaseService;
 
@@ -31,12 +31,12 @@ public class CohortExecutor {
       throw new IllegalArgumentException("Cannot execute an empty cohort");
     }
 
-    return executeGroup(cohort.getCohortGroup(), cohort.getCohortGroup().getParameters(),
-        allowUsageOutsideEu);
+    return executeGroup(
+        cohort.getCohortGroup(), cohort.getCohortGroup().getParameters(), allowUsageOutsideEu);
   }
 
-  public Set<String> executeGroup(CohortGroup cohortGroup, Map<String, Object> parameters,
-      Boolean allowUsageOutsideEu) {
+  public Set<String> executeGroup(
+      CohortGroup cohortGroup, Map<String, Object> parameters, Boolean allowUsageOutsideEu) {
     if (cohortGroup.getType() == Type.GROUP) {
 
       List<Set<String>> sets =
@@ -47,9 +47,8 @@ public class CohortExecutor {
       return setOperations.apply(
           cohortGroup.getOperator(), sets, ehrBaseService.getAllPatientIds());
 
-    } else if (cohortGroup.getType() == Type.PHENOTYPE) {
-
-      return phenotypeExecutor.execute(cohortGroup.getPhenotype(), parameters, allowUsageOutsideEu);
+    } else if (cohortGroup.getType() == Type.AQL) {
+      return aqlExecutor.execute(cohortGroup.getQuery(), parameters, allowUsageOutsideEu);
     }
 
     return SetUtils.emptySet();

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Type;
+import de.vitagroup.num.domain.dto.CohortAqlDto;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
@@ -29,9 +30,7 @@ public class CohortControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldNotAccessCohortApiWithWrongRole() {
-    mockMvc
-        .perform(get(String.format("%s/%s", COHORT_PATH, 1)))
-        .andExpect(status().isForbidden());
+    mockMvc.perform(get(String.format("%s/%s", COHORT_PATH, 1))).andExpect(status().isForbidden());
   }
 
   @Test
@@ -45,7 +44,11 @@ public class CohortControllerIT extends IntegrationTest {
         CohortDto.builder()
             .name("name")
             .projectId(1L)
-            .cohortGroup(CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build())
+            .cohortGroup(
+                CohortGroupDto.builder()
+                    .type(Type.AQL)
+                    .query(CohortAqlDto.builder().id(1L).query("select...").build())
+                    .build())
             .build();
     String cohortDtoJson = mapper.writeValueAsString(cohortDto);
 
@@ -67,7 +70,7 @@ public class CohortControllerIT extends IntegrationTest {
         CohortDto.builder()
             .name("name")
             .projectId(1L)
-            .cohortGroup(CohortGroupDto.builder().type(Type.PHENOTYPE).build())
+            .cohortGroup(CohortGroupDto.builder().type(Type.AQL).build())
             .build();
     String cohortDtoJson = mapper.writeValueAsString(cohortDto);
 

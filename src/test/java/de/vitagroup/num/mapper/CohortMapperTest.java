@@ -4,16 +4,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 
-import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.domain.AqlExpression;
 import de.vitagroup.num.domain.Cohort;
+import de.vitagroup.num.domain.CohortAql;
 import de.vitagroup.num.domain.CohortGroup;
 import de.vitagroup.num.domain.Operator;
-import de.vitagroup.num.domain.Phenotype;
-import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.service.PhenotypeService;
+import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.service.ProjectService;
 import java.util.Set;
 import org.junit.Before;
@@ -28,7 +25,7 @@ import org.modelmapper.ModelMapper;
 @RunWith(MockitoJUnitRunner.class)
 public class CohortMapperTest {
 
-  @Mock private PhenotypeService phenotypeService;
+  @Mock private AqlService aqlService;
 
   @Mock private ProjectService projectService;
 
@@ -36,121 +33,23 @@ public class CohortMapperTest {
 
   @InjectMocks private CohortMapper cohortMapper;
 
+  private final String Q1 = "SELECT A1 ... FROM E1... WHERE ...";
+  private final String Q2 = "SELECT A2 ... FROM E1... WHERE ...";
+  private final String NAME1 = "AQL query name 1";
+  private final String NAME2 = "AQL query name 2";
+
   @Before
   public void setup() {
     cohortMapper.initialize();
-
-    Project project =
-        Project.builder().id(1L).name("Project name").description("Project description").build();
-
-    Aql aql1 =
-        Aql.builder()
-            .id(1L)
-            .name("AQL query name 1 ")
-            .query("SELECT A1 ... FROM E1... WHERE ...")
-            .build();
-    Aql aql2 =
-        Aql.builder()
-            .id(2L)
-            .name("AQL query name 2")
-            .query("SELECT A2 ... FROM E2... WHERE ...")
-            .build();
-
-    AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
-    AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
-
-    Phenotype phenotype1 =
-        Phenotype.builder()
-            .id(1L)
-            .name("Phenotype name")
-            .description("Phenotype description")
-            .query(aqlExpression1)
-            .build();
-    Phenotype phenotype2 =
-        Phenotype.builder()
-            .id(2L)
-            .name("Phenotype name")
-            .description("Phenotype description")
-            .query(aqlExpression2)
-            .build();
   }
 
   @Test
   public void shouldCorrectlyConvertCohortToCohortDto() {
-    Project project =
-        Project.builder().id(1L).name("Project name").description("Project description").build();
+    CohortAql cohortAql1 = CohortAql.builder().id(1L).name(NAME1).query(Q1).build();
+    CohortAql cohortAql2 = CohortAql.builder().id(2L).name(NAME2).query(Q2).build();
 
-    Aql aql1 =
-        Aql.builder()
-            .id(1L)
-            .name("AQL query name 1 ")
-            .query("SELECT A1 ... FROM E1... WHERE ...")
-            .build();
-    Aql aql2 =
-        Aql.builder()
-            .id(2L)
-            .name("AQL query name 2")
-            .query("SELECT A2 ... FROM E2... WHERE ...")
-            .build();
-
-    AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
-    AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
-
-    Phenotype phenotype1 =
-        Phenotype.builder()
-            .id(1L)
-            .name("Phenotype name")
-            .description("Phenotype description")
-            .query(aqlExpression1)
-            .build();
-    Phenotype phenotype2 =
-        Phenotype.builder()
-            .id(2L)
-            .name("Phenotype name")
-            .description("Phenotype description")
-            .query(aqlExpression2)
-            .build();
-
-    CohortGroup first = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype1).build();
-    CohortGroup second = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype2).build();
-
-    CohortGroup andCohort =
-        CohortGroup.builder()
-            .type(Type.GROUP)
-            .operator(Operator.AND)
-            .children(Set.of(first, second))
-            .build();
-
-    Cohort cohort =
-        Cohort.builder().name("Cohort name").project(project).cohortGroup(andCohort).build();
-    CohortDto cohortDto = cohortMapper.convertToDto(cohort);
-
-    assertThat(cohortDto.getName(), notNullValue());
-    assertThat(cohortDto.getName(), is("Cohort name"));
-
-    assertThat(cohortDto.getProjectId(), is(project.getId()));
-
-    assertThat(cohortDto.getCohortGroup(), notNullValue());
-    assertThat(cohortDto.getCohortGroup().getType(), is(Type.GROUP));
-    assertThat(cohortDto.getCohortGroup().getOperator(), is(Operator.AND));
-    assertThat(cohortDto.getCohortGroup().getChildren().size(), is(2));
-
-    assertThat(cohortDto.getCohortGroup().getChildren().get(0).getType(), is(Type.PHENOTYPE));
-    assertThat(cohortDto.getCohortGroup().getChildren().get(1).getType(), is(Type.PHENOTYPE));
-
-    assertThat(
-        cohortDto.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotypeId() == 1),
-        is(true));
-    assertThat(
-        cohortDto.getCohortGroup().getChildren().stream().anyMatch(c -> c.getPhenotypeId() == 2),
-        is(true));
-  }
-
-  @Test
-  public void shouldCopyIdsFromCohortToCohortDto() {
-
-    CohortGroup first = CohortGroup.builder().id(1L).type(Type.PHENOTYPE).phenotype(null).build();
-    CohortGroup second = CohortGroup.builder().id(2L).type(Type.PHENOTYPE).phenotype(null).build();
+    CohortGroup first = CohortGroup.builder().type(Type.AQL).query(cohortAql1).build();
+    CohortGroup second = CohortGroup.builder().type(Type.AQL).query(cohortAql2).build();
 
     CohortGroup andCohort =
         CohortGroup.builder()
@@ -162,6 +61,7 @@ public class CohortMapperTest {
 
     Cohort cohort =
         Cohort.builder().name("Cohort name").id(17L).project(null).cohortGroup(andCohort).build();
+
     CohortDto cohortDto = cohortMapper.convertToDto(cohort);
 
     assertThat(cohortDto, notNullValue());
@@ -172,6 +72,14 @@ public class CohortMapperTest {
         is(true));
     assertThat(
         cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == second.getId()),
+        is(true));
+    assertThat(
+        cohort.getCohortGroup().getChildren().stream()
+            .anyMatch(c -> c.getQuery().getQuery().equals(Q1)),
+        is(true));
+    assertThat(
+        cohort.getCohortGroup().getChildren().stream()
+            .anyMatch(c -> c.getQuery().getQuery().equals(Q2)),
         is(true));
   }
 }
