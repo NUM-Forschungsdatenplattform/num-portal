@@ -89,7 +89,7 @@ public class Project implements Serializable {
   @Convert(converter = MapConverter.class)
   private Map<String, String> templates;
 
-  @OneToOne(cascade = CascadeType.ALL)
+  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "cohort_id", referencedColumnName = "id")
   private Cohort cohort;
 

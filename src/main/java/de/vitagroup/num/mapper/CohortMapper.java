@@ -20,14 +20,6 @@ public class CohortMapper {
 
   @PostConstruct
   public void initialize() {
-
-    PropertyMap<CohortGroup, CohortGroupDto> cohortGroupDtoMap =
-        new PropertyMap<>() {
-          protected void configure() {
-            map().setPhenotypeId(source.getPhenotype().getId());
-          }
-        };
-
     PropertyMap<Cohort, CohortDto> cohortDtoMap =
         new PropertyMap<>() {
           protected void configure() {
@@ -36,7 +28,6 @@ public class CohortMapper {
         };
 
     modelMapper.addMappings(cohortDtoMap);
-    modelMapper.addMappings(cohortGroupDtoMap);
   }
 
   public CohortDto convertToDto(Cohort cohort) {

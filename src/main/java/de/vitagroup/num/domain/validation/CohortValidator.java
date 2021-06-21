@@ -29,7 +29,7 @@ public class CohortValidator implements ConstraintValidator<ValidCohort, CohortG
 
       if (current.getType().equals(Type.GROUP) && isInvalidGroup(current)) {
         return false;
-      } else if (current.getType().equals(Type.PHENOTYPE) && isInvalidPhenotype(current)) {
+      } else if (current.getType().equals(Type.AQL) && isInvalidAql(current)) {
         return false;
       } else if (current.getType().equals(Type.GROUP)) {
         queue.addAll(current.getChildren());
@@ -52,9 +52,10 @@ public class CohortValidator implements ConstraintValidator<ValidCohort, CohortG
     return false;
   }
 
-  private boolean isInvalidPhenotype(CohortGroupDto cohortGroup) {
+  private boolean isInvalidAql(CohortGroupDto cohortGroup) {
     return (CollectionUtils.isNotEmpty(cohortGroup.getChildren())
-        || cohortGroup.getPhenotypeId() == null
-        || cohortGroup.getPhenotypeId() == 0);
+        || cohortGroup.getQuery() == null
+        || cohortGroup.getQuery().getId() == null
+        || cohortGroup.getQuery().getId() == 0);
   }
 }

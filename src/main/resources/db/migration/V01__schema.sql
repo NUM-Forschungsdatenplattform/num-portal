@@ -39,8 +39,9 @@ CREATE TABLE content
     content text
 );
 
-
------------------------------------ TO DELETE -----------------------------------------
+--
+-- Phenotype
+--
 CREATE TABLE phenotype
 (
     id          serial PRIMARY KEY,
@@ -50,8 +51,6 @@ CREATE TABLE phenotype
     owner_id    varchar(50) references user_details (user_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
     deleted     boolean
 );
-
---------------------------------------------------------------------------------
 
 --
 -- Cohort group
@@ -64,7 +63,7 @@ CREATE TABLE cohort_group
     operator        varchar(100),
     parameters      json,
     parent_group_id integer references cohort_group (id) ON DELETE NO ACTION ON UPDATE NO ACTION,
-    phenotype_id    integer references phenotype (id) ON DELETE NO ACTION ON UPDATE NO ACTION
+    query           json         NOT NULL
 );
 
 --

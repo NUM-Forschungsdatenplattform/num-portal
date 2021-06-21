@@ -1,7 +1,5 @@
 package de.vitagroup.num.service;
 
-import static java.lang.String.format;
-
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlExpression;
 import de.vitagroup.num.domain.Expression;
@@ -39,11 +37,7 @@ public class PhenotypeService {
   private final PhenotypeExecutor phenotypeExecutor;
 
   public boolean isPhenotypeNotInUse(long phenotypeId) {
-    if (phenotypeRepository.existsById(phenotypeId)) {
-      return !cohortGroupRepository.existsByPhenotypeId(phenotypeId);
-    } else {
-      throw new ResourceNotFound(format("Phenotype not found: %s", phenotypeId));
-    }
+    return true;
   }
 
   public void deletePhenotypeById(Long id, String userId, List<String> roles) {

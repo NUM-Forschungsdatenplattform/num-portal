@@ -71,8 +71,12 @@ public class EhrBaseService {
    * @throws WrongStatusCodeException in case if a malformed aql
    */
   public Set<String> retrieveEligiblePatientIds(Aql aql) {
+    return retrieveEligiblePatientIds(aql.getQuery());
+  }
 
-    AqlDto dto = new AqlToDtoParser().parse(aql.getQuery());
+  public Set<String> retrieveEligiblePatientIds(String query) {
+
+    AqlDto dto = new AqlToDtoParser().parse(query);
     SelectFieldDto selectStatementDto = new SelectFieldDto();
     selectStatementDto.setAqlPath(EhrFields.EHR_ID().getPath());
     selectStatementDto.setContainmentId(dto.getEhr().getContainmentId());

@@ -13,15 +13,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.domain.AqlExpression;
 import de.vitagroup.num.domain.Cohort;
+import de.vitagroup.num.domain.CohortAql;
 import de.vitagroup.num.domain.CohortGroup;
 import de.vitagroup.num.domain.Operator;
-import de.vitagroup.num.domain.Phenotype;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.CohortAqlDto;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
@@ -61,7 +60,7 @@ public class CohortServiceTest {
 
   @Mock private ProjectRepository projectRepository;
 
-  @Mock private PhenotypeService phenotypeService;
+  @Mock private AqlService aqlService;
 
   @Spy private ModelMapper modelMapper;
 
@@ -72,6 +71,11 @@ public class CohortServiceTest {
   @Captor ArgumentCaptor<CohortGroup> cohortGroupCaptor;
   @Captor ArgumentCaptor<Map<String, Object>> mapCaptor;
   @Captor ArgumentCaptor<Boolean> booleanCaptor;
+
+  private final String Q1 = "SELECT A1 ... FROM E1... WHERE ...";
+  private final String Q2 = "SELECT A2 ... FROM E1... WHERE ...";
+  private final String NAME1 = "AQL query name 1";
+  private final String NAME2 = "AQL query name 2";
 
   UserDetails approvedUser = UserDetails.builder().userId("approvedUserId").approved(true).build();
 
@@ -148,8 +152,11 @@ public class CohortServiceTest {
 
   @Test
   public void shouldCorrectlySaveCohort() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
+    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+    CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME2).query(Q2).build();
+
+    CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
+    CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto2).build();
 
     CohortGroupDto andCohort =
         CohortGroupDto.builder()
@@ -176,23 +183,45 @@ public class CohortServiceTest {
 
     assertThat(
         savedCohort.getCohortGroup().getChildren().stream()
-            .anyMatch(c -> c.getPhenotype().getId() == 1),
+            .anyMatch(c -> c.getQuery().getId() == 1),
         is(true));
     assertThat(
         savedCohort.getCohortGroup().getChildren().stream()
-            .anyMatch(c -> c.getPhenotype().getId() == 2),
+            .anyMatch(c -> c.getQuery().getId() == 2),
         is(true));
 
     assertThat(
         savedCohort.getCohortGroup().getChildren().stream()
-            .allMatch(c -> c.getPhenotype().getQuery() instanceof AqlExpression),
+            .allMatch(c -> c.getQuery() instanceof CohortAql),
+        is(true));
+
+    assertThat(
+        savedCohort.getCohortGroup().getChildren().stream()
+            .anyMatch(c -> c.getQuery().getQuery().equals(Q1)),
+        is(true));
+
+    assertThat(
+        savedCohort.getCohortGroup().getChildren().stream()
+            .anyMatch(c -> c.getQuery().getQuery().equals(Q2)),
+        is(true));
+
+    assertThat(
+        savedCohort.getCohortGroup().getChildren().stream()
+            .anyMatch(c -> c.getQuery().getName().equals(NAME1)),
+        is(true));
+
+    assertThat(
+        savedCohort.getCohortGroup().getChildren().stream()
+            .anyMatch(c -> c.getQuery().getName().equals(NAME2)),
         is(true));
   }
 
   @Test
   public void shouldCorrectlyEditCohort() {
+    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+
     CohortGroupDto simpleCohort =
-        CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(4L).build();
+        CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
 
     CohortDto cohortDto =
         CohortDto.builder()
@@ -215,14 +244,17 @@ public class CohortServiceTest {
     assertThat(editedCohort.getProject().getId(), is(3L));
     assertThat(editedCohort.getProject().getName(), is("Study name"));
     assertThat(editedCohort.getCohortGroup().getOperator(), nullValue());
-    assertThat(editedCohort.getCohortGroup().getType(), is(Type.PHENOTYPE));
+    assertThat(editedCohort.getCohortGroup().getType(), is(Type.AQL));
     assertThat(editedCohort.getCohortGroup().getChildren(), nullValue());
   }
 
   @Test
   public void shouldCorrectlyExecuteCohort() {
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(1L).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.PHENOTYPE).phenotypeId(2L).build();
+    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+    CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME2).query(Q2).build();
+
+    CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
+    CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto2).build();
 
     CohortGroupDto orCohort =
         CohortGroupDto.builder()
@@ -232,8 +264,7 @@ public class CohortServiceTest {
             .children(List.of(first, second))
             .build();
 
-    long size = cohortService.getCohortGroupSize(orCohort, approvedUser.getUserId(),
-        false);
+    long size = cohortService.getCohortGroupSize(orCohort, approvedUser.getUserId(), false);
     Mockito.verify(cohortExecutor, times(1))
         .executeGroup(cohortGroupCaptor.capture(), mapCaptor.capture(), booleanCaptor.capture());
 
@@ -241,34 +272,23 @@ public class CohortServiceTest {
     CohortGroup executedCohortGroup = cohortGroupCaptor.getValue();
     assertEquals(executedCohortGroup.getOperator(), Operator.OR);
     assertEquals(2, executedCohortGroup.getChildren().size());
-    assertEquals(
-        1,
+
+    CohortAql cohortAql1 =
         executedCohortGroup.getChildren().stream()
-            .filter(cohortGroup -> cohortGroup.getPhenotype().getId() == 1L)
-            .count());
-    assertEquals(
-        1,
+            .filter(cohortGroup -> cohortGroup.getQuery().getId() == 1L)
+            .findFirst()
+            .get()
+            .getQuery();
+
+    CohortAql cohortAql2 =
         executedCohortGroup.getChildren().stream()
-            .filter(cohortGroup -> cohortGroup.getPhenotype().getId() == 2L)
-            .count());
-    AqlExpression aqlExpression1 =
-        (AqlExpression)
-            executedCohortGroup.getChildren().stream()
-                .filter(cohortGroup -> cohortGroup.getPhenotype().getId() == 1L)
-                .findFirst()
-                .get()
-                .getPhenotype()
-                .getQuery();
-    AqlExpression aqlExpression2 =
-        (AqlExpression)
-            executedCohortGroup.getChildren().stream()
-                .filter(cohortGroup -> cohortGroup.getPhenotype().getId() == 2L)
-                .findFirst()
-                .get()
-                .getPhenotype()
-                .getQuery();
-    assertTrue(aqlExpression1.getAql().getQuery().startsWith("SELECT A1"));
-    assertTrue(aqlExpression2.getAql().getQuery().startsWith("SELECT A2"));
+            .filter(cohortGroup -> cohortGroup.getQuery().getId() == 2L)
+            .findFirst()
+            .get()
+            .getQuery();
+
+    assertTrue(cohortAql1.getQuery().startsWith(Q1));
+    assertTrue(cohortAql2.getQuery().startsWith(Q2));
   }
 
   @Before
@@ -282,8 +302,7 @@ public class CohortServiceTest {
     when(userDetailsService.checkIsUserApproved("missingUserID"))
         .thenThrow(new SystemException("User not found"));
 
-    when(userDetailsService.checkIsUserApproved("approvedUserId"))
-        .thenReturn(approvedUser);
+    when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
 
     when(projectRepository.findById(2L))
         .thenReturn(
@@ -301,63 +320,13 @@ public class CohortServiceTest {
 
     when(projectRepository.findById(3L)).thenReturn(Optional.of(ownedProject));
 
-    Aql aql1 =
-        Aql.builder()
-            .id(1L)
-            .name("AQL query name 1 ")
-            .query("SELECT A1 ... FROM E1... WHERE ...")
-            .build();
+    when(aqlService.existsById(1L)).thenReturn(true);
+    when(aqlService.existsById(2L)).thenReturn(true);
 
-    Aql aql2 =
-        Aql.builder()
-            .id(2L)
-            .name("AQL query name 2")
-            .query("SELECT A2 ... FROM E2... WHERE ...")
-            .build();
-    Aql aql4 =
-        Aql.builder()
-            .id(4L)
-            .name("AQL query name 4")
-            .query("SELECT A4 ... FROM E4... WHERE ...")
-            .build();
-
-    AqlExpression aqlExpression1 = AqlExpression.builder().aql(aql1).build();
-    AqlExpression aqlExpression2 = AqlExpression.builder().aql(aql2).build();
-    AqlExpression aqlExpression4 = AqlExpression.builder().aql(aql4).build();
-
-    Phenotype phenotype1 =
-        Phenotype.builder()
-            .id(1L)
-            .name("Phenotype name")
-            .description("Phenotype description")
-            .owner(approvedUser)
-            .query(aqlExpression1)
-            .build();
-
-    Phenotype phenotype2 =
-        Phenotype.builder()
-            .id(2L)
-            .name("Phenotype name")
-            .description("Phenotype description")
-            .owner(approvedUser)
-            .query(aqlExpression2)
-            .build();
-
-    Phenotype phenotype4 =
-        Phenotype.builder()
-            .id(4L)
-            .name("Phenotype to edit")
-            .description("Phenotype to edit description")
-            .owner(approvedUser)
-            .query(aqlExpression4)
-            .build();
-
-    when(phenotypeService.getPhenotypeById(1L)).thenReturn(Optional.of(phenotype1));
-    when(phenotypeService.getPhenotypeById(2L)).thenReturn(Optional.of(phenotype2));
-    when(phenotypeService.getPhenotypeById(4L)).thenReturn(Optional.of(phenotype4));
-
-    CohortGroup first = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype1).build();
-    CohortGroup second = CohortGroup.builder().type(Type.PHENOTYPE).phenotype(phenotype2).build();
+    CohortGroup first =
+        CohortGroup.builder().type(Type.AQL).query(CohortAql.builder().id(3L).build()).build();
+    CohortGroup second =
+        CohortGroup.builder().type(Type.AQL).query(CohortAql.builder().id(4L).build()).build();
 
     CohortGroup andCohort =
         CohortGroup.builder()
@@ -379,7 +348,8 @@ public class CohortServiceTest {
     when(cohortRepository.findById(1L)).thenReturn(Optional.empty());
     when(cohortRepository.findById(2L)).thenReturn(Optional.of(Cohort.builder().id(2L).build()));
 
-    when(cohortExecutor.executeGroup(any(), anyMap(), anyBoolean())).thenReturn(Set.of("test1", "test2"));
+    when(cohortExecutor.executeGroup(any(), anyMap(), anyBoolean()))
+        .thenReturn(Set.of("test1", "test2"));
 
     when(privacyProperties.getMinHits()).thenReturn(2);
   }
