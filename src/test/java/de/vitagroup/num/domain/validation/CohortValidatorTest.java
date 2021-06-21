@@ -116,7 +116,7 @@ public class CohortValidatorTest {
             .query(CohortAqlDto.builder().id(1L).query("select...").build())
             .build();
 
-    CohortGroupDto singlePhenotypeOrGroup =
+    CohortGroupDto singleOrGroup =
         CohortGroupDto.builder()
             .type(Type.GROUP)
             .operator(Operator.OR)
@@ -127,7 +127,7 @@ public class CohortValidatorTest {
         CohortDto.builder()
             .name("Cohort name")
             .projectId(1L)
-            .cohortGroup(singlePhenotypeOrGroup)
+            .cohortGroup(singleOrGroup)
             .build();
 
     Set<ConstraintViolation<CohortDto>> violations = validator.validate(cohortDto);

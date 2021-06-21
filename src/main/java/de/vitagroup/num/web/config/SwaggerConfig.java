@@ -57,11 +57,6 @@ public class SwaggerConfig {
   }
 
   @Bean
-  public Docket phenotypeApi() {
-    return getDocket("Phenotype", "/phenotype.*").useDefaultResponseMessages(false);
-  }
-
-  @Bean
   public Docket aqlApi() {
     return getDocket("Aql", "/aql.*", "org.ehrbase.aqleditor");
   }

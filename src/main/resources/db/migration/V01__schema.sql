@@ -40,19 +40,6 @@ CREATE TABLE content
 );
 
 --
--- Phenotype
---
-CREATE TABLE phenotype
-(
-    id          serial PRIMARY KEY,
-    name        varchar(250) NOT NULL,
-    description text         NOT NULL,
-    query       json         NOT NULL,
-    owner_id    varchar(50) references user_details (user_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
-    deleted     boolean
-);
-
---
 -- Cohort group
 --
 CREATE TABLE cohort_group
