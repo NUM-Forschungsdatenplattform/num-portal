@@ -4,14 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.ProjectTransition;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.ProjectInfoDto;
 import de.vitagroup.num.domain.dto.ProjectDto;
+import de.vitagroup.num.domain.dto.ProjectInfoDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.dto.ZarsInfoDto;
@@ -20,6 +20,7 @@ import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
 import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.service.executors.CohortQueryLister;
 import de.vitagroup.num.service.notification.NotificationService;
@@ -115,6 +116,8 @@ public class ProjectService {
 
   private final ConsentProperties consentProperties;
 
+  private final ResponseFilter responseFilter;
+
   public void deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
@@ -188,6 +191,16 @@ public class ProjectService {
 
   public String executeAqlAndJsonify(String query, Long projectId, String userId) {
     List<QueryResponseData> response = executeAql(query, projectId, userId);
+    try {
+      return mapper.writeValueAsString(response);
+    } catch (JsonProcessingException e) {
+      throw new SystemException("An issue has occurred, cannot execute aql.");
+    }
+  }
+
+  public String executeAqlWithFilter(String query, Long projectId, String userId) {
+    List<QueryResponseData> response = executeAql(query, projectId, userId);
+    response = responseFilter.filterResponse(response);
     try {
       return mapper.writeValueAsString(response);
     } catch (JsonProcessingException e) {
