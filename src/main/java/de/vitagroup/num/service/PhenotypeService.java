@@ -1,7 +1,5 @@
 package de.vitagroup.num.service;
 
-import static java.lang.String.format;
-
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlExpression;
 import de.vitagroup.num.domain.Expression;

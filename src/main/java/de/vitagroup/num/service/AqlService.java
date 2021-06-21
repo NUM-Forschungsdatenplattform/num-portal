@@ -216,26 +216,6 @@ public class AqlService {
     return parameterService.getParameterOptions(response, aqlPath, archetypeId);
   }
 
-  private void validateQuery(String query) {
-    QueryValidationResponse response =
-        aqlEditorAqlService.validateAql(Result.builder().q(query).build());
-    if (!response.isValid()) {
-      try {
-        throw new BadRequestException(mapper.writeValueAsString(response));
-      } catch (JsonProcessingException e) {
-        log.error("Could not serialize aql validation response", e);
-      }
-    }
-  }
-
-  private void deleteAql(Long id) {
-    try {
-      aqlRepository.deleteById(id);
-    } catch (EmptyResultDataAccessException e) {
-      throw new BadRequestException(String.format("%s: %s", "Invalid aql id", id));
-    }
-  }
-
   @Scheduled(fixedRate = 3600000)
   public void evictParametersCache() {
     Cache cache = cacheManager.getCache(PARAMETERS_CACHE);
@@ -274,6 +254,30 @@ public class AqlService {
       }
     } else {
       throw new BadRequestException("The category is not empty, can't delete it.");
+    }
+  }
+
+  public boolean existsById(Long aqlId) {
+    return aqlRepository.existsById(aqlId);
+  }
+
+  private void validateQuery(String query) {
+    QueryValidationResponse response =
+        aqlEditorAqlService.validateAql(Result.builder().q(query).build());
+    if (!response.isValid()) {
+      try {
+        throw new BadRequestException(mapper.writeValueAsString(response));
+      } catch (JsonProcessingException e) {
+        log.error("Could not serialize aql validation response", e);
+      }
+    }
+  }
+
+  private void deleteAql(Long id) {
+    try {
+      aqlRepository.deleteById(id);
+    } catch (EmptyResultDataAccessException e) {
+      throw new BadRequestException(String.format("%s: %s", "Invalid aql id", id));
     }
   }
 }

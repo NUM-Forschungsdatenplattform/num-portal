@@ -114,9 +114,12 @@ public class CohortService {
 
     if (cohortGroupDto.isAql()) {
       if (cohortGroupDto.getQuery() != null && cohortGroupDto.getQuery().getId() != null) {
-        aqlService
-            .getAqlById(cohortGroupDto.getQuery().getId())
-            .orElseThrow(() -> new BadRequestException("Invalid aql id"));
+
+        if (!aqlService.existsById(cohortGroupDto.getQuery().getId())) {
+          throw new BadRequestException(
+              String.format("%s %s", "Invalid aql id:", cohortGroupDto.getQuery().getId()));
+        }
+
       } else {
         throw new BadRequestException("Invalid cohort group. Aql missing.");
       }

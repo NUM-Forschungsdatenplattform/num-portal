@@ -13,7 +13,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortAql;
 import de.vitagroup.num.domain.CohortGroup;
@@ -219,13 +218,7 @@ public class CohortServiceTest {
 
   @Test
   public void shouldCorrectlyEditCohort() {
-    String q1 = "SELECT A1 ... FROM E1... WHERE ...";
-    String name1 = "AQL query name 1";
-
-    when(aqlService.getAqlById(1L))
-        .thenReturn(Optional.of(Aql.builder().id(1L).name(name1).query(q1).build()));
-
-    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(name1).query(q1).build();
+    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
 
     CohortGroupDto simpleCohort =
         CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
@@ -257,18 +250,8 @@ public class CohortServiceTest {
 
   @Test
   public void shouldCorrectlyExecuteCohort() {
-    String q1 = "SELECT A1 ... FROM E1... WHERE ...";
-    String q2 = "SELECT A2 ... FROM E1... WHERE ...";
-    String name1 = "AQL query name 1";
-    String name2 = "AQL query name 2";
-
-    when(aqlService.getAqlById(1L))
-        .thenReturn(Optional.of(Aql.builder().id(1L).name(name1).query(q1).build()));
-    when(aqlService.getAqlById(2L))
-        .thenReturn(Optional.of(Aql.builder().id(2L).name(name2).query(q2).build()));
-
-    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(name1).query(q1).build();
-    CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(name2).query(q2).build();
+    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+    CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME2).query(Q2).build();
 
     CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
     CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto2).build();
@@ -304,8 +287,8 @@ public class CohortServiceTest {
             .get()
             .getQuery();
 
-    assertTrue(cohortAql1.getQuery().startsWith(q1));
-    assertTrue(cohortAql2.getQuery().startsWith(q2));
+    assertTrue(cohortAql1.getQuery().startsWith(Q1));
+    assertTrue(cohortAql2.getQuery().startsWith(Q2));
   }
 
   @Before
@@ -337,10 +320,8 @@ public class CohortServiceTest {
 
     when(projectRepository.findById(3L)).thenReturn(Optional.of(ownedProject));
 
-    when(aqlService.getAqlById(1L))
-        .thenReturn(Optional.of(Aql.builder().id(1L).name(NAME1).query(Q1).build()));
-    when(aqlService.getAqlById(2L))
-        .thenReturn(Optional.of(Aql.builder().id(2L).name(NAME2).query(Q2).build()));
+    when(aqlService.existsById(1L)).thenReturn(true);
+    when(aqlService.existsById(2L)).thenReturn(true);
 
     CohortGroup first =
         CohortGroup.builder().type(Type.AQL).query(CohortAql.builder().id(3L).build()).build();

@@ -38,4 +38,5 @@ public interface AqlRepository extends JpaRepository<Aql, Long> {
 
   List<Aql> findByCategoryId(Long id);
 
+  boolean existsById(Long id);
 }
