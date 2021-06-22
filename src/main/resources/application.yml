@@ -7,7 +7,7 @@ spring:
     hikari:
       data-source-properties:
         stringtype: unspecified
-    url: jdbc:postgresql://localhost:5432/num?currentSchema=public
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=num
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: postgres
@@ -37,7 +37,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: numportalwebapp@gmail.com
-    password: 0s4IishJezzsuRCJ7wVO3u
+    password: notPassword
     from: numportalwebapp@gmail.com
     properties:
       mail:
@@ -136,7 +136,7 @@ consent:
 spring:
   profiles: local
   datasource:
-    url: jdbc:postgresql://localhost:5432/num?currentSchema=public
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=num
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: postgres
@@ -185,7 +185,7 @@ userstore:
   url: ${keycloak.url}/auth/admin/realms/Num
 
 keycloak:
-  url: https://keycloak.dev.num-codex.de
+  url: http://localhost:8180
 
 feign:
   client:
