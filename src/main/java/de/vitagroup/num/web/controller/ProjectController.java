@@ -120,7 +120,7 @@ public class ProjectController {
       @RequestBody @Valid RawQueryDto query,
       @NotNull @NotEmpty @PathVariable Long projectId) {
     return ResponseEntity.ok(
-        projectService.executeAqlAndJsonify(query.getQuery(), projectId, principal.getSubject()));
+        projectService.executeAqlWithFilter(query.getQuery(), projectId, principal.getSubject()));
   }
 
   @AuditLog
