@@ -182,6 +182,6 @@ public class AqlController {
       @RequestParam @NotNull @NotEmpty String aqlPath,
       @RequestParam @NotNull @NotEmpty String archetypeId) {
     return ResponseEntity.ok(
-        aqlService.getParameterValues(principal.getId(), aqlPath, archetypeId));
+        aqlService.getParameterValues(principal.getSubject(), aqlPath, archetypeId));
   }
 }
