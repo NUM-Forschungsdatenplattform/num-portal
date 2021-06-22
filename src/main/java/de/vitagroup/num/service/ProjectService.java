@@ -27,7 +27,6 @@ import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
 import de.vitagroup.num.service.notification.dto.ProjectRequestNotification;
-import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStatusChangeNotification;
 import de.vitagroup.num.service.policy.EhrPolicy;
 import de.vitagroup.num.service.policy.EuropeanConsentPolicy;
@@ -121,7 +120,7 @@ public class ProjectService {
   public void deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
-    Project project =
+    var project =
         projectRepository
             .findById(projectId)
             .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
@@ -141,9 +140,9 @@ public class ProjectService {
 
   @Transactional
   public void archiveProject(Long projectId, String userId, List<String> roles) {
-    UserDetails user = userDetailsService.checkIsUserApproved(userId);
+    var user = userDetailsService.checkIsUserApproved(userId);
 
-    Project project =
+    var project =
         projectRepository
             .findById(projectId)
             .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
@@ -228,11 +227,13 @@ public class ProjectService {
       }
 
       if (project.getCohort() == null) {
-        throw new BadRequestException(String.format("Project: %s cohort cannot be null", projectId));
+        throw new BadRequestException(
+            String.format("Project: %s cohort cannot be null", projectId));
       }
 
       if (project.getTemplates() == null) {
-        throw new BadRequestException(String.format("Project: %s templates cannot be null", projectId));
+        throw new BadRequestException(
+            String.format("Project: %s templates cannot be null", projectId));
       }
 
       Set<String> ehrIds =
@@ -259,9 +260,9 @@ public class ProjectService {
       String filenameStart,
       OutputStream outputStream) {
 
-    try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+    try (var zipOutputStream = new ZipOutputStream(outputStream)) {
 
-      int index = 0;
+      var index = 0;
       for (QueryResponseData queryResponseData : queryResponseDataList) {
 
         zipOutputStream.putNextEntry(
@@ -343,9 +344,9 @@ public class ProjectService {
   @Transactional
   public Project createProject(ProjectDto projectDto, String userId, List<String> roles) {
 
-    UserDetails coordinator = userDetailsService.checkIsUserApproved(userId);
+    var coordinator = userDetailsService.checkIsUserApproved(userId);
 
-    Project project = Project.builder().build();
+    var project = Project.builder().build();
 
     validateStatus(null, projectDto.getStatus(), roles);
     persistTransition(project, project.getStatus(), projectDto.getStatus(), coordinator);
@@ -370,7 +371,7 @@ public class ProjectService {
     project.setEndDate(projectDto.getEndDate());
     project.setFinanced(projectDto.isFinanced());
 
-    Project savedProject = projectRepository.save(project);
+    var savedProject = projectRepository.save(project);
 
     if (savedProject.getStatus() == ProjectStatus.PENDING) {
       registerToZars(project);
@@ -393,16 +394,19 @@ public class ProjectService {
 
   @Transactional
   public Project updateProject(ProjectDto projectDto, Long id, String userId, List<String> roles) {
-    UserDetails user = userDetailsService.checkIsUserApproved(userId);
+    var user = userDetailsService.checkIsUserApproved(userId);
 
-    Project projectToEdit =
-        projectRepository.findById(id).orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + id));
+    var projectToEdit =
+        projectRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + id));
 
     if (ProjectStatus.ARCHIVED.equals(projectToEdit.getStatus())
         || ProjectStatus.CLOSED.equals(projectToEdit.getStatus())) {
       throw new ForbiddenException(
           String.format(
-              "Cannot update project: %s, invalid project status: %s", id, projectToEdit.getStatus()));
+              "Cannot update project: %s, invalid project status: %s",
+              id, projectToEdit.getStatus()));
     }
 
     if (CollectionUtils.isNotEmpty(roles)
@@ -419,16 +423,19 @@ public class ProjectService {
   private Project updateProjectStatus(
       ProjectDto projectDto, List<String> roles, UserDetails user, Project projectToEdit) {
 
-    ProjectStatus oldProjectStatus = projectToEdit.getStatus();
+    var oldProjectStatus = projectToEdit.getStatus();
 
     validateStatus(projectToEdit.getStatus(), projectDto.getStatus(), roles);
     persistTransition(projectToEdit, projectToEdit.getStatus(), projectDto.getStatus(), user);
     projectToEdit.setStatus(projectDto.getStatus());
 
-    Project savedProject = projectRepository.save(projectToEdit);
+    var savedProject = projectRepository.save(projectToEdit);
 
     registerToZarsIfNecessary(
-        savedProject, oldProjectStatus, savedProject.getResearchers(), savedProject.getResearchers());
+        savedProject,
+        oldProjectStatus,
+        savedProject.getResearchers(),
+        savedProject.getResearchers());
 
     List<Notification> notifications =
         collectNotifications(
@@ -462,7 +469,7 @@ public class ProjectService {
     if (ProjectStatus.APPROVED.equals(projectToEdit.getStatus())
         || ProjectStatus.PUBLISHED.equals(projectToEdit.getStatus())) {
       projectToEdit.setStatus(projectDto.getStatus());
-      Project savedProject = projectRepository.save(projectToEdit);
+      var savedProject = projectRepository.save(projectToEdit);
 
       registerToZarsIfNecessary(savedProject, oldStatus, oldResearchers, newResearchers);
 
@@ -496,7 +503,7 @@ public class ProjectService {
     projectToEdit.setEndDate(projectDto.getEndDate());
     projectToEdit.setFinanced(projectDto.isFinanced());
 
-    Project savedProject = projectRepository.save(projectToEdit);
+    var savedProject = projectRepository.save(projectToEdit);
     registerToZarsIfNecessary(savedProject, oldStatus, oldResearchers, newResearchers);
 
     List<Notification> notifications =
@@ -540,7 +547,7 @@ public class ProjectService {
       String approverUserId) {
 
     List<Notification> notifications = new LinkedList<>();
-    User coordinator = userService.getUserById(coordinatorUserId, false);
+    var coordinator = userService.getUserById(coordinatorUserId, false);
 
     if (isTransitionToPending(oldStatus, newStatus)) {
 
@@ -563,7 +570,7 @@ public class ProjectService {
 
     if (isTransitionMadeByApprover(oldStatus, newStatus)) {
 
-      User approver = userService.getUserById(approverUserId, false);
+      var approver = userService.getUserById(approverUserId, false);
 
       ProjectStatusChangeNotification notification =
           ProjectStatusChangeNotification.builder()
@@ -578,26 +585,11 @@ public class ProjectService {
       notifications.add(notification);
     }
 
-    if (isTransitionToPublished(oldStatus, newStatus)) {
-      if (newResearchers != null) {
-        List<String> researcherIds =
-            newResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
+    if (isTransitionToPublished(oldStatus, newStatus) && newResearchers != null) {
+      List<String> researcherIds =
+          newResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
 
-        researcherIds.forEach(
-            r -> {
-              User researcher = userService.getUserById(r, false);
-              ProjectStartNotification notification =
-                  ProjectStartNotification.builder()
-                      .recipientEmail(researcher.getEmail())
-                      .recipientFirstName(researcher.getFirstName())
-                      .recipientLastName(researcher.getLastName())
-                      .coordinatorFirstName(coordinator.getFirstName())
-                      .coordinatorLastName(coordinator.getLastName())
-                      .projectTitle(projectName)
-                      .build();
-              notifications.add(notification);
-            });
-      }
+      createNotification(projectName, notifications, coordinator, researcherIds);
     }
 
     if (isTransitionToPublishedFromPublished(oldStatus, newStatus)) {
@@ -613,40 +605,13 @@ public class ProjectService {
             oldResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
       }
 
-      List<String> newResearcherIdsCopy = new ArrayList<>(newResearcherIds);
+      var newResearcherIdsCopy = new ArrayList<>(newResearcherIds);
 
       newResearcherIdsCopy.removeAll(oldResearcherIds);
       oldResearcherIds.removeAll(newResearcherIds);
 
-      newResearcherIdsCopy.forEach(
-          r -> {
-            User researcher = userService.getUserById(r, false);
-            ProjectStartNotification notification =
-                ProjectStartNotification.builder()
-                    .recipientEmail(researcher.getEmail())
-                    .recipientFirstName(researcher.getFirstName())
-                    .recipientLastName(researcher.getLastName())
-                    .coordinatorFirstName(coordinator.getFirstName())
-                    .coordinatorLastName(coordinator.getLastName())
-                    .projectTitle(projectName)
-                    .build();
-            notifications.add(notification);
-          });
-
-      oldResearcherIds.forEach(
-          r -> {
-            User researcher = userService.getUserById(r, false);
-            ProjectCloseNotification notification =
-                ProjectCloseNotification.builder()
-                    .recipientEmail(researcher.getEmail())
-                    .recipientFirstName(researcher.getFirstName())
-                    .recipientLastName(researcher.getLastName())
-                    .coordinatorFirstName(coordinator.getFirstName())
-                    .coordinatorLastName(coordinator.getLastName())
-                    .projectTitle(projectName)
-                    .build();
-            notifications.add(notification);
-          });
+      createNotification(projectName, notifications, coordinator, newResearcherIds);
+      createNotification(projectName, notifications, coordinator, oldResearcherIds);
     }
 
     if (ProjectStatus.CLOSED.equals(newStatus)) {
@@ -655,23 +620,31 @@ public class ProjectService {
         researcherIds =
             oldResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
       }
-      researcherIds.forEach(
-          r -> {
-            User researcher = userService.getUserById(r, false);
-            ProjectCloseNotification notification =
-                ProjectCloseNotification.builder()
-                    .recipientEmail(researcher.getEmail())
-                    .recipientFirstName(researcher.getFirstName())
-                    .recipientLastName(researcher.getLastName())
-                    .coordinatorFirstName(coordinator.getFirstName())
-                    .coordinatorLastName(coordinator.getLastName())
-                    .projectTitle(projectName)
-                    .build();
-            notifications.add(notification);
-          });
+      createNotification(projectName, notifications, coordinator, researcherIds);
     }
 
     return notifications;
+  }
+
+  private void createNotification(
+      String projectName,
+      List<Notification> notifications,
+      User coordinator,
+      List<String> researcherIds) {
+    researcherIds.forEach(
+        r -> {
+          var researcher = userService.getUserById(r, false);
+          ProjectCloseNotification notification =
+              ProjectCloseNotification.builder()
+                  .recipientEmail(researcher.getEmail())
+                  .recipientFirstName(researcher.getFirstName())
+                  .recipientLastName(researcher.getLastName())
+                  .coordinatorFirstName(coordinator.getFirstName())
+                  .coordinatorLastName(coordinator.getLastName())
+                  .projectTitle(projectName)
+                  .build();
+          notifications.add(notification);
+        });
   }
 
   private boolean isTransitionToPending(ProjectStatus oldStatus, ProjectStatus newStatus) {
@@ -801,7 +774,11 @@ public class ProjectService {
 
       if (intersectionSet.isEmpty()) {
         throw new ForbiddenException(
-            "Project status transition from " + initialStatus + " to " + nextStatus + " not allowed");
+            "Project status transition from "
+                + initialStatus
+                + " to "
+                + nextStatus
+                + " not allowed");
       }
     } else {
       throw new BadRequestException(
@@ -820,7 +797,7 @@ public class ProjectService {
       return;
     }
 
-    ProjectTransition projectTransition =
+    var projectTransition =
         ProjectTransition.builder()
             .toStatus(toStatus)
             .project(project)
@@ -850,11 +827,14 @@ public class ProjectService {
       return null;
     }
 
-    ProjectInfoDto projectInfoDto =
-        ProjectInfoDto.builder().createDate(project.getCreateDate()).title(project.getName()).build();
+    var projectInfoDto =
+        ProjectInfoDto.builder()
+            .createDate(project.getCreateDate())
+            .title(project.getName())
+            .build();
 
     if (project.getCoordinator() != null) {
-      User coordinator = userService.getUserById(project.getCoordinator().getUserId(), false);
+      var coordinator = userService.getUserById(project.getCoordinator().getUserId(), false);
       projectInfoDto.setCoordinator(
           String.format("%s %s", coordinator.getFirstName(), coordinator.getLastName()));
 
@@ -867,7 +847,7 @@ public class ProjectService {
 
   private void registerToZars(Project project) {
     if (zarsService != null) {
-      ZarsInfoDto zarsInfoDto = modelMapper.map(project, ZarsInfoDto.class);
+      var zarsInfoDto = modelMapper.map(project, ZarsInfoDto.class);
       zarsInfoDto.setCoordinator(getCoordinator(project));
       zarsInfoDto.setQueries(getQueries(project));
       zarsInfoDto.setApprovalDate(getApprovalDateIfExists(project));
@@ -901,7 +881,8 @@ public class ProjectService {
                 project.getId(), ProjectStatus.REVIEWING, ProjectStatus.APPROVED)
             .orElse(Collections.emptyList());
     if (transitions.size() > 1) {
-      log.error("More than one transition from REVIEWING to APPROVED for project " + project.getId());
+      log.error(
+          "More than one transition from REVIEWING to APPROVED for project " + project.getId());
       return StringUtils.EMPTY;
     }
     if (transitions.size() == 1) {
