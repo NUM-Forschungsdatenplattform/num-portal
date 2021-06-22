@@ -17,9 +17,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.ProjectDto;
@@ -383,7 +383,8 @@ public class ProjectServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleMissingCoordinator() {
-    ProjectDto project = ProjectDto.builder().name("Project").status(ProjectStatus.APPROVED).build();
+    ProjectDto project =
+        ProjectDto.builder().name("Project").status(ProjectStatus.APPROVED).build();
 
     projectService.createProject(project, "nonExistingCoordinatorId", List.of());
   }
@@ -540,7 +541,8 @@ public class ProjectServiceTest {
     ProjectDto projectDto =
         ProjectDto.builder().name("Project is edited").status(ProjectStatus.PENDING).build();
 
-    projectService.updateProject(projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    projectService.updateProject(
+        projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
   }
 
   @Test
@@ -557,7 +559,8 @@ public class ProjectServiceTest {
     ProjectDto projectDto =
         ProjectDto.builder().name("Project is edited").status(ProjectStatus.DRAFT).build();
 
-    projectService.updateProject(projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    projectService.updateProject(
+        projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
   }
 
   @Test
@@ -717,7 +720,10 @@ public class ProjectServiceTest {
             ForbiddenException.class,
             () ->
                 projectService.updateProject(
-                    projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR, RESEARCHER)));
+                    projectDto,
+                    1L,
+                    "approvedCoordinatorId",
+                    List.of(STUDY_COORDINATOR, RESEARCHER)));
 
     String expectedMessage = "Project status transition from REVIEWING to DENIED not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
@@ -726,7 +732,11 @@ public class ProjectServiceTest {
   @Test
   public void shouldRejectInitialClosedStudyStatus() {
     ProjectDto newStudy =
-        ProjectDto.builder().name("new project").financed(false).status(ProjectStatus.CLOSED).build();
+        ProjectDto.builder()
+            .name("new project")
+            .financed(false)
+            .status(ProjectStatus.CLOSED)
+            .build();
 
     Exception exception =
         assertThrows(
@@ -740,7 +750,11 @@ public class ProjectServiceTest {
   @Test
   public void shouldRejectInitialApprovedStudyStatus() {
     ProjectDto newStudy =
-        ProjectDto.builder().name("new project").financed(false).status(ProjectStatus.APPROVED).build();
+        ProjectDto.builder()
+            .name("new project")
+            .financed(false)
+            .status(ProjectStatus.APPROVED)
+            .build();
 
     Exception exception =
         assertThrows(
@@ -754,7 +768,11 @@ public class ProjectServiceTest {
   @Test
   public void shouldAllowInitialDraftStudyStatus() {
     ProjectDto newStudy =
-        ProjectDto.builder().name("new project").financed(false).status(ProjectStatus.DRAFT).build();
+        ProjectDto.builder()
+            .name("new project")
+            .financed(false)
+            .status(ProjectStatus.DRAFT)
+            .build();
     projectService.createProject(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(projectRepository, times(1)).save(any());
   }
@@ -762,7 +780,11 @@ public class ProjectServiceTest {
   @Test
   public void shouldAllowInitialPendingStudyStatus() {
     ProjectDto newStudy =
-        ProjectDto.builder().name("new Project").financed(false).status(ProjectStatus.PENDING).build();
+        ProjectDto.builder()
+            .name("new Project")
+            .financed(false)
+            .status(ProjectStatus.PENDING)
+            .build();
     projectService.createProject(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(projectRepository, times(1)).save(any());
   }
