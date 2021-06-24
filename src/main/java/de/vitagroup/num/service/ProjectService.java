@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.transaction.Transactional;
@@ -704,9 +705,15 @@ public class ProjectService {
               userId, new ProjectStatus[] {ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
-      projects.addAll(
-          projectRepository.findByStatusIn(
-              new ProjectStatus[] {ProjectStatus.PENDING, ProjectStatus.REVIEWING}));
+      ProjectStatus[] statuses =
+          Stream.of(ProjectStatus.values())
+              .filter(
+                  projectStatus ->
+                      projectStatus != ProjectStatus.DRAFT
+                          && projectStatus != ProjectStatus.ARCHIVED)
+              .collect(Collectors.toList())
+              .toArray(new ProjectStatus[] {});
+      projects.addAll(projectRepository.findByStatusIn(statuses));
     }
 
     return projects.stream().distinct().collect(Collectors.toList());

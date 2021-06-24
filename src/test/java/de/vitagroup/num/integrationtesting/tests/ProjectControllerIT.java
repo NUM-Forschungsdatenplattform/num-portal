@@ -274,13 +274,13 @@ public class ProjectControllerIT extends IntegrationTest {
   @WithMockNumUser(
       roles = {STUDY_APPROVER},
       userId = "user1")
-  public void studyApproverShouldGetPendingAndReviewingProjects() {
+  public void studyApproverShouldGetAllExceptDraftAndArchivedProjects() {
 
     MvcResult result =
         mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
     ProjectDto[] projects =
         mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(2, projects.length);
+    assertEquals(7, projects.length);
     assertNotNull(
         Arrays.stream(projects)
             .filter(projectDto -> projectDto.getName().equals("pending"))
@@ -289,6 +289,31 @@ public class ProjectControllerIT extends IntegrationTest {
     assertNotNull(
         Arrays.stream(projects)
             .filter(projectDto -> projectDto.getName().equals("reviewing"))
+            .findFirst()
+            .orElse(null));
+    assertNotNull(
+        Arrays.stream(projects)
+            .filter(projectDto -> projectDto.getName().equals("approved"))
+            .findFirst()
+            .orElse(null));
+    assertNotNull(
+        Arrays.stream(projects)
+            .filter(projectDto -> projectDto.getName().equals("changeRequest"))
+            .findFirst()
+            .orElse(null));
+    assertNotNull(
+        Arrays.stream(projects)
+            .filter(projectDto -> projectDto.getName().equals("denied"))
+            .findFirst()
+            .orElse(null));
+    assertNotNull(
+        Arrays.stream(projects)
+            .filter(projectDto -> projectDto.getName().equals("closed"))
+            .findFirst()
+            .orElse(null));
+    assertNotNull(
+        Arrays.stream(projects)
+            .filter(projectDto -> projectDto.getName().equals("published"))
             .findFirst()
             .orElse(null));
   }
