@@ -25,6 +25,11 @@ public class ParameterService {
   private static final String DV_BOOLEAN = "DV_BOOLEAN";
   private static final String DV_CODED_TEXT = "DV_CODED_TEXT";
 
+  private static final String VALUE = "/value";
+  private static final String VALUE_VALUE = "/value/value";
+  private static final String VALUE_MAGNITUDE = "/value/magnitude";
+  private static final String VALUE_UNIT = "/value/unitS";
+  private static final String VALUE_SYMBOL_VALUE = "/value/symbol/value";
   /**
    * Create the aql query for retrieving all distinct existing values of a certain aql path
    *
@@ -66,7 +71,18 @@ public class ParameterService {
     List<Object> options = new LinkedList<>();
 
     if (response != null && CollectionUtils.isNotEmpty(response.getRows())) {
-      response.getRows().forEach(row -> processResponseRow(options, row));
+
+      if (aqlPath.endsWith(VALUE_VALUE)
+          || aqlPath.endsWith(VALUE_MAGNITUDE)
+          || aqlPath.endsWith(VALUE_SYMBOL_VALUE)
+          || aqlPath.endsWith(VALUE_UNIT)) {
+        response.getRows().forEach(row -> processSimpleRow(options, row));
+      }
+
+      if (aqlPath.endsWith(VALUE)) {
+        response.getRows().forEach(row -> processResponseRow(options, row));
+      }
+
     }
 
     return ParameterOptionsDto.builder()
@@ -74,6 +90,15 @@ public class ParameterService {
         .aqlPath(aqlPath)
         .archetypeId(archetypeId)
         .build();
+  }
+
+  private void processSimpleRow(List<Object> options, List<Object> row) {
+    if (CollectionUtils.isNotEmpty(row)) {
+      Object value = row.get(0);
+      if (value != null) {
+        options.add(value);
+      }
+    }
   }
 
   private void processResponseRow(List<Object> options, List<Object> row) {
