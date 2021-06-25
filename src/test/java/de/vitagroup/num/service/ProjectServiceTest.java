@@ -16,12 +16,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
@@ -116,6 +118,8 @@ public class ProjectServiceTest {
   @Mock private UserService userService;
 
   @Spy private ProjectPolicyService projectPolicyService;
+
+  @Spy private ObjectMapper mapper;
 
   @InjectMocks private ProjectService projectService;
 
@@ -893,6 +897,20 @@ public class ProjectServiceTest {
     verify(projectRepository, times(1)).save(any());
   }
 
+  @Test
+  public void shouldSuccessfullyExecuteManagerProject() {
+    CohortDto cohortDto = CohortDto.builder().name("Cohort name").id(2L).build();
+
+    UserDetails userDetails =
+        UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
+
+    String result =
+        projectService.executeManagerProject(
+            QUERY_BASIC, cohortDto, List.of(CORONA_TEMPLATE), userDetails.getUserId());
+
+    assertThat(result, is("[]"));
+  }
+
   @Before
   public void setup() {
     UserDetails approvedCoordinator =
@@ -962,5 +980,6 @@ public class ProjectServiceTest {
 
     when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
+    when(cohortService.executeCohort(any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
   }
 }

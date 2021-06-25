@@ -10,6 +10,7 @@ import de.vitagroup.num.domain.ProjectTransition;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.ProjectInfoDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
@@ -41,6 +42,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -254,6 +256,29 @@ public class ProjectService {
     }
     atnaService.logDataExport(userId, projectId, project, true);
     return queryResponseData;
+  }
+
+  public String executeManagerProject(
+      String query, CohortDto cohort, List<String> templates, String userId) {
+    var queryResponse = StringUtils.EMPTY;
+    var project = createManagerProject();
+
+    try {
+      userDetailsService.checkIsUserApproved(userId);
+      var aql = new AqlToDtoParser().parse(query);
+      var templateMap = templates.stream().collect(Collectors.toMap(k -> k, v -> v));
+
+      projectPolicyService.apply(
+          aql, collectProjectPolicies(cohortService.executeCohort(cohort), templateMap, false));
+
+      queryResponse =
+          mapper.writeValueAsString(ehrBaseService.executeRawQuery(aql, project.getId()));
+    } catch (Exception e) {
+      atnaService.logDataExport(userId, project.getId(), project, false);
+      throw new SystemException("Error while retrieving data:" + e.getLocalizedMessage());
+    }
+    atnaService.logDataExport(userId, project.getId(), project, true);
+    return queryResponse;
   }
 
   public void streamResponseAsZip(
@@ -931,5 +956,21 @@ public class ProjectService {
       return transitions.get(0).getCreateDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
     }
     return StringUtils.EMPTY;
+  }
+
+  private Project createManagerProject() {
+    var undef = "undef";
+    return Project.builder()
+        .id(0L)
+        .name("Manager data retrieval project")
+        .createDate(OffsetDateTime.now())
+        .startDate(LocalDate.now())
+        .description("Adhoc temp project for manager data retrieval")
+        .goal(undef)
+        .usedOutsideEu(false)
+        .firstHypotheses(undef)
+        .secondHypotheses(undef)
+        .description("Temporary project for manager data retrieval")
+        .build();
   }
 }
