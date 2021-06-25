@@ -3,11 +3,13 @@ package de.vitagroup.num.web.controller;
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
+import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
 import de.vitagroup.num.mapper.CohortMapper;
 import de.vitagroup.num.service.CohortService;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
+import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -77,5 +79,16 @@ public class CohortController {
     return ResponseEntity.ok(
         cohortService.getCohortGroupSize(
             cohortGroupDto, principal.getSubject(), allowUsageOutsideEu));
+  }
+
+  @AuditLog
+  @PostMapping("size/template")
+  @ApiOperation(value = "Retrieves the size of the templates")
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
+  public ResponseEntity<Map<String, Integer>> getSizePerTemplates(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @RequestBody TemplateSizeRequestDto requestDto) {
+
+    return ResponseEntity.ok(cohortService.getSizePerTemplates(principal.getSubject(), requestDto));
   }
 }
