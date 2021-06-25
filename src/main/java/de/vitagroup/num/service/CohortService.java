@@ -69,6 +69,10 @@ public class CohortService {
         allowUsageOutsideEu);
   }
 
+  public Set<String> executeCohort(CohortDto cohort) {
+    return cohortExecutor.execute(modelMapper.map(cohort, Cohort.class), null);
+  }
+
   public long getCohortSize(long cohortId, Boolean allowUsageOutsideEu) {
     return executeCohort(cohortId, allowUsageOutsideEu).size();
   }

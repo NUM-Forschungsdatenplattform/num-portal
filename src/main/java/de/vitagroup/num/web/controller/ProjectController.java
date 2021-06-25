@@ -2,11 +2,12 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Comment;
 import de.vitagroup.num.domain.ExportType;
-import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.CommentDto;
-import de.vitagroup.num.domain.dto.RawQueryDto;
+import de.vitagroup.num.domain.dto.ManagerProjectDto;
 import de.vitagroup.num.domain.dto.ProjectDto;
+import de.vitagroup.num.domain.dto.RawQueryDto;
 import de.vitagroup.num.mapper.CommentMapper;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.service.CommentService;
@@ -88,7 +89,8 @@ public class ProjectController {
       @Valid @NotNull @RequestBody ProjectDto projectDto) {
 
     Project project =
-        projectService.createProject(projectDto, principal.getSubject(), Roles.extractRoles(principal));
+        projectService.createProject(
+            projectDto, principal.getSubject(), Roles.extractRoles(principal));
 
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
@@ -121,6 +123,23 @@ public class ProjectController {
       @NotNull @NotEmpty @PathVariable Long projectId) {
     return ResponseEntity.ok(
         projectService.executeAqlWithFilter(query.getQuery(), projectId, principal.getSubject()));
+  }
+
+  @AuditLog
+  @PostMapping("/manager/execute")
+  @ApiOperation(
+      value =
+          "Executes the manager project aql in the cohort returning medical data matching the templates")
+  @PreAuthorize(Role.MANAGER)
+  public ResponseEntity<String> executeManagerProject(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @RequestBody @Valid ManagerProjectDto cohortTemplates) {
+    return ResponseEntity.ok(
+        projectService.executeManagerProject(
+            cohortTemplates.getQuery(),
+            cohortTemplates.getCohort(),
+            cohortTemplates.getTemplates(),
+            principal.getSubject()));
   }
 
   @AuditLog
@@ -185,7 +204,10 @@ public class ProjectController {
 
     Comment comment =
         commentService.updateComment(
-            commentMapper.convertToEntity(commentDto), commentId, principal.getSubject(), projectId);
+            commentMapper.convertToEntity(commentDto),
+            commentId,
+            principal.getSubject(),
+            projectId);
 
     return ResponseEntity.ok(commentMapper.convertToDto(comment));
   }
