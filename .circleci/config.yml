@@ -23,7 +23,7 @@ workflows:
           filters:
             branches:
               only:
-                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+)$/
+                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master)$/
       - build_and_deploy:
           requires:
             - test
@@ -74,18 +74,21 @@ jobs:
       - run:
           name: Update Snapshot Develop Version
           description: |
-            This automatically bumps the application version when there is a commit to release or develop branch
-            If the commit is to the develop branch, there is a patch version bump, if the commit is to the
-            release branch, we will bump the minor version
+            This automatically bumps the application version when there is a commit to release branch
+            It will set the version number to release branch version number, but it will do it only once. If the commit is
+            to the master branch, then the pipeline will create a tag and push it to the Git
           command: |
-            VERSION_NUMBER="$(echo $CIRCLE_BRANCH | awk -F'/' '{print $2;}')"
-            echo "Updating the application version from the branch to ${VERSION_NUMBER}"
-            ./mvnw versions:set -DnewVersion=$VERSION_NUMBER versions:commit
-
-            git commit -am "updated patch version to v${VERSION_NUMBER} [skip ci]"
-            git tag -a $VERSION_NUMBER -m "num-portal release version ${VERSION_NUMBER}"
-            git push --set-upstream origin $CIRCLE_BRANCH
-            git push origin --tags
+            VERSION_NUMBER="$(echo $CIRCLE_BRANCH | awk -F'/v' '{print $2;}')"
+            CURRENT_TAG=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
+            if [ $VERSION_NUMBER != $CURRENT_TAG ]; then
+              echo "Updating the application version from the branch to ${VERSION_NUMBER}"
+              ./mvnw versions:set -DnewVersion=$VERSION_NUMBER versions:commit
+              git commit -am "updated project version to v${VERSION_NUMBER} [skip ci]"
+              git push --set-upstream origin $CIRCLE_BRANCH
+            elif [ $CIRCLE_BRANCH = "master" ]; then
+              git tag -a $VERSION_NUMBER -m "num-portal release version ${VERSION_NUMBER}"
+              git push origin --tags
+            fi
 
             exit 0
             esac
@@ -111,7 +114,7 @@ jobs:
             elif [ $CIRCLE_BRANCH = "develop" ]; then
                 TAG=$CIRCLE_BRANCH
             else
-                TAG="$(echo $CIRCLE_BRANCH | awk -F'/' '{print $2;}')-rc$CIRCLE_BUILD_NUM"
+                TAG="$(echo $CIRCLE_BRANCH | awk -F'/v' '{print $2;}')-rc$CIRCLE_BUILD_NUM"
             fi
             echo "Publishing Docker image with following tag: ${TAG}"
             echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
