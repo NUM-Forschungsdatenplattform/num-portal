@@ -15,14 +15,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.response.openehr.QueryResponseData;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@AllArgsConstructor
 public class ContentService {
 
   private final ContentItemRepository contentItemRepository;
@@ -57,6 +57,22 @@ public class ContentService {
           + "WHERE r/data[at0001]/events[at0002]/data[at0003]/items[at0041]/value/magnitude >= %d "
           + "AND r/data[at0001]/events[at0002]/data[at0003]/items[at0041]/value/magnitude <= %d "
           + "AND c/context/health_care_facility/name = '%s'";
+
+  @Autowired
+  public ContentService(
+      ContentItemRepository contentItemRepository,
+      ObjectMapper mapper,
+      @Lazy ProjectService projectService,
+      AqlService aqlService,
+      OrganizationService organizationService,
+      EhrBaseService ehrBaseService) {
+    this.contentItemRepository = contentItemRepository;
+    this.mapper = mapper;
+    this.projectService = projectService;
+    this.aqlService = aqlService;
+    this.organizationService = organizationService;
+    this.ehrBaseService = ehrBaseService;
+  }
 
   /**
    * Retrieves info about the latest five projects
