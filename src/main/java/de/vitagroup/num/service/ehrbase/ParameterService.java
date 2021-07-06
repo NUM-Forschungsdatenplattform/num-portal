@@ -1,9 +1,16 @@
 package de.vitagroup.num.service.ehrbase;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
+import de.vitagroup.num.service.AqlService;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
@@ -16,42 +23,37 @@ import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ParameterService {
 
+  public static final String TYPE = "_type";
+  public static final String TERMINOLOGY_ID = "terminology_id";
+  public static final String VALUE = "value";
+  public static final String CODE_STRING = "code_string";
+  public static final String SYMBOL = "symbol";
+  public static final String DEFINING_CODE = "defining_code";
   private static final String SELECT = "Select";
-  private static final String SYMBOL = "symbol";
   private static final String SELECT_DISTINCT = "Select distinct";
-  private static final String DV_BOOLEAN = "DV_BOOLEAN";
-  private static final String DV_CODED_TEXT = "DV_CODED_TEXT";
+  private final ObjectMapper mapper;
 
-  private static final String VALUE = "/value";
-  private static final String VALUE_VALUE = "/value/value";
-  private static final String VALUE_MAGNITUDE = "/value/magnitude";
-  private static final String VALUE_UNIT = "/value/unitS";
-  private static final String VALUE_SYMBOL_VALUE = "/value/symbol/value";
-  /**
-   * Create the aql query for retrieving all distinct existing values of a certain aql path
-   *
-   * @param aqlPath
-   * @param archetypeId
-   * @return
-   */
+  /** Create the aql query for retrieving all distinct existing values of a certain aql path */
   public String createQuery(String aqlPath, String archetypeId) {
-    AqlDto aql = new AqlDto();
+    var aql = new AqlDto();
 
-    SelectFieldDto selectFieldDto = new SelectFieldDto();
+    var selectFieldDto = new SelectFieldDto();
     selectFieldDto.setAqlPath(aqlPath);
     selectFieldDto.setContainmentId(1);
 
-    SelectDto select = new SelectDto();
+    var select = new SelectDto();
     select.setStatement(List.of(selectFieldDto));
 
-    ContainmentDto contains = new ContainmentDto();
+    var contains = new ContainmentDto();
     contains.setArchetypeId(archetypeId);
     contains.setId(1);
 
-    OrderByExpressionDto orderByExpressionDto = new OrderByExpressionDto();
+    var orderByExpressionDto = new OrderByExpressionDto();
     orderByExpressionDto.setStatement(selectFieldDto);
     orderByExpressionDto.setSymbol(OrderByExpressionSymbol.ASC);
 
@@ -65,85 +67,93 @@ public class ParameterService {
     return insertSelect(query);
   }
 
-  public ParameterOptionsDto getParameterOptions(
-      QueryResponseData response, String aqlPath, String archetypeId) {
+  public ParameterOptionsDto getSimpleParameterOptions(
+      QueryResponseData response, String aqlPathPostfix) {
 
-    List<Object> options = new LinkedList<>();
+    var parameterOptionsDto = new ParameterOptionsDto();
 
     if (response != null && CollectionUtils.isNotEmpty(response.getRows())) {
-
-      if (aqlPath.endsWith(VALUE_VALUE)
-          || aqlPath.endsWith(VALUE_MAGNITUDE)
-          || aqlPath.endsWith(VALUE_SYMBOL_VALUE)
-          || aqlPath.endsWith(VALUE_UNIT)) {
-        response.getRows().forEach(row -> processSimpleRow(options, row));
-      }
-
-      if (aqlPath.endsWith(VALUE)) {
-        response.getRows().forEach(row -> processResponseRow(options, row));
-      }
-
+      response.getRows().forEach(row -> processSimpleRow(parameterOptionsDto, row, aqlPathPostfix));
+      return parameterOptionsDto;
     }
-
-    return ParameterOptionsDto.builder()
-        .options(options)
-        .aqlPath(aqlPath)
-        .archetypeId(archetypeId)
-        .build();
+    return null;
   }
 
-  private void processSimpleRow(List<Object> options, List<Object> row) {
-    if (CollectionUtils.isNotEmpty(row)) {
-      Object value = row.get(0);
-      if (value != null) {
-        options.add(value);
+  public ParameterOptionsDto getParameterOptions(QueryResponseData responseData, String postfix) {
+    var parameterOptionsDto = new ParameterOptionsDto();
+    responseData.getRows().forEach(row -> processResponseRow(parameterOptionsDto, row, postfix));
+    return parameterOptionsDto;
+  }
+
+  private void processSimpleRow(ParameterOptionsDto options, List<?> row, String pathPostfix) {
+    if (row != null) {
+      try {
+        var json = mapper.writeValueAsString(row.get(0));
+        options.setType(JsonPath.read(json, "value._type"));
+        options.setUnit(JsonPath.read(json, "value.units"));
+        var value = JsonPath.read(json, pathPostfix.replace("/", "."));
+        options.getOptions().put(value.toString(), value);
+      } catch (JsonProcessingException e) {
+        e.printStackTrace();
       }
     }
   }
 
-  private void processResponseRow(List<Object> options, List<Object> row) {
+  private void processResponseRow(
+      ParameterOptionsDto parameterOptionsDto, List<Object> row, String postfix) {
     if (CollectionUtils.isNotEmpty(row) && (row.get(0) instanceof HashMap)) {
-      HashMap rowData = (HashMap) row.get(0);
+      var rowData = (HashMap<?, ?>) row.get(0);
 
-      if (isDvText(rowData) || isDvBoolean(rowData)) {
-        Object value = getValue(rowData);
-        if (value != null) {
-          options.add(value);
+      if (rowData.containsKey(SYMBOL)) {
+        var data = (HashMap<?, ?>) rowData.get(SYMBOL);
+
+        var definingCode = (HashMap<?, ?>) data.get(DEFINING_CODE);
+
+        parameterOptionsDto.setType(definingCode.get(TYPE).toString());
+        var codeString = definingCode.get(CODE_STRING);
+
+        parameterOptionsDto
+            .getOptions()
+            .put(
+                codeString,
+                ((LinkedHashMap<?, ?>) definingCode.get(TERMINOLOGY_ID)).get(VALUE)
+                    + "-"
+                    + codeString);
+        return;
+      }
+
+      if (AqlService.VALUE_DEFINING_CODE.equals(postfix)) {
+
+        try {
+          var json = mapper.writeValueAsString(rowData);
+          postfix = postfix.replace("/", ".");
+          postfix = postfix.substring(1);
+          parameterOptionsDto.setType(JsonPath.read(json, postfix + "._type"));
+
+          var codeString = JsonPath.read(json, postfix + ".code_string");
+          var terminologyId = JsonPath.read(json, postfix + ".terminology_id.value");
+          parameterOptionsDto.getOptions().put(codeString, terminologyId + "-" + codeString);
+          return;
+        } catch (JsonProcessingException e) {
+          log.error("Parameter data could not be retrieved.");
         }
       }
-    }
-  }
 
-  private Object getValue(HashMap rowData) {
-    if (rowData.containsKey("value")) {
-      return rowData.get("value");
-    } else {
-      return null;
-    }
-  }
+      if ("CODE_PHRASE".equals(rowData.get(TYPE))) {
+        parameterOptionsDto.setType(rowData.get(TYPE).toString());
+        var codeString = rowData.get(CODE_STRING).toString();
 
-  private boolean isDvText(HashMap rowData) {
-    return isType(rowData, DV_CODED_TEXT);
-  }
-
-  private boolean isDvBoolean(HashMap rowData) {
-    return isType(rowData, DV_BOOLEAN);
-  }
-
-  private boolean isType(HashMap rowData, String ehrType) {
-    if (rowData.containsKey(SYMBOL)) {
-      if (rowData.get(SYMBOL) instanceof HashMap) {
-        HashMap symbolData = (HashMap) rowData.get(SYMBOL);
-        if (symbolData.containsKey("_type") && symbolData.get("_type").equals(ehrType)) {
-          return true;
-        }
+        parameterOptionsDto
+            .getOptions()
+            .put(
+                codeString,
+                ((LinkedHashMap<?, ?>) rowData.get(TERMINOLOGY_ID)).get(VALUE) + "-" + codeString);
       }
     }
-    return false;
   }
 
   private String insertSelect(String query) {
-    String result = StringUtils.substringAfter(query, SELECT);
+    var result = StringUtils.substringAfter(query, SELECT);
     return new StringBuilder(result).insert(0, SELECT_DISTINCT).toString();
   }
 }

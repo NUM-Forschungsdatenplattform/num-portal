@@ -25,6 +25,7 @@ import java.util.Set;
 import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
@@ -42,25 +43,26 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class AqlService {
 
-  private final AqlRepository aqlRepository;
+  public static final String VALUE_DEFINING_CODE = "/value/defining_code";
 
-  private final AqlCategoryRepository aqlCategoryRepository;
+  private static final String VALUE_VALUE = "/value/value";
 
-  private final EhrBaseService ehrBaseService;
+  private static final String VALUE_MAGNITUDE = "/value/magnitude";
 
-  private final ObjectMapper mapper;
+  private static final String VALUE_UNIT = "/value/units";
 
-  private final UserDetailsService userDetailsService;
-
-  private final PrivacyProperties privacyProperties;
-
-  private final AqlEditorAqlService aqlEditorAqlService;
-
-  private final ParameterService parameterService;
-
-  private final CacheManager cacheManager;
+  private static final String VALUE_SYMBOL_VALUE = "/value/symbol/value";
 
   private static final String PARAMETERS_CACHE = "aqlParameters";
+  private final AqlRepository aqlRepository;
+  private final AqlCategoryRepository aqlCategoryRepository;
+  private final EhrBaseService ehrBaseService;
+  private final ObjectMapper mapper;
+  private final UserDetailsService userDetailsService;
+  private final PrivacyProperties privacyProperties;
+  private final AqlEditorAqlService aqlEditorAqlService;
+  private final ParameterService parameterService;
+  private final CacheManager cacheManager;
 
   /**
    * Counts the number of aql queries existing in the platform
@@ -201,7 +203,27 @@ public class AqlService {
   @CachePut(value = PARAMETERS_CACHE, key = "#aqlPath")
   public ParameterOptionsDto getParameterValues(String userId, String aqlPath, String archetypeId) {
     userDetailsService.checkIsUserApproved(userId);
-    String query = parameterService.createQuery(aqlPath, archetypeId);
+
+    if (aqlPath.endsWith(VALUE_VALUE)) {
+      return getSimpleParameters(aqlPath, archetypeId, VALUE_VALUE);
+    } else if (aqlPath.endsWith(VALUE_MAGNITUDE)) {
+      return getSimpleParameters(aqlPath, archetypeId, VALUE_MAGNITUDE);
+    } else if (aqlPath.endsWith(VALUE_SYMBOL_VALUE)) {
+      return getSimpleParameters(aqlPath, archetypeId, VALUE_SYMBOL_VALUE);
+    } else if (aqlPath.endsWith(VALUE_UNIT)) {
+      return getSimpleParameters(aqlPath, archetypeId, VALUE_UNIT);
+    } else if (aqlPath.endsWith(VALUE_DEFINING_CODE)) {
+      return getComplexParameters(aqlPath, archetypeId, VALUE_DEFINING_CODE);
+    } else {
+      return getComplexParameters(aqlPath, archetypeId, StringUtils.EMPTY);
+    }
+  }
+
+  private ParameterOptionsDto getSimpleParameters(
+      String aqlPath, String archetypeId, String postfix) {
+    String query =
+        parameterService.createQuery(
+            aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
 
     try {
       log.info(
@@ -212,8 +234,34 @@ public class AqlService {
     }
 
     QueryResponseData response = ehrBaseService.executePlainQuery(query);
+    var simpleParameterOptions = parameterService.getSimpleParameterOptions(response, postfix);
 
-    return parameterService.getParameterOptions(response, aqlPath, archetypeId);
+    simpleParameterOptions.setAqlPath(aqlPath);
+    simpleParameterOptions.setArchetypeId(archetypeId);
+    return simpleParameterOptions;
+  }
+
+  private ParameterOptionsDto getComplexParameters(
+      String aqlPath, String archetypeId, String postfix) {
+
+    String query =
+        parameterService.createQuery(
+            aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
+
+    try {
+      log.info(
+          String.format(
+              "[AQL QUERY] Getting parameter %s options with query: %s ", aqlPath, query));
+    } catch (Exception e) {
+      log.error("Error parsing query while logging", e);
+    }
+
+    QueryResponseData response = ehrBaseService.executePlainQuery(query);
+    var complexParameterOptions = parameterService.getParameterOptions(response, postfix);
+
+    complexParameterOptions.setAqlPath(aqlPath);
+    complexParameterOptions.setArchetypeId(archetypeId);
+    return complexParameterOptions;
   }
 
   @Scheduled(fixedRate = 3600000)

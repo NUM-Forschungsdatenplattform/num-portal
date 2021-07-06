@@ -1,8 +1,10 @@
 package de.vitagroup.num.integrationtesting.tests;
 
+import static de.vitagroup.num.domain.Roles.MANAGER;
 import static de.vitagroup.num.domain.Roles.RESEARCHER;
 import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
-import static de.vitagroup.num.domain.Roles.MANAGER;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -24,10 +26,9 @@ import org.springframework.test.web.servlet.MvcResult;
 
 public class AqlControllerIT extends IntegrationTest {
 
+  private static final String AQL_PATH = "/aql";
   @Autowired public MockMvc mockMvc;
   @Autowired private ObjectMapper mapper;
-
-  private static final String AQL_PATH = "/aql";
 
   @Test
   @SneakyThrows
@@ -70,7 +71,7 @@ public class AqlControllerIT extends IntegrationTest {
         .andExpect(status().isForbidden());
   }
 
-  //TODO: for this test to work we need to stub the calls made to keycloak to retrieve users
+  // TODO: for this test to work we need to stub the calls made to keycloak to retrieve users
   @Ignore
   @Test
   @SneakyThrows
@@ -105,7 +106,7 @@ public class AqlControllerIT extends IntegrationTest {
         .andExpect(jsonPath("$.query").value(aql.getQuery()));
   }
 
-  //TODO: for this test to work we need to stub the calls made to keycloak to retrieve users
+  // TODO: for this test to work we need to stub the calls made to keycloak to retrieve users
   @Ignore
   @Test
   @SneakyThrows
@@ -166,11 +167,79 @@ public class AqlControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {MANAGER})
   public void shouldGetAllCategories() {
-
-    mockMvc
-        .perform(
-            get(AQL_PATH+"/category").with(csrf()))
-        .andExpect(status().isOk());
+    mockMvc.perform(get(AQL_PATH + "/category").with(csrf())).andExpect(status().isOk());
   }
 
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {RESEARCHER})
+  public void shouldRetrieveParameterValues() {
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(AQL_PATH + "/parameter/values")
+                    .queryParam(
+                        "aqlPath",
+                        "/data[at0001]/events[at0006]/data[at0003]/items[at0005]/value/magnitude")
+                    .queryParam("archetypeId", "openEHR-EHR-OBSERVATION.blood_pressure.v2")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+    assertThat(
+        result.getResponse().getContentAsString(), containsString("\"type\":\"DV_QUANTITY\""));
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {RESEARCHER})
+  public void shouldRetrieveParameterCodePhrase() {
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(AQL_PATH + "/parameter/values")
+                    .queryParam(
+                        "aqlPath",
+                        "/data[at0001]/events[at0002]/data[at0003]/items[at0011]/value/defining_code")
+                    .queryParam("archetypeId", "openEHR-EHR-OBSERVATION.pregnancy_status.v0")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+    assertThat(
+        result.getResponse().getContentAsString(), containsString("\"type\":\"CODE_PHRASE\""));
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {RESEARCHER})
+  public void shouldRetrieveParameterEnumValues() {
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(AQL_PATH + "/parameter/values")
+                    .queryParam(
+                        "aqlPath", "/data[at0001]/events[at0002]/data[at0003]/items[at0007]/value")
+                    .queryParam("archetypeId", "openEHR-EHR-OBSERVATION.sofa_score.v0")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+    assertThat(
+        result.getResponse().getContentAsString(), containsString("\"type\":\"CODE_PHRASE\""));
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {RESEARCHER})
+  public void shouldRetrieveParameterMagnitude() {
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(AQL_PATH + "/parameter/values")
+                    .queryParam("aqlPath", "/items[at0005]/value/defining_code")
+                    .queryParam("archetypeId", "openEHR-EHR-CLUSTER.laboratory_test_analyte.v1")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+    assertThat(
+        result.getResponse().getContentAsString(), containsString("\"type\":\"CODE_PHRASE\""));
+  }
 }
