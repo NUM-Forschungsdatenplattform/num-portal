@@ -364,7 +364,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire.version}</version>
         <configuration>
-          <argLine>${surefire.jacoco.args}</argLine>
+          <argLine>@{surefire.jacoco.args}</argLine>
           <skipTests>${skip.unit.tests}</skipTests>
         </configuration>
         <dependencies>
@@ -380,7 +380,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>${failsafe.version}</version>
         <configuration>
-          <argLine>${failsafe.jacoco.args}</argLine>
+          <argLine>@{failsafe.jacoco.args}</argLine>
           <skipTests>${skip.integration.tests}</skipTests>
         </configuration>
         <dependencies>
