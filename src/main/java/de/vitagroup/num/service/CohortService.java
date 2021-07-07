@@ -58,21 +58,19 @@ public class CohortService {
   private final EhrBaseService ehrBaseService;
   private final ContentService contentService;
 
+  private static final String RESULTS_WITHHELD_FOR_PRIVACY_REASONS = "Too few matches, results withheld for privacy reasons.";
   private static final String GET_PATIENTS_PER_CLINIC =
       "SELECT e/ehr_id/value as patient_id "
           + "FROM EHR e CONTAINS COMPOSITION c "
           + "WHERE c/context/health_care_facility/name = '%s'"
           + "AND e/ehr_id/value MATCHES {%s} ";
-
   private static final String GET_PATIENTS_PER_AGE_INTERVAL =
       "SELECT count(e/ehr_id/value) "
           + "FROM EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.age.v0] "
           + "WHERE o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/value >= 'P%dY' "
           + "AND o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/value < 'P%dY'"
           + "AND e/ehr_id/value MATCHES {%s} ";
-
   private static final String AGE_INTERVAL_LABEL = "%d-%d";
-
   private static final int MAX_AGE = 122;
   private static final int AGE_INTERVAL = 10;
 
@@ -129,7 +127,7 @@ public class CohortService {
     Set<String> ehrIds =
         cohortExecutor.executeGroup(cohortGroup, cohortGroup.getParameters(), allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
+      throw new PrivacyException(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds.size();
   }
@@ -145,7 +143,7 @@ public class CohortService {
 
     Set<String> ehrIds = cohortExecutor.execute(cohort, false);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
+      throw new PrivacyException(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
 
     return determineTemplatesHits(ehrIds, requestDto.getTemplateIds());
@@ -266,7 +264,7 @@ public class CohortService {
     Set<String> ehrIds =
         cohortExecutor.executeGroup(cohortGroup, cohortGroup.getParameters(), allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
+      throw new PrivacyException(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     int count = ehrIds.size();
 
