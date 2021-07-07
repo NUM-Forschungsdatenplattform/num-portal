@@ -1,10 +1,25 @@
 package de.vitagroup.num.service.ehrbase;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.nedap.archie.rm.RMObject;
+import com.nedap.archie.rm.datastructures.Element;
+import com.nedap.archie.rm.datavalues.DvBoolean;
+import com.nedap.archie.rm.datavalues.DvCodedText;
+import com.nedap.archie.rm.datavalues.quantity.DvOrdinal;
+import com.nedap.archie.rm.datavalues.quantity.DvQuantity;
+import com.nedap.archie.rm.datavalues.quantity.datetime.DvDate;
+import com.nedap.archie.rm.datavalues.quantity.datetime.DvDateTime;
+import com.nedap.archie.rm.datavalues.quantity.datetime.DvTime;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
-import java.util.HashMap;
+import de.vitagroup.num.service.UserDetailsService;
+import java.time.temporal.TemporalAccessor;
 import java.util.LinkedList;
 import java.util.List;
-import org.apache.commons.collections4.CollectionUtils;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
@@ -13,45 +28,150 @@ import org.ehrbase.aql.dto.orderby.OrderByExpressionDto;
 import org.ehrbase.aql.dto.orderby.OrderByExpressionSymbol;
 import org.ehrbase.aql.dto.select.SelectDto;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
-import org.ehrbase.response.openehr.QueryResponseData;
+import org.ehrbase.client.openehrclient.VersionUid;
+import org.ehrbase.client.openehrclient.defaultrestclient.TemporalAccessorDeSerializer;
+import org.ehrbase.client.openehrclient.defaultrestclient.VersionUidDeSerializer;
+import org.ehrbase.serialisation.jsonencoding.JacksonUtil;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ParameterService {
 
   private static final String SELECT = "Select";
-  private static final String SYMBOL = "symbol";
+
   private static final String SELECT_DISTINCT = "Select distinct";
-  private static final String DV_BOOLEAN = "DV_BOOLEAN";
-  private static final String DV_CODED_TEXT = "DV_CODED_TEXT";
+
+  private static final String VALUE_DEFINING_CODE = "/value/defining_code";
+
+  private static final String VALUE_VALUE = "/value/value";
+
+  private static final String VALUE_MAGNITUDE = "/value/magnitude";
+
+  private static final String VALUE_UNIT = "/value/units";
+
+  private static final String VALUE_SYMBOL_VALUE = "/value/symbol/value";
 
   private static final String VALUE = "/value";
-  private static final String VALUE_VALUE = "/value/value";
-  private static final String VALUE_MAGNITUDE = "/value/magnitude";
-  private static final String VALUE_UNIT = "/value/unitS";
-  private static final String VALUE_SYMBOL_VALUE = "/value/symbol/value";
-  /**
-   * Create the aql query for retrieving all distinct existing values of a certain aql path
-   *
-   * @param aqlPath
-   * @param archetypeId
-   * @return
-   */
-  public String createQuery(String aqlPath, String archetypeId) {
-    AqlDto aql = new AqlDto();
 
-    SelectFieldDto selectFieldDto = new SelectFieldDto();
+  private static final String PARAMETERS_CACHE = "aqlParameters";
+
+  private final CacheManager cacheManager;
+
+  private final EhrBaseService ehrBaseService;
+
+  private final UserDetailsService userDetailsService;
+
+  private static ObjectMapper buildAqlObjectMapper() {
+    var objectMapper = JacksonUtil.getObjectMapper();
+    var module = new SimpleModule("openEHR", new Version(1, 0, 0, null, null, null));
+    module.addDeserializer(VersionUid.class, new VersionUidDeSerializer());
+    module.addDeserializer(TemporalAccessor.class, new TemporalAccessorDeSerializer());
+    objectMapper.registerModule(module);
+    return objectMapper;
+  }
+
+  @CachePut(value = PARAMETERS_CACHE, key = "#aqlPath")
+  public ParameterOptionsDto getParameterValues(String userId, String aqlPath, String archetypeId) {
+    userDetailsService.checkIsUserApproved(userId);
+
+    if (aqlPath.endsWith(VALUE_VALUE)) {
+      return getParameters(aqlPath, archetypeId, VALUE_VALUE);
+    } else if (aqlPath.endsWith(VALUE_MAGNITUDE)) {
+      return getParameters(aqlPath, archetypeId, VALUE_MAGNITUDE);
+    } else if (aqlPath.endsWith(VALUE_SYMBOL_VALUE)) {
+      return getParameters(aqlPath, archetypeId, VALUE_SYMBOL_VALUE);
+    } else if (aqlPath.endsWith(VALUE_UNIT)) {
+      return getParameters(aqlPath, archetypeId, VALUE_UNIT);
+    } else if (aqlPath.endsWith(VALUE_DEFINING_CODE)) {
+      return getParameters(aqlPath, archetypeId, VALUE_DEFINING_CODE);
+    } else if (aqlPath.endsWith(VALUE)) {
+      return getParameters(aqlPath, archetypeId, VALUE);
+    } else {
+      return getParameters(aqlPath, archetypeId, StringUtils.EMPTY);
+    }
+  }
+
+  @Scheduled(fixedRate = 3600000)
+  public void evictParametersCache() {
+    var cache = cacheManager.getCache(PARAMETERS_CACHE);
+    if (cache != null) {
+      log.trace("Evicting aql parameters opetions cache");
+      cache.clear();
+    }
+  }
+
+  private ParameterOptionsDto getParameters(String aqlPath, String archetypeId, String postfix) {
+    var query =
+        createQueryString(aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
+
+    try {
+      log.info(
+          String.format(
+              "[AQL QUERY] Getting parameter %s options with query: %s ", aqlPath, query));
+    } catch (Exception e) {
+      log.error("Error parsing query while logging", e);
+    }
+
+    var parameterOptions = new ParameterOptionsDto();
+
+    var queryResponseData = ehrBaseService.executePlainQuery(query);
+    queryResponseData
+        .getRows()
+        .forEach(
+            row -> {
+              try {
+                if (row.get(0) != null) {
+                  var rowString = buildAqlObjectMapper().writeValueAsString(row.get(0));
+                  var element =
+                      (Element) buildAqlObjectMapper().readValue(rowString, RMObject.class);
+
+                  if (element.getValue().getClass().isAssignableFrom(DvCodedText.class)) {
+                    convertDvCodedText((DvCodedText) element.getValue(), parameterOptions);
+                  } else if (element.getValue().getClass().isAssignableFrom(DvQuantity.class)) {
+                    convertDvQuantity((DvQuantity) element.getValue(), parameterOptions);
+                  } else if (element.getValue().getClass().isAssignableFrom(DvOrdinal.class)) {
+                    convertDvOrdinal((DvOrdinal) element.getValue(), parameterOptions);
+                  } else if (element.getValue().getClass().isAssignableFrom(DvBoolean.class)) {
+                    convertDvBoolean(parameterOptions);
+                  } else if (element.getValue().getClass().isAssignableFrom(DvDate.class)) {
+                    convertDvDate(parameterOptions);
+                  } else if (element.getValue().getClass().isAssignableFrom(DvDateTime.class)) {
+                    convertDvDateTime(parameterOptions);
+                  } else if (element.getValue().getClass().isAssignableFrom(DvTime.class)) {
+                    convertTime(parameterOptions);
+                  }
+                }
+              } catch (JsonProcessingException e) {
+                log.error("Could not retrieve parameters", e);
+              }
+            });
+
+    parameterOptions.setAqlPath(aqlPath);
+    parameterOptions.setArchetypeId(archetypeId);
+    return parameterOptions;
+  }
+
+  /** Create the aql query for retrieving all distinct existing values of a certain aql path */
+  private String createQueryString(String aqlPath, String archetypeId) {
+    var aql = new AqlDto();
+
+    var selectFieldDto = new SelectFieldDto();
     selectFieldDto.setAqlPath(aqlPath);
     selectFieldDto.setContainmentId(1);
 
-    SelectDto select = new SelectDto();
+    var select = new SelectDto();
     select.setStatement(List.of(selectFieldDto));
 
-    ContainmentDto contains = new ContainmentDto();
+    var contains = new ContainmentDto();
     contains.setArchetypeId(archetypeId);
     contains.setId(1);
 
-    OrderByExpressionDto orderByExpressionDto = new OrderByExpressionDto();
+    var orderByExpressionDto = new OrderByExpressionDto();
     orderByExpressionDto.setStatement(selectFieldDto);
     orderByExpressionDto.setSymbol(OrderByExpressionSymbol.ASC);
 
@@ -65,85 +185,40 @@ public class ParameterService {
     return insertSelect(query);
   }
 
-  public ParameterOptionsDto getParameterOptions(
-      QueryResponseData response, String aqlPath, String archetypeId) {
-
-    List<Object> options = new LinkedList<>();
-
-    if (response != null && CollectionUtils.isNotEmpty(response.getRows())) {
-
-      if (aqlPath.endsWith(VALUE_VALUE)
-          || aqlPath.endsWith(VALUE_MAGNITUDE)
-          || aqlPath.endsWith(VALUE_SYMBOL_VALUE)
-          || aqlPath.endsWith(VALUE_UNIT)) {
-        response.getRows().forEach(row -> processSimpleRow(options, row));
-      }
-
-      if (aqlPath.endsWith(VALUE)) {
-        response.getRows().forEach(row -> processResponseRow(options, row));
-      }
-
-    }
-
-    return ParameterOptionsDto.builder()
-        .options(options)
-        .aqlPath(aqlPath)
-        .archetypeId(archetypeId)
-        .build();
+  private void convertDvCodedText(DvCodedText data, ParameterOptionsDto dto) {
+    dto.setType("DV_CODED_TEXT");
+    dto.getOptions().put(data.getDefiningCode().getCodeString(), data.getValue());
   }
 
-  private void processSimpleRow(List<Object> options, List<Object> row) {
-    if (CollectionUtils.isNotEmpty(row)) {
-      Object value = row.get(0);
-      if (value != null) {
-        options.add(value);
-      }
-    }
+  private void convertDvQuantity(DvQuantity data, ParameterOptionsDto dto) {
+    dto.setType("DV_QUANTITY");
+    dto.setUnit(data.getUnits());
   }
 
-  private void processResponseRow(List<Object> options, List<Object> row) {
-    if (CollectionUtils.isNotEmpty(row) && (row.get(0) instanceof HashMap)) {
-      HashMap rowData = (HashMap) row.get(0);
-
-      if (isDvText(rowData) || isDvBoolean(rowData)) {
-        Object value = getValue(rowData);
-        if (value != null) {
-          options.add(value);
-        }
-      }
-    }
+  private void convertDvOrdinal(DvOrdinal data, ParameterOptionsDto dto) {
+    dto.setType("DV_ORDINAL");
+    var symbol = data.getSymbol();
+    dto.getOptions().put(symbol.getDefiningCode().getCodeString(), symbol.getValue());
   }
 
-  private Object getValue(HashMap rowData) {
-    if (rowData.containsKey("value")) {
-      return rowData.get("value");
-    } else {
-      return null;
-    }
+  private void convertDvBoolean(ParameterOptionsDto dto) {
+    dto.setType("DV_BOOLEAN");
   }
 
-  private boolean isDvText(HashMap rowData) {
-    return isType(rowData, DV_CODED_TEXT);
+  private void convertDvDate(ParameterOptionsDto dto) {
+    dto.setType("DV_DATE");
   }
 
-  private boolean isDvBoolean(HashMap rowData) {
-    return isType(rowData, DV_BOOLEAN);
+  private void convertDvDateTime(ParameterOptionsDto dto) {
+    dto.setType("DV_DATE_TIME");
   }
 
-  private boolean isType(HashMap rowData, String ehrType) {
-    if (rowData.containsKey(SYMBOL)) {
-      if (rowData.get(SYMBOL) instanceof HashMap) {
-        HashMap symbolData = (HashMap) rowData.get(SYMBOL);
-        if (symbolData.containsKey("_type") && symbolData.get("_type").equals(ehrType)) {
-          return true;
-        }
-      }
-    }
-    return false;
+  private void convertTime(ParameterOptionsDto dto) {
+    dto.setType("DV_TIME");
   }
 
   private String insertSelect(String query) {
-    String result = StringUtils.substringAfter(query, SELECT);
+    var result = StringUtils.substringAfter(query, SELECT);
     return new StringBuilder(result).insert(0, SELECT_DISTINCT).toString();
   }
 }

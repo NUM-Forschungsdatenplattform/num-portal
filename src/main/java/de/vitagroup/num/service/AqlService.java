@@ -5,15 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
-import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
-import de.vitagroup.num.service.ehrbase.ParameterService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.PrivacyException;
@@ -29,12 +26,7 @@ import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
-import org.ehrbase.response.openehr.QueryResponseData;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -43,24 +35,12 @@ import org.springframework.stereotype.Service;
 public class AqlService {
 
   private final AqlRepository aqlRepository;
-
   private final AqlCategoryRepository aqlCategoryRepository;
-
   private final EhrBaseService ehrBaseService;
-
   private final ObjectMapper mapper;
-
   private final UserDetailsService userDetailsService;
-
   private final PrivacyProperties privacyProperties;
-
   private final AqlEditorAqlService aqlEditorAqlService;
-
-  private final ParameterService parameterService;
-
-  private final CacheManager cacheManager;
-
-  private static final String PARAMETERS_CACHE = "aqlParameters";
 
   /**
    * Counts the number of aql queries existing in the platform
@@ -78,7 +58,7 @@ public class AqlService {
   public Aql getAqlById(Long id, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    Aql aql =
+    var aql =
         aqlRepository.findById(id).orElseThrow(() -> new ResourceNotFound("Aql not found: " + id));
 
     if (aql.isViewable(loggedInUserId)) {
@@ -94,13 +74,13 @@ public class AqlService {
   }
 
   public Aql createAql(Aql aql, String loggedInUserId) {
-    UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
+    var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    if (user.isNotApproved()) {
+    if (userDetails.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
     }
 
-    aql.setOwner(user);
+    aql.setOwner(userDetails);
     aql.setCreateDate(OffsetDateTime.now());
     aql.setModifiedDate(OffsetDateTime.now());
 
@@ -110,7 +90,7 @@ public class AqlService {
   public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    Aql aqlToEdit =
+    var aqlToEdit =
         aqlRepository
             .findById(aqlId)
             .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + aqlId));
@@ -136,7 +116,7 @@ public class AqlService {
   public void deleteById(Long id, String loggedInUserId, List<String> roles) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    Aql aql =
+    var aql =
         aqlRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + id));
@@ -160,20 +140,20 @@ public class AqlService {
    */
   public List<Aql> searchAqls(String name, AqlSearchFilter filter, String loggedInUserId) {
 
-    UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
+    var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    if (user.isNotApproved()) {
+    if (userDetails.isNotApproved()) {
       throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
     }
 
     switch (filter) {
       case ALL:
-        return aqlRepository.findAllOwnedOrPublicByName(user.getUserId(), name);
+        return aqlRepository.findAllOwnedOrPublicByName(userDetails.getUserId(), name);
       case OWNED:
-        return aqlRepository.findAllOwnedByName(user.getUserId(), name);
+        return aqlRepository.findAllOwnedByName(userDetails.getUserId(), name);
       case ORGANIZATION:
         return aqlRepository.findAllOrganizationOwnedByName(
-            user.getOrganization().getId(), user.getUserId(), name);
+            userDetails.getOrganization().getId(), userDetails.getUserId(), name);
       default:
         return List.of();
     }
@@ -196,33 +176,6 @@ public class AqlService {
       throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
     }
     return ehrIds.size();
-  }
-
-  @CachePut(value = PARAMETERS_CACHE, key = "#aqlPath")
-  public ParameterOptionsDto getParameterValues(String userId, String aqlPath, String archetypeId) {
-    userDetailsService.checkIsUserApproved(userId);
-    String query = parameterService.createQuery(aqlPath, archetypeId);
-
-    try {
-      log.info(
-          String.format(
-              "[AQL QUERY] Getting parameter %s options with query: %s ", aqlPath, query));
-    } catch (Exception e) {
-      log.error("Error parsing query while logging", e);
-    }
-
-    QueryResponseData response = ehrBaseService.executePlainQuery(query);
-
-    return parameterService.getParameterOptions(response, aqlPath, archetypeId);
-  }
-
-  @Scheduled(fixedRate = 3600000)
-  public void evictParametersCache() {
-    Cache cache = cacheManager.getCache(PARAMETERS_CACHE);
-    if (cache != null) {
-      log.trace("Evicting aql parameters opetions cache");
-      cache.clear();
-    }
   }
 
   public List<AqlCategory> getAqlCategories() {
