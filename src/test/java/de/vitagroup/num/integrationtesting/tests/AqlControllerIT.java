@@ -71,11 +71,10 @@ public class AqlControllerIT extends IntegrationTest {
         .andExpect(status().isForbidden());
   }
 
-  // TODO: for this test to work we need to stub the calls made to keycloak to retrieve users
-  @Ignore
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
+  @Ignore("For this test to work we need to stub the calls made to keycloak to retrieve users")
   public void shouldSaveAndRetrieveAqlSuccessfully() {
 
     Aql aql = Aql.builder().name("t1").query("t3").publicAql(true).build();
@@ -106,11 +105,10 @@ public class AqlControllerIT extends IntegrationTest {
         .andExpect(jsonPath("$.query").value(aql.getQuery()));
   }
 
-  // TODO: for this test to work we need to stub the calls made to keycloak to retrieve users
-  @Ignore
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
+  @Ignore("For this test to work we need to stub the calls made to keycloak to retrieve users")
   public void shouldSaveAndDeleteAqlSuccessfully() {
 
     Aql aql = Aql.builder().name("d1").query("d3").publicAql(true).build();
@@ -173,6 +171,7 @@ public class AqlControllerIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
+  @Ignore("EhrBase mock is needed to run this test")
   public void shouldRetrieveParameterValues() {
     MvcResult result =
         mockMvc
@@ -192,6 +191,7 @@ public class AqlControllerIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
+  @Ignore("EhrBase mock is needed to run this test")
   public void shouldRetrieveParameterCodePhrase() {
     MvcResult result =
         mockMvc
@@ -205,12 +205,13 @@ public class AqlControllerIT extends IntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
     assertThat(
-        result.getResponse().getContentAsString(), containsString("\"type\":\"CODE_PHRASE\""));
+        result.getResponse().getContentAsString(), containsString("\"type\":\"DV_CODED_TEXT\""));
   }
 
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
+  @Ignore("EhrBase mock is needed to run this test")
   public void shouldRetrieveParameterEnumValues() {
     MvcResult result =
         mockMvc
@@ -223,12 +224,14 @@ public class AqlControllerIT extends IntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
     assertThat(
-        result.getResponse().getContentAsString(), containsString("\"type\":\"CODE_PHRASE\""));
+        result.getResponse().getContentAsString(), containsString("\"type\":\"DV_ORDINAL\""));
+    assertThat(result.getResponse().getContentAsString(), containsString("\"local::at0028\""));
   }
 
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
+  @Ignore("EhrBase mock is needed to run this test")
   public void shouldRetrieveParameterMagnitude() {
     MvcResult result =
         mockMvc
@@ -240,6 +243,6 @@ public class AqlControllerIT extends IntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
     assertThat(
-        result.getResponse().getContentAsString(), containsString("\"type\":\"CODE_PHRASE\""));
+        result.getResponse().getContentAsString(), containsString("\"type\":\"DV_CODED_TEXT\""));
   }
 }

@@ -30,7 +30,6 @@ import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
-import org.ehrbase.response.openehr.QueryResponseData;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
@@ -52,6 +51,8 @@ public class AqlService {
   private static final String VALUE_UNIT = "/value/units";
 
   private static final String VALUE_SYMBOL_VALUE = "/value/symbol/value";
+
+  private static final String VALUE = "/value";
 
   private static final String PARAMETERS_CACHE = "aqlParameters";
   private final AqlRepository aqlRepository;
@@ -205,63 +206,20 @@ public class AqlService {
     userDetailsService.checkIsUserApproved(userId);
 
     if (aqlPath.endsWith(VALUE_VALUE)) {
-      return getSimpleParameters(aqlPath, archetypeId, VALUE_VALUE);
+      return parameterService.getParameters(aqlPath, archetypeId, VALUE_VALUE);
     } else if (aqlPath.endsWith(VALUE_MAGNITUDE)) {
-      return getSimpleParameters(aqlPath, archetypeId, VALUE_MAGNITUDE);
+      return parameterService.getParameters(aqlPath, archetypeId, VALUE_MAGNITUDE);
     } else if (aqlPath.endsWith(VALUE_SYMBOL_VALUE)) {
-      return getSimpleParameters(aqlPath, archetypeId, VALUE_SYMBOL_VALUE);
+      return parameterService.getParameters(aqlPath, archetypeId, VALUE_SYMBOL_VALUE);
     } else if (aqlPath.endsWith(VALUE_UNIT)) {
-      return getSimpleParameters(aqlPath, archetypeId, VALUE_UNIT);
+      return parameterService.getParameters(aqlPath, archetypeId, VALUE_UNIT);
     } else if (aqlPath.endsWith(VALUE_DEFINING_CODE)) {
-      return getComplexParameters(aqlPath, archetypeId, VALUE_DEFINING_CODE);
+      return parameterService.getParameters(aqlPath, archetypeId, VALUE_DEFINING_CODE);
+    } else if (aqlPath.endsWith(VALUE)) {
+      return parameterService.getParameters(aqlPath, archetypeId, VALUE);
     } else {
-      return getComplexParameters(aqlPath, archetypeId, StringUtils.EMPTY);
+      return parameterService.getParameters(aqlPath, archetypeId, StringUtils.EMPTY);
     }
-  }
-
-  private ParameterOptionsDto getSimpleParameters(
-      String aqlPath, String archetypeId, String postfix) {
-    String query =
-        parameterService.createQuery(
-            aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
-
-    try {
-      log.info(
-          String.format(
-              "[AQL QUERY] Getting parameter %s options with query: %s ", aqlPath, query));
-    } catch (Exception e) {
-      log.error("Error parsing query while logging", e);
-    }
-
-    QueryResponseData response = ehrBaseService.executePlainQuery(query);
-    var simpleParameterOptions = parameterService.getSimpleParameterOptions(response, postfix);
-
-    simpleParameterOptions.setAqlPath(aqlPath);
-    simpleParameterOptions.setArchetypeId(archetypeId);
-    return simpleParameterOptions;
-  }
-
-  private ParameterOptionsDto getComplexParameters(
-      String aqlPath, String archetypeId, String postfix) {
-
-    String query =
-        parameterService.createQuery(
-            aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
-
-    try {
-      log.info(
-          String.format(
-              "[AQL QUERY] Getting parameter %s options with query: %s ", aqlPath, query));
-    } catch (Exception e) {
-      log.error("Error parsing query while logging", e);
-    }
-
-    QueryResponseData response = ehrBaseService.executePlainQuery(query);
-    var complexParameterOptions = parameterService.getParameterOptions(response, postfix);
-
-    complexParameterOptions.setAqlPath(aqlPath);
-    complexParameterOptions.setArchetypeId(archetypeId);
-    return complexParameterOptions;
   }
 
   @Scheduled(fixedRate = 3600000)
