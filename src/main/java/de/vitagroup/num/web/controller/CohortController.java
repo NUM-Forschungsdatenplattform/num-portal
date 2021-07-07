@@ -3,6 +3,7 @@ package de.vitagroup.num.web.controller;
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
+import de.vitagroup.num.domain.dto.CohortSizeDto;
 import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
 import de.vitagroup.num.mapper.CohortMapper;
 import de.vitagroup.num.service.CohortService;
@@ -90,5 +91,20 @@ public class CohortController {
       @NotNull @RequestBody TemplateSizeRequestDto requestDto) {
 
     return ResponseEntity.ok(cohortService.getSizePerTemplates(principal.getSubject(), requestDto));
+  }
+
+  @AuditLog
+  @PostMapping("size/distribution")
+  @ApiOperation(
+      value =
+          "Retrieves the cohort group size without saving, provides also age distribution and patient numbers per hospital")
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
+  public ResponseEntity<CohortSizeDto> getCohortGroupSizeWithDistribution(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @RequestBody CohortGroupDto cohortGroupDto,
+      @RequestParam(required = false) Boolean allowUsageOutsideEu) {
+    return ResponseEntity.ok(
+        cohortService.getCohortGroupSizeWithDistribution(
+            cohortGroupDto, principal.getSubject(), allowUsageOutsideEu));
   }
 }
