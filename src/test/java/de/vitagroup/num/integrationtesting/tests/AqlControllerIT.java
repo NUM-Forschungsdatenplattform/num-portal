@@ -245,4 +245,22 @@ public class AqlControllerIT extends IntegrationTest {
     assertThat(
         result.getResponse().getContentAsString(), containsString("\"type\":\"DV_CODED_TEXT\""));
   }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {RESEARCHER})
+  @Ignore("EhrBase mock is needed to run this test")
+  public void shouldRetrieveParameterGender() {
+    MvcResult result =
+        mockMvc
+            .perform(
+                get(AQL_PATH + "/parameter/values")
+                    .queryParam("aqlPath", "/data[at0002]/items[at0019]/value/defining_code")
+                    .queryParam("archetypeId", "openEHR-EHR-EVALUATION.gender.v1")
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn();
+    assertThat(
+        result.getResponse().getContentAsString(), containsString("\"type\":\"DV_CODED_TEXT\""));
+  }
 }

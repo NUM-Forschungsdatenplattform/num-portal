@@ -54,7 +54,8 @@ public class ParameterService {
   }
 
   public ParameterOptionsDto getParameters(String aqlPath, String archetypeId, String postfix) {
-    var query = createQuery(aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
+    var query =
+        createQueryString(aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
 
     try {
       log.info(
@@ -66,8 +67,8 @@ public class ParameterService {
 
     var parameterOptions = new ParameterOptionsDto();
 
-    var response = ehrBaseService.executePlainQuery(query);
-    response
+    var queryResponseData = ehrBaseService.executePlainQuery(query);
+    queryResponseData
         .getRows()
         .forEach(
             row -> {
@@ -104,7 +105,7 @@ public class ParameterService {
   }
 
   /** Create the aql query for retrieving all distinct existing values of a certain aql path */
-  private String createQuery(String aqlPath, String archetypeId) {
+  private String createQueryString(String aqlPath, String archetypeId) {
     var aql = new AqlDto();
 
     var selectFieldDto = new SelectFieldDto();
