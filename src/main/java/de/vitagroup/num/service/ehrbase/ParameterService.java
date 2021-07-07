@@ -14,6 +14,7 @@ import com.nedap.archie.rm.datavalues.quantity.datetime.DvDate;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvDateTime;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvTime;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
+import de.vitagroup.num.service.UserDetailsService;
 import java.time.temporal.TemporalAccessor;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,6 +32,9 @@ import org.ehrbase.client.openehrclient.VersionUid;
 import org.ehrbase.client.openehrclient.defaultrestclient.TemporalAccessorDeSerializer;
 import org.ehrbase.client.openehrclient.defaultrestclient.VersionUidDeSerializer;
 import org.ehrbase.serialisation.jsonencoding.JacksonUtil;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -38,11 +42,29 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ParameterService {
 
-  public static final String TYPE = "_type";
-  public static final String CODE_STRING = "code_string";
   private static final String SELECT = "Select";
+
   private static final String SELECT_DISTINCT = "Select distinct";
+
+  private static final String VALUE_DEFINING_CODE = "/value/defining_code";
+
+  private static final String VALUE_VALUE = "/value/value";
+
+  private static final String VALUE_MAGNITUDE = "/value/magnitude";
+
+  private static final String VALUE_UNIT = "/value/units";
+
+  private static final String VALUE_SYMBOL_VALUE = "/value/symbol/value";
+
+  private static final String VALUE = "/value";
+
+  private static final String PARAMETERS_CACHE = "aqlParameters";
+
+  private final CacheManager cacheManager;
+
   private final EhrBaseService ehrBaseService;
+
+  private final UserDetailsService userDetailsService;
 
   private static ObjectMapper buildAqlObjectMapper() {
     var objectMapper = JacksonUtil.getObjectMapper();
@@ -53,7 +75,37 @@ public class ParameterService {
     return objectMapper;
   }
 
-  public ParameterOptionsDto getParameters(String aqlPath, String archetypeId, String postfix) {
+  @CachePut(value = PARAMETERS_CACHE, key = "#aqlPath")
+  public ParameterOptionsDto getParameterValues(String userId, String aqlPath, String archetypeId) {
+    userDetailsService.checkIsUserApproved(userId);
+
+    if (aqlPath.endsWith(VALUE_VALUE)) {
+      return getParameters(aqlPath, archetypeId, VALUE_VALUE);
+    } else if (aqlPath.endsWith(VALUE_MAGNITUDE)) {
+      return getParameters(aqlPath, archetypeId, VALUE_MAGNITUDE);
+    } else if (aqlPath.endsWith(VALUE_SYMBOL_VALUE)) {
+      return getParameters(aqlPath, archetypeId, VALUE_SYMBOL_VALUE);
+    } else if (aqlPath.endsWith(VALUE_UNIT)) {
+      return getParameters(aqlPath, archetypeId, VALUE_UNIT);
+    } else if (aqlPath.endsWith(VALUE_DEFINING_CODE)) {
+      return getParameters(aqlPath, archetypeId, VALUE_DEFINING_CODE);
+    } else if (aqlPath.endsWith(VALUE)) {
+      return getParameters(aqlPath, archetypeId, VALUE);
+    } else {
+      return getParameters(aqlPath, archetypeId, StringUtils.EMPTY);
+    }
+  }
+
+  @Scheduled(fixedRate = 3600000)
+  public void evictParametersCache() {
+    var cache = cacheManager.getCache(PARAMETERS_CACHE);
+    if (cache != null) {
+      log.trace("Evicting aql parameters opetions cache");
+      cache.clear();
+    }
+  }
+
+  private ParameterOptionsDto getParameters(String aqlPath, String archetypeId, String postfix) {
     var query =
         createQueryString(aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
 
@@ -91,7 +143,7 @@ public class ParameterService {
                   } else if (element.getValue().getClass().isAssignableFrom(DvDateTime.class)) {
                     convertDvDateTime(parameterOptions);
                   } else if (element.getValue().getClass().isAssignableFrom(DvTime.class)) {
-                    converTime(parameterOptions);
+                    convertTime(parameterOptions);
                   }
                 }
               } catch (JsonProcessingException e) {
@@ -145,7 +197,7 @@ public class ParameterService {
 
   private void convertDvOrdinal(DvOrdinal data, ParameterOptionsDto dto) {
     dto.setType("DV_ORDINAL");
-    dto.getOptions().put(data.getSymbol().getDefiningCode(), data.getValue());
+    dto.getOptions().put(data.getSymbol().getDefiningCode().toString(), data.getValue());
   }
 
   private void convertDvBoolean(ParameterOptionsDto dto) {
@@ -160,7 +212,7 @@ public class ParameterService {
     dto.setType("DV_DATE_TIME");
   }
 
-  private void converTime(ParameterOptionsDto dto) {
+  private void convertTime(ParameterOptionsDto dto) {
     dto.setType("DV_TIME");
   }
 

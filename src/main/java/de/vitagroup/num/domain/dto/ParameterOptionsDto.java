@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ParameterOptionsDto {
 
-  private HashMap options = new HashMap<>();
+  private HashMap<String, Object> options = new HashMap<>();
   private String aqlPath;
   private String archetypeId;
   private String type;

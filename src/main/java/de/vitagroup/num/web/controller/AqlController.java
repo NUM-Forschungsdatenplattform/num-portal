@@ -1,6 +1,5 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.AqlCategoryDto;
@@ -10,6 +9,7 @@ import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
+import de.vitagroup.num.service.ehrbase.ParameterService;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
@@ -41,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AqlController {
 
   private final AqlService aqlService;
+  private final ParameterService parameterService;
   private final AqlMapper mapper;
   private final ModelMapper modelMapper;
 
@@ -61,7 +62,7 @@ public class AqlController {
   public ResponseEntity<AqlDto> createAql(
       @AuthenticationPrincipal @NotNull Jwt principal, @Valid @NotNull @RequestBody AqlDto aqlDto) {
 
-    Aql aql = aqlService.createAql(mapper.convertToEntity(aqlDto), principal.getSubject());
+    var aql = aqlService.createAql(mapper.convertToEntity(aqlDto), principal.getSubject());
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
@@ -75,7 +76,7 @@ public class AqlController {
       @PathVariable("id") Long aqlId,
       @Valid @NotNull @RequestBody AqlDto aqlDto) {
 
-    Aql aql = aqlService.updateAql(mapper.convertToEntity(aqlDto), aqlId, principal.getSubject());
+    var aql = aqlService.updateAql(mapper.convertToEntity(aqlDto), aqlId, principal.getSubject());
 
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
@@ -83,7 +84,7 @@ public class AqlController {
   @AuditLog
   @DeleteMapping("/{id}")
   @PreAuthorize(Role.MANAGER_OR_SUPER_ADMIN)
-  void deleteAql(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
+  public void deleteAql(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
     aqlService.deleteById(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
@@ -93,13 +94,10 @@ public class AqlController {
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<List<AqlDto>> searchAqls(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @ApiParam(value = "A string contained in the name of the aqls", required = false)
+      @ApiParam(value = "A string contained in the name of the aqls")
           @RequestParam(required = false)
           String name,
-      @ApiParam(value = "Type of the search", required = true)
-          @RequestParam(required = true)
-          @Valid
-          @NotNull
+      @ApiParam(value = "Type of the search", required = true) @RequestParam @Valid @NotNull
           AqlSearchFilter filter) {
     return ResponseEntity.ok(
         aqlService.searchAqls(name, filter, principal.getSubject()).stream()
@@ -135,7 +133,7 @@ public class AqlController {
   public ResponseEntity<AqlCategoryDto> createCategory(
       @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
 
-    AqlCategory aqlCategory =
+    var aqlCategory =
         aqlService.createAqlCategory(AqlCategory.builder().name(aqlCategoryDto.getName()).build());
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
@@ -148,7 +146,7 @@ public class AqlController {
       @PathVariable("id") Long categoryId,
       @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
 
-    AqlCategory aqlCategory =
+    var aqlCategory =
         aqlService.updateAqlCategory(
             AqlCategory.builder().name(aqlCategoryDto.getName()).build(), categoryId);
 
@@ -158,7 +156,7 @@ public class AqlController {
   @AuditLog
   @DeleteMapping(value = "/category/{id}")
   @PreAuthorize(Role.MANAGER)
-  void deleteAql(@PathVariable Long id) {
+  public void deleteAql(@PathVariable Long id) {
     aqlService.deleteCategoryById(id);
   }
 
@@ -181,6 +179,6 @@ public class AqlController {
       @RequestParam @NotNull @NotEmpty String aqlPath,
       @RequestParam @NotNull @NotEmpty String archetypeId) {
     return ResponseEntity.ok(
-        aqlService.getParameterValues(principal.getSubject(), aqlPath, archetypeId));
+        parameterService.getParameterValues(principal.getSubject(), aqlPath, archetypeId));
   }
 }
