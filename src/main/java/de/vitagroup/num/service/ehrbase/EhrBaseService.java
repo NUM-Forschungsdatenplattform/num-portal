@@ -169,7 +169,9 @@ public class EhrBaseService {
       QueryResponseData responseData, Long projectId) {
     List<String> ehrIds = getAndRemoveEhrIdColumn(responseData);
     List<QueryResponseData> listOfResponseData = flattenCompositions(responseData);
-    addPseudonyms(ehrIds, listOfResponseData, projectId);
+    if (projectId != null) {
+      addPseudonyms(ehrIds, listOfResponseData, projectId);
+    }
     return listOfResponseData;
   }
 
