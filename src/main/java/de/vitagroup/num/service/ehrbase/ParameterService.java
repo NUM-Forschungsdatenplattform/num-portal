@@ -198,7 +198,7 @@ public class ParameterService {
   private void convertDvOrdinal(DvOrdinal data, ParameterOptionsDto dto) {
     dto.setType("DV_ORDINAL");
     var symbol = data.getSymbol();
-    dto.getOptions().put(symbol.getDefiningCode().toString(), symbol.getValue());
+    dto.getOptions().put(symbol.getDefiningCode().getCodeString(), symbol.getValue());
   }
 
   private void convertDvBoolean(ParameterOptionsDto dto) {
