@@ -17,7 +17,6 @@ import de.vitagroup.num.domain.CohortAql;
 import de.vitagroup.num.domain.CohortGroup;
 import de.vitagroup.num.domain.Operator;
 import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortAqlDto;
@@ -216,27 +215,6 @@ public class CohortServiceTest {
         is(true));
   }
 
-  @Test(expected = ForbiddenException.class)
-  public void shouldFailSavingCohortOnApprovedProject() {
-    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
-    CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME2).query(Q2).build();
-
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto2).build();
-
-    CohortGroupDto andCohort =
-        CohortGroupDto.builder()
-            .type(Type.GROUP)
-            .operator(Operator.AND)
-            .children(List.of(first, second))
-            .build();
-
-    CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").projectId(4L).cohortGroup(andCohort).build();
-
-    cohortService.createCohort(cohortDto, "approvedUserId");
-  }
-
   @Test
   public void shouldCorrectlyEditCohort() {
     CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
@@ -267,24 +245,6 @@ public class CohortServiceTest {
     assertThat(editedCohort.getCohortGroup().getOperator(), nullValue());
     assertThat(editedCohort.getCohortGroup().getType(), is(Type.AQL));
     assertThat(editedCohort.getCohortGroup().getChildren(), nullValue());
-  }
-
-  @Test(expected = ForbiddenException.class)
-  public void shouldFailEditingCohortOnApprovedProject() {
-    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
-
-    CohortGroupDto simpleCohort =
-        CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
-
-    CohortDto cohortDto =
-        CohortDto.builder()
-            .name("New cohort name")
-            .description("New cohort description")
-            .projectId(4L)
-            .cohortGroup(simpleCohort)
-            .build();
-
-    cohortService.updateCohort(cohortDto, 5L, "approvedUserId");
   }
 
   @Test
@@ -355,25 +315,9 @@ public class CohortServiceTest {
                     .build()));
 
     Project ownedProject =
-        Project.builder()
-            .name("Study")
-            .id(3L)
-            .name("Study name")
-            .coordinator(approvedUser)
-            .status(ProjectStatus.DRAFT)
-            .build();
-
-    Project ownedProjectApproved =
-        Project.builder()
-            .name("Study approved")
-            .id(4L)
-            .name("Study name approved")
-            .coordinator(approvedUser)
-            .status(ProjectStatus.APPROVED)
-            .build();
+        Project.builder().name("Study").id(3L).name("Study name").coordinator(approvedUser).build();
 
     when(projectRepository.findById(3L)).thenReturn(Optional.of(ownedProject));
-    when(projectRepository.findById(4L)).thenReturn(Optional.of(ownedProjectApproved));
 
     when(aqlService.existsById(1L)).thenReturn(true);
     when(aqlService.existsById(2L)).thenReturn(true);
@@ -399,19 +343,9 @@ public class CohortServiceTest {
             .cohortGroup(andCohort)
             .build();
 
-    Cohort cohortToEditOnApprovedProject =
-        Cohort.builder()
-            .name("Cohort to edit")
-            .name("Cohort to edit description")
-            .id(5L)
-            .project(ownedProjectApproved)
-            .cohortGroup(andCohort)
-            .build();
-
+    when(cohortRepository.findById(4L)).thenReturn(Optional.of(cohortToEdit));
     when(cohortRepository.findById(1L)).thenReturn(Optional.empty());
     when(cohortRepository.findById(2L)).thenReturn(Optional.of(Cohort.builder().id(2L).build()));
-    when(cohortRepository.findById(4L)).thenReturn(Optional.of(cohortToEdit));
-    when(cohortRepository.findById(5L)).thenReturn(Optional.of(cohortToEditOnApprovedProject));
 
     when(cohortExecutor.executeGroup(any(), anyBoolean())).thenReturn(Set.of("test1", "test2"));
 

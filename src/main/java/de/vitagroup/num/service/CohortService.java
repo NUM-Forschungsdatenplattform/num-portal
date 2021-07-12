@@ -3,7 +3,6 @@ package de.vitagroup.num.service;
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortGroup;
 import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
@@ -92,11 +91,6 @@ public class CohortService {
 
     if (project.hasEmptyOrDifferentOwner(userId)) {
       throw new ForbiddenException("Not allowed");
-    }
-
-    if (project.getStatus() != ProjectStatus.DRAFT
-        && project.getStatus() != ProjectStatus.PENDING) {
-      throw new ForbiddenException("Cohort change only allowed on project status draft or pending");
     }
 
     Cohort cohort =
@@ -216,15 +210,8 @@ public class CohortService {
             .findById(cohortId)
             .orElseThrow(() -> new ResourceNotFound("Cohort not found: " + cohortId));
 
-    Project project = cohortToEdit.getProject();
-
-    if (project.hasEmptyOrDifferentOwner(userId)) {
+    if (cohortToEdit.getProject().hasEmptyOrDifferentOwner(userId)) {
       throw new ForbiddenException("Not allowed");
-    }
-
-    if (project.getStatus() != ProjectStatus.DRAFT
-        && project.getStatus() != ProjectStatus.PENDING) {
-      throw new ForbiddenException("Cohort change only allowed on project status draft or pending");
     }
 
     cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()));
