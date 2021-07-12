@@ -58,7 +58,8 @@ public class CohortService {
   private final EhrBaseService ehrBaseService;
   private final ContentService contentService;
 
-  private static final String RESULTS_WITHHELD_FOR_PRIVACY_REASONS = "Too few matches, results withheld for privacy reasons.";
+  private static final String RESULTS_WITHHELD_FOR_PRIVACY_REASONS =
+      "Too few matches, results withheld for privacy reasons.";
   private static final String GET_PATIENTS_PER_CLINIC =
       "SELECT e/ehr_id/value as patient_id "
           + "FROM EHR e CONTAINS COMPOSITION c "
@@ -124,8 +125,7 @@ public class CohortService {
     userDetailsService.checkIsUserApproved(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
-    Set<String> ehrIds =
-        cohortExecutor.executeGroup(cohortGroup, cohortGroup.getParameters(), allowUsageOutsideEu);
+    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
       throw new PrivacyException(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
@@ -261,8 +261,7 @@ public class CohortService {
     userDetailsService.checkIsUserApproved(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
-    Set<String> ehrIds =
-        cohortExecutor.executeGroup(cohortGroup, cohortGroup.getParameters(), allowUsageOutsideEu);
+    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
       throw new PrivacyException(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }

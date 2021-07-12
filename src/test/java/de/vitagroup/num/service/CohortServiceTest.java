@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -266,7 +265,7 @@ public class CohortServiceTest {
 
     long size = cohortService.getCohortGroupSize(orCohort, approvedUser.getUserId(), false);
     Mockito.verify(cohortExecutor, times(1))
-        .executeGroup(cohortGroupCaptor.capture(), mapCaptor.capture(), booleanCaptor.capture());
+        .executeGroup(cohortGroupCaptor.capture(), booleanCaptor.capture());
 
     assertEquals(2, size);
     CohortGroup executedCohortGroup = cohortGroupCaptor.getValue();
@@ -348,8 +347,7 @@ public class CohortServiceTest {
     when(cohortRepository.findById(1L)).thenReturn(Optional.empty());
     when(cohortRepository.findById(2L)).thenReturn(Optional.of(Cohort.builder().id(2L).build()));
 
-    when(cohortExecutor.executeGroup(any(), anyMap(), anyBoolean()))
-        .thenReturn(Set.of("test1", "test2"));
+    when(cohortExecutor.executeGroup(any(), anyBoolean())).thenReturn(Set.of("test1", "test2"));
 
     when(privacyProperties.getMinHits()).thenReturn(2);
   }
