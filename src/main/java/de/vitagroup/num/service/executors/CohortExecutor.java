@@ -31,24 +31,23 @@ public class CohortExecutor {
       throw new IllegalArgumentException("Cannot execute an empty cohort");
     }
 
-    return executeGroup(
-        cohort.getCohortGroup(), cohort.getCohortGroup().getParameters(), allowUsageOutsideEu);
+    return executeGroup(cohort.getCohortGroup(), allowUsageOutsideEu);
   }
 
-  public Set<String> executeGroup(
-      CohortGroup cohortGroup, Map<String, Object> parameters, Boolean allowUsageOutsideEu) {
+  public Set<String> executeGroup(CohortGroup cohortGroup, Boolean allowUsageOutsideEu) {
     if (cohortGroup.getType() == Type.GROUP) {
 
       List<Set<String>> sets =
           cohortGroup.getChildren().stream()
-              .map(e -> executeGroup(e, parameters, allowUsageOutsideEu))
+              .map(e -> executeGroup(e, allowUsageOutsideEu))
               .collect(Collectors.toList());
 
       return setOperations.apply(
           cohortGroup.getOperator(), sets, ehrBaseService.getAllPatientIds());
 
     } else if (cohortGroup.getType() == Type.AQL) {
-      return aqlExecutor.execute(cohortGroup.getQuery(), parameters, allowUsageOutsideEu);
+      return aqlExecutor.execute(
+          cohortGroup.getQuery(), cohortGroup.getParameters(), allowUsageOutsideEu);
     }
 
     return SetUtils.emptySet();

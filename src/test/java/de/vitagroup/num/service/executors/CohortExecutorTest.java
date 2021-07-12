@@ -50,15 +50,16 @@ public class CohortExecutorTest {
     when(aqlExecutor.execute(cohortAql2, Map.of("p1", 1), false))
         .thenReturn(Set.of("1", "2", "4", "5", "6", "10"));
 
-    CohortGroup first = CohortGroup.builder().type(Type.AQL).query(cohortAql1).build();
-    CohortGroup second = CohortGroup.builder().type(Type.AQL).query(cohortAql2).build();
+    CohortGroup first =
+        CohortGroup.builder().type(Type.AQL).query(cohortAql1).parameters(Map.of("p1", 1)).build();
+    CohortGroup second =
+        CohortGroup.builder().type(Type.AQL).query(cohortAql2).parameters(Map.of("p1", 1)).build();
 
     CohortGroup andCohort =
         CohortGroup.builder()
             .type(Type.GROUP)
             .operator(Operator.AND)
             .children(Set.of(first, second))
-            .parameters(Map.of("p1", 1))
             .build();
 
     Cohort cohort = Cohort.builder().name(COHORT_NAME).cohortGroup(andCohort).build();
@@ -79,14 +80,15 @@ public class CohortExecutorTest {
     when(aqlExecutor.execute(cohortAql2, Map.of("p1", 1), false))
         .thenReturn(Set.of("4", "5", "6", "7", "8", "9", "10"));
 
-    CohortGroup first = CohortGroup.builder().type(Type.AQL).query(cohortAql1).build();
-    CohortGroup second = CohortGroup.builder().type(Type.AQL).query(cohortAql2).build();
+    CohortGroup first =
+        CohortGroup.builder().type(Type.AQL).query(cohortAql1).parameters(Map.of("p1", 1)).build();
+    CohortGroup second =
+        CohortGroup.builder().type(Type.AQL).query(cohortAql2).parameters(Map.of("p1", 1)).build();
 
     CohortGroup orCohort =
         CohortGroup.builder()
             .type(Type.GROUP)
             .operator(Operator.OR)
-            .parameters(Map.of("p1", 1))
             .children(Set.of(first, second))
             .build();
 
