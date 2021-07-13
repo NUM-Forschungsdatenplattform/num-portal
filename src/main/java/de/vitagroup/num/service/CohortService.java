@@ -3,6 +3,7 @@ package de.vitagroup.num.service;
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortGroup;
 import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
@@ -89,9 +90,7 @@ public class CohortService {
             .orElseThrow(
                 () -> new ResourceNotFound("Project not found: " + cohortDto.getProjectId()));
 
-    if (project.hasEmptyOrDifferentOwner(userId)) {
-      throw new ForbiddenException("Not allowed");
-    }
+    checkProjectModifiable(project, userId);
 
     Cohort cohort =
         Cohort.builder()
@@ -210,14 +209,25 @@ public class CohortService {
             .findById(cohortId)
             .orElseThrow(() -> new ResourceNotFound("Cohort not found: " + cohortId));
 
-    if (cohortToEdit.getProject().hasEmptyOrDifferentOwner(userId)) {
-      throw new ForbiddenException("Not allowed");
-    }
+    Project project = cohortToEdit.getProject();
+
+    checkProjectModifiable(project, userId);
 
     cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()));
     cohortToEdit.setDescription(cohortDto.getDescription());
     cohortToEdit.setName(cohortDto.getName());
     return cohortRepository.save(cohortToEdit);
+  }
+
+  private void checkProjectModifiable(Project project, String userId) {
+    if (project.hasEmptyOrDifferentOwner(userId)) {
+      throw new ForbiddenException("Changing cohort only allowed by the owner of the project");
+    }
+
+    if (project.getStatus() != ProjectStatus.DRAFT
+        && project.getStatus() != ProjectStatus.PENDING) {
+      throw new ForbiddenException("Cohort change only allowed on project status draft or pending");
+    }
   }
 
   private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto) {
