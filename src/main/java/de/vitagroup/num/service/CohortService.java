@@ -90,14 +90,7 @@ public class CohortService {
             .orElseThrow(
                 () -> new ResourceNotFound("Project not found: " + cohortDto.getProjectId()));
 
-    if (project.hasEmptyOrDifferentOwner(userId)) {
-      throw new ForbiddenException("Not allowed");
-    }
-
-    if (project.getStatus() != ProjectStatus.DRAFT
-        && project.getStatus() != ProjectStatus.PENDING) {
-      throw new ForbiddenException("Cohort change only allowed on project status draft or pending");
-    }
+    checkProjectModifiable(project, userId);
 
     Cohort cohort =
         Cohort.builder()
@@ -218,19 +211,23 @@ public class CohortService {
 
     Project project = cohortToEdit.getProject();
 
+    checkProjectModifiable(project, userId);
+
+    cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()));
+    cohortToEdit.setDescription(cohortDto.getDescription());
+    cohortToEdit.setName(cohortDto.getName());
+    return cohortRepository.save(cohortToEdit);
+  }
+
+  private void checkProjectModifiable(Project project, String userId) {
     if (project.hasEmptyOrDifferentOwner(userId)) {
-      throw new ForbiddenException("Not allowed");
+      throw new ForbiddenException("Changing cohort only allowed by the owner of the project");
     }
 
     if (project.getStatus() != ProjectStatus.DRAFT
         && project.getStatus() != ProjectStatus.PENDING) {
       throw new ForbiddenException("Cohort change only allowed on project status draft or pending");
     }
-
-    cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()));
-    cohortToEdit.setDescription(cohortDto.getDescription());
-    cohortToEdit.setName(cohortDto.getName());
-    return cohortRepository.save(cohortToEdit);
   }
 
   private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto) {
