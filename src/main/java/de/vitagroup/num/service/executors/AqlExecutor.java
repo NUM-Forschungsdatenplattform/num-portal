@@ -73,10 +73,10 @@ public class AqlExecutor {
 
   private String removeNullParameters(Map<String, Object> parameters, String query) {
     if (MapUtils.isNotEmpty(parameters) && StringUtils.isNotEmpty(query)) {
-      for (var key : parameters.keySet()) {
-        if (parameters.get(key) == null) {
-          query = AqlUtil.removeParameter(query, key);
-          parameters.remove(key);
+      for (var entry : parameters.entrySet()) {
+        if (entry.getValue() == null) {
+          query = AqlUtil.removeParameter(query, entry.getKey());
+          parameters.remove(entry.getKey());
         }
       }
     }
