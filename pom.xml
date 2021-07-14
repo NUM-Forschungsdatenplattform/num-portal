@@ -18,14 +18,14 @@
 
   <properties>
     <commons-collections4.version>4.4</commons-collections4.version>
-    <commons-io.version>2.8.0</commons-io.version>
+    <commons-io.version>2.10.0</commons-io.version>
     <ehr-sdk.version>v1.4.0</ehr-sdk.version>
     <aql-editor-backend-starter.version>v0.4.0</aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>6.6</logstash-logback-encoder.version>
-    <modelmapper.version>2.3.9</modelmapper.version>
+    <modelmapper.version>2.4.4</modelmapper.version>
     <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
     <java.version>11</java.version>
-    <openfeign.version>3.0.1</openfeign.version>
+    <openfeign.version>3.0.3</openfeign.version>
     <commons-csv.version>1.8</commons-csv.version>
     <jacoco.version>0.8.6</jacoco.version>
     <dependency-check.version>6.1.6</dependency-check.version>
@@ -111,7 +111,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.15.2</version>
+      <version>1.15.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -186,7 +186,7 @@
     <dependency>
       <groupId>org.openehealth.ipf.commons</groupId>
       <artifactId>ipf-commons-audit</artifactId>
-      <version>4.0.0</version>
+      <version>4.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
