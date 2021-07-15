@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
+import org.ehrbase.aql.util.AqlUtil;
 import org.ehrbase.client.aql.parameter.ParameterValue;
 import org.springframework.stereotype.Service;
 
@@ -40,8 +41,10 @@ public class AqlExecutor {
         applyPolicy(aql);
       }
 
-      String queryWithParameters = addParameters(parameters, aql.getQuery());
-      return ehrBaseService.retrieveEligiblePatientIds(queryWithParameters);
+      String query = removeNullParameters(parameters, aql.getQuery());
+      query = addParameters(parameters, query);
+
+      return ehrBaseService.retrieveEligiblePatientIds(query);
     } else {
       return SetUtils.emptySet();
     }
@@ -60,10 +63,20 @@ public class AqlExecutor {
   }
 
   private String addParameters(Map<String, Object> parameters, String query) {
-    if (MapUtils.isNotEmpty(parameters)) {
-      if (!StringUtils.isEmpty(query)) {
-        for (ParameterValue v : getParameterValues(parameters)) {
-          query = query.replace(v.getParameter().getAqlParameter(), v.buildAql());
+    if (MapUtils.isNotEmpty(parameters) && StringUtils.isNotEmpty(query)) {
+      for (var v : getParameterValues(parameters)) {
+        query = query.replace(v.getParameter().getAqlParameter(), v.buildAql());
+      }
+    }
+    return query;
+  }
+
+  private String removeNullParameters(Map<String, Object> parameters, String query) {
+    if (MapUtils.isNotEmpty(parameters) && StringUtils.isNotEmpty(query)) {
+      for (var entry : parameters.entrySet()) {
+        if (entry.getValue() == null) {
+          query = AqlUtil.removeParameter(query, entry.getKey());
+          parameters.remove(entry.getKey());
         }
       }
     }
