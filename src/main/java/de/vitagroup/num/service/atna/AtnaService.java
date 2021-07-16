@@ -2,7 +2,7 @@ package de.vitagroup.num.service.atna;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Study;
+import de.vitagroup.num.domain.Project;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -40,35 +40,35 @@ public class AtnaService {
     auditContext.setAuditRepositoryHost(properties.getHost());
   }
 
-  public void logDataExport(String userId, Long studyId, @Nullable Study study, boolean successful) {
+  public void logDataExport(String userId, Long projectId, @Nullable Project project, boolean successful) {
     AuditMessage auditMessage =
         new DataExportBuilder(
                 successful ? EventOutcomeIndicator.Success : EventOutcomeIndicator.MajorFailure,
                 EventType.of(EVENT_CODE_DATA_EXPORT, SYSTEM_NAME, "Export"),
                 XspaPoUCode.Research)
             .addActiveParticipant(new ActiveParticipantType(userId, true))
-            .addStudyParticipantObject(String.valueOf(studyId), getStudyDetails(study))
+            .addStudyParticipantObject(String.valueOf(projectId), getProjectDetails(project))
             .setAuditSource(auditContext)
             .getMessage();
 
     validateAndSend(auditMessage);
   }
 
-  private List<TypeValuePairType> getStudyDetails(@Nullable Study study) {
+  private List<TypeValuePairType> getProjectDetails(@Nullable Project project) {
     try {
-      Long organizationId = study.getCoordinator().getOrganization().getId();
+      Long organizationId = project.getCoordinator().getOrganization().getId();
       return List.of(
-          new TypeValuePairType("Name", study.getName()),
-          new TypeValuePairType("First hypothesis", study.getFirstHypotheses()),
-          new TypeValuePairType("Second hypothesis", study.getSecondHypotheses()),
-          new TypeValuePairType("Coordinator user id", study.getCoordinator().getUserId()),
+          new TypeValuePairType("Name", project.getName()),
+          new TypeValuePairType("First hypothesis", project.getFirstHypotheses()),
+          new TypeValuePairType("Second hypothesis", project.getSecondHypotheses()),
+          new TypeValuePairType("Coordinator user id", project.getCoordinator().getUserId()),
           new TypeValuePairType(
               "Coordinator organization id",
               organizationId != null ? organizationId.toString() : StringUtils.EMPTY),
-          new TypeValuePairType("Status", study.getStatus().name()),
-          new TypeValuePairType("Create date", study.getCreateDate().toString()));
+          new TypeValuePairType("Status", project.getStatus().name()),
+          new TypeValuePairType("Create date", project.getCreateDate().toString()));
     } catch (Exception e) {
-      log.debug("Cannot extract study information", e);
+      log.debug("Cannot extract project information", e);
       return List.of();
     }
   }

@@ -3,16 +3,17 @@ package de.vitagroup.num.domain.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.vitagroup.num.domain.Operator;
 import de.vitagroup.num.domain.Type;
+import de.vitagroup.num.domain.repository.AqlConverter;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.List;
+import java.util.Map;
+import javax.persistence.Convert;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotNull;
-import java.util.List;
-import java.util.Map;
 
 @ApiModel
 @Data
@@ -32,23 +33,21 @@ public class CohortGroupDto {
           "Cohort group parameter map representing the name of the aql parameter and the corresponding value")
   private Map<String, Object> parameters;
 
-  @ApiModelProperty(required = true, value = "Type of the cohort group", example = "PHENOTYPE")
+  @ApiModelProperty(required = true, value = "Type of the cohort group", example = "AQL")
   @NotNull(message = "Type cannot be null")
   private Type type;
 
   @ApiModelProperty(
       value =
-          "Children of the cohort group in case the type of the group is: GROUP; can be other groups or phenotypes")
+          "Children of the cohort group in case the type of the group is: GROUP; can be other groups or aqls")
   private List<CohortGroupDto> children;
 
-  @ApiModelProperty(
-      value = "Reference to phenotype in case the type of the group is: PHENOTYPE",
-      example = "2")
-  private Long phenotypeId;
+  @Convert(converter = AqlConverter.class)
+  private CohortAqlDto query;
 
   @JsonIgnore
-  public boolean isPhenotype() {
-    return Type.PHENOTYPE == type;
+  public boolean isAql() {
+    return Type.AQL == type;
   }
 
   @JsonIgnore

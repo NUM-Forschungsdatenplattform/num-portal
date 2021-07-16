@@ -46,6 +46,10 @@ public class Aql implements Serializable {
 
   private OffsetDateTime modifiedDate;
 
+  @ManyToOne
+  @JoinColumn(name = "category_id", referencedColumnName = "id")
+  private AqlCategory category;
+
   public boolean hasEmptyOrDifferentOwner(String userId) {
     return ObjectUtils.isEmpty(owner) || !owner.getUserId().equals(userId);
   }

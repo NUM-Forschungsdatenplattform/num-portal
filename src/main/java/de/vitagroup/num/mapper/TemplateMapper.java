@@ -21,14 +21,14 @@ public class TemplateMapper {
 
   @PostConstruct
   public void initialize() {
-    PropertyMap<TemplateMetaDataDto, TemplateMetadataDto> studyPropertyMap =
+    PropertyMap<TemplateMetaDataDto, TemplateMetadataDto> projectPropertyMap =
         new PropertyMap<>() {
           protected void configure() {
             map().setName(source.getConcept());
           }
         };
 
-    modelMapper.addMappings(studyPropertyMap);
+    modelMapper.addMappings(projectPropertyMap);
   }
 
   public TemplateMetadataDto convertToTemplateMetadataDto(TemplateMetaDataDto metaDataDto) {

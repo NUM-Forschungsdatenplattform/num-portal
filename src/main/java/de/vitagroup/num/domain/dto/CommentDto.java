@@ -26,7 +26,7 @@ public class CommentDto {
   @NotNull(message = "The text of the comment is mandatory")
   private String text;
 
-  @ApiModelProperty private Long studyId;
+  @ApiModelProperty private Long projectId;
 
   @ApiModelProperty private User author;
 

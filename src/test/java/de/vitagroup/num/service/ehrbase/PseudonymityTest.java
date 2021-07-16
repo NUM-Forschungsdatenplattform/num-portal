@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import java.util.Set;
-import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +24,7 @@ public class PseudonymityTest {
   @InjectMocks private Pseudonymity pseudonymity;
 
   @Test
-  public void shouldPseudonymShouldBeReversible() {
+  public void pseudonymShouldBeReversible() {
     when(ehrBaseService.getAllPatientIds()).thenReturn(Set.of("notTesttestttest", "testtesttest"));
     String pseudonym = pseudonymity.getPseudonym("testtesttest", 100L);
     assertEquals("testtesttest", pseudonymity.getEhrIdFromPseudonym(pseudonym, 100L));

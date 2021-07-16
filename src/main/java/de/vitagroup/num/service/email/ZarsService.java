@@ -1,14 +1,13 @@
 package de.vitagroup.num.service.email;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.StudyCategories;
 import de.vitagroup.num.domain.dto.ZarsInfoDto;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
@@ -18,6 +17,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.MessageSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -28,17 +28,19 @@ import org.springframework.stereotype.Service;
 @ConditionalOnBean(ZarsProperties.class)
 public class ZarsService {
 
+  public static final String STATUS = "status";
   private final ObjectMapper objectMapper;
   private final EmailService emailService;
   private final ZarsProperties zarsProperties;
+  private final MessageSource messageSource;
 
   private String[] zarsHeaders;
 
   @PostConstruct
   public void initialize() {
     try {
-      File resource = new ClassPathResource("ZARSHeaders.json").getFile();
-      String json = new String(Files.readAllBytes(resource.toPath()));
+      var resource = new ClassPathResource("ZARSHeaders.json").getFile();
+      var json = new String(Files.readAllBytes(resource.toPath()));
       zarsHeaders = objectMapper.readValue(json, String[].class);
     } catch (IOException e) {
       log.error("Failed to read ZARS headers file, can't send updates to ZARS!");
@@ -49,11 +51,12 @@ public class ZarsService {
   public void registerToZars(@NotNull ZarsInfoDto zarsInfoDto) {
     try {
       String csv = generateCSV(zarsInfoDto);
-      String subject = "Projekt NUM-" + zarsInfoDto.getId();
-      String body =
+      String status = translate(STATUS, zarsInfoDto.getStatus().toString());
+      String subject = status + ": " + zarsInfoDto.getName();
+      var body =
           String.format(
               "NUM-%d%nTitel: %s%nProjektleiter: %s%nNeuer Status: %s",
-              zarsInfoDto.getId(), zarsInfoDto.getName(), zarsInfoDto.getCoordinator(), zarsInfoDto.getStatus().toString());
+              zarsInfoDto.getId(), zarsInfoDto.getName(), zarsInfoDto.getCoordinator(), status);
       emailService.sendEmailWithAttachment(
           subject,
           body,
@@ -73,10 +76,10 @@ public class ZarsService {
       log.error("ZARS headers file reading has failed, can't send updates to ZARS!");
       return StringUtils.EMPTY;
     }
-    StringWriter writer = new StringWriter();
+    var writer = new StringWriter();
     try (CSVPrinter printer = CSVFormat.EXCEL.withHeader(zarsHeaders).print(writer)) {
 
-      printer.printRecord(generateStudyRow(zarsInfoDto));
+      printer.printRecord(generateProjectRow(zarsInfoDto));
       printer.flush();
     } catch (IOException e) {
       log.error("Error while creating the ZARS CSV file", e);
@@ -85,7 +88,7 @@ public class ZarsService {
     return writer.toString();
   }
 
-  private List<String> generateStudyRow(@NotNull ZarsInfoDto zarsInfoDto) {
+  private List<String> generateProjectRow(@NotNull ZarsInfoDto zarsInfoDto) {
 
     List<String> values = new ArrayList<>();
     values.add("NUM-" + zarsInfoDto.getId()); // Local project id
@@ -99,7 +102,7 @@ public class ZarsService {
     values.add(String.join(", ", zarsInfoDto.getKeywords())); // Keywords
     values.add(
         zarsInfoDto.getCategories().stream()
-            .map(StudyCategories::toString)
+            .map(category -> translate("category", category.toString()))
             .collect(Collectors.joining(", "))); // Categories
     values.add(zarsInfoDto.getQueries()); // One or more queries
     values.add(zarsInfoDto.getApprovalDate()); // Approval date
@@ -115,7 +118,12 @@ public class ZarsService {
     values.add(zarsInfoDto.getClosedDate()); // Publication date
     values.add("NA"); // Publication reference
     values.add("NA"); // Comments
+    values.add(translate(STATUS, zarsInfoDto.getStatus().toString()));
 
     return values;
+  }
+
+  private String translate(String prefix, String key) {
+    return messageSource.getMessage(prefix + "." + key.toLowerCase(), null, Locale.GERMAN);
   }
 }

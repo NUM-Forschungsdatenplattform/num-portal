@@ -10,14 +10,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.AqlCategory;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +36,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 public class AqlServiceTest {
 
   @Mock private AqlRepository aqlRepository;
+
+  @Mock private AqlCategoryRepository aqlCategoryRepository;
 
   @Mock private UserDetailsService userDetailsService;
 
@@ -119,20 +126,32 @@ public class AqlServiceTest {
     verify(aqlRepository, times(1)).findById(any());
   }
 
+  @Test(expected = ForbiddenException.class)
+  public void shouldFailWhenDeletingIfCoordinator() {
+    aqlService.deleteById(1L, "approvedUserId", List.of(Roles.STUDY_COORDINATOR));
+    verify(aqlRepository, times(1)).deleteById(1L);
+  }
+
   @Test
-  public void shouldCallRepoWhenDeleting() {
-    aqlService.deleteById(1L, "approvedUserId", List.of());
+  public void shouldCallRepoWhenDeletingIfManager() {
+    aqlService.deleteById(1L, "approvedUserId", List.of(Roles.MANAGER));
+    verify(aqlRepository, times(1)).deleteById(1L);
+  }
+
+  @Test
+  public void shouldCallRepoWhenDeletingIfSuperAdmin() {
+    aqlService.deleteById(1L, "approvedUserId", List.of(Roles.SUPER_ADMIN));
     verify(aqlRepository, times(1)).deleteById(1L);
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleMissingOwnerWhenDeleting() {
-    aqlService.deleteById(2L, "approvedUserId",  List.of());
+    aqlService.deleteById(2L, "approvedUserId",  List.of(Roles.MANAGER));
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleMissingAqlOwnerWhenDeleting() {
-    aqlService.deleteById(3L, "approvedUserId",  List.of());
+    aqlService.deleteById(3L, "approvedUserId",  List.of(Roles.MANAGER));
   }
 
   @Test(expected = SystemException.class)
@@ -149,6 +168,78 @@ public class AqlServiceTest {
   public void shouldCallRepoWhenSearching() {
     aqlService.deleteById(9L, "approvedUserId",  List.of());
   }
+
+  @Test(expected = ResourceNotFound.class)
+  public void shouldHandleNotExistingCategoryWhenDeleting() {
+    when(aqlRepository.findByCategoryId(1L)).thenReturn(List.of());
+    when(aqlCategoryRepository.existsById(1L)).thenReturn(false);
+    aqlService.deleteCategoryById(1L);
+    verify(aqlCategoryRepository, times(0)).deleteById(1L);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleCategoryInUseWhenDeleting() {
+    when(aqlRepository.findByCategoryId(1L)).thenReturn(List.of(new Aql()));
+    aqlService.deleteCategoryById(1L);
+    verify(aqlCategoryRepository, times(0)).deleteById(1L);
+  }
+
+  @Test
+  public void shouldDeleteCategory() {
+    when(aqlRepository.findByCategoryId(1L)).thenReturn(List.of());
+    when(aqlCategoryRepository.existsById(1L)).thenReturn(true);
+    aqlService.deleteCategoryById(1L);
+    verify(aqlCategoryRepository, times(1)).deleteById(1L);
+  }
+
+  @Test
+  public void shouldCreateValidCategory() {
+    Map<String, String> translations = new HashMap<>();
+    translations.put("en", "test en");
+    translations.put("de", "test de");
+    AqlCategory category = AqlCategory.builder().name(translations).build();
+    aqlService.createAqlCategory(category);
+    verify(aqlCategoryRepository, times(1)).save(category);
+  }
+
+  @Test
+  public void shouldUpdateValidCategory() {
+    Map<String, String> translations = new HashMap<>();
+    translations.put("en", "test en");
+    translations.put("de", "test de");
+    AqlCategory category = AqlCategory.builder().name(translations).id(1L).build();
+    when(aqlCategoryRepository.existsById(1L)).thenReturn(true);
+    aqlService.updateAqlCategory(category, 1L);
+    verify(aqlCategoryRepository, times(1)).save(category);
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void shouldNotUpdateNotExistingCategory() {
+    Map<String, String> translations = new HashMap<>();
+    translations.put("en", "test en");
+    translations.put("de", "test de");
+    AqlCategory category = AqlCategory.builder().name(translations).id(1L).build();
+    when(aqlCategoryRepository.existsById(1L)).thenReturn(false);
+    aqlService.updateAqlCategory(category, 1L);
+    verify(aqlCategoryRepository, times(0)).save(category);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldNotUpdateCategoryWithoutId() {
+    Map<String, String> translations = new HashMap<>();
+    translations.put("en", "test en");
+    translations.put("de", "test de");
+    AqlCategory category = AqlCategory.builder().name(translations).id(1L).build();
+    aqlService.updateAqlCategory(category, null);
+    verify(aqlCategoryRepository, times(0)).save(category);
+  }
+
+  @Test
+  public void shouldGetAllCategories() {
+    aqlService.getAqlCategories();
+    verify(aqlCategoryRepository, times(1)).findAll();
+  }
+
 
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {
     return Aql.builder()

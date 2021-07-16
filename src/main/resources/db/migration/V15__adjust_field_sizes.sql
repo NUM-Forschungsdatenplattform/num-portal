@@ -1,9 +1,0 @@
-ALTER TABLE aql ALTER COLUMN query TYPE text;
-ALTER TABLE aql ALTER COLUMN name TYPE varchar(250);
-ALTER TABLE cohort ALTER COLUMN description TYPE text;
-ALTER TABLE cohort_group ALTER COLUMN description TYPE text;
-ALTER TABLE comment ALTER COLUMN text TYPE text;
-ALTER TABLE phenotype ALTER COLUMN description TYPE text;
-ALTER TABLE study ALTER COLUMN description TYPE text;
-ALTER TABLE study ALTER COLUMN first_hypotheses TYPE text;
-ALTER TABLE study ALTER COLUMN second_hypotheses TYPE text;

@@ -37,8 +37,8 @@ public class SwaggerConfig {
   }
 
   @Bean
-  public Docket studyApi() {
-    return getDocket("Study", "/study.*");
+  public Docket projectApi() {
+    return getDocket("Project", "/project.*");
   }
 
   @Bean
@@ -54,11 +54,6 @@ public class SwaggerConfig {
   @Bean
   public Docket cohortApi() {
     return getDocket("Cohort", "/cohort.*");
-  }
-
-  @Bean
-  public Docket phenotypeApi() {
-    return getDocket("Phenotype", "/phenotype.*").useDefaultResponseMessages(false);
   }
 
   @Bean

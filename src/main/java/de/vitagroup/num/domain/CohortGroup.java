@@ -2,18 +2,26 @@ package de.vitagroup.num.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import de.vitagroup.num.domain.repository.AqlConverter;
 import de.vitagroup.num.domain.repository.MapConverter;
 import java.io.Serializable;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.EqualsAndHashCode;
-
-import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.persistence.CascadeType;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
@@ -42,7 +50,6 @@ public class CohortGroup implements Serializable {
   @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
   private Set<CohortGroup> children = new HashSet<>();
 
-  @ManyToOne
-  @JoinColumn(name = "phenotype_id", referencedColumnName = "id")
-  private Phenotype phenotype;
+  @Convert(converter = AqlConverter.class)
+  private CohortAql query;
 }
