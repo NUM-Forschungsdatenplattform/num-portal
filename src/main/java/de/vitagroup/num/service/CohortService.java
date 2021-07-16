@@ -6,8 +6,8 @@ import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
-import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
 import de.vitagroup.num.domain.dto.CohortSizeDto;
+import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
@@ -112,7 +112,7 @@ public class CohortService {
   }
 
   public Set<String> executeCohort(CohortDto cohort) {
-    return cohortExecutor.execute(modelMapper.map(cohort, Cohort.class), null);
+    return cohortExecutor.execute(modelMapper.map(cohort, Cohort.class), false);
   }
 
   public long getCohortSize(long cohortId, Boolean allowUsageOutsideEu) {
