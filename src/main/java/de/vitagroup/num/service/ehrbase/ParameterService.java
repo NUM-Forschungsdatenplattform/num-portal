@@ -8,6 +8,7 @@ import com.nedap.archie.rm.RMObject;
 import com.nedap.archie.rm.datastructures.Element;
 import com.nedap.archie.rm.datavalues.DvBoolean;
 import com.nedap.archie.rm.datavalues.DvCodedText;
+import com.nedap.archie.rm.datavalues.SingleValuedDataValue;
 import com.nedap.archie.rm.datavalues.quantity.DvOrdinal;
 import com.nedap.archie.rm.datavalues.quantity.DvQuantity;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvDate;
@@ -128,7 +129,7 @@ public class ParameterService {
                 if (row.get(0) != null) {
                   var rowString = buildAqlObjectMapper().writeValueAsString(row.get(0));
                   var element =
-                      (Element) buildAqlObjectMapper().readValue(rowString, RMObject.class);
+                      (SingleValuedDataValue) buildAqlObjectMapper().readValue(rowString, RMObject.class);
 
                   if (element.getValue().getClass().isAssignableFrom(DvCodedText.class)) {
                     convertDvCodedText((DvCodedText) element.getValue(), parameterOptions);
