@@ -46,7 +46,7 @@ public class ParameterService {
 
   private static final String SELECT_DISTINCT = "Select distinct";
 
-  private static final String VALUE_DEFINING_CODE = "/value/defining_code/coded_string";
+  private static final String VALUE_DEFINING_CODE = "/value/defining_code/code_string";
 
   private static final String VALUE_VALUE = "/value/value";
 
