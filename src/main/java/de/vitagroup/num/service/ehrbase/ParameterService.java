@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.nedap.archie.rm.RMObject;
-import com.nedap.archie.rm.datastructures.Element;
 import com.nedap.archie.rm.datavalues.DvBoolean;
 import com.nedap.archie.rm.datavalues.DvCodedText;
 import com.nedap.archie.rm.datavalues.SingleValuedDataValue;
@@ -47,7 +46,7 @@ public class ParameterService {
 
   private static final String SELECT_DISTINCT = "Select distinct";
 
-  private static final String VALUE_DEFINING_CODE = "/value/defining_code";
+  private static final String VALUE_DEFINING_CODE = "/value/defining_code/coded_value";
 
   private static final String VALUE_VALUE = "/value/value";
 
@@ -101,7 +100,7 @@ public class ParameterService {
   public void evictParametersCache() {
     var cache = cacheManager.getCache(PARAMETERS_CACHE);
     if (cache != null) {
-      log.trace("Evicting aql parameters opetions cache");
+      log.trace("Evicting aql parameters options cache");
       cache.clear();
     }
   }
@@ -129,7 +128,8 @@ public class ParameterService {
                 if (row.get(0) != null) {
                   var rowString = buildAqlObjectMapper().writeValueAsString(row.get(0));
                   var element =
-                      (SingleValuedDataValue) buildAqlObjectMapper().readValue(rowString, RMObject.class);
+                      (SingleValuedDataValue)
+                          buildAqlObjectMapper().readValue(rowString, RMObject.class);
 
                   if (element.getValue().getClass().isAssignableFrom(DvCodedText.class)) {
                     convertDvCodedText((DvCodedText) element.getValue(), parameterOptions);
@@ -199,7 +199,7 @@ public class ParameterService {
   private void convertDvOrdinal(DvOrdinal data, ParameterOptionsDto dto) {
     dto.setType("DV_ORDINAL");
     var symbol = data.getSymbol();
-    dto.getOptions().put(symbol.getDefiningCode().getCodeString(), symbol.getValue());
+    dto.getOptions().put(symbol.getValue(), data.getValue());
   }
 
   private void convertDvBoolean(ParameterOptionsDto dto) {
