@@ -51,17 +51,20 @@ public class ContentController {
 
   @GetMapping("/graph/clinic")
   @ApiOperation(value = "Retrieves the list of participating clinics")
+  @PreAuthorize(Role.MANAGER)
   public ResponseEntity<List<String>> getClinics() {
     return ResponseEntity.ok(contentService.getClinics());
   }
 
   @GetMapping("/graph/clinic/{name}/sofaDistribution")
   @ApiOperation(value = "Retrieves sofa distribution of a clinic")
+  @PreAuthorize(Role.MANAGER)
   public ResponseEntity<Map<String, Integer>> getClinicDistributions(@PathVariable String name) {
     return ResponseEntity.ok(contentService.getClinicDistributions(name));
   }
 
   @GetMapping("/graph/clinic/sofaAverage")
+  @PreAuthorize(Role.MANAGER)
   @ApiOperation(value = "Retrieves the sofa averages of participating clinics")
   public ResponseEntity<Map<String, Double>> getClinicAverages() {
     return ResponseEntity.ok(contentService.getClinicAverages());
