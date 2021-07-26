@@ -133,6 +133,10 @@ public class CohortService {
     return ehrIds.size();
   }
 
+  public int getRoundedSize(long size) {
+    return Math.round((float) size / 10) * 10;
+  }
+
   public Map<String, Integer> getSizePerTemplates(
       String userId, TemplateSizeRequestDto requestDto) {
     userDetailsService.checkIsUserApproved(userId);

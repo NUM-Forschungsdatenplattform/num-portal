@@ -1,6 +1,7 @@
 package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.Cohort;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.CohortSizeDto;
@@ -11,6 +12,8 @@ import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -77,9 +80,15 @@ public class CohortController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @RequestBody CohortGroupDto cohortGroupDto,
       @RequestParam(required = false) Boolean allowUsageOutsideEu) {
-    return ResponseEntity.ok(
+    long cohortGroupSize =
         cohortService.getCohortGroupSize(
-            cohortGroupDto, principal.getSubject(), allowUsageOutsideEu));
+            cohortGroupDto, principal.getSubject(), allowUsageOutsideEu);
+
+    if (!Roles.extractRoles(principal).contains(Roles.MANAGER)) {
+      cohortGroupSize = cohortService.getRoundedSize(cohortGroupSize);
+    }
+
+    return ResponseEntity.ok(cohortGroupSize);
   }
 
   @AuditLog
@@ -90,7 +99,18 @@ public class CohortController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @RequestBody TemplateSizeRequestDto requestDto) {
 
-    return ResponseEntity.ok(cohortService.getSizePerTemplates(principal.getSubject(), requestDto));
+    Map<String, Integer> sizePerTemplate =
+        cohortService.getSizePerTemplates(principal.getSubject(), requestDto);
+
+    if (!Roles.extractRoles(principal).contains(Roles.MANAGER)) {
+      sizePerTemplate =
+          sizePerTemplate.entrySet().stream()
+              .collect(
+                  Collectors.toMap(
+                      Entry::getKey, entry -> cohortService.getRoundedSize(entry.getValue())));
+    }
+
+    return ResponseEntity.ok(sizePerTemplate);
   }
 
   @AuditLog
