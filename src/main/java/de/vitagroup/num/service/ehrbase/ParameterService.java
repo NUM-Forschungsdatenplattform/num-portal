@@ -128,15 +128,15 @@ public class ParameterService {
                 if (row.get(0) != null) {
                   var rowString = buildAqlObjectMapper().writeValueAsString(row.get(0));
                   var element =
-                      (SingleValuedDataValue)
+                      (SingleValuedDataValue<?>)
                           buildAqlObjectMapper().readValue(rowString, RMObject.class);
 
                   if (element.getValue().getClass().isAssignableFrom(DvCodedText.class)) {
-                    convertDvCodedText((DvCodedText) element.getValue(), parameterOptions);
+                    convertDvCodedText((DvCodedText) element.getValue(), parameterOptions, postfix);
                   } else if (element.getValue().getClass().isAssignableFrom(DvQuantity.class)) {
-                    convertDvQuantity((DvQuantity) element.getValue(), parameterOptions);
+                    convertDvQuantity((DvQuantity) element.getValue(), parameterOptions, postfix);
                   } else if (element.getValue().getClass().isAssignableFrom(DvOrdinal.class)) {
-                    convertDvOrdinal((DvOrdinal) element.getValue(), parameterOptions);
+                    convertDvOrdinal((DvOrdinal) element.getValue(), parameterOptions, postfix);
                   } else if (element.getValue().getClass().isAssignableFrom(DvBoolean.class)) {
                     convertDvBoolean(parameterOptions);
                   } else if (element.getValue().getClass().isAssignableFrom(DvDate.class)) {
@@ -186,17 +186,26 @@ public class ParameterService {
     return insertSelect(query);
   }
 
-  private void convertDvCodedText(DvCodedText data, ParameterOptionsDto dto) {
+  private void convertDvCodedText(DvCodedText data, ParameterOptionsDto dto, String postfix) {
+    if (VALUE_MAGNITUDE.equals(postfix)) {
+      return;
+    }
     dto.setType("DV_CODED_TEXT");
     dto.getOptions().put(data.getDefiningCode().getCodeString(), data.getValue());
   }
 
-  private void convertDvQuantity(DvQuantity data, ParameterOptionsDto dto) {
+  private void convertDvQuantity(DvQuantity data, ParameterOptionsDto dto, String postfix) {
+    if (VALUE_DEFINING_CODE.equals(postfix)) {
+      return;
+    }
     dto.setType("DV_QUANTITY");
     dto.setUnit(data.getUnits());
   }
 
-  private void convertDvOrdinal(DvOrdinal data, ParameterOptionsDto dto) {
+  private void convertDvOrdinal(DvOrdinal data, ParameterOptionsDto dto, String postfix) {
+    if (VALUE_MAGNITUDE.equals(postfix)) {
+      return;
+    }
     dto.setType("DV_ORDINAL");
     var symbol = data.getSymbol();
     dto.getOptions().put(symbol.getValue(), data.getValue());
