@@ -193,15 +193,6 @@ public class ProjectService {
 
   public String executeAqlAndJsonify(String query, Long projectId, String userId) {
     List<QueryResponseData> response = executeAql(query, projectId, userId);
-    try {
-      return mapper.writeValueAsString(response);
-    } catch (JsonProcessingException e) {
-      throw new SystemException("An issue has occurred, cannot execute aql.");
-    }
-  }
-
-  public String executeAqlWithFilter(String query, Long projectId, String userId) {
-    List<QueryResponseData> response = executeAql(query, projectId, userId);
     response = responseFilter.filterResponse(response);
     try {
       return mapper.writeValueAsString(response);
@@ -271,8 +262,9 @@ public class ProjectService {
       projectPolicyService.apply(
           aql, collectProjectPolicies(cohortService.executeCohort(cohort), templateMap, false));
 
-      queryResponse =
-          mapper.writeValueAsString(ehrBaseService.executeRawQuery(aql, project.getId()));
+      List<QueryResponseData> response = ehrBaseService.executeRawQuery(aql, project.getId());
+      response = responseFilter.filterResponse(response);
+      queryResponse = mapper.writeValueAsString(response);
     } catch (Exception e) {
       atnaService.logDataExport(userId, project.getId(), project, false);
       throw new SystemException("Error while retrieving data:" + e.getLocalizedMessage());
