@@ -98,7 +98,7 @@ public class CohortController {
   @ApiOperation(
       value =
           "Retrieves the cohort group size without saving, provides also age distribution and patient numbers per hospital")
-  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER)
   public ResponseEntity<CohortSizeDto> getCohortGroupSizeWithDistribution(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @RequestBody CohortGroupDto cohortGroupDto,
