@@ -176,7 +176,7 @@ public class ProjectService {
    * @param count number of projects to be retrieved
    * @return The list of max requested count of latest projects
    */
-  public List<ProjectInfoDto> getLatestProjectsInfo(int count) {
+  public List<ProjectInfoDto> getLatestProjectsInfo(int count, List<String> roles) {
 
     if (count < 1) {
       return List.of();
@@ -188,7 +188,9 @@ public class ProjectService {
             ProjectStatus.APPROVED.name(),
             ProjectStatus.PUBLISHED.name(),
             ProjectStatus.CLOSED.name());
-    return projects.stream().map(this::toProjectInfo).collect(Collectors.toList());
+    return projects.stream()
+        .map(project -> toProjectInfo(project, roles))
+        .collect(Collectors.toList());
   }
 
   public String executeAqlAndJsonify(String query, Long projectId, String userId) {
@@ -846,7 +848,7 @@ public class ProjectService {
     }
   }
 
-  private ProjectInfoDto toProjectInfo(Project project) {
+  private ProjectInfoDto toProjectInfo(Project project, List<String> roles) {
     if (project == null) {
       return null;
     }
@@ -858,10 +860,16 @@ public class ProjectService {
             .build();
 
     if (project.getCoordinator() != null) {
-      var coordinator = userService.getUserById(project.getCoordinator().getUserId(), false);
-      projectInfoDto.setCoordinator(
-          String.format("%s %s", coordinator.getFirstName(), coordinator.getLastName()));
+      if (roles.contains(Roles.RESEARCHER)
+          || roles.contains(Roles.STUDY_COORDINATOR)
+          || roles.contains(Roles.STUDY_APPROVER)) {
 
+        var coordinator = userService.getUserById(project.getCoordinator().getUserId(), false);
+        projectInfoDto.setCoordinator(
+            String.format("%s %s", coordinator.getFirstName(), coordinator.getLastName()));
+      } else {
+        projectInfoDto.setCoordinator(StringUtils.EMPTY);
+      }
       if (project.getCoordinator().getOrganization() != null) {
         projectInfoDto.setOrganization(project.getCoordinator().getOrganization().getName());
       }

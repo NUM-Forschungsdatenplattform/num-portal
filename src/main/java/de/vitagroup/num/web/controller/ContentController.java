@@ -1,5 +1,6 @@
 package de.vitagroup.num.web.controller;
 
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.CardDto;
 import de.vitagroup.num.domain.dto.MetricsDto;
 import de.vitagroup.num.domain.dto.NavigationItemDto;
@@ -9,6 +10,7 @@ import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.validation.Valid;
@@ -17,6 +19,8 @@ import javax.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,8 +76,13 @@ public class ContentController {
 
   @GetMapping("/latest-projects")
   @ApiOperation(value = "Retrieves latest project info")
-  public ResponseEntity<List<ProjectInfoDto>> getLatestProjects() {
-    return ResponseEntity.ok(contentService.getLatestProjects());
+  public ResponseEntity<List<ProjectInfoDto>> getLatestProjects(
+      @AuthenticationPrincipal Jwt principal) {
+    List<String> roles = new ArrayList<>();
+    if (principal != null) {
+      roles = Roles.extractRoles(principal);
+    }
+    return ResponseEntity.ok(contentService.getLatestProjects(roles));
   }
 
   @PostMapping("/navigation")
