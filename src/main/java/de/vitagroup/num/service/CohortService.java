@@ -32,13 +32,8 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.util.Strings;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.EhrDto;
-import org.ehrbase.aql.dto.select.SelectDto;
-import org.ehrbase.aql.dto.select.SelectFieldDto;
-import org.ehrbase.aqleditor.dto.containment.ContainmentDto;
 import org.ehrbase.aqleditor.service.AqlEditorContainmentService;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
@@ -60,9 +55,8 @@ public class CohortService {
   private final ProjectPolicyService policyService;
   private final EhrBaseService ehrBaseService;
   private final ContentService contentService;
+  private final TemplateService templateService;
 
-  private static final String RESULTS_WITHHELD_FOR_PRIVACY_REASONS =
-      "Too few matches, results withheld for privacy reasons.";
   private static final String GET_PATIENTS_PER_CLINIC =
       "SELECT e/ehr_id/value as patient_id "
           + "FROM EHR e CONTAINS COMPOSITION c "
@@ -106,11 +100,26 @@ public class CohortService {
     return cohortRepository.save(cohort);
   }
 
+  public Cohort toCohort(CohortDto cohortDto) {
+    return Cohort.builder()
+        .name(cohortDto.getName())
+        .description(cohortDto.getDescription())
+        .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()))
+        .build();
+  }
+
   public Set<String> executeCohort(long cohortId, Boolean allowUsageOutsideEu) {
     Optional<Cohort> cohort = cohortRepository.findById(cohortId);
     return cohortExecutor.execute(
         cohort.orElseThrow(() -> new BadRequestException("Cohort not found: " + cohortId)),
         allowUsageOutsideEu);
+  }
+
+  public Set<String> executeCohort(Cohort cohort, Boolean allowUsageOutsideEu) {
+    if (cohort == null) {
+      new BadRequestException("Cannot execute null cohort");
+    }
+    return cohortExecutor.execute(cohort, allowUsageOutsideEu);
   }
 
   public Set<String> executeCohort(CohortDto cohort) {
@@ -128,7 +137,7 @@ public class CohortService {
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(PrivacyProperties.RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds.size();
   }
@@ -148,7 +157,7 @@ public class CohortService {
 
     Set<String> ehrIds = cohortExecutor.execute(cohort, false);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(PrivacyProperties.RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
 
     return determineTemplatesHits(ehrIds, requestDto.getTemplateIds());
@@ -163,25 +172,17 @@ public class CohortService {
 
   private void getTemplateHits(Set<String> ehrIds, Map<String, Integer> hits, String templateId) {
     try {
-      ContainmentDto containmentDto = aqlEditorContainmentService.buildContainment(templateId);
+      AqlDto aql = templateService.createSelectCompositionQuery(templateId);
 
-      if (containmentDto != null && StringUtils.isNotEmpty(containmentDto.getArchetypeId())) {
-        List<Policy> policies = new LinkedList<>();
-        policies.add(EhrPolicy.builder().cohortEhrIds(ehrIds).build());
-        policies.add(
-            TemplatesPolicy.builder().templatesMap(Map.of(templateId, templateId)).build());
+      List<Policy> policies = new LinkedList<>();
+      policies.add(EhrPolicy.builder().cohortEhrIds(ehrIds).build());
+      policies.add(TemplatesPolicy.builder().templatesMap(Map.of(templateId, templateId)).build());
+      policyService.apply(aql, policies);
 
-        AqlDto dto = createQuery(containmentDto.getArchetypeId());
-        policyService.apply(dto, policies);
+      Set<String> templateHits =
+          ehrBaseService.retrieveEligiblePatientIds(new AqlBinder().bind(aql).getLeft().buildAql());
+      hits.put(templateId, templateHits != null ? templateHits.size() : 0);
 
-        Set<String> templateHits =
-            ehrBaseService.retrieveEligiblePatientIds(
-                new AqlBinder().bind(dto).getLeft().buildAql());
-        hits.put(templateId, templateHits != null ? templateHits.size() : 0);
-
-      } else {
-        throw new BadRequestException("Cannot find template: " + templateId);
-      }
     } catch (Exception e) {
       log.error(e.getMessage(), e);
 
@@ -189,31 +190,6 @@ public class CohortService {
         hits.put(templateId, -1);
       }
     }
-  }
-
-  private AqlDto createQuery(String archetypeId) {
-    org.ehrbase.aql.dto.containment.ContainmentDto contains =
-        new org.ehrbase.aql.dto.containment.ContainmentDto();
-    contains.setArchetypeId(archetypeId);
-    contains.setId(1);
-
-    SelectFieldDto fieldDto = new SelectFieldDto();
-    fieldDto.setContainmentId(1);
-    fieldDto.setAqlPath(Strings.EMPTY);
-
-    SelectDto select = new SelectDto();
-    select.setStatement(List.of(fieldDto));
-
-    EhrDto ehrDto = new EhrDto();
-    ehrDto.setContainmentId(0);
-    ehrDto.setIdentifier("e");
-
-    AqlDto dto = new AqlDto();
-    dto.setEhr(ehrDto);
-    dto.setSelect(select);
-    dto.setContains(contains);
-
-    return dto;
   }
 
   public Cohort updateCohort(CohortDto cohortDto, Long cohortId, String userId) {
@@ -288,7 +264,7 @@ public class CohortService {
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(PrivacyProperties.RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     int count = ehrIds.size();
 

@@ -120,9 +120,11 @@ public class ProjectController {
   public ResponseEntity<String> executeAql(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid RawQueryDto query,
-      @NotNull @NotEmpty @PathVariable Long projectId) {
+      @NotNull @NotEmpty @PathVariable Long projectId,
+      @RequestParam(required = false) Boolean customConfiguration) {
     return ResponseEntity.ok(
-        projectService.executeAqlAndJsonify(query.getQuery(), projectId, principal.getSubject()));
+        projectService.retrieveData(
+            query.getQuery(), projectId, principal.getSubject(), customConfiguration));
   }
 
   @AuditLog
@@ -133,13 +135,14 @@ public class ProjectController {
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<String> executeManagerProject(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @RequestBody @Valid ManagerProjectDto cohortTemplates) {
+      @RequestBody @Valid ManagerProjectDto cohortTemplates,
+      @RequestParam(required = false) Boolean customConfiguration) {
     return ResponseEntity.ok(
         projectService.executeManagerProject(
             cohortTemplates.getQuery(),
             cohortTemplates.getCohort(),
             cohortTemplates.getTemplates(),
-            principal.getSubject()));
+            principal.getSubject(), customConfiguration));
   }
 
   @AuditLog
