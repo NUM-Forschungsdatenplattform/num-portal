@@ -116,9 +116,6 @@ public class CohortService {
   }
 
   public Set<String> executeCohort(Cohort cohort, Boolean allowUsageOutsideEu) {
-    if (cohort == null) {
-      new BadRequestException("Cannot execute null cohort");
-    }
     return cohortExecutor.execute(cohort, allowUsageOutsideEu);
   }
 
