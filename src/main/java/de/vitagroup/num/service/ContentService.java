@@ -79,8 +79,8 @@ public class ContentService {
    *
    * @return the five latest projects
    */
-  public List<ProjectInfoDto> getLatestProjects() {
-    return projectService.getLatestProjectsInfo(PROJECT_COUNT);
+  public List<ProjectInfoDto> getLatestProjects(List<String> roles) {
+    return projectService.getLatestProjectsInfo(PROJECT_COUNT, roles);
   }
 
   /**
