@@ -176,7 +176,7 @@ public class ProjectService {
    * @param count number of projects to be retrieved
    * @return The list of max requested count of latest projects
    */
-  public List<ProjectInfoDto> getLatestProjectsInfo(int count) {
+  public List<ProjectInfoDto> getLatestProjectsInfo(int count, List<String> roles) {
 
     if (count < 1) {
       return List.of();
@@ -188,19 +188,12 @@ public class ProjectService {
             ProjectStatus.APPROVED.name(),
             ProjectStatus.PUBLISHED.name(),
             ProjectStatus.CLOSED.name());
-    return projects.stream().map(this::toProjectInfo).collect(Collectors.toList());
+    return projects.stream()
+        .map(project -> toProjectInfo(project, roles))
+        .collect(Collectors.toList());
   }
 
   public String executeAqlAndJsonify(String query, Long projectId, String userId) {
-    List<QueryResponseData> response = executeAql(query, projectId, userId);
-    try {
-      return mapper.writeValueAsString(response);
-    } catch (JsonProcessingException e) {
-      throw new SystemException("An issue has occurred, cannot execute aql.");
-    }
-  }
-
-  public String executeAqlWithFilter(String query, Long projectId, String userId) {
     List<QueryResponseData> response = executeAql(query, projectId, userId);
     response = responseFilter.filterResponse(response);
     try {
@@ -271,8 +264,9 @@ public class ProjectService {
       projectPolicyService.apply(
           aql, collectProjectPolicies(cohortService.executeCohort(cohort), templateMap, false));
 
-      queryResponse =
-          mapper.writeValueAsString(ehrBaseService.executeRawQuery(aql, project.getId()));
+      List<QueryResponseData> response = ehrBaseService.executeRawQuery(aql, project.getId());
+      response = responseFilter.filterResponse(response);
+      queryResponse = mapper.writeValueAsString(response);
     } catch (Exception e) {
       atnaService.logDataExport(userId, project.getId(), project, false);
       throw new SystemException("Error while retrieving data:" + e.getLocalizedMessage());
@@ -854,7 +848,7 @@ public class ProjectService {
     }
   }
 
-  private ProjectInfoDto toProjectInfo(Project project) {
+  private ProjectInfoDto toProjectInfo(Project project, List<String> roles) {
     if (project == null) {
       return null;
     }
@@ -866,10 +860,16 @@ public class ProjectService {
             .build();
 
     if (project.getCoordinator() != null) {
-      var coordinator = userService.getUserById(project.getCoordinator().getUserId(), false);
-      projectInfoDto.setCoordinator(
-          String.format("%s %s", coordinator.getFirstName(), coordinator.getLastName()));
+      if (roles.contains(Roles.RESEARCHER)
+          || roles.contains(Roles.STUDY_COORDINATOR)
+          || roles.contains(Roles.STUDY_APPROVER)) {
 
+        var coordinator = userService.getUserById(project.getCoordinator().getUserId(), false);
+        projectInfoDto.setCoordinator(
+            String.format("%s %s", coordinator.getFirstName(), coordinator.getLastName()));
+      } else {
+        projectInfoDto.setCoordinator(StringUtils.EMPTY);
+      }
       if (project.getCoordinator().getOrganization() != null) {
         projectInfoDto.setOrganization(project.getCoordinator().getOrganization().getName());
       }

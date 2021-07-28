@@ -179,7 +179,7 @@ public class AqlService {
   }
 
   public List<AqlCategory> getAqlCategories() {
-    return aqlCategoryRepository.findAll();
+    return aqlCategoryRepository.findAllCategories();
   }
 
   public AqlCategory createAqlCategory(AqlCategory aqlCategory) {

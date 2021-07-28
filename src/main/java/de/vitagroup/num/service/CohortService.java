@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.ehrbase.aql.binder.AqlBinder;
@@ -43,6 +44,7 @@ import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class CohortService {
@@ -131,6 +133,10 @@ public class CohortService {
     return ehrIds.size();
   }
 
+  public int getRoundedSize(long size) {
+    return Math.round((float) size / 10) * 10;
+  }
+
   public Map<String, Integer> getSizePerTemplates(
       String userId, TemplateSizeRequestDto requestDto) {
     userDetailsService.checkIsUserApproved(userId);
@@ -151,29 +157,38 @@ public class CohortService {
   private Map<String, Integer> determineTemplatesHits(
       Set<String> ehrIds, List<String> templateIds) {
     Map<String, Integer> hits = new HashMap<>();
-    templateIds.forEach(
-        templateId -> {
-          ContainmentDto containmentDto = aqlEditorContainmentService.buildContainment(templateId);
-
-          if (containmentDto != null && StringUtils.isNotEmpty(containmentDto.getArchetypeId())) {
-            List<Policy> policies = new LinkedList<>();
-            policies.add(EhrPolicy.builder().cohortEhrIds(ehrIds).build());
-            policies.add(
-                TemplatesPolicy.builder().templatesMap(Map.of(templateId, templateId)).build());
-
-            AqlDto dto = createQuery(containmentDto.getArchetypeId());
-            policyService.apply(dto, policies);
-
-            Set<String> templateHits =
-                ehrBaseService.retrieveEligiblePatientIds(
-                    new AqlBinder().bind(dto).getLeft().buildAql());
-            hits.put(templateId, templateHits != null ? templateHits.size() : 0);
-
-          } else {
-            throw new BadRequestException("Cannot find template: " + templateId);
-          }
-        });
+    templateIds.forEach(templateId -> getTemplateHits(ehrIds, hits, templateId));
     return hits;
+  }
+
+  private void getTemplateHits(Set<String> ehrIds, Map<String, Integer> hits, String templateId) {
+    try {
+      ContainmentDto containmentDto = aqlEditorContainmentService.buildContainment(templateId);
+
+      if (containmentDto != null && StringUtils.isNotEmpty(containmentDto.getArchetypeId())) {
+        List<Policy> policies = new LinkedList<>();
+        policies.add(EhrPolicy.builder().cohortEhrIds(ehrIds).build());
+        policies.add(
+            TemplatesPolicy.builder().templatesMap(Map.of(templateId, templateId)).build());
+
+        AqlDto dto = createQuery(containmentDto.getArchetypeId());
+        policyService.apply(dto, policies);
+
+        Set<String> templateHits =
+            ehrBaseService.retrieveEligiblePatientIds(
+                new AqlBinder().bind(dto).getLeft().buildAql());
+        hits.put(templateId, templateHits != null ? templateHits.size() : 0);
+
+      } else {
+        throw new BadRequestException("Cannot find template: " + templateId);
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+
+      if (StringUtils.isNotEmpty(templateId)) {
+        hits.put(templateId, -1);
+      }
+    }
   }
 
   private AqlDto createQuery(String archetypeId) {

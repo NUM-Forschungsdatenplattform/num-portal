@@ -29,6 +29,7 @@ import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -116,6 +117,8 @@ public class ProjectServiceTest {
   @Mock private NotificationService notificationService;
 
   @Mock private UserService userService;
+
+  @Spy private ResponseFilter responseFilter;
 
   @Spy private ProjectPolicyService projectPolicyService;
 

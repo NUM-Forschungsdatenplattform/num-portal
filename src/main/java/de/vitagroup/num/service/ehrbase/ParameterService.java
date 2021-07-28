@@ -5,9 +5,9 @@ import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.nedap.archie.rm.RMObject;
-import com.nedap.archie.rm.datastructures.Element;
 import com.nedap.archie.rm.datavalues.DvBoolean;
 import com.nedap.archie.rm.datavalues.DvCodedText;
+import com.nedap.archie.rm.datavalues.SingleValuedDataValue;
 import com.nedap.archie.rm.datavalues.quantity.DvOrdinal;
 import com.nedap.archie.rm.datavalues.quantity.DvQuantity;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvDate;
@@ -46,7 +46,7 @@ public class ParameterService {
 
   private static final String SELECT_DISTINCT = "Select distinct";
 
-  private static final String VALUE_DEFINING_CODE = "/value/defining_code";
+  private static final String VALUE_DEFINING_CODE = "/value/defining_code/code_string";
 
   private static final String VALUE_VALUE = "/value/value";
 
@@ -100,7 +100,7 @@ public class ParameterService {
   public void evictParametersCache() {
     var cache = cacheManager.getCache(PARAMETERS_CACHE);
     if (cache != null) {
-      log.trace("Evicting aql parameters opetions cache");
+      log.trace("Evicting aql parameters options cache");
       cache.clear();
     }
   }
@@ -128,14 +128,15 @@ public class ParameterService {
                 if (row.get(0) != null) {
                   var rowString = buildAqlObjectMapper().writeValueAsString(row.get(0));
                   var element =
-                      (Element) buildAqlObjectMapper().readValue(rowString, RMObject.class);
+                      (SingleValuedDataValue<?>)
+                          buildAqlObjectMapper().readValue(rowString, RMObject.class);
 
                   if (element.getValue().getClass().isAssignableFrom(DvCodedText.class)) {
-                    convertDvCodedText((DvCodedText) element.getValue(), parameterOptions);
+                    convertDvCodedText((DvCodedText) element.getValue(), parameterOptions, postfix);
                   } else if (element.getValue().getClass().isAssignableFrom(DvQuantity.class)) {
-                    convertDvQuantity((DvQuantity) element.getValue(), parameterOptions);
+                    convertDvQuantity((DvQuantity) element.getValue(), parameterOptions, postfix);
                   } else if (element.getValue().getClass().isAssignableFrom(DvOrdinal.class)) {
-                    convertDvOrdinal((DvOrdinal) element.getValue(), parameterOptions);
+                    convertDvOrdinal((DvOrdinal) element.getValue(), parameterOptions, postfix);
                   } else if (element.getValue().getClass().isAssignableFrom(DvBoolean.class)) {
                     convertDvBoolean(parameterOptions);
                   } else if (element.getValue().getClass().isAssignableFrom(DvDate.class)) {
@@ -185,20 +186,29 @@ public class ParameterService {
     return insertSelect(query);
   }
 
-  private void convertDvCodedText(DvCodedText data, ParameterOptionsDto dto) {
+  private void convertDvCodedText(DvCodedText data, ParameterOptionsDto dto, String postfix) {
+    if (VALUE_MAGNITUDE.equals(postfix)) {
+      return;
+    }
     dto.setType("DV_CODED_TEXT");
     dto.getOptions().put(data.getDefiningCode().getCodeString(), data.getValue());
   }
 
-  private void convertDvQuantity(DvQuantity data, ParameterOptionsDto dto) {
+  private void convertDvQuantity(DvQuantity data, ParameterOptionsDto dto, String postfix) {
+    if (VALUE_DEFINING_CODE.equals(postfix)) {
+      return;
+    }
     dto.setType("DV_QUANTITY");
     dto.setUnit(data.getUnits());
   }
 
-  private void convertDvOrdinal(DvOrdinal data, ParameterOptionsDto dto) {
+  private void convertDvOrdinal(DvOrdinal data, ParameterOptionsDto dto, String postfix) {
+    if (VALUE_MAGNITUDE.equals(postfix)) {
+      return;
+    }
     dto.setType("DV_ORDINAL");
     var symbol = data.getSymbol();
-    dto.getOptions().put(symbol.getDefiningCode().getCodeString(), symbol.getValue());
+    dto.getOptions().put(symbol.getValue(), data.getValue());
   }
 
   private void convertDvBoolean(ParameterOptionsDto dto) {
