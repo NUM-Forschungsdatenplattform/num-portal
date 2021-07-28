@@ -241,7 +241,7 @@ public class ProjectController {
   @AuditLog
   @GetMapping("/{id}/resolve/{pseudonym}")
   @ApiOperation(value = "Archive a project")
-  @PreAuthorize(Role.SUPER_ADMIN)
+  @PreAuthorize(Role.MANAGER)
   public ResponseEntity<String> resolvePseudonym(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable Long id,
