@@ -909,7 +909,7 @@ public class ProjectServiceTest {
 
     String result =
         projectService.executeManagerProject(
-            QUERY_BASIC, cohortDto, List.of(CORONA_TEMPLATE), userDetails.getUserId());
+            QUERY_BASIC, cohortDto, List.of(CORONA_TEMPLATE), userDetails.getUserId(), false);
 
     assertThat(result, is("[]"));
   }
