@@ -121,10 +121,10 @@ public class ProjectController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid RawQueryDto query,
       @NotNull @NotEmpty @PathVariable Long projectId,
-      @RequestParam(required = false) Boolean customConfiguration) {
+      @RequestParam(required = false) Boolean defaultConfiguration) {
     return ResponseEntity.ok(
         projectService.retrieveData(
-            query.getQuery(), projectId, principal.getSubject(), customConfiguration));
+            query.getQuery(), projectId, principal.getSubject(), defaultConfiguration));
   }
 
   @AuditLog
@@ -136,13 +136,13 @@ public class ProjectController {
   public ResponseEntity<String> executeManagerProject(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid ManagerProjectDto cohortTemplates,
-      @RequestParam(required = false) Boolean customConfiguration) {
+      @RequestParam(required = false) Boolean defaultConfiguration) {
     return ResponseEntity.ok(
         projectService.executeManagerProject(
             cohortTemplates.getQuery(),
             cohortTemplates.getCohort(),
             cohortTemplates.getTemplates(),
-            principal.getSubject(), customConfiguration));
+            principal.getSubject(), defaultConfiguration));
   }
 
   @AuditLog
