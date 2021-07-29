@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +21,16 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ResponseFilter {
   private HashSet<String> pathFilters;
+  private List<Pattern> regexpFilters;
 
   @PostConstruct
   public void initialize() {
     try {
       File pathResource = new ClassPathResource("resultfilters/pathfilters.txt").getFile();
       pathFilters = new HashSet<>(Files.readAllLines(pathResource.toPath()));
+      File regexpResource = new ClassPathResource("resultfilters/regexpfilters.txt").getFile();
+      regexpFilters = Files.readAllLines(regexpResource.toPath()).stream().map(Pattern::compile).collect(
+          Collectors.toList());
     } catch (IOException e) {
       log.error("Failed to read project data filters, can't filter results.");
     }
@@ -58,6 +64,10 @@ public class ResponseFilter {
   }
 
   private boolean keepColumn(Map<String, String> column) {
-    return !pathFilters.contains(column.get("path"));
+    String path = column.get("path");
+    if(pathFilters.contains(path)){
+      return false;
+    }
+    return regexpFilters.stream().filter(regexp -> regexp.matcher(path).matches()).findFirst().isEmpty();
   }
 }

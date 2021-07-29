@@ -8,8 +8,6 @@ import lombok.Data;
 @ApiModel
 public class ManagerProjectDto {
 
-  private String query;
-
   private CohortDto cohort;
 
   private List<String> templates;

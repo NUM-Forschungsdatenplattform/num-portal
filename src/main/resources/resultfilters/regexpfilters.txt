@@ -1,0 +1,5 @@
+.*uid$
+.*ehrid$
+.*ehr_id$
+.*category|terminology$
+.*context/setting|terminology$

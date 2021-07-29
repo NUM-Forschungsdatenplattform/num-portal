@@ -237,7 +237,7 @@ public class AqlServiceTest {
   @Test
   public void shouldGetAllCategories() {
     aqlService.getAqlCategories();
-    verify(aqlCategoryRepository, times(1)).findAll();
+    verify(aqlCategoryRepository, times(1)).findAllCategories();
   }
 
 

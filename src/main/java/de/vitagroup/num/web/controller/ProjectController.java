@@ -120,9 +120,11 @@ public class ProjectController {
   public ResponseEntity<String> executeAql(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid RawQueryDto query,
-      @NotNull @NotEmpty @PathVariable Long projectId) {
+      @NotNull @NotEmpty @PathVariable Long projectId,
+      @RequestParam(required = false) Boolean defaultConfiguration) {
     return ResponseEntity.ok(
-        projectService.executeAqlWithFilter(query.getQuery(), projectId, principal.getSubject()));
+        projectService.retrieveData(
+            query.getQuery(), projectId, principal.getSubject(), defaultConfiguration));
   }
 
   @AuditLog
@@ -136,7 +138,6 @@ public class ProjectController {
       @RequestBody @Valid ManagerProjectDto cohortTemplates) {
     return ResponseEntity.ok(
         projectService.executeManagerProject(
-            cohortTemplates.getQuery(),
             cohortTemplates.getCohort(),
             cohortTemplates.getTemplates(),
             principal.getSubject()));
@@ -241,7 +242,7 @@ public class ProjectController {
   @AuditLog
   @GetMapping("/{id}/resolve/{pseudonym}")
   @ApiOperation(value = "Archive a project")
-  @PreAuthorize(Role.SUPER_ADMIN)
+  @PreAuthorize(Role.MANAGER)
   public ResponseEntity<String> resolvePseudonym(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable Long id,
