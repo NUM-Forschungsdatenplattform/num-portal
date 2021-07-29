@@ -986,7 +986,6 @@ public class ProjectServiceTest {
 
     when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
-    when(cohortService.executeCohort(any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     when(cohortService.executeCohort(any(), any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     when(privacyProperties.getMinHits()).thenReturn(0);
   }
