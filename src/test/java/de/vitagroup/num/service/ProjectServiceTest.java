@@ -27,6 +27,7 @@ import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
@@ -115,6 +116,8 @@ public class ProjectServiceTest {
   @Mock private AtnaService atnaService;
 
   @Mock private NotificationService notificationService;
+
+  @Mock private PrivacyProperties privacyProperties;
 
   @Mock private UserService userService;
 
@@ -909,7 +912,7 @@ public class ProjectServiceTest {
 
     String result =
         projectService.executeManagerProject(
-            QUERY_BASIC, cohortDto, List.of(CORONA_TEMPLATE), userDetails.getUserId());
+            cohortDto, List.of(CORONA_TEMPLATE), userDetails.getUserId());
 
     assertThat(result, is("[]"));
   }
@@ -983,6 +986,7 @@ public class ProjectServiceTest {
 
     when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
-    when(cohortService.executeCohort(any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
+    when(cohortService.executeCohort(any(), any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
+    when(privacyProperties.getMinHits()).thenReturn(0);
   }
 }
