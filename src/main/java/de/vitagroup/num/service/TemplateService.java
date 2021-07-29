@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.ehrbase.aql.dto.AqlDto;
@@ -32,6 +33,10 @@ public class TemplateService {
   private final UserDetailsService userDetailsService;
 
   private final AqlEditorContainmentService aqlEditorContainmentService;
+
+  private static final int COMPOSITION_CONTAINMENT_ID = 1;
+  private static final int EHR_CONTAINMENT_ID = 0;
+  private static final String EHR_CONTAINMENT_IDENTIFIER = "e";
 
   /**
    * Retrieves a list of all available templates metadata information
@@ -65,10 +70,10 @@ public class TemplateService {
     org.ehrbase.aql.dto.containment.ContainmentDto contains =
         new org.ehrbase.aql.dto.containment.ContainmentDto();
     contains.setArchetypeId(archetypeId);
-    contains.setId(1);
+    contains.setId(COMPOSITION_CONTAINMENT_ID);
 
     SelectFieldDto fieldDto = new SelectFieldDto();
-    fieldDto.setContainmentId(1);
+    fieldDto.setContainmentId(COMPOSITION_CONTAINMENT_ID);
     fieldDto.setAqlPath(Strings.EMPTY);
 
     SelectDto select = new SelectDto();
@@ -78,8 +83,8 @@ public class TemplateService {
     select.setStatement(fieldDtos);
 
     EhrDto ehrDto = new EhrDto();
-    ehrDto.setContainmentId(0);
-    ehrDto.setIdentifier("e");
+    ehrDto.setContainmentId(EHR_CONTAINMENT_ID);
+    ehrDto.setIdentifier(EHR_CONTAINMENT_IDENTIFIER);
 
     AqlDto dto = new AqlDto();
     dto.setEhr(ehrDto);

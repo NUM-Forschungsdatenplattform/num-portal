@@ -34,7 +34,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aqleditor.service.AqlEditorContainmentService;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -51,7 +50,6 @@ public class CohortService {
   private final AqlService aqlService;
   private final ProjectRepository projectRepository;
   private final PrivacyProperties privacyProperties;
-  private final AqlEditorContainmentService aqlEditorContainmentService;
   private final ProjectPolicyService policyService;
   private final EhrBaseService ehrBaseService;
   private final ContentService contentService;

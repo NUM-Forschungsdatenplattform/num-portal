@@ -135,14 +135,12 @@ public class ProjectController {
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<String> executeManagerProject(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @RequestBody @Valid ManagerProjectDto cohortTemplates,
-      @RequestParam(required = false) Boolean defaultConfiguration) {
+      @RequestBody @Valid ManagerProjectDto cohortTemplates) {
     return ResponseEntity.ok(
         projectService.executeManagerProject(
-            cohortTemplates.getQuery(),
             cohortTemplates.getCohort(),
             cohortTemplates.getTemplates(),
-            principal.getSubject(), defaultConfiguration));
+            principal.getSubject()));
   }
 
   @AuditLog

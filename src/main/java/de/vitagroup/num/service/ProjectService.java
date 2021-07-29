@@ -128,6 +128,8 @@ public class ProjectService {
 
   private final TemplateService templateService;
 
+  private static final String ERROR_MESSAGE = "An issue has occurred, cannot execute aql";
+
   public void deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
@@ -232,7 +234,7 @@ public class ProjectService {
     try {
       return mapper.writeValueAsString(filteredResponse);
     } catch (JsonProcessingException e) {
-      throw new SystemException("An issue has occurred, cannot execute aql.");
+      throw new SystemException(ERROR_MESSAGE);
     }
   }
 
@@ -242,7 +244,7 @@ public class ProjectService {
     try {
       return mapper.writeValueAsString(response);
     } catch (JsonProcessingException e) {
-      throw new SystemException("An issue has occurred, cannot execute aql.");
+      throw new SystemException(ERROR_MESSAGE);
     }
   }
 
@@ -295,33 +297,17 @@ public class ProjectService {
     return queryResponseData;
   }
 
-  public String executeManagerProject(
-      String query,
-      CohortDto cohortDto,
-      List<String> templates,
-      String userId,
-      Boolean defaultConfiguration) {
+  public String executeManagerProject(CohortDto cohortDto, List<String> templates, String userId) {
     var queryResponse = StringUtils.EMPTY;
     var project = createManagerProject();
-
     try {
       userDetailsService.checkIsUserApproved(userId);
       var templateMap = templates.stream().collect(Collectors.toMap(k -> k, v -> v));
 
-      if (BooleanUtils.isTrue(defaultConfiguration)) {
-        return executeDefaultConfiguration(
-            project.getId(), cohortService.toCohort(cohortDto), templateMap);
-      } else {
-        var aql = new AqlToDtoParser().parse(query);
+      queryResponse =
+          executeDefaultConfiguration(
+              project.getId(), cohortService.toCohort(cohortDto), templateMap);
 
-        projectPolicyService.apply(
-            aql,
-            collectProjectPolicies(cohortService.executeCohort(cohortDto), templateMap, false));
-
-        List<QueryResponseData> response = ehrBaseService.executeRawQuery(aql, project.getId());
-        response = responseFilter.filterResponse(response);
-        queryResponse = mapper.writeValueAsString(response);
-      }
     } catch (Exception e) {
       atnaService.logDataExport(userId, project.getId(), project, false);
       throw new SystemException("Error while retrieving data:" + e.getLocalizedMessage());
@@ -386,7 +372,7 @@ public class ProjectService {
       try {
         jsonResponse = mapper.writeValueAsString(response);
       } catch (JsonProcessingException e) {
-        throw new SystemException("An issue has occurred, cannot execute aql.");
+        throw new SystemException(ERROR_MESSAGE);
       }
 
       return outputStream -> {
