@@ -1,9 +1,9 @@
 .*uid$
 .*ehrid$
 .*ehr_id$
-.*|terminology$
-.*language|code$
-.*territory|code$
-.*category|code$
-.*encoding|code$
+.*\|terminology$
+.*language\|code$
+.*territory\|code$
+.*category\|code$
+.*encoding\|code$
 
