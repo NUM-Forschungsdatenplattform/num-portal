@@ -2,13 +2,15 @@ package de.vitagroup.num.domain.dto;
 
 import io.swagger.annotations.ApiModel;
 import java.util.List;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 @ApiModel
 public class ManagerProjectDto {
 
-  private CohortDto cohort;
+  @NotNull private CohortDto cohort;
 
-  private List<String> templates;
+  @NotNull @NotEmpty private List<String> templates;
 }

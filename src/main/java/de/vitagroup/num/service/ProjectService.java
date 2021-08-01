@@ -207,18 +207,26 @@ public class ProjectService {
       String query, Long projectId, String userId, Boolean defaultConfiguration) {
     Project project = validateAndRetrieveProject(projectId, userId);
 
+    List<QueryResponseData> responseData;
     if (BooleanUtils.isTrue(defaultConfiguration)) {
-      return executeDefaultConfiguration(projectId, project.getCohort(), project.getTemplates());
+      responseData =
+          executeDefaultConfiguration(projectId, project.getCohort(), project.getTemplates());
     } else {
-      return executeCustomConfiguration(query, projectId, userId);
+      responseData = executeCustomConfiguration(query, projectId, userId);
+    }
+
+    try {
+      return mapper.writeValueAsString(responseData);
+    } catch (JsonProcessingException e) {
+      throw new SystemException(ERROR_MESSAGE);
     }
   }
 
-  private String executeDefaultConfiguration(
+  private List<QueryResponseData> executeDefaultConfiguration(
       Long projectId, Cohort cohort, Map<String, String> templates) {
 
     if (templates == null || templates.isEmpty()) {
-      return StringUtils.EMPTY;
+      return List.of();
     }
 
     Set<String> ehrIds = cohortService.executeCohort(cohort, false);
@@ -232,22 +240,13 @@ public class ProjectService {
     templates.forEach(
         (templateId, v) ->
             response.addAll(retrieveTemplateData(ehrIds, templateId, projectId, false)));
-    List<QueryResponseData> filteredResponse = responseFilter.filterResponse(response);
-    try {
-      return mapper.writeValueAsString(filteredResponse);
-    } catch (JsonProcessingException e) {
-      throw new SystemException(ERROR_MESSAGE);
-    }
+    return responseFilter.filterResponse(response);
   }
 
-  private String executeCustomConfiguration(String query, Long projectId, String userId) {
+  private List<QueryResponseData> executeCustomConfiguration(
+      String query, Long projectId, String userId) {
     List<QueryResponseData> response = executeAql(query, projectId, userId);
-    response = responseFilter.filterResponse(response);
-    try {
-      return mapper.writeValueAsString(response);
-    } catch (JsonProcessingException e) {
-      throw new SystemException(ERROR_MESSAGE);
-    }
+    return responseFilter.filterResponse(response);
   }
 
   private List<QueryResponseData> retrieveTemplateData(
@@ -306,9 +305,11 @@ public class ProjectService {
       userDetailsService.checkIsUserApproved(userId);
       var templateMap = templates.stream().collect(Collectors.toMap(k -> k, v -> v));
 
-      queryResponse =
+      List<QueryResponseData> responseData =
           executeDefaultConfiguration(
               project.getId(), cohortService.toCohort(cohortDto), templateMap);
+
+      queryResponse = mapper.writeValueAsString(responseData);
 
     } catch (Exception e) {
       atnaService.logDataExport(userId, project.getId(), project, false);
@@ -365,27 +366,64 @@ public class ProjectService {
   }
 
   public StreamingResponseBody getExportResponseBody(
-      String query, Long projectId, String userId, ExportType format) {
+      String query,
+      Long projectId,
+      String userId,
+      ExportType format,
+      Boolean defaultConfiguration) {
 
-    List<QueryResponseData> response = executeAql(query, projectId, userId);
+    Project project = validateAndRetrieveProject(projectId, userId);
+    List<QueryResponseData> response;
+
+    if (BooleanUtils.isTrue(defaultConfiguration)) {
+      response =
+          executeDefaultConfiguration(projectId, project.getCohort(), project.getTemplates());
+    } else {
+      response = executeCustomConfiguration(query, projectId, userId);
+    }
 
     if (format == ExportType.json) {
-      String jsonResponse;
-      try {
-        jsonResponse = mapper.writeValueAsString(response);
-      } catch (JsonProcessingException e) {
-        throw new SystemException(ERROR_MESSAGE);
-      }
-
-      return outputStream -> {
-        outputStream.write(jsonResponse.getBytes(StandardCharsets.UTF_8));
-        outputStream.flush();
-        outputStream.close();
-      };
+      return exportJson(response);
     } else {
-      return outputStream ->
-          streamResponseAsZip(response, getExportFilenameBody(projectId), outputStream);
+      return exportCsv(response, projectId);
     }
+  }
+
+  public StreamingResponseBody getManagerExportResponseBody(
+      CohortDto cohortDto, List<String> templates, String userId, ExportType format) {
+    userDetailsService.checkIsUserApproved(userId);
+    var project = createManagerProject();
+
+    var templateMap = templates.stream().collect(Collectors.toMap(k -> k, v -> v));
+
+    List<QueryResponseData> response =
+        executeDefaultConfiguration(
+            project.getId(), cohortService.toCohort(cohortDto), templateMap);
+
+    if (format == ExportType.json) {
+      return exportJson(response);
+    } else {
+      return exportCsv(response, project.getId());
+    }
+  }
+
+  private StreamingResponseBody exportCsv(List<QueryResponseData> response, Long projectId) {
+    return outputStream ->
+        streamResponseAsZip(response, getExportFilenameBody(projectId), outputStream);
+  }
+
+  private StreamingResponseBody exportJson(List<QueryResponseData> response) {
+    String json;
+    try {
+      json = mapper.writeValueAsString(response);
+    } catch (JsonProcessingException e) {
+      throw new SystemException(ERROR_MESSAGE);
+    }
+    return outputStream -> {
+      outputStream.write(json.getBytes());
+      outputStream.flush();
+      outputStream.close();
+    };
   }
 
   public MultiValueMap<String, String> getExportHeaders(ExportType format, Long projectId) {

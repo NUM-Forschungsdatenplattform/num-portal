@@ -135,11 +135,11 @@ public class ProjectController {
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<String> executeManagerProject(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @RequestBody @Valid ManagerProjectDto cohortTemplates) {
+      @RequestBody @Valid ManagerProjectDto managerProjectDto) {
     return ResponseEntity.ok(
         projectService.executeManagerProject(
-            cohortTemplates.getCohort(),
-            cohortTemplates.getTemplates(),
+            managerProjectDto.getCohort(),
+            managerProjectDto.getTemplates(),
             principal.getSubject()));
   }
 
@@ -151,6 +151,7 @@ public class ProjectController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid RawQueryDto query,
       @NotNull @NotEmpty @PathVariable Long projectId,
+      @RequestParam(required = false) Boolean defaultConfiguration,
       @RequestParam(required = false)
           @ApiParam(
               value =
@@ -158,8 +159,28 @@ public class ProjectController {
           ExportType format) {
     StreamingResponseBody streamingResponseBody =
         projectService.getExportResponseBody(
-            query.getQuery(), projectId, principal.getSubject(), format);
+            query.getQuery(), projectId, principal.getSubject(), format, defaultConfiguration);
     MultiValueMap<String, String> headers = projectService.getExportHeaders(format, projectId);
+
+    return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
+  }
+
+  @AuditLog
+  @PostMapping(value = "/manager/export")
+  @ApiOperation(value = "Executes the cohort default configuration returns the result as a csv file attachment")
+  @PreAuthorize(Role.MANAGER)
+  public ResponseEntity<StreamingResponseBody> exportManagerResults(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @RequestBody @Valid ManagerProjectDto managerProjectDto,
+      @RequestParam(required = false)
+      @ApiParam(
+          value =
+              "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
+          ExportType format) {
+    StreamingResponseBody streamingResponseBody =
+        projectService.getManagerExportResponseBody(
+            managerProjectDto.getCohort(), managerProjectDto.getTemplates(), principal.getSubject(), format);
+    MultiValueMap<String, String> headers = projectService.getExportHeaders(format, 0L);
 
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }
