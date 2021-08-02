@@ -10,12 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.ehrbase.serialisation.jsonencoding.CanonicalJson;
 import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class CompositionResponseDataBuilder {
   private final ObjectMapper mapper;
   private final CompositionFlattener compositionFlattener;
@@ -86,7 +88,7 @@ public class CompositionResponseDataBuilder {
                 new CanonicalJson().unmarshal(compositionString, Composition.class);
             compositionsMap.add(compositionFlattener.flatten(composition));
           } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.warn("Composition mapping failed", e);
           }
         });
 
