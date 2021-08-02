@@ -101,9 +101,7 @@ public abstract class Policy {
     }
 
     matchesOperatorDtos.forEach(
-        matchesOperatorDto -> {
-          newWhere.getValues().add(matchesOperatorDto);
-        });
+        matchesOperatorDto -> newWhere.getValues().add(matchesOperatorDto));
 
     aql.setWhere(newWhere);
   }

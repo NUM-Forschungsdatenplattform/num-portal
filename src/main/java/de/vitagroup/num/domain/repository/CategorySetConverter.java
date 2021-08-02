@@ -38,13 +38,12 @@ public class CategorySetConverter implements AttributeConverter<Set<ProjectCateg
       return Set.of();
     }
 
-    Set<ProjectCategories> categories = null;
     try {
-      categories = mapper.readValue(categoriesJson, Set.class);
+      return mapper.readValue(categoriesJson, Set.class);
     } catch (final IOException e) {
       log.error("Cannot convert JSON to map", e);
     }
 
-    return categories;
+    return Set.of();
   }
 }

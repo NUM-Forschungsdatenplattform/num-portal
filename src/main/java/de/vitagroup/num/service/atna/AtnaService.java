@@ -27,10 +27,8 @@ public class AtnaService {
   private static final String EVENT_CODE_DATA_EXPORT = "110106";
   private static final String SYSTEM_NAME = "Num portal";
   private DefaultAuditContext auditContext;
-  @Autowired
-  private AtnaProperties properties;
-  @Autowired
-  private ObjectMapper mapper;
+  @Autowired private AtnaProperties properties;
+  @Autowired private ObjectMapper mapper;
 
   @PostConstruct
   private void initialize() {
@@ -40,7 +38,8 @@ public class AtnaService {
     auditContext.setAuditRepositoryHost(properties.getHost());
   }
 
-  public void logDataExport(String userId, Long projectId, @Nullable Project project, boolean successful) {
+  public void logDataExport(
+      String userId, Long projectId, @Nullable Project project, boolean successful) {
     AuditMessage auditMessage =
         new DataExportBuilder(
                 successful ? EventOutcomeIndicator.Success : EventOutcomeIndicator.MajorFailure,
@@ -55,6 +54,11 @@ public class AtnaService {
   }
 
   private List<TypeValuePairType> getProjectDetails(@Nullable Project project) {
+
+    if (project == null) {
+      return List.of();
+    }
+
     try {
       Long organizationId = project.getCoordinator().getOrganization().getId();
       return List.of(
@@ -79,8 +83,8 @@ public class AtnaService {
       auditMessage.validate();
     } catch (AuditException e) {
       try {
-        log.debug("Failed to log atna message {} with cause",
-            mapper.writeValueAsString(auditMessage), e);
+        log.debug(
+            "Failed to log atna message {} with cause", mapper.writeValueAsString(auditMessage), e);
       } catch (JsonProcessingException ex) {
         log.debug("Failed to log message", ex);
       }
