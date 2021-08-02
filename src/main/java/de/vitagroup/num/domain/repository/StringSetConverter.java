@@ -37,13 +37,12 @@ public class StringSetConverter implements AttributeConverter<Set<String>, Strin
       return Set.of();
     }
 
-    Set<String> strings = null;
     try {
-      strings = mapper.readValue(stringsJson, Set.class);
+      return mapper.readValue(stringsJson, Set.class);
     } catch (final IOException e) {
       log.error("Cannot convert JSON to map", e);
     }
 
-    return strings;
+    return Set.of();
   }
 }

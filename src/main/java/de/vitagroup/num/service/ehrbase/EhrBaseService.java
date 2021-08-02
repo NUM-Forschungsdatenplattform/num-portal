@@ -49,6 +49,8 @@ public class EhrBaseService {
   private static final String PSEUDONYM = "pseudonym";
   private static final String EHR_ID_PATH = "/ehr_id/value";
 
+  private static final String ERROR_MESSAGE = "An error has occurred while calling ehrbase";
+
   private final DefaultRestClient restClient;
   private final CompositionResponseDataBuilder compositionResponseDataBuilder;
   private final Pseudonymity pseudonymity;
@@ -92,7 +94,7 @@ public class EhrBaseService {
       log.error("Malformed query exception", e);
       throw e;
     } catch (ClientException e) {
-      log.error("An error has occurred while calling ehrbase", e);
+      log.error(ERROR_MESSAGE, e);
       throw new SystemException("An error has occurred, cannot execute aql");
     }
   }
@@ -123,10 +125,10 @@ public class EhrBaseService {
       return flattenIfCompositionPresent(response, projectId);
 
     } catch (WrongStatusCodeException e) {
-      log.error("An error has occurred while calling ehrbase", e);
+      log.error(ERROR_MESSAGE, e);
       throw e;
     } catch (ClientException e) {
-      log.error("An error has occurred while calling ehrbase", e);
+      log.error(ERROR_MESSAGE, e);
       throw new SystemException("An error has occurred, cannot execute aql");
     }
   }
@@ -141,7 +143,7 @@ public class EhrBaseService {
       log.error("Malformed query exception", e);
       throw e;
     } catch (ClientException e) {
-      log.error("An error has occurred while calling ehrbase", e);
+      log.error(ERROR_MESSAGE, e);
       throw new SystemException("An error has occurred, cannot execute aql", e);
     }
   }

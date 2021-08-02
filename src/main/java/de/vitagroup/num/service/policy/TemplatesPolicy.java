@@ -14,7 +14,6 @@ import org.ehrbase.aql.dto.condition.Value;
 public class TemplatesPolicy extends Policy {
 
   private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
-  private static final String ERROR_MESSAGE = "No templates attached to this project";
 
   private Map<String, String> templatesMap;
 

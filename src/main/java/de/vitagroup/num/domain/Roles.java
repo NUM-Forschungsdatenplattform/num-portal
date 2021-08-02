@@ -14,7 +14,7 @@ public class Roles {
   public static final String STUDY_APPROVER = "STUDY_APPROVER";
   public static final String RESEARCHER = "RESEARCHER";
 
-  public static final List<String> SUPER_ADMIN_ASSIGNABLE =
+  private static final List<String> SUPER_ADMIN_ASSIGNABLE =
       Lists.newArrayList(
           SUPER_ADMIN,
           CONTENT_ADMIN,
@@ -23,7 +23,7 @@ public class Roles {
           STUDY_COORDINATOR,
           STUDY_APPROVER,
           RESEARCHER);
-  public static final List<String> ORGANIZATION_ADMIN_ASSIGNABLE =
+  private static final List<String> ORGANIZATION_ADMIN_ASSIGNABLE =
       Lists.newArrayList(ORGANIZATION_ADMIN, STUDY_COORDINATOR, STUDY_APPROVER, RESEARCHER);
 
   private static final String REALM_ACCESS_CLAIM = "realm_access";

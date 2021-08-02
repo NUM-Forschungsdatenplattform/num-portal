@@ -248,7 +248,7 @@ public class ProjectController {
   @DeleteMapping("/{id}")
   @ApiOperation(value = "Deletes a project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
-  void deleteProject(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
+  public void deleteProject(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
     projectService.deleteProject(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
@@ -256,7 +256,7 @@ public class ProjectController {
   @PostMapping("/{id}/archive")
   @ApiOperation(value = "Archive a project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
-  void archiveProject(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
+  public void archiveProject(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
     projectService.archiveProject(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 

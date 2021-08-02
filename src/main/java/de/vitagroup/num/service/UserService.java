@@ -61,11 +61,13 @@ public class UserService {
     }
   }
 
+  @Transactional
   public User getUserProfile(String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
     return getUserById(loggedInUserId, true);
   }
 
+  @Transactional
   public User getUserById(String userId, boolean withRole, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
     return getUserById(userId, withRole);
@@ -318,7 +320,7 @@ public class UserService {
         keycloakFeign.deleteUser(userId);
       } else {
         throw new BadRequestException(
-            String.format("Cannot delete user. User is enabled and email address is verified"));
+            "Cannot delete user. User is enabled and email address is verified");
       }
     } catch (Exception e) {
       throw new SystemException(
