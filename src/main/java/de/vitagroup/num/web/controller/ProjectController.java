@@ -19,17 +19,21 @@ import de.vitagroup.num.web.exception.ResourceNotFound;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -153,9 +157,9 @@ public class ProjectController {
       @NotNull @NotEmpty @PathVariable Long projectId,
       @RequestParam(required = false) Boolean defaultConfiguration,
       @RequestParam(required = false)
-          @ApiParam(
-              value =
-                  "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
+      @ApiParam(
+          value =
+              "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
           ExportType format) {
     StreamingResponseBody streamingResponseBody =
         projectService.getExportResponseBody(
@@ -179,7 +183,8 @@ public class ProjectController {
           ExportType format) {
     StreamingResponseBody streamingResponseBody =
         projectService.getManagerExportResponseBody(
-            managerProjectDto.getCohort(), managerProjectDto.getTemplates(), principal.getSubject(), format);
+            managerProjectDto.getCohort(), managerProjectDto.getTemplates(), principal.getSubject(),
+            format);
     MultiValueMap<String, String> headers = projectService.getExportHeaders(format, 0L);
 
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
@@ -248,7 +253,8 @@ public class ProjectController {
   @DeleteMapping("/{id}")
   @ApiOperation(value = "Deletes a project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
-  public void deleteProject(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
+  public void deleteProject(@AuthenticationPrincipal @NotNull Jwt principal,
+      @PathVariable Long id) {
     projectService.deleteProject(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
@@ -256,7 +262,8 @@ public class ProjectController {
   @PostMapping("/{id}/archive")
   @ApiOperation(value = "Archive a project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
-  public void archiveProject(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
+  public void archiveProject(@AuthenticationPrincipal @NotNull Jwt principal,
+      @PathVariable Long id) {
     projectService.archiveProject(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
@@ -269,5 +276,25 @@ public class ProjectController {
       @NotNull @PathVariable Long id,
       @NotEmpty @PathVariable String pseudonym) {
     return ResponseEntity.ok(pseudonymity.getEhrIdFromPseudonym(pseudonym, id));
+  }
+
+  @AuditLog
+  @GetMapping("/{id}/document")
+  @ApiOperation(value = "Get the project info as a document", produces = MediaType.TEXT_PLAIN_VALUE)
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
+  public ResponseEntity<byte[]> getProjectInfoPDF(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @PathVariable Long id,
+      @RequestParam
+  @ApiParam(
+      value =
+          "The language the document should be returned in (en/de)")
+      String locale) {
+    byte[] docBytes = projectService.getInfoDocBytes(id, principal.getSubject(), new Locale(locale));
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE);
+    headers.add(HttpHeaders.CONTENT_DISPOSITION,
+        "attachment; filename=Project_" + id + ".txt");
+    return new ResponseEntity<>(docBytes, headers, HttpStatus.OK);
   }
 }
