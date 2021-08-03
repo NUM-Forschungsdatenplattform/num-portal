@@ -13,6 +13,7 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -35,7 +36,8 @@ public class ProjectDocCreator {
   public byte[] getDocBytesOfProject(ProjectDto projectInfo, Locale locale)
       throws IOException {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream);
+    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream,
+        StandardCharsets.UTF_8);
     writeDocument(projectInfo, outputStreamWriter, locale);
     outputStreamWriter.close();
     return outputStream.toByteArray();
@@ -73,7 +75,8 @@ public class ProjectDocCreator {
     addSection("start_date",
         project.getStartDate() == null ? StringUtils.EMPTY : project.getStartDate().toString(),
         outputStreamWriter, locale);
-    addSection("end_date", project.getEndDate() == null ? StringUtils.EMPTY : project.getEndDate().toString(),
+    addSection("end_date",
+        project.getEndDate() == null ? StringUtils.EMPTY : project.getEndDate().toString(),
         outputStreamWriter, locale);
     String researchers = getResearchers(project);
     addSection("researchers", researchers, outputStreamWriter, locale);
@@ -177,7 +180,7 @@ public class ProjectDocCreator {
     outputStreamWriter.append("\n\n\n");
     outputStreamWriter.append(heading);
     outputStreamWriter.append("\n\n");
-    if(text == null){
+    if (text == null) {
       text = StringUtils.EMPTY;
     }
     outputStreamWriter.append(text);
