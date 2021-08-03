@@ -173,7 +173,7 @@ public class AqlController {
   @AuditLog
   @GetMapping("/parameter/values")
   @ApiOperation(value = "Retrieves a list of possible values for an aql path")
-  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<ParameterOptionsDto> getParameterValues(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestParam @NotNull @NotEmpty String aqlPath,
