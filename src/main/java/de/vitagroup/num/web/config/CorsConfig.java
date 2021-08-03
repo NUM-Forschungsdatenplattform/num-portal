@@ -5,6 +5,7 @@ import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -26,6 +27,7 @@ public class CorsConfig {
     corsConfiguration.setAllowedOriginPatterns(corsProperties.getAllowedOrigins());
     corsConfiguration.setAllowedMethods(Collections.singletonList(CorsConfiguration.ALL));
     corsConfiguration.setAllowedHeaders(Collections.singletonList(CorsConfiguration.ALL));
+    corsConfiguration.addExposedHeader(HttpHeaders.CONTENT_DISPOSITION);
     source.registerCorsConfiguration(BASE_PATH, corsConfiguration);
     return new CorsFilter(source);
   }

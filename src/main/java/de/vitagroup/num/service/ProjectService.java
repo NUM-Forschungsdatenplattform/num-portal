@@ -19,6 +19,7 @@ import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.dto.ZarsInfoDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
+import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
@@ -44,7 +45,6 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -55,6 +55,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -114,7 +115,8 @@ public class ProjectService {
 
   private final ModelMapper modelMapper;
 
-  @Nullable private final ZarsService zarsService;
+  @Nullable
+  private final ZarsService zarsService;
 
   private final ProjectPolicyService projectPolicyService;
 
@@ -127,6 +129,10 @@ public class ProjectService {
   private final PrivacyProperties privacyProperties;
 
   private final TemplateService templateService;
+
+  private final ProjectDocCreator projectDocCreator;
+
+  private final ProjectMapper projectMapper;
 
   private static final String ERROR_MESSAGE = "An issue has occurred, cannot execute aql";
 
@@ -353,7 +359,7 @@ public class ProjectService {
     try {
       printer =
           CSVFormat.EXCEL
-              .withHeader(paths.toArray(new String[] {}))
+              .withHeader(paths.toArray(new String[]{}))
               .print(new OutputStreamWriter(zipOutputStream));
 
       for (List<Object> row : queryResponseData.getRows()) {
@@ -714,9 +720,6 @@ public class ProjectService {
             oldResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
       }
 
-      var newResearcherIdsCopy = new ArrayList<>(newResearcherIds);
-
-      newResearcherIdsCopy.removeAll(oldResearcherIds);
       oldResearcherIds.removeAll(newResearcherIds);
 
       createNotification(projectName, notifications, coordinator, newResearcherIds);
@@ -762,9 +765,9 @@ public class ProjectService {
 
   private boolean isTransitionMadeByApprover(ProjectStatus oldStatus, ProjectStatus newStatus) {
     return (ProjectStatus.APPROVED.equals(newStatus)
-            || ProjectStatus.DENIED.equals(newStatus)
-            || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
-            || ProjectStatus.REVIEWING.equals(newStatus))
+        || ProjectStatus.DENIED.equals(newStatus)
+        || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
+        || ProjectStatus.REVIEWING.equals(newStatus))
         && !newStatus.equals(oldStatus);
   }
 
@@ -784,12 +787,12 @@ public class ProjectService {
       List<UserDetails> newResearchers) {
     ProjectStatus newStatus = project.getStatus();
     if (((newStatus == ProjectStatus.PENDING
-                || newStatus == ProjectStatus.APPROVED
-                || newStatus == ProjectStatus.PUBLISHED
-                || newStatus == ProjectStatus.CLOSED)
-            && newStatus != oldStatus)
+        || newStatus == ProjectStatus.APPROVED
+        || newStatus == ProjectStatus.PUBLISHED
+        || newStatus == ProjectStatus.CLOSED)
+        && newStatus != oldStatus)
         || (newStatus == ProjectStatus.PUBLISHED
-            && researchersAreDifferent(oldResearchers, newResearchers))) {
+        && researchersAreDifferent(oldResearchers, newResearchers))) {
       registerToZars(project);
     }
   }
@@ -810,7 +813,7 @@ public class ProjectService {
     if (roles.contains(Roles.RESEARCHER)) {
       projects.addAll(
           projectRepository.findByResearchers_UserIdAndStatusIn(
-              userId, new ProjectStatus[] {ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
+              userId, new ProjectStatus[]{ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
       ProjectStatus[] statuses =
@@ -820,7 +823,7 @@ public class ProjectService {
                       projectStatus != ProjectStatus.DRAFT
                           && projectStatus != ProjectStatus.ARCHIVED)
               .collect(Collectors.toList())
-              .toArray(new ProjectStatus[] {});
+              .toArray(new ProjectStatus[]{});
       projects.addAll(projectRepository.findByStatusIn(statuses));
     }
 
@@ -1087,5 +1090,18 @@ public class ProjectService {
         .secondHypotheses(undef)
         .description("Temporary project for manager data retrieval")
         .build();
+  }
+
+  public byte[] getInfoDocBytes(Long id, String userId, Locale locale) {
+    userDetailsService.checkIsUserApproved(userId);
+    Project project = projectRepository.findById(id).orElseThrow(() -> {
+      throw new BadRequestException("Project not found");
+    });
+    ProjectDto projectDto = projectMapper.convertToDto(project);
+    try {
+      return projectDocCreator.getDocBytesOfProject(projectDto, locale);
+    } catch (IOException e) {
+      throw new SystemException("Error creating the project PDF");
+    }
   }
 }
