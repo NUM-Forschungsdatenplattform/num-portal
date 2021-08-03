@@ -5,6 +5,7 @@ import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.policy.EuropeanConsentPolicy;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -73,10 +74,13 @@ public class AqlExecutor {
 
   private String removeNullParameters(Map<String, Object> parameters, String query) {
     if (MapUtils.isNotEmpty(parameters) && StringUtils.isNotEmpty(query)) {
-      for (var entry : parameters.entrySet()) {
+
+      Iterator<Map.Entry<String, Object>> iterator = parameters.entrySet().iterator();
+      while (iterator.hasNext()) {
+        Map.Entry<String, Object> entry = iterator.next();
         if (entry.getValue() == null) {
           query = AqlUtil.removeParameter(query, entry.getKey());
-          parameters.remove(entry.getKey());
+          iterator.remove();
         }
       }
     }
