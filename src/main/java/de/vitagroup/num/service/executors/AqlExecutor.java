@@ -73,12 +73,15 @@ public class AqlExecutor {
   }
 
   private String removeNullParameters(Map<String, Object> parameters, String query) {
-    Iterator<Map.Entry<String, Object>> iterator = parameters.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<String, Object> entry = iterator.next();
-      if (entry.getValue() == null) {
-        query = AqlUtil.removeParameter(query, entry.getKey());
-        iterator.remove();
+    if (MapUtils.isNotEmpty(parameters) && StringUtils.isNotEmpty(query)) {
+
+      Iterator<Map.Entry<String, Object>> iterator = parameters.entrySet().iterator();
+      while (iterator.hasNext()) {
+        Map.Entry<String, Object> entry = iterator.next();
+        if (entry.getValue() == null) {
+          query = AqlUtil.removeParameter(query, entry.getKey());
+          iterator.remove();
+        }
       }
     }
     return query;
