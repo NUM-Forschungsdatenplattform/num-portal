@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Project;
@@ -18,7 +19,9 @@ import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.dto.ZarsInfoDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
+import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.ConsentProperties;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
@@ -36,12 +39,12 @@ import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.service.policy.TemplatesPolicy;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
+import de.vitagroup.num.web.exception.PrivacyException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -52,6 +55,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -66,6 +70,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
@@ -110,7 +115,8 @@ public class ProjectService {
 
   private final ModelMapper modelMapper;
 
-  @Nullable private final ZarsService zarsService;
+  @Nullable
+  private final ZarsService zarsService;
 
   private final ProjectPolicyService projectPolicyService;
 
@@ -119,6 +125,16 @@ public class ProjectService {
   private final ConsentProperties consentProperties;
 
   private final ResponseFilter responseFilter;
+
+  private final PrivacyProperties privacyProperties;
+
+  private final TemplateService templateService;
+
+  private final ProjectDocCreator projectDocCreator;
+
+  private final ProjectMapper projectMapper;
+
+  private static final String ERROR_MESSAGE = "An issue has occurred, cannot execute aql";
 
   public void deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
@@ -193,13 +209,71 @@ public class ProjectService {
         .collect(Collectors.toList());
   }
 
-  public String executeAqlAndJsonify(String query, Long projectId, String userId) {
-    List<QueryResponseData> response = executeAql(query, projectId, userId);
-    response = responseFilter.filterResponse(response);
+  public String retrieveData(
+      String query, Long projectId, String userId, Boolean defaultConfiguration) {
+    Project project = validateAndRetrieveProject(projectId, userId);
+
+    List<QueryResponseData> responseData;
+    if (BooleanUtils.isTrue(defaultConfiguration)) {
+      responseData =
+          executeDefaultConfiguration(projectId, project.getCohort(), project.getTemplates());
+    } else {
+      responseData = executeCustomConfiguration(query, projectId, userId);
+    }
+
     try {
-      return mapper.writeValueAsString(response);
+      return mapper.writeValueAsString(responseData);
     } catch (JsonProcessingException e) {
-      throw new SystemException("An issue has occurred, cannot execute aql.");
+      throw new SystemException(ERROR_MESSAGE);
+    }
+  }
+
+  private List<QueryResponseData> executeDefaultConfiguration(
+      Long projectId, Cohort cohort, Map<String, String> templates) {
+
+    if (templates == null || templates.isEmpty()) {
+      return List.of();
+    }
+
+    Set<String> ehrIds = cohortService.executeCohort(cohort, false);
+
+    if (ehrIds.size() < privacyProperties.getMinHits()) {
+      throw new PrivacyException(PrivacyProperties.RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+    }
+
+    List<QueryResponseData> response = new LinkedList<>();
+
+    templates.forEach(
+        (templateId, v) ->
+            response.addAll(retrieveTemplateData(ehrIds, templateId, projectId, false)));
+    return responseFilter.filterResponse(response);
+  }
+
+  private List<QueryResponseData> executeCustomConfiguration(
+      String query, Long projectId, String userId) {
+    List<QueryResponseData> response = executeAql(query, projectId, userId);
+    return responseFilter.filterResponse(response);
+  }
+
+  private List<QueryResponseData> retrieveTemplateData(
+      Set<String> ehrIds, String templateId, Long projectId, Boolean usedOutsideEu) {
+    try {
+      AqlDto aql = templateService.createSelectCompositionQuery(templateId);
+
+      List<Policy> policies =
+          collectProjectPolicies(ehrIds, Map.of(templateId, templateId), usedOutsideEu);
+      projectPolicyService.apply(aql, policies);
+
+      List<QueryResponseData> response = ehrBaseService.executeRawQuery(aql, projectId);
+      response.forEach(data -> data.setName(templateId));
+      return response;
+
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+
+      QueryResponseData response = new QueryResponseData();
+      response.setName(templateId);
+      return List.of(response);
     }
   }
 
@@ -209,28 +283,7 @@ public class ProjectService {
     try {
       userDetailsService.checkIsUserApproved(userId);
 
-      project =
-          projectRepository
-              .findById(projectId)
-              .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
-
-      if (project.getStatus() == null || !project.getStatus().equals(ProjectStatus.PUBLISHED)) {
-        throw new ForbiddenException("Data explorer available for published projects only");
-      }
-
-      if (!project.isProjectResearcher(userId) && project.hasEmptyOrDifferentOwner(userId)) {
-        throw new ForbiddenException("Cannot access this project");
-      }
-
-      if (project.getCohort() == null) {
-        throw new BadRequestException(
-            String.format("Project: %s cohort cannot be null", projectId));
-      }
-
-      if (project.getTemplates() == null) {
-        throw new BadRequestException(
-            String.format("Project: %s templates cannot be null", projectId));
-      }
+      project = validateAndRetrieveProject(projectId, userId);
 
       Set<String> ehrIds =
           cohortService.executeCohort(project.getCohort().getId(), project.isUsedOutsideEu());
@@ -251,22 +304,19 @@ public class ProjectService {
     return queryResponseData;
   }
 
-  public String executeManagerProject(
-      String query, CohortDto cohort, List<String> templates, String userId) {
+  public String executeManagerProject(CohortDto cohortDto, List<String> templates, String userId) {
     var queryResponse = StringUtils.EMPTY;
     var project = createManagerProject();
-
     try {
       userDetailsService.checkIsUserApproved(userId);
-      var aql = new AqlToDtoParser().parse(query);
       var templateMap = templates.stream().collect(Collectors.toMap(k -> k, v -> v));
 
-      projectPolicyService.apply(
-          aql, collectProjectPolicies(cohortService.executeCohort(cohort), templateMap, false));
+      List<QueryResponseData> responseData =
+          executeDefaultConfiguration(
+              project.getId(), cohortService.toCohort(cohortDto), templateMap);
 
-      List<QueryResponseData> response = ehrBaseService.executeRawQuery(aql, project.getId());
-      response = responseFilter.filterResponse(response);
-      queryResponse = mapper.writeValueAsString(response);
+      queryResponse = mapper.writeValueAsString(responseData);
+
     } catch (Exception e) {
       atnaService.logDataExport(userId, project.getId(), project, false);
       throw new SystemException("Error while retrieving data:" + e.getLocalizedMessage());
@@ -309,7 +359,7 @@ public class ProjectService {
     try {
       printer =
           CSVFormat.EXCEL
-              .withHeader(paths.toArray(new String[] {}))
+              .withHeader(paths.toArray(new String[]{}))
               .print(new OutputStreamWriter(zipOutputStream));
 
       for (List<Object> row : queryResponseData.getRows()) {
@@ -322,19 +372,64 @@ public class ProjectService {
   }
 
   public StreamingResponseBody getExportResponseBody(
-      String query, Long projectId, String userId, ExportType format) {
-    if (format == ExportType.json) {
-      String jsonResponse = executeAqlAndJsonify(query, projectId, userId);
-      return outputStream -> {
-        outputStream.write(jsonResponse.getBytes(StandardCharsets.UTF_8));
-        outputStream.flush();
-        outputStream.close();
-      };
-    }
-    List<QueryResponseData> queryResponseData = executeAql(query, projectId, userId);
+      String query,
+      Long projectId,
+      String userId,
+      ExportType format,
+      Boolean defaultConfiguration) {
 
+    Project project = validateAndRetrieveProject(projectId, userId);
+    List<QueryResponseData> response;
+
+    if (BooleanUtils.isTrue(defaultConfiguration)) {
+      response =
+          executeDefaultConfiguration(projectId, project.getCohort(), project.getTemplates());
+    } else {
+      response = executeCustomConfiguration(query, projectId, userId);
+    }
+
+    if (format == ExportType.json) {
+      return exportJson(response);
+    } else {
+      return exportCsv(response, projectId);
+    }
+  }
+
+  public StreamingResponseBody getManagerExportResponseBody(
+      CohortDto cohortDto, List<String> templates, String userId, ExportType format) {
+    userDetailsService.checkIsUserApproved(userId);
+    var project = createManagerProject();
+
+    var templateMap = templates.stream().collect(Collectors.toMap(k -> k, v -> v));
+
+    List<QueryResponseData> response =
+        executeDefaultConfiguration(
+            project.getId(), cohortService.toCohort(cohortDto), templateMap);
+
+    if (format == ExportType.json) {
+      return exportJson(response);
+    } else {
+      return exportCsv(response, project.getId());
+    }
+  }
+
+  private StreamingResponseBody exportCsv(List<QueryResponseData> response, Long projectId) {
     return outputStream ->
-        streamResponseAsZip(queryResponseData, getExportFilenameBody(projectId), outputStream);
+        streamResponseAsZip(response, getExportFilenameBody(projectId), outputStream);
+  }
+
+  private StreamingResponseBody exportJson(List<QueryResponseData> response) {
+    String json;
+    try {
+      json = mapper.writeValueAsString(response);
+    } catch (JsonProcessingException e) {
+      throw new SystemException(ERROR_MESSAGE);
+    }
+    return outputStream -> {
+      outputStream.write(json.getBytes());
+      outputStream.flush();
+      outputStream.close();
+    };
   }
 
   public MultiValueMap<String, String> getExportHeaders(ExportType format, Long projectId) {
@@ -625,9 +720,6 @@ public class ProjectService {
             oldResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
       }
 
-      var newResearcherIdsCopy = new ArrayList<>(newResearcherIds);
-
-      newResearcherIdsCopy.removeAll(oldResearcherIds);
       oldResearcherIds.removeAll(newResearcherIds);
 
       createNotification(projectName, notifications, coordinator, newResearcherIds);
@@ -673,9 +765,9 @@ public class ProjectService {
 
   private boolean isTransitionMadeByApprover(ProjectStatus oldStatus, ProjectStatus newStatus) {
     return (ProjectStatus.APPROVED.equals(newStatus)
-            || ProjectStatus.DENIED.equals(newStatus)
-            || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
-            || ProjectStatus.REVIEWING.equals(newStatus))
+        || ProjectStatus.DENIED.equals(newStatus)
+        || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
+        || ProjectStatus.REVIEWING.equals(newStatus))
         && !newStatus.equals(oldStatus);
   }
 
@@ -695,12 +787,12 @@ public class ProjectService {
       List<UserDetails> newResearchers) {
     ProjectStatus newStatus = project.getStatus();
     if (((newStatus == ProjectStatus.PENDING
-                || newStatus == ProjectStatus.APPROVED
-                || newStatus == ProjectStatus.PUBLISHED
-                || newStatus == ProjectStatus.CLOSED)
-            && newStatus != oldStatus)
+        || newStatus == ProjectStatus.APPROVED
+        || newStatus == ProjectStatus.PUBLISHED
+        || newStatus == ProjectStatus.CLOSED)
+        && newStatus != oldStatus)
         || (newStatus == ProjectStatus.PUBLISHED
-            && researchersAreDifferent(oldResearchers, newResearchers))) {
+        && researchersAreDifferent(oldResearchers, newResearchers))) {
       registerToZars(project);
     }
   }
@@ -721,7 +813,7 @@ public class ProjectService {
     if (roles.contains(Roles.RESEARCHER)) {
       projects.addAll(
           projectRepository.findByResearchers_UserIdAndStatusIn(
-              userId, new ProjectStatus[] {ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
+              userId, new ProjectStatus[]{ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
       ProjectStatus[] statuses =
@@ -731,7 +823,7 @@ public class ProjectService {
                       projectStatus != ProjectStatus.DRAFT
                           && projectStatus != ProjectStatus.ARCHIVED)
               .collect(Collectors.toList())
-              .toArray(new ProjectStatus[] {});
+              .toArray(new ProjectStatus[]{});
       projects.addAll(projectRepository.findByStatusIn(statuses));
     }
 
@@ -958,6 +1050,32 @@ public class ProjectService {
     return StringUtils.EMPTY;
   }
 
+  private Project validateAndRetrieveProject(Long projectId, String userId) {
+    Project project =
+        projectRepository
+            .findById(projectId)
+            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
+
+    if (project.getStatus() == null || !project.getStatus().equals(ProjectStatus.PUBLISHED)) {
+      throw new ForbiddenException("Data explorer available for published projects only");
+    }
+
+    if (!project.isProjectResearcher(userId) && project.hasEmptyOrDifferentOwner(userId)) {
+      throw new ForbiddenException("Cannot access this project");
+    }
+
+    if (project.getCohort() == null) {
+      throw new BadRequestException(
+          String.format("Project: %s cohort cannot be null", project.getId()));
+    }
+
+    if (project.getTemplates() == null) {
+      throw new BadRequestException(
+          String.format("Project: %s templates cannot be null", project.getId()));
+    }
+    return project;
+  }
+
   private Project createManagerProject() {
     var undef = "undef";
     return Project.builder()
@@ -972,5 +1090,18 @@ public class ProjectService {
         .secondHypotheses(undef)
         .description("Temporary project for manager data retrieval")
         .build();
+  }
+
+  public byte[] getInfoDocBytes(Long id, String userId, Locale locale) {
+    userDetailsService.checkIsUserApproved(userId);
+    Project project = projectRepository.findById(id).orElseThrow(() -> {
+      throw new BadRequestException("Project not found");
+    });
+    ProjectDto projectDto = projectMapper.convertToDto(project);
+    try {
+      return projectDocCreator.getDocBytesOfProject(projectDto, locale);
+    } catch (IOException e) {
+      throw new SystemException("Error creating the project PDF");
+    }
   }
 }

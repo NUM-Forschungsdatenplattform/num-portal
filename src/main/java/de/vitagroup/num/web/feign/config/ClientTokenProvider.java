@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class ClientTokenProvider implements TokenProvider {
 
-  private static final String clientRegistrationId = "userStoreClient";
+  private static final String CLIENT_REGISTRATION_ID = "userStoreClient";
 
   private final OAuth2AuthorizedClientManager oAuth2AuthorizedClientManager;
 
@@ -23,7 +23,7 @@ public class ClientTokenProvider implements TokenProvider {
 
     OAuth2AuthorizedClient auth2AuthorizedClient =
         oAuth2AuthorizedClientManager.authorize(
-            OAuth2AuthorizeRequest.withClientRegistrationId(clientRegistrationId)
+            OAuth2AuthorizeRequest.withClientRegistrationId(CLIENT_REGISTRATION_ID)
                 .principal(new ClientAuthentication())
                 .build());
 
@@ -66,7 +66,7 @@ public class ClientTokenProvider implements TokenProvider {
 
     @Override
     public String getName() {
-      return clientRegistrationId;
+      return CLIENT_REGISTRATION_ID;
     }
   }
 }

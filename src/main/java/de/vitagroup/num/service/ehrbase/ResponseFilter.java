@@ -44,6 +44,7 @@ public class ResponseFilter {
     for (QueryResponseData queryResponseData : queryResponseDataList) {
       List<Map<String, String>> filteredColumns = new ArrayList<>();
       List<List<Object>> filteredRows = new ArrayList<>();
+      QueryResponseData filteredResponse = new QueryResponseData();
       for (int i = 0; i < queryResponseData.getRows().size(); i++) {
         filteredRows.add(new ArrayList<>());
       }
@@ -56,9 +57,10 @@ public class ResponseFilter {
           }
         }
       }
-      queryResponseData.setColumns(filteredColumns);
-      queryResponseData.setRows(filteredRows);
-      resultList.add(queryResponseData);
+      filteredResponse.setColumns(filteredColumns);
+      filteredResponse.setRows(filteredRows);
+      filteredResponse.setName(queryResponseData.getName());
+      resultList.add(filteredResponse);
     }
     return resultList;
   }

@@ -1,7 +1,6 @@
 package de.vitagroup.num.config;
 
 import de.vitagroup.num.properties.NumProperties;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import javax.annotation.PostConstruct;

@@ -41,7 +41,7 @@ public class AdminController {
   @AuditLog
   @DeleteMapping("/{userId}")
   @PreAuthorize(Role.SUPER_ADMIN)
-  void deleteUser(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable String userId) {
+  public void deleteUser(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable String userId) {
     userService.deleteUser(userId, principal.getSubject());
   }
 
