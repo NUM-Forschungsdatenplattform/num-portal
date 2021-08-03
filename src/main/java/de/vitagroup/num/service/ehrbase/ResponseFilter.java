@@ -59,6 +59,7 @@ public class ResponseFilter {
       }
       filteredResponse.setColumns(filteredColumns);
       filteredResponse.setRows(filteredRows);
+      filteredResponse.setName(queryResponseData.getName());
       resultList.add(filteredResponse);
     }
     return resultList;
