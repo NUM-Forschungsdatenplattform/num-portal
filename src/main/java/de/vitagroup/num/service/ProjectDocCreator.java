@@ -41,7 +41,7 @@ public class ProjectDocCreator {
     return outputStream.toByteArray();
   }
 
-  public void writeDocument(@NotNull ProjectDto project, OutputStreamWriter outputStreamWriter,
+  private void writeDocument(@NotNull ProjectDto project, OutputStreamWriter outputStreamWriter,
       Locale locale)
       throws IOException {
     addTitle(project.getName(), outputStreamWriter);
