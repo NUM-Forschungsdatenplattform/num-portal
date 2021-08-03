@@ -211,7 +211,8 @@ public class CohortService {
     }
 
     if (project.getStatus() != ProjectStatus.DRAFT
-        && project.getStatus() != ProjectStatus.PENDING) {
+        && project.getStatus() != ProjectStatus.PENDING
+        && project.getStatus() != ProjectStatus.CHANGE_REQUEST) {
       throw new ForbiddenException("Cohort change only allowed on project status draft or pending");
     }
   }
