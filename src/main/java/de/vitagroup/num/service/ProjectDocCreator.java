@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
@@ -56,13 +57,13 @@ public class ProjectDocCreator {
         getUserAndOrgString(project.getCoordinator()),
         outputStreamWriter, locale);
     Set<String> keyWords = project.getKeywords();
-    String keyWordsString = "";
+    String keyWordsString = StringUtils.EMPTY;
     if (keyWords != null) {
       keyWordsString = String.join(", ", keyWords);
     }
     addSection("keywords", keyWordsString, outputStreamWriter, locale);
     Set<ProjectCategories> categories = project.getCategories();
-    String categoriesString = "";
+    String categoriesString = StringUtils.EMPTY;
     if (categories != null) {
       categoriesString = categories.stream().map(category -> messageSource.getMessage(
               "category." + category.toString().toLowerCase(Locale.ROOT), null, locale))
@@ -70,9 +71,9 @@ public class ProjectDocCreator {
     }
     addSection("category", categoriesString, outputStreamWriter, locale);
     addSection("start_date",
-        project.getStartDate() == null ? "" : project.getStartDate().toString(),
+        project.getStartDate() == null ? StringUtils.EMPTY : project.getStartDate().toString(),
         outputStreamWriter, locale);
-    addSection("end_date", project.getEndDate() == null ? "" : project.getEndDate().toString(),
+    addSection("end_date", project.getEndDate() == null ? StringUtils.EMPTY : project.getEndDate().toString(),
         outputStreamWriter, locale);
     String researchers = getResearchers(project);
     addSection("researchers", researchers, outputStreamWriter, locale);
@@ -80,7 +81,7 @@ public class ProjectDocCreator {
         locale);
     addSection("use_outside_eu", getYesNo(project.isUsedOutsideEu(), locale), outputStreamWriter,
         locale);
-    String templatesString = "";
+    String templatesString = StringUtils.EMPTY;
     List<TemplateInfoDto> templates = project.getTemplates();
     if (templates != null) {
       templatesString = templates.stream().map(TemplateInfoDto::getName)
@@ -93,43 +94,43 @@ public class ProjectDocCreator {
   private String getCohort(ProjectDto project) {
     Long cohortId = project.getCohortId();
     if (cohortId == null) {
-      return "";
+      return StringUtils.EMPTY;
     }
     Cohort cohort = cohortRepository.findById(cohortId)
         .orElseThrow(() -> new SystemException("Can't find the cohort"));
     CohortGroup group = cohort.getCohortGroup();
     if (group == null) {
-      return "";
+      return StringUtils.EMPTY;
     }
-    StringBuffer buffer = new StringBuffer();
-    printCohortGroup("", cohort.getCohortGroup(), buffer);
-    return buffer.toString();
+    StringBuilder builder = new StringBuilder();
+    printCohortGroup(StringUtils.EMPTY, cohort.getCohortGroup(), builder);
+    return builder.toString();
   }
 
-  private void printCohortGroup(String prefix, CohortGroup cohortGroup, StringBuffer buffer) {
+  private void printCohortGroup(String prefix, CohortGroup cohortGroup, StringBuilder builder) {
     if (cohortGroup.getType() == Type.AQL) {
-      buffer.append(prefix);
-      buffer.append(cohortGroup.getQuery().getName());
-      buffer.append("   ");
-      printParameters(cohortGroup.getParameters(), buffer);
-      buffer.append("\n");
+      builder.append(prefix);
+      builder.append(cohortGroup.getQuery().getName());
+      builder.append("   ");
+      printParameters(cohortGroup.getParameters(), builder);
+      builder.append(StringUtils.LF);
       return;
     }
     Set<CohortGroup> children = cohortGroup.getChildren();
     if (children == null) {
       return;
     }
-    buffer.append(prefix);
-    buffer.append(cohortGroup.getOperator().toString());
-    buffer.append("\n");
-    children.forEach(group -> printCohortGroup(prefix + "  ", group, buffer));
+    builder.append(prefix);
+    builder.append(cohortGroup.getOperator().toString());
+    builder.append(StringUtils.LF);
+    children.forEach(group -> printCohortGroup(prefix + "  ", group, builder));
   }
 
-  private void printParameters(Map<String, Object> parameters, StringBuffer buffer) {
+  private void printParameters(Map<String, Object> parameters, StringBuilder builder) {
     if (parameters == null) {
       return;
     }
-    buffer.append(
+    builder.append(
         parameters.entrySet().stream().map(entry -> entry.getKey() + ":" + entry.getValue())
             .collect(Collectors.joining(", ")));
   }
@@ -145,7 +146,7 @@ public class ProjectDocCreator {
   private String getResearchers(ProjectDto project) {
     List<UserDetailsDto> researchers = project.getResearchers();
     if (researchers == null) {
-      return "";
+      return StringUtils.EMPTY;
     }
     return researchers.stream().map(this::getResearcherString).collect(Collectors.joining("\n"));
   }
@@ -164,9 +165,9 @@ public class ProjectDocCreator {
   }
 
   private void addTitle(String title, OutputStreamWriter outputStreamWriter) throws IOException {
-    outputStreamWriter.append("\n");
+    outputStreamWriter.append(StringUtils.LF);
     outputStreamWriter.append(title);
-    outputStreamWriter.append("\n");
+    outputStreamWriter.append(StringUtils.LF);
   }
 
   private void addSection(String headingKey, String text, OutputStreamWriter outputStreamWriter,
@@ -176,6 +177,9 @@ public class ProjectDocCreator {
     outputStreamWriter.append("\n\n\n");
     outputStreamWriter.append(heading);
     outputStreamWriter.append("\n\n");
+    if(text == null){
+      text = StringUtils.EMPTY;
+    }
     outputStreamWriter.append(text);
   }
 }
