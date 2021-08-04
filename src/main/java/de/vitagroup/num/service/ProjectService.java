@@ -45,6 +45,7 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -330,7 +331,7 @@ public class ProjectService {
       String filenameStart,
       OutputStream outputStream) {
 
-    try (var zipOutputStream = new ZipOutputStream(outputStream)) {
+    try (var zipOutputStream = new ZipOutputStream(outputStream, StandardCharsets.UTF_8)) {
 
       var index = 0;
       for (QueryResponseData queryResponseData : queryResponseDataList) {
@@ -360,7 +361,7 @@ public class ProjectService {
       printer =
           CSVFormat.EXCEL
               .withHeader(paths.toArray(new String[]{}))
-              .print(new OutputStreamWriter(zipOutputStream));
+              .print(new OutputStreamWriter(zipOutputStream, StandardCharsets.UTF_8));
 
       for (List<Object> row : queryResponseData.getRows()) {
         printer.printRecord(row);
