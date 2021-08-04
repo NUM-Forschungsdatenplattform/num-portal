@@ -12,6 +12,7 @@ import de.vitagroup.num.domain.Operator;
 import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.Before;
@@ -28,10 +29,14 @@ public class CohortExecutorTest {
   private final String COHORT_NAME = "Cohort name";
   private final String AQL_NAME = "AQL query name";
   private final String AQL_QUERY = "SELECT A ... FROM E ... WHERE ...";
-  @Spy private SetOperationsService setOperations;
-  @Mock private EhrBaseService ehrBaseService;
-  @Mock private AqlExecutor aqlExecutor;
-  @InjectMocks private CohortExecutor cohortExecutor;
+  @Spy
+  private SetOperationsService setOperations;
+  @Mock
+  private EhrBaseService ehrBaseService;
+  @Mock
+  private AqlExecutor aqlExecutor;
+  @InjectMocks
+  private CohortExecutor cohortExecutor;
 
   @Before
   public void setup() {
@@ -59,7 +64,7 @@ public class CohortExecutorTest {
         CohortGroup.builder()
             .type(Type.GROUP)
             .operator(Operator.AND)
-            .children(Set.of(first, second))
+            .children(List.of(first, second))
             .build();
 
     Cohort cohort = Cohort.builder().name(COHORT_NAME).cohortGroup(andCohort).build();
@@ -89,7 +94,7 @@ public class CohortExecutorTest {
         CohortGroup.builder()
             .type(Type.GROUP)
             .operator(Operator.OR)
-            .children(Set.of(first, second))
+            .children(List.of(first, second))
             .build();
 
     Cohort cohort = Cohort.builder().name(COHORT_NAME).cohortGroup(orCohort).build();

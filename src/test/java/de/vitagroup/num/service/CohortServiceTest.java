@@ -50,27 +50,39 @@ import org.modelmapper.ModelMapper;
 @RunWith(MockitoJUnitRunner.class)
 public class CohortServiceTest {
 
-  @InjectMocks private CohortService cohortService;
+  @InjectMocks
+  private CohortService cohortService;
 
-  @Mock private CohortRepository cohortRepository;
+  @Mock
+  private CohortRepository cohortRepository;
 
-  @Mock private CohortExecutor cohortExecutor;
+  @Mock
+  private CohortExecutor cohortExecutor;
 
-  @Mock private UserDetailsService userDetailsService;
+  @Mock
+  private UserDetailsService userDetailsService;
 
-  @Mock private ProjectRepository projectRepository;
+  @Mock
+  private ProjectRepository projectRepository;
 
-  @Mock private AqlService aqlService;
+  @Mock
+  private AqlService aqlService;
 
-  @Spy private ModelMapper modelMapper;
+  @Spy
+  private ModelMapper modelMapper;
 
-  @Mock private PrivacyProperties privacyProperties;
+  @Mock
+  private PrivacyProperties privacyProperties;
 
-  @Captor ArgumentCaptor<Cohort> cohortCaptor;
+  @Captor
+  ArgumentCaptor<Cohort> cohortCaptor;
 
-  @Captor ArgumentCaptor<CohortGroup> cohortGroupCaptor;
-  @Captor ArgumentCaptor<Map<String, Object>> mapCaptor;
-  @Captor ArgumentCaptor<Boolean> booleanCaptor;
+  @Captor
+  ArgumentCaptor<CohortGroup> cohortGroupCaptor;
+  @Captor
+  ArgumentCaptor<Map<String, Object>> mapCaptor;
+  @Captor
+  ArgumentCaptor<Boolean> booleanCaptor;
 
   private final String Q1 = "SELECT A1 ... FROM E1... WHERE ...";
   private final String Q2 = "SELECT A2 ... FROM E1... WHERE ...";
@@ -92,12 +104,6 @@ public class CohortServiceTest {
   @Test
   public void shouldExecuteCohortExactlyOnce() {
     cohortService.executeCohort(2L, false);
-    verify(cohortExecutor, times(1)).execute(any(), anyBoolean());
-  }
-
-  @Test
-  public void shouldExecuteCohortExactlyOnceWhenRetrievingSize() {
-    cohortService.getCohortSize(2L, false);
     verify(cohortExecutor, times(1)).execute(any(), anyBoolean());
   }
 
@@ -387,7 +393,7 @@ public class CohortServiceTest {
         CohortGroup.builder()
             .type(Type.GROUP)
             .operator(Operator.AND)
-            .children(Set.of(first, second))
+            .children(List.of(first, second))
             .build();
 
     Cohort cohortToEdit =
