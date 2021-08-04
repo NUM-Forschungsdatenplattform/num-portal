@@ -94,7 +94,7 @@ public class ProjectService {
   private static final String ZIP_FILE_ENDING = ".zip";
   private static final String JSON_FILE_ENDING = ".json";
   private static final String ZIP_MEDIA_TYPE = "application/zip";
-  private static final String CSV_FILE_PATTERN = "%s_%d.csv";
+  private static final String CSV_FILE_PATTERN = "%s_%s.csv";
 
   private final ProjectRepository projectRepository;
 
@@ -336,8 +336,12 @@ public class ProjectService {
       var index = 0;
       for (QueryResponseData queryResponseData : queryResponseDataList) {
 
+        String responseName = queryResponseData.getName();
+        if(StringUtils.isEmpty(responseName)){
+          responseName = String.valueOf(index);
+        }
         zipOutputStream.putNextEntry(
-            new ZipEntry(String.format(CSV_FILE_PATTERN, filenameStart, index)));
+            new ZipEntry(String.format(CSV_FILE_PATTERN, filenameStart, responseName)));
         addResponseAsCsv(zipOutputStream, queryResponseData);
         zipOutputStream.closeEntry();
         index++;
