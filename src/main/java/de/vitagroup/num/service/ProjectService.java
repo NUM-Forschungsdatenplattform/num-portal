@@ -337,7 +337,7 @@ public class ProjectService {
       for (QueryResponseData queryResponseData : queryResponseDataList) {
 
         String responseName = queryResponseData.getName();
-        if(StringUtils.isEmpty(responseName)){
+        if (StringUtils.isEmpty(responseName)) {
           responseName = String.valueOf(index);
         }
         zipOutputStream.putNextEntry(
@@ -814,6 +814,9 @@ public class ProjectService {
 
     if (roles.contains(Roles.STUDY_COORDINATOR)) {
       projects.addAll(projectRepository.findByCoordinatorUserId(userId));
+      projects.addAll(projectRepository.findByStatusIn(
+          new ProjectStatus[]{ProjectStatus.APPROVED, ProjectStatus.PUBLISHED,
+              ProjectStatus.CLOSED}));
     }
     if (roles.contains(Roles.RESEARCHER)) {
       projects.addAll(

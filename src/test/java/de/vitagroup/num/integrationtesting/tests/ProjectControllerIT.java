@@ -343,13 +343,13 @@ public class ProjectControllerIT extends IntegrationTest {
   @WithMockNumUser(
       roles = {STUDY_COORDINATOR},
       userId = "user2")
-  public void studyCoordinatorShouldNotGetOtherCoordinatorsProjects() {
+  public void studyCoordinatorShouldNotGetOtherCoordinatorsProjectsExceptProperStatuses() {
 
     MvcResult result =
         mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
     ProjectDto[] projects =
         mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(0, projects.length);
+    assertEquals(3, projects.length);
   }
 
   @Test
