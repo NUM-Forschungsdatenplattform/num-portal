@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import de.vitagroup.num.domain.repository.AqlConverter;
 import de.vitagroup.num.domain.repository.MapConverter;
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
@@ -48,7 +48,7 @@ public class CohortGroup implements Serializable {
 
   @JsonManagedReference
   @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
-  private Set<CohortGroup> children = new HashSet<>();
+  private List<CohortGroup> children = new LinkedList<>();
 
   @Convert(converter = AqlConverter.class)
   private CohortAql query;

@@ -119,7 +119,7 @@ public class ProjectDocCreator {
       builder.append(StringUtils.LF);
       return;
     }
-    Set<CohortGroup> children = cohortGroup.getChildren();
+    List<CohortGroup> children = cohortGroup.getChildren();
     if (children == null) {
       return;
     }

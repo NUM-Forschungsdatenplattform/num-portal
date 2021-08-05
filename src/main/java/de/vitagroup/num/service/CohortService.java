@@ -117,14 +117,6 @@ public class CohortService {
     return cohortExecutor.execute(cohort, allowUsageOutsideEu);
   }
 
-  public Set<String> executeCohort(CohortDto cohort) {
-    return cohortExecutor.execute(modelMapper.map(cohort, Cohort.class), false);
-  }
-
-  public long getCohortSize(long cohortId, Boolean allowUsageOutsideEu) {
-    return executeCohort(cohortId, allowUsageOutsideEu).size();
-  }
-
   public long getCohortGroupSize(
       CohortGroupDto cohortGroupDto, String userId, Boolean allowUsageOutsideEu) {
     userDetailsService.checkIsUserApproved(userId);
@@ -247,7 +239,7 @@ public class CohortService {
                     cohortGroupChild.setParent(cohortGroup);
                     return cohortGroupChild;
                   })
-              .collect(Collectors.toSet()));
+              .collect(Collectors.toList()));
     }
 
     return cohortGroup;
