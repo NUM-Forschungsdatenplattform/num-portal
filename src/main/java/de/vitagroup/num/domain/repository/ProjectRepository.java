@@ -10,11 +10,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
-  List<Project> findByCoordinatorUserId(String userId);
-
   List<Project> findByStatusIn(ProjectStatus[] statuses);
 
   List<Project> findByResearchers_UserIdAndStatusIn(String userId, ProjectStatus[] statuses);
+
+  List<Project> findByCoordinatorUserIdOrStatusIn(String userId, ProjectStatus[] statuses);
 
   @Query(
       value =

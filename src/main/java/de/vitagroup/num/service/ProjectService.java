@@ -813,8 +813,7 @@ public class ProjectService {
     List<Project> projects = new ArrayList<>();
 
     if (roles.contains(Roles.STUDY_COORDINATOR)) {
-      projects.addAll(projectRepository.findByCoordinatorUserId(userId));
-      projects.addAll(projectRepository.findByStatusIn(
+      projects.addAll(projectRepository.findByCoordinatorUserIdOrStatusIn(userId,
           new ProjectStatus[]{ProjectStatus.APPROVED, ProjectStatus.PUBLISHED,
               ProjectStatus.CLOSED}));
     }

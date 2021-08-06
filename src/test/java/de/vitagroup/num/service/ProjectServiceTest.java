@@ -103,33 +103,47 @@ public class ProjectServiceTest {
   private static final String QUERY_5 =
       "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, c1 as openEHR_EHR_COMPOSITION_report_v1 FROM EHR e contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c2[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
 
-  @Captor ArgumentCaptor<AqlDto> aqlDtoArgumentCaptor;
+  @Captor
+  ArgumentCaptor<AqlDto> aqlDtoArgumentCaptor;
 
-  @Mock private ProjectRepository projectRepository;
+  @Mock
+  private ProjectRepository projectRepository;
 
-  @Mock private UserDetailsService userDetailsService;
+  @Mock
+  private UserDetailsService userDetailsService;
 
-  @Mock private CohortService cohortService;
+  @Mock
+  private CohortService cohortService;
 
-  @Mock private EhrBaseService ehrBaseService;
+  @Mock
+  private EhrBaseService ehrBaseService;
 
-  @Mock private AtnaService atnaService;
+  @Mock
+  private AtnaService atnaService;
 
-  @Mock private NotificationService notificationService;
+  @Mock
+  private NotificationService notificationService;
 
-  @Mock private PrivacyProperties privacyProperties;
+  @Mock
+  private PrivacyProperties privacyProperties;
 
-  @Mock private UserService userService;
+  @Mock
+  private UserService userService;
 
-  @Spy private ResponseFilter responseFilter;
+  @Spy
+  private ResponseFilter responseFilter;
 
-  @Spy private ProjectPolicyService projectPolicyService;
+  @Spy
+  private ProjectPolicyService projectPolicyService;
 
-  @Spy private ObjectMapper mapper;
+  @Spy
+  private ObjectMapper mapper;
 
-  @InjectMocks private ProjectService projectService;
+  @InjectMocks
+  private ProjectService projectService;
 
-  @Spy private AqlEditorAqlService aqlEditorAqlService;
+  @Spy
+  private AqlEditorAqlService aqlEditorAqlService;
 
   @Ignore(
       value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/217 is fixed")
@@ -412,7 +426,9 @@ public class ProjectServiceTest {
     roles.add(Roles.STUDY_COORDINATOR);
     projectService.getProjects("coordinatorId", roles);
 
-    verify(projectRepository, times(1)).findByCoordinatorUserId("coordinatorId");
+    verify(projectRepository, times(1)).findByCoordinatorUserIdOrStatusIn("coordinatorId",
+        new ProjectStatus[]{ProjectStatus.APPROVED, ProjectStatus.PUBLISHED,
+            ProjectStatus.CLOSED});
     verify(projectRepository, times(0)).findAll();
   }
 
