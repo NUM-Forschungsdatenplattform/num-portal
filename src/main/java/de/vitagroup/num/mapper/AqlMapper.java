@@ -23,7 +23,7 @@ public class AqlMapper {
 
   public AqlDto convertToDto(Aql aql) {
     AqlDto aqlDto = modelMapper.map(aql, AqlDto.class);
-    User aqlOwner = userService.getUserById(aql.getOwner().getUserId(), false);
+    User aqlOwner = userService.getOwner(aql.getOwner().getUserId());
     aqlDto.setOwner(aqlOwner);
     return aqlDto;
   }

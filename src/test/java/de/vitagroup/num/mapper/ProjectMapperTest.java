@@ -46,7 +46,7 @@ public class ProjectMapperTest {
                 TemplateInfoDto.builder().templateId("param1").name("value1").build(),
                 TemplateInfoDto.builder().templateId("param2").name("value2").build()));
 
-    when(userService.getUserById("123", false)).thenReturn(User.builder().build());
+    when(userService.getOwner("123")).thenReturn(User.builder().build());
   }
 
   @Test
