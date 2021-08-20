@@ -45,6 +45,7 @@ import de.vitagroup.num.web.exception.SystemException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -93,7 +94,7 @@ public class ProjectService {
   private static final String ZIP_FILE_ENDING = ".zip";
   private static final String JSON_FILE_ENDING = ".json";
   private static final String ZIP_MEDIA_TYPE = "application/zip";
-  private static final String CSV_FILE_PATTERN = "%s_%d.csv";
+  private static final String CSV_FILE_PATTERN = "%s_%s.csv";
 
   private final ProjectRepository projectRepository;
 
@@ -330,13 +331,17 @@ public class ProjectService {
       String filenameStart,
       OutputStream outputStream) {
 
-    try (var zipOutputStream = new ZipOutputStream(outputStream)) {
+    try (var zipOutputStream = new ZipOutputStream(outputStream, StandardCharsets.UTF_8)) {
 
       var index = 0;
       for (QueryResponseData queryResponseData : queryResponseDataList) {
 
+        String responseName = queryResponseData.getName();
+        if (StringUtils.isEmpty(responseName)) {
+          responseName = String.valueOf(index);
+        }
         zipOutputStream.putNextEntry(
-            new ZipEntry(String.format(CSV_FILE_PATTERN, filenameStart, index)));
+            new ZipEntry(String.format(CSV_FILE_PATTERN, filenameStart, responseName)));
         addResponseAsCsv(zipOutputStream, queryResponseData);
         zipOutputStream.closeEntry();
         index++;
@@ -360,7 +365,7 @@ public class ProjectService {
       printer =
           CSVFormat.EXCEL
               .withHeader(paths.toArray(new String[]{}))
-              .print(new OutputStreamWriter(zipOutputStream));
+              .print(new OutputStreamWriter(zipOutputStream, StandardCharsets.UTF_8));
 
       for (List<Object> row : queryResponseData.getRows()) {
         printer.printRecord(row);
@@ -808,7 +813,9 @@ public class ProjectService {
     List<Project> projects = new ArrayList<>();
 
     if (roles.contains(Roles.STUDY_COORDINATOR)) {
-      projects.addAll(projectRepository.findByCoordinatorUserId(userId));
+      projects.addAll(projectRepository.findByCoordinatorUserIdOrStatusIn(userId,
+          new ProjectStatus[]{ProjectStatus.APPROVED, ProjectStatus.PUBLISHED,
+              ProjectStatus.CLOSED}));
     }
     if (roles.contains(Roles.RESEARCHER)) {
       projects.addAll(

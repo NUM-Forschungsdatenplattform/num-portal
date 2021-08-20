@@ -48,7 +48,7 @@ public class AqlMapperTest {
             .organization(OrganizationDto.builder().name("organization a").id(1L).build())
             .build();
 
-    when(userService.getUserById("123456", false)).thenReturn(user);
+    when(userService.getOwner("123456")).thenReturn(user);
   }
 
   @Test

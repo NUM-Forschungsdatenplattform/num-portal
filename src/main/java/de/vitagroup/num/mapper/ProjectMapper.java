@@ -34,7 +34,7 @@ public class ProjectMapper {
   public ProjectDto convertToDto(Project project) {
     ProjectDto projectDto = modelMapper.map(project, ProjectDto.class);
     projectDto.setTemplates(templateMapper.convertToTemplateInfoDtoList(project.getTemplates()));
-    User coordinator = userService.getUserById(project.getCoordinator().getUserId(), false);
+    User coordinator = userService.getOwner(project.getCoordinator().getUserId());
     projectDto.setCoordinator(coordinator);
     return projectDto;
   }

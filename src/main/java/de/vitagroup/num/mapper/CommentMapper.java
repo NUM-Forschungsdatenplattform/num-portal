@@ -17,7 +17,7 @@ public class CommentMapper {
 
   public CommentDto convertToDto(Comment comment) {
     CommentDto commentDto = modelMapper.map(comment, CommentDto.class);
-    User author = userService.getUserById(comment.getAuthor().getUserId(), false);
+    User author = userService.getOwner(comment.getAuthor().getUserId());
     commentDto.setAuthor(author);
     return commentDto;
   }

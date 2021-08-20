@@ -5,8 +5,8 @@ import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.mapper.OrganizationMapper;
-import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.UserUpdateNotification;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -28,6 +28,9 @@ import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -42,6 +45,10 @@ public class UserService {
   private final OrganizationMapper organizationMapper;
 
   private final NotificationService notificationService;
+
+  private final CacheManager cacheManager;
+
+  private static final String USERS_CACHE = "users";
 
   @Transactional
   public void deleteUser(String userId, String loggedInUserId) {
@@ -71,6 +78,19 @@ public class UserService {
   public User getUserById(String userId, boolean withRole, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
     return getUserById(userId, withRole);
+  }
+
+  /**
+   * Retrieves user details without roles - used for determining the ownership on aql, projects and
+   * comments; caches results
+   *
+   * @param userId
+   * @return
+   */
+  @Transactional
+  @Cacheable(value = USERS_CACHE, key = "#userId")
+  public User getOwner(String userId) {
+    return getUserById(userId, false);
   }
 
   /**
@@ -325,6 +345,16 @@ public class UserService {
     } catch (Exception e) {
       throw new SystemException(
           "An error has occurred while deleting user. Please try again later");
+    }
+  }
+
+  /** Evicts users cache every 8 hours */
+  @Scheduled(fixedRate = 28800000)
+  public void evictParametersCache() {
+    var cache = cacheManager.getCache(USERS_CACHE);
+    if (cache != null) {
+      log.trace("Evicting users cache");
+      cache.clear();
     }
   }
 }

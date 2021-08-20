@@ -12,7 +12,7 @@ import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.service.ProjectService;
-import java.util.Set;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,13 +25,17 @@ import org.modelmapper.ModelMapper;
 @RunWith(MockitoJUnitRunner.class)
 public class CohortMapperTest {
 
-  @Mock private AqlService aqlService;
+  @Mock
+  private AqlService aqlService;
 
-  @Mock private ProjectService projectService;
+  @Mock
+  private ProjectService projectService;
 
-  @Spy private ModelMapper modelMapper;
+  @Spy
+  private ModelMapper modelMapper;
 
-  @InjectMocks private CohortMapper cohortMapper;
+  @InjectMocks
+  private CohortMapper cohortMapper;
 
   private final String Q1 = "SELECT A1 ... FROM E1... WHERE ...";
   private final String Q2 = "SELECT A2 ... FROM E1... WHERE ...";
@@ -56,7 +60,7 @@ public class CohortMapperTest {
             .id(12L)
             .type(Type.GROUP)
             .operator(Operator.AND)
-            .children(Set.of(first, second))
+            .children(List.of(first, second))
             .build();
 
     Cohort cohort =
