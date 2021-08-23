@@ -16,7 +16,9 @@ workflows:
   build_and_test:
     jobs:
       - test:
-          context: org-global
+          context: 
+            - org-global
+            - slack-secrets
       - tag-version:
           requires:
             - test
