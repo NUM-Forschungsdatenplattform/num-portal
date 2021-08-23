@@ -46,7 +46,7 @@ jobs:
       image: ubuntu-2004:202010-01
     steps:
       - slack/notify:
-          event: pass
+          event: always
           template: basic_success_1
 
   test:
@@ -83,7 +83,7 @@ jobs:
       - sonarcloud/scan
       - cache-in-maven-dependencies
       - slack/notify:
-          event: always
+          event: pass
           template: basic_success_1
   tag-version:
     docker:
