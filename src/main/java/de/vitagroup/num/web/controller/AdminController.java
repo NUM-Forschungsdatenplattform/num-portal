@@ -3,6 +3,7 @@ package de.vitagroup.num.web.controller;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
+import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
 import de.vitagroup.num.service.logger.AuditLog;
@@ -11,6 +12,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import java.util.List;
 import java.util.Set;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -96,6 +98,16 @@ public class AdminController {
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
 
     userDetailsService.createUserDetails(userId, principal.getClaimAsString(EMAIL_CLAIM));
+    return ResponseEntity.ok(SUCCESS_REPLY);
+  }
+
+  @AuditLog
+  @PostMapping("/{userId}/name")
+  @ApiOperation(value = "Changes user name")
+  public ResponseEntity<String> changeUserName(
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId,
+      @NotNull @Valid @RequestBody UserNameDto userName) {
+    userService.changeUserName(userId, userName, principal.getSubject(), Roles.extractRoles(principal));
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 

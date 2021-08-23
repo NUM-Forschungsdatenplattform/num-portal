@@ -21,6 +21,7 @@ import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
+import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.web.exception.BadRequestException;
@@ -30,14 +31,18 @@ import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -59,6 +64,12 @@ public class UserServiceTest {
   @Spy private final OrganizationMapper organizationMapper = new OrganizationMapper(modelMapper);
 
   @InjectMocks private UserService userService;
+
+  @Captor
+  ArgumentCaptor<Map<String,Object>> mapArgumentCaptor;
+
+  @Captor
+  ArgumentCaptor<String> stringArgumentCaptor;
 
   private final Set<Role> roles =
       Set.of(
@@ -83,6 +94,8 @@ public class UserServiceTest {
     when(keycloakFeign.getUser("1")).thenThrow(FeignException.BadRequest.class);
     when(keycloakFeign.getUser("2")).thenThrow(FeignException.InternalServerError.class);
     when(keycloakFeign.getUser("3")).thenThrow(FeignException.NotFound.class);
+
+    when(keycloakFeign.getUserRaw(anyString())).thenReturn(new HashMap<>());
 
     when(keycloakFeign.getRolesOfUser("1")).thenThrow(FeignException.BadRequest.class);
     when(keycloakFeign.getRolesOfUser("2")).thenThrow(FeignException.InternalServerError.class);
@@ -179,6 +192,13 @@ public class UserServiceTest {
                         Organization.builder().id(2L).name("org 2").domains(Set.of()).build())
                     .approved(true)
                     .build()));
+    when(userDetailsService.checkIsUserApproved("7"))
+        .thenReturn(
+            UserDetails.builder()
+                .userId("7")
+                .organization(Organization.builder().id(2L).name("org 2").domains(Set.of()).build())
+                .approved(true)
+                .build());
     when(userDetailsService.getUserDetailsById("8"))
         .thenReturn(
             Optional.of(
@@ -188,6 +208,7 @@ public class UserServiceTest {
                         Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                     .approved(true)
                     .build()));
+    when(userDetailsService.checkIsUserApproved("8")).thenThrow(new ForbiddenException());
     when(userDetailsService.getUserDetailsById("9"))
         .thenReturn(Optional.of(UserDetails.builder().userId("9").approved(true).build()));
     when(userDetailsService.checkIsUserApproved("9"))
@@ -361,6 +382,84 @@ public class UserServiceTest {
         Collections.singletonList("RESEARCHER"),
         "4",
         Collections.singletonList("ORGANIZATION_ADMIN"));
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldNotAllowOrgAdminChangeNameOtherOrgUser() {
+    userService.changeUserName(
+        "5",
+        new UserNameDto("John", "Doe"),
+        "7",
+        Collections.singletonList("ORGANIZATION_ADMIN"));
+  }
+
+  @Test
+  public void shouldAllowOrgAdminChangeNameSameOrgUser() {
+    userService.changeUserName(
+        "5",
+        new UserNameDto("John", "Doe"),
+        "4",
+        Collections.singletonList("ORGANIZATION_ADMIN"));
+    verify(keycloakFeign, times(1)).updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
+    Map<String, Object> captured = mapArgumentCaptor.getValue();
+    assertEquals("John", captured.get("firstName"));
+    assertEquals("Doe", captured.get("lastName"));
+    assertEquals("5", stringArgumentCaptor.getValue());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldFailChangeNameSameOrgUserWithoutOrgAdmin() {
+    userService.changeUserName(
+        "5",
+        new UserNameDto("John", "Doe"),
+        "4",
+        Collections.singletonList("RESEARCHER"));
+  }
+
+  @Test
+  public void shouldAllowChangeOwnName() {
+    userService.changeUserName(
+        "5",
+        new UserNameDto("John", "Doe"),
+        "5",
+        Collections.emptyList());
+    verify(keycloakFeign, times(1)).updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
+    Map<String, Object> captured = mapArgumentCaptor.getValue();
+    assertEquals("John", captured.get("firstName"));
+    assertEquals("Doe", captured.get("lastName"));
+    assertEquals("5", stringArgumentCaptor.getValue());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldFailChangeUnapprovedName() {
+    userService.changeUserName(
+        "8",
+        new UserNameDto("John", "Doe"),
+        "5",
+        Collections.singletonList("SUPER_ADMIN"));
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void unapprovedShouldFailChangeName() {
+    userService.changeUserName(
+        "5",
+        new UserNameDto("John", "Doe"),
+        "8",
+        Collections.singletonList("SUPER_ADMIN"));
+  }
+
+  @Test
+  public void shouldAllowSuperAdminChangeNameOtherOrgUser() {
+    userService.changeUserName(
+        "5",
+        new UserNameDto("John", "Doe"),
+        "7",
+        Collections.singletonList("SUPER_ADMIN"));
+    verify(keycloakFeign, times(1)).updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
+    Map<String, Object> captured = mapArgumentCaptor.getValue();
+    assertEquals("John", captured.get("firstName"));
+    assertEquals("Doe", captured.get("lastName"));
+    assertEquals("5", stringArgumentCaptor.getValue());
   }
 
   @Test
