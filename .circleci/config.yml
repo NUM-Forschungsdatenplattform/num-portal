@@ -47,7 +47,7 @@ jobs:
     steps:
       - slack/notify:
           event: always
-          template: basic_success_1
+          template: basic_fail_1
 
   test:
     machine:
