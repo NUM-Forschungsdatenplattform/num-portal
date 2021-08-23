@@ -65,6 +65,9 @@ jobs:
           path: ~/test-results/integration-tests/
       - sonarcloud/scan
       - cache-in-maven-dependencies
+      - slack/notify:
+          event: pass
+          template: basic_success_1
   tag-version:
     docker:
       - image: circleci/openjdk:stretch
@@ -122,6 +125,29 @@ jobs:
             docker push $DOCKER_USER/num-portal:$TAG
       - cache-in-maven-dependencies
 
+#  notify:
+#    docker:
+#      - image: 'cimg/base:stable'
+#    steps:
+#      - slack/notify:
+#          custom: |
+#            {
+#              "blocks": [
+#                {
+#                  "type": "section",
+#                  "fields": [
+#                    {
+#                      "type": "plain_text",
+#                      "text": "*This is a text notification*",
+#                      "emoji": true
+#                    }
+#                  ]
+#                }
+#              ]
+#            }
+#          event: fail
+#          branch_pattern: "nightly-builds"
+
 commands:
   configure-git-for-ci-bot:
     steps:
@@ -154,3 +180,4 @@ commands:
 
 orbs:
   sonarcloud: sonarsource/sonarcloud@1.0.2
+  slack: circleci/slack@4.0
