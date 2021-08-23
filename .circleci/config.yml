@@ -83,7 +83,7 @@ jobs:
       - sonarcloud/scan
       - cache-in-maven-dependencies
       - slack/notify:
-          event: pass
+          event: always
           template: basic_success_1
   tag-version:
     docker:
