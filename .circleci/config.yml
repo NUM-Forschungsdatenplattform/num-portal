@@ -13,27 +13,42 @@ workflows:
     jobs:
       - test:
           context: org-global
-  build_and_test:
+#  build_and_test:
+#    jobs:
+#      - test:
+#          context: 
+#            - org-global
+#            - slack-secrets
+#      - tag-version:
+#          requires:
+#            - test
+#          filters:
+#            branches:
+#              only:
+#                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master)$/
+#      - build_and_deploy:
+#          requires:
+#            - test
+#          filters:
+#            branches:
+#              only:
+#                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop)$/
+  gka_test:
     jobs:
-      - test:
+      - gkatest:
           context: 
             - org-global
             - slack-secrets
-      - tag-version:
-          requires:
-            - test
-          filters:
-            branches:
-              only:
-                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master)$/
-      - build_and_deploy:
-          requires:
-            - test
-          filters:
-            branches:
-              only:
-                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop)$/
+
 jobs:
+  gkatest:
+    machine:
+      image: ubuntu-2004:202010-01
+    steps:
+      - slack/notify:
+          event: pass
+          template: basic_success_1
+
   test:
     machine:
       image: ubuntu-2004:202010-01
