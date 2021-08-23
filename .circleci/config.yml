@@ -127,7 +127,7 @@ jobs:
             docker push $DOCKER_USER/num-portal:$TAG
       - cache-in-maven-dependencies
 
-#  notify:
+##  notify:
 #    docker:
 #      - image: 'cimg/base:stable'
 #    steps:
