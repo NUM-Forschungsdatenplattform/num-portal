@@ -55,7 +55,7 @@ jobs:
                   "fields": [
                     {
                       "type": "plain_text",
-                      "text": "*This is a text notification*",
+                      "text": "*This is a text notification* << pipeline.project.git_url >>",
                       "emoji": true
                     }
                   ]
