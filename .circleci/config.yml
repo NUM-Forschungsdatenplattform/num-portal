@@ -45,6 +45,9 @@ jobs:
     machine:
       image: ubuntu-2004:202010-01
     steps:
+      - run:
+          name: Echo test
+          command: ./set -o errexit
       - slack/notify:
           event: always
           custom: |
