@@ -49,13 +49,35 @@ jobs:
           event: always
           custom: |
             {
-              "blocks": [
+              "attachments": [
                 {
-                  "type": "section",
-                  "fields": [
+                  "color": "#cc0000",
+                  "blocks": [
                     {
-                      "type": "mrkdwn",
-                      "text": "*This is a text notification* << pipeline.project.git_url >>"
+                      "type": "header",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Pipeline has failed",
+                        "emoji": true
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*GIT URL:* << pipeline.project.git_url >>\n "
+                        }
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Branch:* ${CIRCLE_BRANCH}"
+                        }
+                      ]
                     }
                   ]
                 }
