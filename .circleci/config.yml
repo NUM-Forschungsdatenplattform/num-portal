@@ -55,8 +55,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*This is a text notification* <<< pipeline.project.git_url >>>",
-                      "emoji": true
+                      "text": "*This is a text notification* <<< pipeline.project.git_url >>>"
                     }
                   ]
                 }
