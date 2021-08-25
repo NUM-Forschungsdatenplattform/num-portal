@@ -66,16 +66,7 @@ jobs:
                       "fields": [
                         {
                           "type": "mrkdwn",
-                          "text": "*GIT URL:* << pipeline.project.git_url >>\n "
-                        }
-                      ]
-                    },
-                    {
-                      "type": "section",
-                      "fields": [
-                        {
-                          "type": "mrkdwn",
-                          "text": "*Branch:* ${CIRCLE_BRANCH}"
+                          "text": "*GIT URL:* << pipeline.project.git_url >>\n pipeline.git.revision <<pipeline.git.revision>> \n CIRCLE_BUILD_URL ${CIRCLE_BUILD_URL} \n CIRCLE_JOB ${CIRCLE_JOB} \n CIRCLE_PR_REPONAME ${CIRCLE_PR_REPONAME} \n CIRCLE_PROJECT_REPONAME ${CIRCLE_PROJECT_REPONAME} \n CIRCLE_WORKFLOW_ID ${CIRCLE_WORKFLOW_ID} \n *Branch:* ${CIRCLE_BRANCH}"
                         }
                       ]
                     }
