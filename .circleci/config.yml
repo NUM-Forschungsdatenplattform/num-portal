@@ -49,7 +49,7 @@ jobs:
           name: Echo test
           command: ./set -o errexit
       - slack/notify:
-          event: always
+          event: fail
           custom: |
             {
               "blocks": [
@@ -57,7 +57,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "Pipeline has failed",
+                    "text": ":warning: Pipeline has failed :warning:",
                     "emoji": true
                   }
                 },
@@ -66,7 +66,43 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*GIT URL:* << pipeline.project.git_url >>\n pipeline.git.revision <<pipeline.git.revision>> \n CIRCLE_BUILD_URL ${CIRCLE_BUILD_URL} \n CIRCLE_JOB ${CIRCLE_JOB} \n CIRCLE_PR_REPONAME ${CIRCLE_PR_REPONAME} \n CIRCLE_PROJECT_REPONAME ${CIRCLE_PROJECT_REPONAME} \n CIRCLE_WORKFLOW_ID ${CIRCLE_WORKFLOW_ID} \n *Branch:* ${CIRCLE_BRANCH}"
+                      "text": "*Project repository name:* ${CIRCLE_PROJECT_REPONAME}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch name:* ${CIRCLE_BRANCH}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*GIT URL:* << pipeline.project.git_url >>"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*CircleCI Build URL:* ${CIRCLE_BUILD_URL}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*CircleCI Job:* ${CIRCLE_JOB}"
                     }
                   ]
                 }
