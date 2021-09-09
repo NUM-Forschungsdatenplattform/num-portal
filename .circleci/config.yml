@@ -52,7 +52,7 @@ jobs:
           name: CCI status
           command: echo "${CCI_STATUS}"
       - slack/notify:
-          event: fail
+          event: always
           custom: |
             {
               "blocks": [
@@ -106,6 +106,15 @@ jobs:
                     {
                       "type": "mrkdwn",
                       "text": "*Failed CircleCI Job:* ${CIRCLE_JOB}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Job status:* ${CCI_STATUS}"
                     }
                   ]
                 }
