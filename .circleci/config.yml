@@ -49,7 +49,7 @@ jobs:
           name: Echo test
           command: ./set -o errexit
       - run:
-          name: Echo test
+          name: CCI status
           command: echo $CCI_STATUS
       - slack/notify:
           event: fail
