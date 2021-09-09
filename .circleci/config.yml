@@ -50,9 +50,9 @@ jobs:
           command: ./set -o errexit
       - run:
           name: CCI status
-          command: echo $CCI_STATUS
+          command: echo "$CCI_STATUS"
       - slack/notify:
-          event: fail
+          event: always
           custom: |
             {
               "blocks": [
