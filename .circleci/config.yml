@@ -52,7 +52,7 @@ jobs:
           name: CCI status
           command: echo "${CCI_STATUS}"
       - slack/notify:
-          event: always
+          event: pass
           custom: |
             {
               "blocks": [
