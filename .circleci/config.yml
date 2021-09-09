@@ -49,7 +49,7 @@ jobs:
           name: Echo test
           command: ./set -o errexit
       - slack/notify:
-          event: always
+          event: fail
           custom: |
             {
               "blocks": [
@@ -102,7 +102,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*CircleCI Job:* ${CIRCLE_JOB}"
+                      "text": "*Failed CircleCI Job:* ${CIRCLE_JOB}"
                     }
                   ]
                 }
