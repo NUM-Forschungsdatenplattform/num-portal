@@ -45,14 +45,11 @@ jobs:
     machine:
       image: ubuntu-2004:202010-01
     steps:
-#      - run:
-#          name: Echo test
-#          command: ./set -o errexit
       - run:
-          name: CCI status
-          command: echo 'export $CCI_STATUS'
+          name: Echo test
+          command: ./set -o errexit
       - slack/notify:
-          event: pass
+          event: fail
           custom: |
             {
               "blocks": [
@@ -106,15 +103,6 @@ jobs:
                     {
                       "type": "mrkdwn",
                       "text": "*Failed CircleCI Job:* ${CIRCLE_JOB}"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Job status:* ${CCI_STATUS}"
                     }
                   ]
                 }
