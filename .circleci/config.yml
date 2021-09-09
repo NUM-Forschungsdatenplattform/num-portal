@@ -45,11 +45,11 @@ jobs:
     machine:
       image: ubuntu-2004:202010-01
     steps:
-#      - run:
-#          name: Echo test
-#          command: ./set -o errexit
+      - run:
+          name: Echo test
+          command: ./set -o errexit
       - slack/notify:
-          event: pass
+          event: fail
           custom: |
             {
               "blocks": [
@@ -57,7 +57,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "3:warning: Pipeline has failed :warning:",
+                    "text": ":warning: Pipeline has failed :warning:",
                     "emoji": true
                   }
                 },
