@@ -78,20 +78,19 @@ jobs:
             It will set the version number to release branch version number, but it will do it only once. If the commit is
             to the master branch, then the pipeline will create a tag and push it to the Git
           command: |
-            VERSION_NUMBER="$(echo $CIRCLE_BRANCH | awk -F'/v' '{print $2;}')"
-            CURRENT_TAG=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
-            if [ $VERSION_NUMBER != $CURRENT_TAG ]; then
-              echo "Updating the application version from the branch to ${VERSION_NUMBER}"
-              ./mvnw versions:set -DnewVersion=$VERSION_NUMBER versions:commit
-              git commit -am "updated project version to v${VERSION_NUMBER} [skip ci]"
-              git push --set-upstream origin $CIRCLE_BRANCH
-            elif [ $CIRCLE_BRANCH = "master" ]; then
-              git tag -a $VERSION_NUMBER -m "num-portal release version ${VERSION_NUMBER}"
+            VERSION_NUMBER_FROM_BRANCH="$(echo $CIRCLE_BRANCH | awk -F'/v' '{print $2;}')"
+            VERSION_NUMBER_FROM_POM=$(./mvnw -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)
+            if [ $CIRCLE_BRANCH = "master" ]; then
+              git tag -a $VERSION_NUMBER_FROM_POM -m "num-portal release version ${VERSION_NUMBER_FROM_POM}"
               git push origin --tags
+            elif [ $VERSION_NUMBER_FROM_BRANCH != $VERSION_NUMBER_FROM_POM ]; then
+              echo "Updating the application version from the branch to ${VERSION_NUMBER_FROM_BRANCH}"
+              ./mvnw versions:set -DnewVersion=$VERSION_NUMBER_FROM_BRANCH versions:commit
+              git commit -am "updated project version to v${VERSION_NUMBER_FROM_BRANCH} [skip ci]"
+              git push --set-upstream origin $CIRCLE_BRANCH
             fi
 
             exit 0
-            esac
 
   build_and_deploy:
     docker:
