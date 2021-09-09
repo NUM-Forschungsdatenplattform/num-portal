@@ -49,7 +49,7 @@ jobs:
           name: Echo test
           command: ./set -o errexit
       - slack/notify:
-          event: fail
+          event: always
           custom: |
             {
               "blocks": [
