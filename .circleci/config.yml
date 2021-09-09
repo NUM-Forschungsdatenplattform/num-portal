@@ -57,7 +57,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": ":warning: Pipeline has failed :warning:",
+                    "text": "1:warning: Pipeline has failed :warning:",
                     "emoji": true
                   }
                 },
