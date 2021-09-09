@@ -45,9 +45,9 @@ jobs:
     machine:
       image: ubuntu-2004:202010-01
     steps:
-#      - run:
-#          name: Echo test
-#          command: ./set -o errexit
+      - run:
+          name: Echo test
+          command: ./set -o errexit
       - run:
           name: CCI status
           command: echo "${CCI_STATUS}"
