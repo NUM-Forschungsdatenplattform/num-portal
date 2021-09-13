@@ -66,43 +66,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Project repository name:* ${CIRCLE_PROJECT_REPONAME} \n\n *Branch name:* ${CIRCLE_BRANCH}"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Branch name:* ${CIRCLE_BRANCH}"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*GIT URL:* << pipeline.project.git_url >>"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*CircleCI Build URL:* ${CIRCLE_BUILD_URL}"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Failed CircleCI Job:* ${CIRCLE_JOB}"
+                      "text": "*Project repository name:* ${CIRCLE_PROJECT_REPONAME} \n\n *Branch name:* ${CIRCLE_BRANCH} \n\n *GIT URL:* << pipeline.project.git_url >> \n\n *CircleCI Build URL:* ${CIRCLE_BUILD_URL} \n\n *Failed CircleCI Job:* ${CIRCLE_JOB} \n\n "
                     }
                   ]
                 }
