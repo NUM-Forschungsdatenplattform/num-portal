@@ -12,68 +12,31 @@ workflows:
                 - nightly-builds
     jobs:
       - test:
-          context: org-global
-#  build_and_test:
-#    jobs:
-#      - test:
-#          context: 
-#            - org-global
-#            - slack-secrets
-#      - tag-version:
-#          requires:
-#            - test
-#          filters:
-#            branches:
-#              only:
-#                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master)$/
-#      - build_and_deploy:
-#          requires:
-#            - test
-#          filters:
-#            branches:
-#              only:
-#                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop)$/
-  gka_test:
+          context:
+            - org-global
+            - slack-secrets
+  build_and_test:
     jobs:
-      - gkatest:
+      - test:
           context: 
             - org-global
             - slack-secrets
+      - tag-version:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master)$/
+      - build_and_deploy:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop)$/
 
 jobs:
-  gkatest:
-    machine:
-      image: ubuntu-2004:202010-01
-    steps:
-      - run:
-          name: Echo test
-          command: ./set -o errexit
-      - slack/notify:
-          event: always
-          branch_pattern: nightly-builds
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "3:warning: Pipeline has failed :warning:",
-                    "emoji": true
-                  }
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Project repository name:* ${CIRCLE_PROJECT_REPONAME} \n\n *Branch name:* ${CIRCLE_BRANCH} \n\n *GIT URL:* << pipeline.project.git_url >> \n\n *CircleCI Build URL:* ${CIRCLE_BUILD_URL} \n\n *Failed CircleCI Job:* ${CIRCLE_JOB} \n\n "
-                    }
-                  ]
-                }
-              ]
-            }
-
   test:
     machine:
       image: ubuntu-2004:202010-01
@@ -108,8 +71,30 @@ jobs:
       - sonarcloud/scan
       - cache-in-maven-dependencies
       - slack/notify:
-          event: pass
-          template: basic_success_1
+          event: fail
+          branch_pattern: nightly-builds
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":warning: Pipeline has failed :warning:",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Project repository name:* ${CIRCLE_PROJECT_REPONAME} \n\n *Branch name:* ${CIRCLE_BRANCH} \n\n *GIT URL:* << pipeline.project.git_url >> \n\n *CircleCI Build URL:* ${CIRCLE_BUILD_URL} \n\n *Failed CircleCI Job:* ${CIRCLE_JOB} \n\n "
+                    }
+                  ]
+                }
+              ]
+            }
   tag-version:
     docker:
       - image: circleci/openjdk:stretch
@@ -166,29 +151,6 @@ jobs:
             ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$DOCKER_USER/num-portal:$TAG -DskipTests
             docker push $DOCKER_USER/num-portal:$TAG
       - cache-in-maven-dependencies
-
-##  notify:
-#    docker:
-#      - image: 'cimg/base:stable'
-#    steps:
-#      - slack/notify:
-#          custom: |
-#            {
-#              "blocks": [
-#                {
-#                  "type": "section",
-#                  "fields": [
-#                    {
-#                      "type": "plain_text",
-#                      "text": "*This is a text notification*",
-#                      "emoji": true
-#                    }
-#                  ]
-#                }
-#              ]
-#            }
-#          event: fail
-#          branch_pattern: "nightly-builds"
 
 commands:
   configure-git-for-ci-bot:
