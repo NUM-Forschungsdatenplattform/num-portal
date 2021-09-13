@@ -50,7 +50,7 @@ jobs:
           command: ./set -o errexit
       - slack/notify:
           event: always
-          # branch_pattern: nightly-builds
+          branch_pattern: nightly-builds
           custom: |
             {
               "blocks": [
@@ -58,7 +58,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": ":warning: Pipeline has failed :warning:",
+                    "text": "3:warning: Pipeline has failed :warning:",
                     "emoji": true
                   }
                 },
