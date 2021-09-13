@@ -66,7 +66,8 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Project repository name:* ${CIRCLE_PROJECT_REPONAME}"
+                      "text": "*Project repository name:* ${CIRCLE_PROJECT_REPONAME} \n\n" /
+                      "asdf"
                     }
                   ]
                 },
