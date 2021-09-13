@@ -38,7 +38,7 @@ workflows:
       - gkatest:
           context: 
             - org-global
-            - slack-secrets
+            #- slack-secrets
 
 jobs:
   gkatest:
