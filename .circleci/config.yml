@@ -50,6 +50,7 @@ jobs:
           command: ./set -o errexit
       - slack/notify:
           event: always
+          branch_pattern: nightly-builds
           custom: |
             {
               "blocks": [
