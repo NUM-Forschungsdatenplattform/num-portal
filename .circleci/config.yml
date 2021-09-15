@@ -80,7 +80,7 @@ jobs:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": ":warning: Pipeline has failed :warning:",
+                    "text": ":warning: CircleCI pipeline has failed :warning:",
                     "emoji": true
                   }
                 },
