@@ -21,20 +21,20 @@ workflows:
           context: 
             - org-global
             - slack-secrets
-      - tag-version:
-          requires:
-            - test
-          filters:
-            branches:
-              only:
-                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master)$/
-      - build_and_deploy:
-          requires:
-            - test
-          filters:
-            branches:
-              only:
-                - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop)$/
+      #- tag-version:
+      #    requires:
+      #      - test
+      #    filters:
+      #      branches:
+      #        only:
+      #          - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master)$/
+      #- build_and_deploy:
+      #    requires:
+      #      - test
+      #    filters:
+      #      branches:
+      #        only:
+      #          - /^(release\/v\d+\.\d+\.\d+|hotfix\/v\d+\.\d+\.\d+|master|develop)$/
 
 jobs:
   test:
@@ -71,7 +71,7 @@ jobs:
       - sonarcloud/scan
       - cache-in-maven-dependencies
       - slack/notify:
-          event: fail
+          event: always
           branch_pattern: nightly-builds
           custom: |
             {
