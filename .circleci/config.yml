@@ -72,7 +72,7 @@ jobs:
      # - cache-in-maven-dependencies
       - slack/notify:
           event: always
-          branch_pattern: nightly-builds
+          #branch_pattern: nightly-builds
           custom: |
             {
               "blocks": [
