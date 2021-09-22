@@ -20,7 +20,7 @@ workflows:
       - test:
           context: 
             - org-global
-            - test-slack-secrets
+            - slack-secrets
       - tag-version:
           requires:
             - test
