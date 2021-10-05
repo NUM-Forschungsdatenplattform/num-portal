@@ -34,6 +34,13 @@ public class OrganizationController {
   private final OrganizationMapper mapper;
 
   @AuditLog
+  @GetMapping("/domains")
+  @ApiOperation(value = "Retrieves a list of all existing organization email domains")
+  public ResponseEntity<List<String>> getAllMailDomains() {
+    return ResponseEntity.ok(organizationService.getAllMailDomains());
+  }
+
+  @AuditLog
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves an organization by external id")
   public ResponseEntity<OrganizationDto> getOrganizationById(

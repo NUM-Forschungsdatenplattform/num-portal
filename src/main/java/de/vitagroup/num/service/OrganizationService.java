@@ -33,6 +33,17 @@ public class OrganizationService {
   private final UserDetailsService userDetailsService;
 
   /**
+   * Retrieves a list of all existing email domains
+   *
+   * @return
+   */
+  public List<String> getAllMailDomains() {
+    return mailDomainRepository.findAll().stream()
+        .map(MailDomain::getName)
+        .collect(Collectors.toList());
+  }
+
+  /**
    * Counts the number of organization existing in the platform
    *
    * @return
