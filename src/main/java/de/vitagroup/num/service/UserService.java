@@ -4,6 +4,7 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
@@ -20,6 +21,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -84,8 +86,8 @@ public class UserService {
    * Retrieves user details without roles - used for determining the ownership on aql, projects and
    * comments; caches results
    *
-   * @param userId
-   * @return
+   * @param userId the id of the user to fetch
+   * @return the found user
    */
   @Transactional
   @Cacheable(value = USERS_CACHE, key = "#userId")
@@ -133,7 +135,7 @@ public class UserService {
   /**
    * Assigns roles to a particular user
    *
-   * @param userId the user to update roles of
+   * @param userId    the user to update roles of
    * @param roleNames The list of roles of the user
    */
   public List<String> setUserRoles(
@@ -152,9 +154,9 @@ public class UserService {
     if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)
         && !callerRoles.contains(Roles.SUPER_ADMIN)
         && !callerDetails
-            .getOrganization()
-            .getId()
-            .equals(userToChange.getOrganization().getId())) {
+        .getOrganization()
+        .getId()
+        .equals(userToChange.getOrganization().getId())) {
       throw new ForbiddenException(
           "Organization admin can only manage users in the own organization.");
     }
@@ -169,7 +171,7 @@ public class UserService {
           existingRoles.stream()
               .filter(role -> !roleNames.contains(role.getName()))
               .collect(Collectors.toList())
-              .toArray(new Role[] {});
+              .toArray(new Role[]{});
 
       Role[] addRoles =
           roleNames.stream()
@@ -183,7 +185,7 @@ public class UserService {
                     }
                   })
               .collect(Collectors.toList())
-              .toArray(new Role[] {});
+              .toArray(new Role[]{});
 
       if (Arrays.stream(removeRoles)
           .anyMatch(role -> !Roles.isAllowedToSet(role.getName(), callerRoles))) {
@@ -246,8 +248,8 @@ public class UserService {
   /**
    * Retrieved a list of users that match the search criteria
    *
-   * @param approved Indicates that the user has been approved by the admin
-   * @param search A string contained in username, first or last name, or email
+   * @param approved  Indicates that the user has been approved by the admin
+   * @param search    A string contained in username, first or last name, or email
    * @param withRoles flag whether to add roles to the user structure, if present, or not
    * @return the users that match the search parameters and with optional roles if indicated
    */
@@ -348,7 +350,9 @@ public class UserService {
     }
   }
 
-  /** Evicts users cache every 8 hours */
+  /**
+   * Evicts users cache every 8 hours
+   */
   @Scheduled(fixedRate = 28800000)
   public void evictParametersCache() {
     var cache = cacheManager.getCache(USERS_CACHE);
@@ -356,5 +360,35 @@ public class UserService {
       log.trace("Evicting users cache");
       cache.clear();
     }
+  }
+
+  public void changeUserName(@NotNull String userIdToChange,
+      @NotNull UserNameDto userName, @NotNull String loggedInUserId, List<String> roles) {
+    UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
+    UserDetails userToChange = userDetailsService.checkIsUserApproved(userIdToChange);
+    if (Objects.equals(loggedInUser.getUserId(), userToChange.getUserId()) || roles.contains(
+        Roles.SUPER_ADMIN)) {
+      loadAndUpdateName(userIdToChange, userName);
+      return;
+    }
+
+    if (roles.contains(Roles.ORGANIZATION_ADMIN) && loggedInUser.getOrganization() != null &&
+        userToChange.getOrganization() != null && loggedInUser.getOrganization().getId()
+        .equals(userToChange.getOrganization().getId())) {
+      loadAndUpdateName(userIdToChange, userName);
+      return;
+    }
+    throw new ForbiddenException(
+        "Can only change own name, org admin names of the people in the organization and superuser all names.");
+  }
+
+  private void loadAndUpdateName(String userId, UserNameDto userNameDto){
+    Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
+    if(userRaw == null){
+      throw new SystemException("Fetching user from Keycloak failed");
+    }
+    userRaw.put("firstName", userNameDto.getFirstName());
+    userRaw.put("lastName", userNameDto.getLastName());
+    keycloakFeign.updateUser(userId, userRaw);
   }
 }

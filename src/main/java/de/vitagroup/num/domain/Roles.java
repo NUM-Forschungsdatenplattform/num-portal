@@ -1,6 +1,7 @@
 package de.vitagroup.num.domain;
 
 import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -33,6 +34,9 @@ public class Roles {
 
   public static List<String> extractRoles(Jwt principal) {
     Map<String, Object> access = principal.getClaimAsMap(REALM_ACCESS_CLAIM);
+    if(access == null){
+      return new ArrayList<>();
+    }
     return (List<String>) access.get(ROLES_CLAIM);
   }
 
