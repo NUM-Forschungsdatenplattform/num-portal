@@ -148,8 +148,6 @@ jobs:
             curl --fail -H "Content-Type: application/json" --data-binary @$MSG_PATH 
                   https://vitasystems.webhook.office.com/webhookb2/e4132123-40fd-49f1-bac8-e861176c6ffc@33b78827-43bd-441c-861d-8df7f7610d3d/IncomingWebhook/825af948c51541eb986d313a330d6569/dee62492-2c85-4840-8cc3-6c3621da60fa
           when: on_fail
-      - ms-teams/report:
-          webhook_url: https://vitasystems.webhook.office.com/webhookb2/e4132123-40fd-49f1-bac8-e861176c6ffc@33b78827-43bd-441c-861d-8df7f7610d3d/IncomingWebhook/825af948c51541eb986d313a330d6569/dee62492-2c85-4840-8cc3-6c3621da60fa
       - slack/notify:
           event: fail
           branch_pattern: nightly-builds
@@ -265,4 +263,3 @@ orbs:
   sonarcloud: sonarsource/sonarcloud@1.0.2
   slack: circleci/slack@4.1.1
   jq: circleci/jq@2.2.0
-  ms-teams: cloudradar-monitoring/ms-teams@0.0.1
