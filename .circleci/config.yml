@@ -121,7 +121,11 @@ jobs:
                         "name": "Commit",
                         "value": "$COMMIT_LINK"
                       }
-                    ],
+                      {
+                      "name": "OWASP",
+                      "value": "*OWASP report:* $URL_OF_OWASP_REPORT \n\n *Project repository name:* ${CIRCLE_PROJECT_REPONAME} \n\n *Branch name:* ${CIRCLE_BRANCH} \n\n *Project GIT repository:* << pipeline.project.git_url >> \n\n *CircleCI build:* ${CIRCLE_BUILD_URL} \n\n"
+                      }
+                    ]
                     "markdown": true
                   }
                 ]
