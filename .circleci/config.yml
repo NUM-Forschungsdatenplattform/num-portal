@@ -145,8 +145,7 @@ jobs:
           command: |
             MSG_PATH=/tmp/ms_teams_failure_message
             sed -e 's/__build_status__/Failed/' -e 's/__theme_color__/e2091d/' /tmp/ms_teams_message > $MSG_PATH
-            curl --fail -H "Content-Type: application/json" --data-binary @$MSG_PATH 
-                  https://vitasystems.webhook.office.com/webhookb2/e4132123-40fd-49f1-bac8-e861176c6ffc@33b78827-43bd-441c-861d-8df7f7610d3d/IncomingWebhook/825af948c51541eb986d313a330d6569/dee62492-2c85-4840-8cc3-6c3621da60fa
+            curl --fail -H "Content-Type: application/json" --data-binary @$MSG_PATH https://vitasystems.webhook.office.com/webhookb2/e4132123-40fd-49f1-bac8-e861176c6ffc@33b78827-43bd-441c-861d-8df7f7610d3d/IncomingWebhook/825af948c51541eb986d313a330d6569/dee62492-2c85-4840-8cc3-6c3621da60fa
           when: on_fail
       - slack/notify:
           event: fail
