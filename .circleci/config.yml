@@ -15,12 +15,14 @@ workflows:
           context:
             - org-global
             - slack-secrets
+            - ms_teams
   build_and_test:
     jobs:
       - test:
           context: 
             - org-global
             - slack-secrets
+            - ms_teams
       - tag-version:
           requires:
             - test
@@ -88,30 +90,65 @@ jobs:
                 break
               fi
             done
-      - slack/notify:
-          event: always
-          custom: |
+      - run:
+          name: MS Teams OWASP Message
+          command: |
+            SHORT_SHA1=`echo -n $CIRCLE_SHA1 | head -c 7`
+            if [ `echo "$CIRCLE_REPOSITORY_URL" | grep "^git@github.com"` ]; then
+              COMMIT_LINK=\[$SHORT_SHA1\]\(https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/commit/$CIRCLE_SHA1\)
+            elif [ `echo "$CIRCLE_REPOSITORY_URL" | grep "^git@bitbucket.org"` ]; then
+              COMMIT_LINK=\[$SHORT_SHA1\]\(https://bitbucket.org/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/commit/$CIRCLE_SHA1\)
+            else
+              >&2 echo unknown version control system: $CIRCLE_REPOSITORY_URL
+              fail
+            fi
+            # Note that the "\<<" in the heredoc declaration is escaped from
+            # CircleCI's parameters syntax.
+            MS_TEAMS_MSG_TEMPLATE=$(cat \<<END_HEREDOC
             {
-              "blocks": [
+              "@type": "MessageCard",
+              "@context": "http://schema.org/extensions",
+              "themeColor": "__theme_color__",
+              "summary": "CircleCI Build Notification",
+              "sections": [
                 {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": ":information_source: Security scan has completed :information_source:",
-                    "emoji": true
-                  }
-                },
-                {
-                  "type": "section",
-                  "fields": [
+                  "activityTitle": "__build_status__: $CIRCLE_PROJECT_REPONAME job [${CIRCLE_JOB} #${CIRCLE_BUILD_NUM}]($CIRCLE_BUILD_URL)",
+                  "facts": [
                     {
-                      "type": "mrkdwn",
-                      "text": "*OWASP report:* $URL_OF_OWASP_REPORT \n\n *Project repository name:* ${CIRCLE_PROJECT_REPONAME} \n\n *Branch name:* ${CIRCLE_BRANCH} \n\n *Project GIT repository:* << pipeline.project.git_url >> \n\n *CircleCI build:* ${CIRCLE_BUILD_URL} \n\n"
+                      "name": "Git ref",
+                      "value": "$CIRCLE_BRANCH $CIRCLE_TAG"
+                    },
+                    {
+                      "name": "Commit",
+                      "value": "$COMMIT_LINK"
+                    },
+                    {
+                      "name": "OWASP",
+                      "value": "*OWASP report:* $URL_OF_OWASP_REPORT \n\n *Project repository name:* ${CIRCLE_PROJECT_REPONAME} \n\n *Branch name:* ${CIRCLE_BRANCH} \n\n *Project GIT repository:* << pipeline.project.git_url >> \n\n *CircleCI build:* ${CIRCLE_BUILD_URL} \n\n"
                     }
-                  ]
+                  ],
+                  "markdown": true
                 }
               ]
             }
+            END_HEREDOC
+            )
+            echo "$MS_TEAMS_MSG_TEMPLATE" > /tmp/ms_teams_message
+          when: always
+      - run:    
+          name: Report Build Success
+          command: |
+            MSG_PATH=/tmp/ms_teams_success_message
+            sed -e 's/__build_status__/Success/' -e 's/__theme_color__/14a603/' /tmp/ms_teams_message > $MSG_PATH
+            curl --fail -H "Content-Type: application/json" --data-binary @$MSG_PATH $CODEX_NOTIFICATIONS
+          when: on_success
+      - run:
+          name: Report Build Failure
+          command: |
+            MSG_PATH=/tmp/ms_teams_failure_message
+            sed -e 's/__build_status__/Failed/' -e 's/__theme_color__/e2091d/' /tmp/ms_teams_message > $MSG_PATH
+            curl --fail -H "Content-Type: application/json" --data-binary @$MSG_PATH $CODEX_NOTIFICATIONS
+          when: on_fail
       - slack/notify:
           event: fail
           branch_pattern: nightly-builds

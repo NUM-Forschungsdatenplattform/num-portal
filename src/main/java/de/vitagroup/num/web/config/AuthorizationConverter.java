@@ -1,9 +1,9 @@
 package de.vitagroup.num.web.config;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.SetUtils;
 import org.springframework.core.convert.converter.Converter;
@@ -23,14 +23,14 @@ public class AuthorizationConverter implements Converter<Jwt, AbstractAuthentica
 
   @Override
   public AbstractAuthenticationToken convert(Jwt jwt) {
-    Collection<GrantedAuthority> authorities = this.extractAuthorities(jwt);
+    Collection<GrantedAuthority> authorities = extractAuthorities(jwt);
     return new JwtAuthenticationToken(jwt, authorities);
   }
 
   private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
-    JSONObject realmAccess = jwt.getClaim(REALM_ACCESS);
+    Map<String, Object> realmAccess = jwt.getClaim(REALM_ACCESS);
     if (realmAccess != null) {
-      final JSONArray roles = (JSONArray) realmAccess.get(ROLES_CLAIM);
+      final List<String> roles = (List<String>)realmAccess.get(ROLES_CLAIM);
 
       if (CollectionUtils.isNotEmpty(roles)) {
         return roles.stream()
