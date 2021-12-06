@@ -10,14 +10,20 @@ import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 /** Service responsible for retrieving organization information from the terminology server */
@@ -31,6 +37,29 @@ public class OrganizationService {
   private final MailDomainRepository mailDomainRepository;
 
   private final UserDetailsService userDetailsService;
+
+  private static final String DOMAIN_SEPARATOR = "@";
+
+  private static final String DOMAIN_VALIDATION_REGEX =
+      "^(\\*\\.)?((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}$";
+
+  /**
+   * Resolves organization based on user email address
+   *
+   * @param email
+   * @return
+   */
+  public Optional<Organization> resolveOrganization(String email) {
+    if (StringUtils.isBlank(email) || !email.contains(DOMAIN_SEPARATOR)) {
+      return Optional.empty();
+    }
+
+    String domain = email.substring(email.indexOf(DOMAIN_SEPARATOR) + 1);
+
+    Optional<MailDomain> mailDomain = mailDomainRepository.findByName(domain.toLowerCase());
+
+    return mailDomain.map(MailDomain::getOrganization).or(() -> matchOrganization(domain));
+  }
 
   /**
    * Retrieves a list of all existing email domains
@@ -92,7 +121,7 @@ public class OrganizationService {
               throw new BadRequestException(
                   "Organization name must be unique: " + organizationDto.getName());
             });
-
+    validateMailDomains(organizationDto.getMailDomains());
     organizationDto
         .getMailDomains()
         .forEach(
@@ -142,6 +171,7 @@ public class OrganizationService {
                     "Organization name must be unique: " + organizationDto.getName());
               }
             });
+    validateMailDomains(organizationDto.getMailDomains());
 
     organizationDto
         .getMailDomains()
@@ -175,6 +205,19 @@ public class OrganizationService {
     return organizationRepository.save(organizationToEdit);
   }
 
+  private void validateMailDomains(Set<String> domains) {
+    domains.forEach(
+        domain -> {
+          if (StringUtils.isEmpty(domain)) {
+            throw new BadRequestException("Organization mail domain cannot be null or empty");
+          }
+
+          if (!Pattern.matches(DOMAIN_VALIDATION_REGEX, domain.toLowerCase())) {
+            throw new BadRequestException("Invalid mail domain: " + domain);
+          }
+        });
+  }
+
   private void updateOrganization(OrganizationDto dto, Organization organization) {
     organization.setName(dto.getName());
 
@@ -203,5 +246,60 @@ public class OrganizationService {
     } else {
       organization.setDomains(newDomains);
     }
+  }
+
+  private Optional<Organization> matchOrganization(String domain) {
+    List<MailDomainDetails> mailDomainDetails = toMailDomainDetails(mailDomainRepository.findAll());
+
+    for (MailDomainDetails mailDomainDetails1 : mailDomainDetails) {
+      if (Pattern.matches(mailDomainDetails1.getRegex(), domain)) {
+        return Optional.of(mailDomainDetails1.getOrganization());
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Converts an organization email domain list into a list containing correlation between domains
+   * and subdomains and sorts matches descending
+   *
+   * @param allDomains
+   * @return
+   */
+  private List<MailDomainDetails> toMailDomainDetails(List<MailDomain> allDomains) {
+    List<MailDomainDetails> mailDomainDetails = new LinkedList<>();
+
+    allDomains.forEach(
+        mailDomain ->
+            mailDomainDetails.add(
+                MailDomainDetails.builder()
+                    .domain(mailDomain.getName().toLowerCase())
+                    .regex(domainToRegex(mailDomain.getName().toLowerCase()))
+                    .organization(mailDomain.getOrganization())
+                    .build()));
+
+    for (MailDomainDetails d1 : mailDomainDetails) {
+      for (MailDomainDetails d2 : mailDomainDetails) {
+        if (Pattern.matches(d2.regex, d1.domain)) {
+          d1.matches++;
+        }
+      }
+    }
+    mailDomainDetails.sort(Comparator.comparing(MailDomainDetails::getMatches).reversed());
+    return mailDomainDetails;
+  }
+
+  private String domainToRegex(String domain) {
+    String newDomain = domain.replace(".", "\\.");
+    return newDomain.replace("*", ".*");
+  }
+
+  @Data
+  @Builder
+  static class MailDomainDetails {
+    String domain;
+    String regex;
+    int matches = 0;
+    Organization organization;
   }
 }

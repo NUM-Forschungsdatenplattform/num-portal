@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,6 +19,8 @@ import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -38,6 +41,89 @@ public class OrganizationServiceTest {
   @Mock private UserDetailsService userDetailsService;
 
   @InjectMocks private OrganizationService organizationService;
+
+  @Test
+  public void shouldHandleInvalidDomainNamesWhenUpdating() {
+
+    List<String> invalidDomains =
+        Arrays.asList("*.com", "*.c", "-gmail.com", "gmail.c", "bla", "d.c", "*.a.b.c.c");
+
+    invalidDomains.forEach(
+        domain -> {
+          Exception exception =
+              assertThrows(
+                  BadRequestException.class,
+                  () ->
+                      organizationService.update(
+                          3L,
+                          OrganizationDto.builder().name("A").mailDomains(Set.of(domain)).build(),
+                          List.of(Roles.SUPER_ADMIN),
+                          "approvedUserId"));
+
+          String expectedMessage = String.format("%s %s", "Invalid mail domain:", domain);
+          assertThat(exception.getMessage(), is(expectedMessage));
+        });
+
+    verify(organizationRepository, times(0)).save(any());
+  }
+
+  @Test
+  public void shouldHandleInvalidDomainNamesWhenCreating() {
+
+    List<String> invalidDomains =
+        Arrays.asList("*.com", "*.c", "-gmail.com", "gmail.c", "bla", "d.c", "*.a.b.c.c");
+
+    invalidDomains.forEach(
+        domain -> {
+          Exception exception =
+              assertThrows(
+                  BadRequestException.class,
+                  () ->
+                      organizationService.create(
+                          "approvedUserId",
+                          OrganizationDto.builder().name("B").mailDomains(Set.of(domain)).build()));
+
+          String expectedMessage = String.format("%s %s", "Invalid mail domain:", domain);
+          assertThat(exception.getMessage(), is(expectedMessage));
+        });
+
+    verify(organizationRepository, times(0)).save(any());
+  }
+
+  @Test
+  public void shouldDirectlyResolveOrganization() {
+    String email = "john.doe@a.b.c.example.com";
+    String domain = "a.b.c.example.com";
+    when(mailDomainRepository.findByName(domain))
+        .thenReturn(
+            Optional.of(
+                MailDomain.builder()
+                    .name(domain)
+                    .organization(Organization.builder().name("A").build())
+                    .build()));
+
+    Optional<Organization> organization = organizationService.resolveOrganization(email);
+
+    assertThat(organization.isEmpty(), is(false));
+    assertThat(organization.get().getName(), is("A"));
+  }
+
+  @Test
+  public void shouldResolveOrganization() {
+    String email = "john.doe@a.b.c.example.com";
+    String domain = "a.b.c.example.com";
+
+    when(mailDomainRepository.findByName(domain)).thenReturn(Optional.empty());
+    when(mailDomainRepository.findAll()).thenReturn(createMailDomainsList());
+
+    Optional<Organization> organization = organizationService.resolveOrganization(email);
+
+    assertThat(organization.isEmpty(), is(false));
+    assertThat(organization.get().getName(), is("A"));
+    assertThat(
+        organization.get().getDomains().stream().findFirst().get().getName(),
+        is("*.b.c.example.com"));
+  }
 
   @Test(expected = SystemException.class)
   public void shouldHandleMissingUserWhenCreating() {
@@ -67,8 +153,8 @@ public class OrganizationServiceTest {
 
   @Test
   public void shouldHandleNoRolesWhenGettingAll() {
-    List<Organization> organizations = organizationService
-        .getAllOrganizations(List.of(), "approvedUserId");
+    List<Organization> organizations =
+        organizationService.getAllOrganizations(List.of(), "approvedUserId");
     assertThat(organizations.size(), is(0));
   }
 
@@ -94,20 +180,14 @@ public class OrganizationServiceTest {
   public void shouldHandleNotUniqueMailDomain() {
     organizationService.create(
         "approvedUserId",
-        OrganizationDto.builder()
-            .name("Organization")
-            .mailDomains(Set.of("existing mail domain"))
-            .build());
+        OrganizationDto.builder().name("Organization").mailDomains(Set.of("vitagroup.ag")).build());
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleNotUniqueMailDomainInMixCase() {
     organizationService.create(
         "approvedUserId",
-        OrganizationDto.builder()
-            .name("Organization")
-            .mailDomains(Set.of("EXISTING Mail domain"))
-            .build());
+        OrganizationDto.builder().name("Organization").mailDomains(Set.of("vitagroup.ag")).build());
   }
 
   @Test
@@ -116,7 +196,7 @@ public class OrganizationServiceTest {
         "approvedUserId",
         OrganizationDto.builder()
             .name("Some organization name")
-            .mailDomains(Set.of("ç"))
+            .mailDomains(Set.of("*.a.example.com"))
             .build());
 
     verify(organizationRepository, times(1)).save(any());
@@ -155,10 +235,7 @@ public class OrganizationServiceTest {
   public void shouldSaveOrganization() {
     organizationService.update(
         3L,
-        OrganizationDto.builder()
-            .name("Good name")
-            .mailDomains(Set.of("some mail domain name"))
-            .build(),
+        OrganizationDto.builder().name("Good name").mailDomains(Set.of("*.example.com")).build(),
         List.of(Roles.SUPER_ADMIN),
         "approvedUserId");
     verify(organizationRepository, times(1)).save(any());
@@ -170,8 +247,7 @@ public class OrganizationServiceTest {
         3L,
         OrganizationDto.builder()
             .name("Good name")
-            .mailDomains(
-                Set.of("some mail domain name", "existing mail domain, other organization"))
+            .mailDomains(Set.of("some mail domain name", "vitagroup.ag, other organization"))
             .build(),
         List.of(Roles.SUPER_ADMIN),
         "approvedUserId");
@@ -180,9 +256,6 @@ public class OrganizationServiceTest {
 
   @Before
   public void setup() {
-    UserDetails notApprovedUser =
-        UserDetails.builder().userId("notApprovedUserId").approved(false).build();
-
     UserDetails approvedUser =
         UserDetails.builder()
             .userId("approvedUserId")
@@ -207,15 +280,32 @@ public class OrganizationServiceTest {
     when(organizationRepository.findById(3L))
         .thenReturn(Optional.of(Organization.builder().id(3L).name("Existing").build()));
 
-    when(mailDomainRepository.findByName("existing mail domain"))
-        .thenReturn(Optional.of(MailDomain.builder().name("existing mail domain").build()));
+    when(mailDomainRepository.findByName("vitagroup.ag"))
+        .thenReturn(Optional.of(MailDomain.builder().name("vitagroup.ag").build()));
+  }
 
-    when(mailDomainRepository.findByName("existing mail domain, other organization"))
-        .thenReturn(
-            Optional.of(
-                MailDomain.builder()
-                    .name("existing mail domain, other organization")
-                    .organization(Organization.builder().id(123L).build())
-                    .build()));
+  private List<MailDomain> createMailDomainsList() {
+    List<MailDomain> mailDomains = new LinkedList<>();
+
+    Organization orgc = Organization.builder().name("C").build();
+    orgc.setDomains(
+        Set.of(MailDomain.builder().organization(orgc).name("*.c.example.com").build()));
+
+    Organization orga = Organization.builder().name("A").build();
+    orga.setDomains(
+        Set.of(MailDomain.builder().organization(orga).name("*.b.c.example.com").build()));
+
+    Organization orgb = Organization.builder().name("B").build();
+    orgb.setDomains(
+        Set.of(
+            MailDomain.builder().organization(orgb).name("*.a.b.c.example.com").build(),
+            MailDomain.builder().organization(orgb).name("c.example.com").build(),
+            MailDomain.builder().organization(orgb).name("*.example.com").build()));
+
+    mailDomains.addAll(orgc.getDomains());
+    mailDomains.addAll(orgb.getDomains());
+    mailDomains.addAll(orga.getDomains());
+
+    return mailDomains;
   }
 }
