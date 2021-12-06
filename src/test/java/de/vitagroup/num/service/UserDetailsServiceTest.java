@@ -31,6 +31,8 @@ public class UserDetailsServiceTest {
 
   @Mock private NotificationService notificationService;
 
+  @Mock private OrganizationService organizationService;
+
   @InjectMocks UserDetailsService userDetailsService;
 
   @Before
