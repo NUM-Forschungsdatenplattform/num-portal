@@ -1,11 +1,9 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.MailDomain;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.service.notification.NotificationService;
@@ -20,7 +18,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -28,11 +25,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserDetailsService {
 
-  public static final String DOMAIN_SEPARATOR = "@";
-
   private UserDetailsRepository userDetailsRepository;
   private OrganizationRepository organizationRepository;
-  private MailDomainRepository mailDomainRepository;
+  private OrganizationService organizationService;
   private NotificationService notificationService;
   private UserService userService;
 
@@ -41,11 +36,11 @@ public class UserDetailsService {
       @Lazy UserService userService,
       UserDetailsRepository userDetailsRepository,
       OrganizationRepository organizationRepository,
-      MailDomainRepository mailDomainRepository,
+      @Lazy OrganizationService organizationService,
       NotificationService notificationService) {
     this.userService = userService;
     this.notificationService = notificationService;
-    this.mailDomainRepository = mailDomainRepository;
+    this.organizationService = organizationService;
     this.organizationRepository = organizationRepository;
     this.userDetailsRepository = userDetailsRepository;
   }
@@ -64,7 +59,9 @@ public class UserDetailsService {
       return userDetails.get();
     } else {
       UserDetails newUserDetails = UserDetails.builder().userId(userId).build();
-      resolveOrganization(emailAddress).ifPresent(newUserDetails::setOrganization);
+      organizationService
+          .resolveOrganization(emailAddress)
+          .ifPresent(newUserDetails::setOrganization);
       UserDetails saved = userDetailsRepository.save(newUserDetails);
 
       if (saved.getOrganization() != null) {
@@ -122,15 +119,6 @@ public class UserDetailsService {
     }
 
     return user;
-  }
-
-  private Optional<Organization> resolveOrganization(String email) {
-    if (StringUtils.isBlank(email) || !email.contains(DOMAIN_SEPARATOR)) {
-      return Optional.empty();
-    }
-    String domain = email.split("\\" + DOMAIN_SEPARATOR)[1];
-    Optional<MailDomain> mailDomain = mailDomainRepository.findByName(domain.toLowerCase());
-    return mailDomain.map(MailDomain::getOrganization);
   }
 
   private List<Notification> collectUserNotifications(String userId) {
