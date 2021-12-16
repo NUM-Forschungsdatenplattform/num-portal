@@ -1,21 +1,31 @@
 package de.vitagroup.num.service;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
+import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
+import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.feign.KeycloakFeign;
+import java.util.List;
 import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -32,6 +42,10 @@ public class UserDetailsServiceTest {
   @Mock private NotificationService notificationService;
 
   @Mock private OrganizationService organizationService;
+
+  @Mock private OrganizationRepository organizationRepository;
+
+  @Captor ArgumentCaptor<List<Notification>> notificationCaptor;
 
   @InjectMocks UserDetailsService userDetailsService;
 
@@ -72,5 +86,48 @@ public class UserDetailsServiceTest {
   @Test(expected = ResourceNotFound.class)
   public void shouldHandleMissingUserWhenSettingOrganization() {
     userDetailsService.setOrganization("existingUserId", "nonExistingUserId", any());
+  }
+
+  @Test
+  public void shouldSendNotificationWhenSettingOrganization() {
+    when(userDetailsRepository.findByUserId("1"))
+        .thenReturn(Optional.of(UserDetails.builder().userId("1").approved(true).build()));
+    when(userDetailsRepository.findByUserId("2"))
+        .thenReturn(Optional.of(UserDetails.builder().userId("2").approved(true).build()));
+
+    when(organizationRepository.findById(3L))
+        .thenReturn(Optional.of(Organization.builder().id(3L).name("Organization A").build()));
+
+    when(userService.getUserById("1", false)).thenReturn(User.builder().id("1").build());
+    when(userService.getUserById("2", false)).thenReturn(User.builder().id("2").build());
+
+    userDetailsService.setOrganization("1", "2", 3L);
+
+    verify(userDetailsRepository, times(1)).save(any());
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(OrganizationUpdateNotification.class));
+  }
+
+  @Test
+  public void shouldSendNotificationWhenApprovingUser() {
+    when(userDetailsRepository.findByUserId("1"))
+        .thenReturn(Optional.of(UserDetails.builder().userId("1").approved(true).build()));
+    when(userDetailsRepository.findByUserId("2"))
+        .thenReturn(Optional.of(UserDetails.builder().userId("2").approved(true).build()));
+
+    when(userService.getUserById("1", false)).thenReturn(User.builder().id("1").build());
+    when(userService.getUserById("2", false)).thenReturn(User.builder().id("2").build());
+
+    userDetailsService.approveUser("1", "2");
+
+    verify(userDetailsRepository, times(1)).save(any());
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(AccountApprovalNotification.class));
   }
 }
