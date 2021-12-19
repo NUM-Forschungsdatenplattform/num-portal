@@ -11,6 +11,7 @@ import de.vitagroup.num.properties.NumProperties;
 import de.vitagroup.num.service.email.EmailService;
 import de.vitagroup.num.service.email.MessageSourceWrapper;
 import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.ProjectApprovalRequestNotification;
 import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStatusChangeNotification;
@@ -47,9 +48,28 @@ public class NotificationServiceTest {
         List.of(
             ProjectStartNotification.builder().recipientEmail("john.doe@vita.ag").build(),
             ProjectCloseNotification.builder().recipientEmail("jane.doe@vita.ag").build(),
-            ProjectStatusChangeNotification.builder().recipientEmail("anne.doe@vita.ag").build()));
+            ProjectStatusChangeNotification.builder().recipientEmail("anne.doe@vita.ag").build(),
+            ProjectApprovalRequestNotification.builder()
+                .recipientEmail("ann.doe@vita.ag")
+                .build()));
 
-    verify(emailService, times(3)).sendEmail(anyString(), anyString(), anyString());
+    verify(emailService, times(4)).sendEmail(anyString(), anyString(), anyString());
+  }
+
+  @Test
+  public void shouldNotSendEmailsWhenRecipientMissing() {
+    when((numProperties.getUrl())).thenReturn("Portal url");
+
+    notificationService.send(
+        List.of(
+            ProjectStartNotification.builder().build(),
+            ProjectCloseNotification.builder().build(),
+            ProjectStatusChangeNotification.builder().build(),
+            ProjectApprovalRequestNotification.builder()
+                .recipientEmail("ann.doe@vita.ag")
+                .build()));
+
+    verify(emailService, times(1)).sendEmail(anyString(), anyString(), anyString());
   }
 
   @Test

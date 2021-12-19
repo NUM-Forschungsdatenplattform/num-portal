@@ -1008,14 +1008,50 @@ public class ProjectServiceTest {
     assertThat(notificationSent.get(0).getClass(), is(ProjectCloseNotification.class));
   }
 
+  @Test
+  public void shouldSendNotificationWhenClosingProject() {
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .id(77L)
+            .status(ProjectStatus.PUBLISHED)
+            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .researchers(
+                List.of(
+                    UserDetails.builder().userId("researcher1").build(),
+                    UserDetails.builder().userId("researcher2").build()))
+            .build();
+
+    when(projectRepository.findById(77L)).thenReturn(Optional.of(projectToEdit));
+
+    ProjectDto projectDto =
+        ProjectDto.builder()
+            .name("Project is edited")
+            .id(77L)
+            .status(ProjectStatus.CLOSED)
+            .coordinator(User.builder().id("approvedCoordinatorId").build())
+            .researchers(List.of(UserDetailsDto.builder().userId("researcher1").build()))
+            .build();
+
+    projectService.updateProject(
+        projectDto,
+        77L,
+        "approvedCoordinatorId",
+        List.of(STUDY_COORDINATOR, STUDY_APPROVER, RESEARCHER));
+
+    verify(projectRepository, times(1)).save(any());
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(2));
+    assertThat(notificationSent.get(0).getClass(), is(ProjectCloseNotification.class));
+  }
+
   @Before
   public void setup() {
     when(userDetailsService.getUserDetailsById("researcher1"))
         .thenReturn(
             Optional.of(UserDetails.builder().userId("researcher1").approved(true).build()));
-    //    when(userDetailsService.getUserDetailsById("researcher2"))
-    //        .thenReturn(
-    //            Optional.of(UserDetails.builder().userId("researcher2").approved(true).build()));
 
     when(userService.getUserById("researcher2", false))
         .thenReturn(
