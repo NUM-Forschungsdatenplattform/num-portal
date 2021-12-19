@@ -32,6 +32,9 @@ import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -103,47 +106,35 @@ public class ProjectServiceTest {
   private static final String QUERY_5 =
       "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, c1 as openEHR_EHR_COMPOSITION_report_v1 FROM EHR e contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c2[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
 
-  @Captor
-  ArgumentCaptor<AqlDto> aqlDtoArgumentCaptor;
+  @Captor ArgumentCaptor<AqlDto> aqlDtoArgumentCaptor;
 
-  @Mock
-  private ProjectRepository projectRepository;
+  @Mock private ProjectRepository projectRepository;
 
-  @Mock
-  private UserDetailsService userDetailsService;
+  @Mock private UserDetailsService userDetailsService;
 
-  @Mock
-  private CohortService cohortService;
+  @Mock private CohortService cohortService;
 
-  @Mock
-  private EhrBaseService ehrBaseService;
+  @Mock private EhrBaseService ehrBaseService;
 
-  @Mock
-  private AtnaService atnaService;
+  @Mock private AtnaService atnaService;
 
-  @Mock
-  private NotificationService notificationService;
+  @Mock private NotificationService notificationService;
 
-  @Mock
-  private PrivacyProperties privacyProperties;
+  @Mock private PrivacyProperties privacyProperties;
 
-  @Mock
-  private UserService userService;
+  @Mock private UserService userService;
 
-  @Spy
-  private ResponseFilter responseFilter;
+  @Spy private ResponseFilter responseFilter;
 
-  @Spy
-  private ProjectPolicyService projectPolicyService;
+  @Spy private ProjectPolicyService projectPolicyService;
 
-  @Spy
-  private ObjectMapper mapper;
+  @Spy private ObjectMapper mapper;
 
-  @InjectMocks
-  private ProjectService projectService;
+  @InjectMocks private ProjectService projectService;
 
-  @Spy
-  private AqlEditorAqlService aqlEditorAqlService;
+  @Spy private AqlEditorAqlService aqlEditorAqlService;
+
+  @Captor ArgumentCaptor<List<Notification>> notificationCaptor;
 
   @Ignore(
       value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/217 is fixed")
@@ -426,9 +417,12 @@ public class ProjectServiceTest {
     roles.add(Roles.STUDY_COORDINATOR);
     projectService.getProjects("coordinatorId", roles);
 
-    verify(projectRepository, times(1)).findByCoordinatorUserIdOrStatusIn("coordinatorId",
-        new ProjectStatus[]{ProjectStatus.APPROVED, ProjectStatus.PUBLISHED,
-            ProjectStatus.CLOSED});
+    verify(projectRepository, times(1))
+        .findByCoordinatorUserIdOrStatusIn(
+            "coordinatorId",
+            new ProjectStatus[] {
+              ProjectStatus.APPROVED, ProjectStatus.PUBLISHED, ProjectStatus.CLOSED
+            });
     verify(projectRepository, times(0)).findAll();
   }
 
@@ -933,8 +927,114 @@ public class ProjectServiceTest {
     assertThat(result, is("[]"));
   }
 
+  @Test
+  public void shouldSendNotificationWhenProjectStarts() {
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .id(66L)
+            .status(ProjectStatus.APPROVED)
+            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .researchers(
+                List.of(
+                    UserDetails.builder().userId("researcher1").build(),
+                    UserDetails.builder().userId("researcher2").build()))
+            .build();
+
+    when(projectRepository.findById(66L)).thenReturn(Optional.of(projectToEdit));
+
+    ProjectDto projectDto =
+        ProjectDto.builder()
+            .name("Project is edited")
+            .id(66L)
+            .status(ProjectStatus.PUBLISHED)
+            .coordinator(User.builder().id("approvedCoordinatorId").build())
+            .researchers(
+                List.of(
+                    UserDetailsDto.builder().userId("researcher1").build(),
+                    UserDetailsDto.builder().userId("researcher1").build()))
+            .build();
+
+    projectService.updateProject(
+        projectDto,
+        66L,
+        "approvedCoordinatorId",
+        List.of(STUDY_COORDINATOR, STUDY_APPROVER, RESEARCHER));
+
+    verify(projectRepository, times(1)).save(any());
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(2));
+    assertThat(notificationSent.get(0).getClass(), is(ProjectStartNotification.class));
+  }
+
+  @Test
+  public void shouldSendNotificationWhenRemovingResearchers() {
+    Project projectToEdit =
+        Project.builder()
+            .name("Project")
+            .id(66L)
+            .status(ProjectStatus.PUBLISHED)
+            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .researchers(
+                List.of(
+                    UserDetails.builder().userId("researcher1").build(),
+                    UserDetails.builder().userId("researcher2").build()))
+            .build();
+
+    when(projectRepository.findById(66L)).thenReturn(Optional.of(projectToEdit));
+
+    ProjectDto projectDto =
+        ProjectDto.builder()
+            .name("Project is edited")
+            .id(66L)
+            .status(ProjectStatus.PUBLISHED)
+            .coordinator(User.builder().id("approvedCoordinatorId").build())
+            .researchers(List.of(UserDetailsDto.builder().userId("researcher1").build()))
+            .build();
+
+    projectService.updateProject(
+        projectDto,
+        66L,
+        "approvedCoordinatorId",
+        List.of(STUDY_COORDINATOR, STUDY_APPROVER, RESEARCHER));
+
+    verify(projectRepository, times(1)).save(any());
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(ProjectCloseNotification.class));
+  }
+
   @Before
   public void setup() {
+    when(userDetailsService.getUserDetailsById("researcher1"))
+        .thenReturn(
+            Optional.of(UserDetails.builder().userId("researcher1").approved(true).build()));
+    //    when(userDetailsService.getUserDetailsById("researcher2"))
+    //        .thenReturn(
+    //            Optional.of(UserDetails.builder().userId("researcher2").approved(true).build()));
+
+    when(userService.getUserById("researcher2", false))
+        .thenReturn(
+            User.builder()
+                .id("researcher2")
+                .firstName("f2")
+                .lastName("l2")
+                .email("em2@vitagroup.ag")
+                .build());
+
+    when(userService.getUserById("researcher1", false))
+        .thenReturn(
+            User.builder()
+                .id("researcher1")
+                .firstName("f1")
+                .lastName("l1")
+                .email("em1@vitagroup.ag")
+                .build());
+
     UserDetails approvedCoordinator =
         UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
 
