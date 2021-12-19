@@ -4,7 +4,7 @@ import de.vitagroup.num.service.email.MessageSourceWrapper;
 import java.time.Year;
 import lombok.Builder;
 
-public class ProjectRequestNotification extends Notification {
+public class ProjectApprovalRequestNotification extends Notification {
 
   private static final String PROJECT_REQUEST_SUBJECT_KEY = "mail.project-pending-approval.subject";
   private static final String PROJECT_REQUEST_BODY_KEY = "mail.project-pending-approval.body";
@@ -12,15 +12,17 @@ public class ProjectRequestNotification extends Notification {
   private final String coordinatorFirstName;
   private final String coordinatorLastName;
   private final String projectTitle;
+  private final Long projectId;
 
   @Builder
-  public ProjectRequestNotification(
+  public ProjectApprovalRequestNotification(
       String recipientEmail,
       String recipientFirstName,
       String recipientLastName,
       String coordinatorFirstName,
       String coordinatorLastName,
-      String projectTitle) {
+      String projectTitle,
+      Long projectId) {
 
     this.recipientEmail = recipientEmail;
     this.recipientFirstName = recipientFirstName;
@@ -28,6 +30,7 @@ public class ProjectRequestNotification extends Notification {
     this.coordinatorFirstName = coordinatorFirstName;
     this.coordinatorLastName = coordinatorLastName;
     this.projectTitle = projectTitle;
+    this.projectId = projectId;
   }
 
   @Override
@@ -46,6 +49,7 @@ public class ProjectRequestNotification extends Notification {
         coordinatorLastName,
         projectTitle,
         copyright,
-        url);
+        url,
+        getProjectPreviewUrl(url, projectId));
   }
 }

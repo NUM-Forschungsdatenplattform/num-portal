@@ -29,8 +29,9 @@ import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.service.executors.CohortQueryLister;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.ProjectApprovalRequestNotification;
 import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
-import de.vitagroup.num.service.notification.dto.ProjectRequestNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStatusChangeNotification;
 import de.vitagroup.num.service.policy.EhrPolicy;
 import de.vitagroup.num.service.policy.EuropeanConsentPolicy;
@@ -116,8 +117,7 @@ public class ProjectService {
 
   private final ModelMapper modelMapper;
 
-  @Nullable
-  private final ZarsService zarsService;
+  @Nullable private final ZarsService zarsService;
 
   private final ProjectPolicyService projectPolicyService;
 
@@ -364,7 +364,7 @@ public class ProjectService {
     try {
       printer =
           CSVFormat.EXCEL
-              .withHeader(paths.toArray(new String[]{}))
+              .withHeader(paths.toArray(new String[] {}))
               .print(new OutputStreamWriter(zipOutputStream, StandardCharsets.UTF_8));
 
       for (List<Object> row : queryResponseData.getRows()) {
@@ -499,7 +499,7 @@ public class ProjectService {
 
     List<Notification> notifications =
         collectNotifications(
-            savedProject.getName(),
+            savedProject,
             savedProject.getStatus(),
             null,
             savedProject.getCoordinator().getUserId(),
@@ -559,7 +559,7 @@ public class ProjectService {
 
     List<Notification> notifications =
         collectNotifications(
-            savedProject.getName(),
+            savedProject,
             savedProject.getStatus(),
             oldProjectStatus,
             savedProject.getCoordinator().getUserId(),
@@ -595,7 +595,7 @@ public class ProjectService {
 
       List<Notification> notifications =
           collectNotifications(
-              savedProject.getName(),
+              savedProject,
               savedProject.getStatus(),
               oldStatus,
               savedProject.getCoordinator().getUserId(),
@@ -628,7 +628,7 @@ public class ProjectService {
 
     List<Notification> notifications =
         collectNotifications(
-            savedProject.getName(),
+            savedProject,
             savedProject.getStatus(),
             oldStatus,
             savedProject.getCoordinator().getUserId(),
@@ -658,12 +658,12 @@ public class ProjectService {
   }
 
   private List<Notification> collectNotifications(
-      String projectName,
+      Project project,
       ProjectStatus newStatus,
       ProjectStatus oldStatus,
       String coordinatorUserId,
       List<UserDetails> newResearchers,
-      List<UserDetails> oldResearchers,
+      List<UserDetails> currentResearchers,
       String approverUserId) {
 
     List<Notification> notifications = new LinkedList<>();
@@ -675,14 +675,15 @@ public class ProjectService {
 
       approvers.forEach(
           approver -> {
-            ProjectRequestNotification notification =
-                ProjectRequestNotification.builder()
+            ProjectApprovalRequestNotification notification =
+                ProjectApprovalRequestNotification.builder()
                     .coordinatorFirstName(coordinator.getFirstName())
                     .coordinatorLastName(coordinator.getLastName())
-                    .projectTitle(projectName)
+                    .projectTitle(project.getName())
                     .recipientEmail(approver.getEmail())
                     .recipientFirstName(approver.getFirstName())
                     .recipientLastName(approver.getLastName())
+                    .projectId(project.getId())
                     .build();
             notifications.add(notification);
           });
@@ -697,10 +698,12 @@ public class ProjectService {
               .recipientFirstName(coordinator.getFirstName())
               .recipientLastName(coordinator.getLastName())
               .recipientEmail(coordinator.getEmail())
-              .projectTitle(projectName)
+              .projectTitle(project.getName())
               .projectStatus(newStatus)
               .approverFirstName(approver.getFirstName())
               .approverLastName(approver.getLastName())
+              .projectId(project.getId())
+              .oldProjectStatus(oldStatus)
               .build();
       notifications.add(notification);
     }
@@ -709,41 +712,46 @@ public class ProjectService {
       List<String> researcherIds =
           newResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
 
-      createNotification(projectName, notifications, coordinator, researcherIds);
+      createProjectStartedNotifications(project, notifications, coordinator, researcherIds);
     }
 
     if (isTransitionToPublishedFromPublished(oldStatus, newStatus)) {
       List<String> newResearcherIds = new LinkedList<>();
-      List<String> oldResearcherIds = new LinkedList<>();
+      List<String> currentResearchersIds = new LinkedList<>();
       if (newResearchers != null) {
         newResearcherIds =
             newResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
       }
 
-      if (oldResearchers != null) {
-        oldResearcherIds =
-            oldResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
+      if (currentResearchers != null) {
+        currentResearchersIds =
+            currentResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
       }
 
-      oldResearcherIds.removeAll(newResearcherIds);
+      var addedResearchersIds = new ArrayList<>(newResearcherIds);
+      addedResearchersIds.removeAll(currentResearchersIds);
 
-      createNotification(projectName, notifications, coordinator, newResearcherIds);
-      createNotification(projectName, notifications, coordinator, oldResearcherIds);
+      currentResearchersIds.removeAll(newResearcherIds);
+
+      createProjectStartedNotifications(project, notifications, coordinator, addedResearchersIds);
+      createProjectClosedNotifications(
+          project.getName(), notifications, coordinator, currentResearchersIds);
     }
 
     if (ProjectStatus.CLOSED.equals(newStatus)) {
       List<String> researcherIds = new LinkedList<>();
-      if (oldResearchers != null) {
+      if (currentResearchers != null) {
         researcherIds =
-            oldResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
+            currentResearchers.stream().map(UserDetails::getUserId).collect(Collectors.toList());
       }
-      createNotification(projectName, notifications, coordinator, researcherIds);
+      createProjectClosedNotifications(
+          project.getName(), notifications, coordinator, researcherIds);
     }
 
     return notifications;
   }
 
-  private void createNotification(
+  private void createProjectClosedNotifications(
       String projectName,
       List<Notification> notifications,
       User coordinator,
@@ -764,15 +772,37 @@ public class ProjectService {
         });
   }
 
+  private void createProjectStartedNotifications(
+      Project project,
+      List<Notification> notifications,
+      User coordinator,
+      List<String> researcherIds) {
+    researcherIds.forEach(
+        r -> {
+          var researcher = userService.getUserById(r, false);
+          ProjectStartNotification notification =
+              ProjectStartNotification.builder()
+                  .recipientEmail(researcher.getEmail())
+                  .recipientFirstName(researcher.getFirstName())
+                  .recipientLastName(researcher.getLastName())
+                  .coordinatorFirstName(coordinator.getFirstName())
+                  .coordinatorLastName(coordinator.getLastName())
+                  .projectTitle(project.getName())
+                  .projectId(project.getId())
+                  .build();
+          notifications.add(notification);
+        });
+  }
+
   private boolean isTransitionToPending(ProjectStatus oldStatus, ProjectStatus newStatus) {
     return ProjectStatus.PENDING.equals(newStatus) && !newStatus.equals(oldStatus);
   }
 
   private boolean isTransitionMadeByApprover(ProjectStatus oldStatus, ProjectStatus newStatus) {
     return (ProjectStatus.APPROVED.equals(newStatus)
-        || ProjectStatus.DENIED.equals(newStatus)
-        || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
-        || ProjectStatus.REVIEWING.equals(newStatus))
+            || ProjectStatus.DENIED.equals(newStatus)
+            || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
+            || ProjectStatus.REVIEWING.equals(newStatus))
         && !newStatus.equals(oldStatus);
   }
 
@@ -792,12 +822,12 @@ public class ProjectService {
       List<UserDetails> newResearchers) {
     ProjectStatus newStatus = project.getStatus();
     if (((newStatus == ProjectStatus.PENDING
-        || newStatus == ProjectStatus.APPROVED
-        || newStatus == ProjectStatus.PUBLISHED
-        || newStatus == ProjectStatus.CLOSED)
-        && newStatus != oldStatus)
+                || newStatus == ProjectStatus.APPROVED
+                || newStatus == ProjectStatus.PUBLISHED
+                || newStatus == ProjectStatus.CLOSED)
+            && newStatus != oldStatus)
         || (newStatus == ProjectStatus.PUBLISHED
-        && researchersAreDifferent(oldResearchers, newResearchers))) {
+            && researchersAreDifferent(oldResearchers, newResearchers))) {
       registerToZars(project);
     }
   }
@@ -813,14 +843,17 @@ public class ProjectService {
     List<Project> projects = new ArrayList<>();
 
     if (roles.contains(Roles.STUDY_COORDINATOR)) {
-      projects.addAll(projectRepository.findByCoordinatorUserIdOrStatusIn(userId,
-          new ProjectStatus[]{ProjectStatus.APPROVED, ProjectStatus.PUBLISHED,
-              ProjectStatus.CLOSED}));
+      projects.addAll(
+          projectRepository.findByCoordinatorUserIdOrStatusIn(
+              userId,
+              new ProjectStatus[] {
+                ProjectStatus.APPROVED, ProjectStatus.PUBLISHED, ProjectStatus.CLOSED
+              }));
     }
     if (roles.contains(Roles.RESEARCHER)) {
       projects.addAll(
           projectRepository.findByResearchers_UserIdAndStatusIn(
-              userId, new ProjectStatus[]{ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
+              userId, new ProjectStatus[] {ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
       ProjectStatus[] statuses =
@@ -830,7 +863,7 @@ public class ProjectService {
                       projectStatus != ProjectStatus.DRAFT
                           && projectStatus != ProjectStatus.ARCHIVED)
               .collect(Collectors.toList())
-              .toArray(new ProjectStatus[]{});
+              .toArray(new ProjectStatus[] {});
       projects.addAll(projectRepository.findByStatusIn(statuses));
     }
 
@@ -1101,9 +1134,13 @@ public class ProjectService {
 
   public byte[] getInfoDocBytes(Long id, String userId, Locale locale) {
     userDetailsService.checkIsUserApproved(userId);
-    Project project = projectRepository.findById(id).orElseThrow(() -> {
-      throw new BadRequestException("Project not found");
-    });
+    Project project =
+        projectRepository
+            .findById(id)
+            .orElseThrow(
+                () -> {
+                  throw new BadRequestException("Project not found");
+                });
     ProjectDto projectDto = projectMapper.convertToDto(project);
     try {
       return projectDocCreator.getDocBytesOfProject(projectDto, locale);

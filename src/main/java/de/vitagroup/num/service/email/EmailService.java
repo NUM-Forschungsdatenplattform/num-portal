@@ -1,6 +1,10 @@
 package de.vitagroup.num.service.email;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
@@ -30,7 +34,22 @@ public class EmailService {
       helper.setSubject(subject);
       helper.setText(htmlBody, true);
 
-      javaMailSender.send(message);
+      try {
+        String text = new BufferedReader(
+            new InputStreamReader(message.getInputStream(), StandardCharsets.UTF_8))
+            .lines()
+            .collect(Collectors.joining("\n"));
+
+        System.out.println("----------------- EMAIL ----------------------------------------");
+        System.out.println(text);
+        System.out.println("----------------------------------------------------------------");
+
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+
+
+
       log.debug("Message to {} successfully sent", to);
     } catch (MessagingException e) {
       log.error("Sending email to {} failed", to);
