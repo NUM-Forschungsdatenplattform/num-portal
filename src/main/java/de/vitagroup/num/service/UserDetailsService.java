@@ -10,7 +10,8 @@ import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.NewUserWithoutOrganizationNotification;
 import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.UserUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
+import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
@@ -18,10 +19,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class UserDetailsService {
 
@@ -86,10 +89,19 @@ public class UserDetailsService {
             .findById(organizationId)
             .orElseThrow(() -> new ResourceNotFound("Organization not found:" + organizationId));
 
+    String formerOrganizationName =
+        userDetails.getOrganization() != null ? userDetails.getOrganization().getName() : "-";
+
     userDetails.setOrganization(organization);
     UserDetails saved = userDetailsRepository.save(userDetails);
 
-    notificationService.send(collectOrganizationAdminNotifications(userId));
+    List<Notification> notifications = new LinkedList<>();
+    notifications.addAll(collectOrganizationAdminNotifications(userId));
+    notifications.addAll(
+        collectOrganizationUpdateNotification(
+            userId, loggedInUserId, organization.getName(), formerOrganizationName));
+
+    notificationService.send(notifications);
 
     return saved;
   }
@@ -105,7 +117,7 @@ public class UserDetailsService {
     userDetails.setApproved(true);
     UserDetails saved = userDetailsRepository.save(userDetails);
 
-    notificationService.send(collectUserNotifications(userId));
+    notificationService.send(collectAccountApprovalNotification(userId, loggedInUserId));
 
     return saved;
   }
@@ -121,19 +133,53 @@ public class UserDetailsService {
     return user;
   }
 
-  private List<Notification> collectUserNotifications(String userId) {
+  private List<Notification> collectAccountApprovalNotification(
+      String userId, String loggedInUserId) {
     List<Notification> notifications = new LinkedList<>();
     User user = userService.getUserById(userId, false);
+    User admin = userService.getUserById(loggedInUserId, false);
 
-    UserUpdateNotification not =
-        UserUpdateNotification.builder()
-            .recipientEmail(user.getEmail())
-            .recipientFirstName(user.getFirstName())
-            .recipientLastName(user.getLastName())
-            .build();
+    if (user != null && admin != null) {
+      AccountApprovalNotification not =
+          AccountApprovalNotification.builder()
+              .recipientEmail(user.getEmail())
+              .recipientFirstName(user.getFirstName())
+              .recipientLastName(user.getLastName())
+              .adminEmail(admin.getEmail())
+              .adminFullName(String.format("%s %s", admin.getFirstName(), admin.getLastName()))
+              .build();
 
-    notifications.add(not);
+      notifications.add(not);
+    } else {
+      log.warn("Could not create account approval email notification.");
+    }
 
+    return notifications;
+  }
+
+  private List<Notification> collectOrganizationUpdateNotification(
+      String userId, String loggedInUserId, String organization, String formerOrganization) {
+    List<Notification> notifications = new LinkedList<>();
+
+    User user = userService.getUserById(userId, false);
+    User admin = userService.getUserById(loggedInUserId, false);
+
+    if (user != null && admin != null) {
+      OrganizationUpdateNotification not =
+          OrganizationUpdateNotification.builder()
+              .recipientEmail(user.getEmail())
+              .recipientFirstName(user.getFirstName())
+              .recipientLastName(user.getLastName())
+              .adminEmail(admin.getEmail())
+              .adminFullName(String.format("%s %s", admin.getFirstName(), admin.getLastName()))
+              .organization(organization)
+              .formerOrganization(formerOrganization)
+              .build();
+
+      notifications.add(not);
+    } else {
+      log.warn("Could not create organization update email notification.");
+    }
     return notifications;
   }
 

@@ -58,6 +58,9 @@ public class AqlMapperTest {
             .name("name")
             .use("use")
             .purpose("purpose")
+            .nameTranslated("name - de")
+            .useTranslated("use - de")
+            .purposeTranslated("purpose -de ")
             .publicAql(false)
             .owner(
                 UserDetails.builder()
@@ -79,6 +82,9 @@ public class AqlMapperTest {
     assertThat(dto.getName(), is(aql.getName()));
     assertThat(dto.getUse(), is(aql.getUse()));
     assertThat(dto.getPurpose(), is(aql.getPurpose()));
+    assertThat(dto.getNameTranslated(), is(aql.getNameTranslated()));
+    assertThat(dto.getUseTranslated(), is(aql.getUseTranslated()));
+    assertThat(dto.getPurposeTranslated(), is(aql.getPurposeTranslated()));
     assertThat(dto.getCreateDate(), is(aql.getCreateDate()));
     assertThat(dto.getModifiedDate(), is(aql.getModifiedDate()));
     assertThat(dto.isPublicAql(), is(aql.isPublicAql()));
@@ -91,6 +97,9 @@ public class AqlMapperTest {
             .name("name")
             .use("use")
             .purpose("purpose")
+            .nameTranslated("name - de")
+            .useTranslated("use - de")
+            .purposeTranslated("purpose -de ")
             .publicAql(false)
             .createDate(OffsetDateTime.now())
             .modifiedDate(OffsetDateTime.now())
@@ -103,6 +112,9 @@ public class AqlMapperTest {
     assertThat(aql.getName(), is(dto.getName()));
     assertThat(aql.getUse(), is(dto.getUse()));
     assertThat(aql.getPurpose(), is(dto.getPurpose()));
+    assertThat(aql.getNameTranslated(), is(dto.getNameTranslated()));
+    assertThat(aql.getUseTranslated(), is(dto.getUseTranslated()));
+    assertThat(aql.getPurposeTranslated(), is(dto.getPurposeTranslated()));
     assertThat(aql.getCreateDate(), is(dto.getCreateDate()));
     assertThat(aql.getModifiedDate(), is(dto.getModifiedDate()));
     assertThat(aql.isPublicAql(), is(dto.isPublicAql()));

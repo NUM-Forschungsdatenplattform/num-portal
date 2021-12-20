@@ -15,6 +15,9 @@ public abstract class Notification {
   protected String recipientFirstName;
   protected String recipientLastName;
 
+  protected String adminEmail;
+  protected String adminFullName;
+
   public String getNotificationRecipient() {
     return recipientEmail;
   }

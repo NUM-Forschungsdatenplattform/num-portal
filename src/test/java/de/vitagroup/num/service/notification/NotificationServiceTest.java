@@ -15,6 +15,8 @@ import de.vitagroup.num.service.notification.dto.ProjectApprovalRequestNotificat
 import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStatusChangeNotification;
+import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
+import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +40,19 @@ public class NotificationServiceTest {
   public void setUp() {
     when((messageSource.getMessage(any()))).thenReturn("Any content");
     when((messageSource.getMessage(anyString(), any()))).thenReturn("Any content");
+    when((messageSource.getMessage(any(), any(), any(), any(), any(), any(),any()))).thenReturn("Any content");
+  }
+
+  @Test
+  public void shouldSendOneEmailPerNotification() {
+    when((numProperties.getUrl())).thenReturn("Portal url");
+
+    notificationService.send(
+        List.of(
+            AccountApprovalNotification.builder().recipientEmail("john.doe@vita.ag").build(),
+            UserNameUpdateNotification.builder().recipientEmail("jane.doe@vita.ag").build()));
+
+    verify(emailService, times(2)).sendEmail(anyString(), anyString(), anyString());
   }
 
   @Test
