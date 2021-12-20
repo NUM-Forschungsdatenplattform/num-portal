@@ -8,7 +8,7 @@ import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.account.ProfileUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -295,15 +295,15 @@ public class UserService {
     return users;
   }
 
-  private List<Notification> collectProfileUpdateNotification(
+  private List<Notification> collectUserNameUpdateNotification(
       String userId, String loggedInUserId) {
     List<Notification> notifications = new LinkedList<>();
     User user = getUserById(userId, false);
     User admin = getUserById(loggedInUserId, false);
 
     if (user != null && admin != null) {
-      ProfileUpdateNotification not =
-          ProfileUpdateNotification.builder()
+      UserNameUpdateNotification not =
+          UserNameUpdateNotification.builder()
               .recipientEmail(user.getEmail())
               .recipientFirstName(user.getFirstName())
               .recipientLastName(user.getLastName())
@@ -425,7 +425,7 @@ public class UserService {
           "Can only change own name, org admin names of the people in the organization and superuser all names.");
     }
 
-    notificationService.send(collectProfileUpdateNotification(userIdToChange, loggedInUserId));
+    notificationService.send(collectUserNameUpdateNotification(userIdToChange, loggedInUserId));
   }
 
   private void updateName(String userId, UserNameDto userNameDto) {

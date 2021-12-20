@@ -5,13 +5,13 @@ import de.vitagroup.num.service.notification.dto.Notification;
 import java.time.Year;
 import lombok.Builder;
 
-public class ProfileUpdateNotification extends Notification {
+public class UserNameUpdateNotification extends Notification {
 
   private static final String PROFILE_UPDATE_SUBJECT = "mail.user-profile-update.subject";
   private static final String PROFILE_UPDATE_BODY = "mail.user-profile-update.body";
 
   @Builder
-  public ProfileUpdateNotification(
+  public UserNameUpdateNotification(
       String recipientEmail,
       String recipientFirstName,
       String recipientLastName,

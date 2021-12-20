@@ -10,7 +10,7 @@ import de.vitagroup.num.properties.NumProperties;
 import de.vitagroup.num.service.email.EmailService;
 import de.vitagroup.num.service.email.MessageSourceWrapper;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
-import de.vitagroup.num.service.notification.dto.account.ProfileUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +44,7 @@ public class NotificationServiceTest {
     notificationService.send(
         List.of(
             AccountApprovalNotification.builder().recipientEmail("john.doe@vita.ag").build(),
-            ProfileUpdateNotification.builder().recipientEmail("jane.doe@vita.ag").build()));
+            UserNameUpdateNotification.builder().recipientEmail("jane.doe@vita.ag").build()));
 
     verify(emailService, times(2)).sendEmail(anyString(), anyString(), anyString());
   }
