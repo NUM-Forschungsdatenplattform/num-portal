@@ -12,6 +12,7 @@ public class ProjectStartNotification extends Notification {
   private final String coordinatorFirstName;
   private final String coordinatorLastName;
   private final String projectTitle;
+  private final long projectId;
 
   @Builder
   public ProjectStartNotification(
@@ -20,7 +21,8 @@ public class ProjectStartNotification extends Notification {
       String recipientLastName,
       String coordinatorFirstName,
       String coordinatorLastName,
-      String projectTitle) {
+      String projectTitle,
+      long projectId) {
 
     this.recipientEmail = recipientEmail;
     this.recipientFirstName = recipientFirstName;
@@ -28,6 +30,7 @@ public class ProjectStartNotification extends Notification {
     this.coordinatorFirstName = coordinatorFirstName;
     this.coordinatorLastName = coordinatorLastName;
     this.projectTitle = projectTitle;
+    this.projectId = projectId;
   }
 
   @Override
@@ -46,6 +49,7 @@ public class ProjectStartNotification extends Notification {
         coordinatorLastName,
         projectTitle,
         copyright,
-        url);
+        url,
+        getProjectExplorerUrl(url, projectId));
   }
 }
