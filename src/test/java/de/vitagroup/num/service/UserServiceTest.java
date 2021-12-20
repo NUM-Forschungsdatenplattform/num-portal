@@ -25,8 +25,8 @@ import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.account.ProfileUpdateNotification;
 import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -420,7 +420,7 @@ public class UserServiceTest {
     List<Notification> notificationSent = notificationCaptor.getValue();
 
     assertThat(notificationSent.size(), is(1));
-    assertThat(notificationSent.get(0).getClass(), is(ProfileUpdateNotification.class));
+    assertThat(notificationSent.get(0).getClass(), is(UserNameUpdateNotification.class));
   }
 
   @Test(expected = ForbiddenException.class)
@@ -443,7 +443,7 @@ public class UserServiceTest {
     List<Notification> notificationSent = notificationCaptor.getValue();
 
     assertThat(notificationSent.size(), is(1));
-    assertThat(notificationSent.get(0).getClass(), is(ProfileUpdateNotification.class));
+    assertThat(notificationSent.get(0).getClass(), is(UserNameUpdateNotification.class));
   }
 
   @Test(expected = ForbiddenException.class)
