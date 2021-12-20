@@ -103,8 +103,11 @@ public class AqlService {
     }
 
     aqlToEdit.setName(aql.getName());
+    aqlToEdit.setNameTranslated(aql.getNameTranslated());
     aqlToEdit.setPurpose(aql.getPurpose());
+    aqlToEdit.setPurposeTranslated(aql.getPurposeTranslated());
     aqlToEdit.setUse(aql.getUse());
+    aqlToEdit.setUseTranslated(aql.getUseTranslated());
     aqlToEdit.setModifiedDate(OffsetDateTime.now());
     aqlToEdit.setQuery(aql.getQuery());
     aqlToEdit.setPublicAql(aql.isPublicAql());
