@@ -8,7 +8,8 @@ import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.UserUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -135,7 +136,7 @@ public class UserService {
   /**
    * Assigns roles to a particular user
    *
-   * @param userId    the user to update roles of
+   * @param userId the user to update roles of
    * @param roleNames The list of roles of the user
    */
   public List<String> setUserRoles(
@@ -154,26 +155,28 @@ public class UserService {
     if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)
         && !callerRoles.contains(Roles.SUPER_ADMIN)
         && !callerDetails
-        .getOrganization()
-        .getId()
-        .equals(userToChange.getOrganization().getId())) {
+            .getOrganization()
+            .getId()
+            .equals(userToChange.getOrganization().getId())) {
       throw new ForbiddenException(
-          "Organization admin can only manage users in the own organization.");
+          "Organization admin can only manage users in their own organization.");
     }
 
+    Role[] removeRoles;
+    Role[] addRoles;
     try {
       Map<String, Role> supportedRoles =
           keycloakFeign.getRoles().stream().collect(Collectors.toMap(Role::getName, role -> role));
 
       Set<Role> existingRoles = keycloakFeign.getRolesOfUser(userId);
 
-      Role[] removeRoles =
+      removeRoles =
           existingRoles.stream()
               .filter(role -> !roleNames.contains(role.getName()))
               .collect(Collectors.toList())
-              .toArray(new Role[]{});
+              .toArray(new Role[] {});
 
-      Role[] addRoles =
+      addRoles =
           roleNames.stream()
               .filter(
                   role -> existingRoles.stream().noneMatch(role1 -> role1.getName().equals(role)))
@@ -185,7 +188,7 @@ public class UserService {
                     }
                   })
               .collect(Collectors.toList())
-              .toArray(new Role[]{});
+              .toArray(new Role[] {});
 
       if (Arrays.stream(removeRoles)
           .anyMatch(role -> !Roles.isAllowedToSet(role.getName(), callerRoles))) {
@@ -195,6 +198,7 @@ public class UserService {
           .anyMatch(role -> !Roles.isAllowedToSet(role.getName(), callerRoles))) {
         throw new ForbiddenException("Not allowed to set that role");
       }
+
       if (removeRoles.length > 0) {
         keycloakFeign.removeRoles(userId, removeRoles);
       }
@@ -203,14 +207,17 @@ public class UserService {
         keycloakFeign.addRoles(userId, addRoles);
       }
 
-      notificationService.send(collectNotification(userId));
-
-      return roleNames;
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
       throw new SystemException("An error has occurred, please try again later");
     } catch (FeignException.NotFound e) {
       throw new ResourceNotFound("Role or user not found");
     }
+
+    Set<Role> current = keycloakFeign.getRolesOfUser(userId);
+
+    notificationService.send(
+        collectRolesUpdateNotification(userId, callerUserId, addRoles, removeRoles, current));
+    return roleNames;
   }
 
   private Set<Role> getUserRoles(String userId) {
@@ -248,8 +255,8 @@ public class UserService {
   /**
    * Retrieved a list of users that match the search criteria
    *
-   * @param approved  Indicates that the user has been approved by the admin
-   * @param search    A string contained in username, first or last name, or email
+   * @param approved Indicates that the user has been approved by the admin
+   * @param search A string contained in username, first or last name, or email
    * @param withRoles flag whether to add roles to the user structure, if present, or not
    * @return the users that match the search parameters and with optional roles if indicated
    */
@@ -288,18 +295,57 @@ public class UserService {
     return users;
   }
 
-  private List<Notification> collectNotification(String userId) {
+  private List<Notification> collectUserNameUpdateNotification(
+      String userId, String loggedInUserId) {
     List<Notification> notifications = new LinkedList<>();
     User user = getUserById(userId, false);
+    User admin = getUserById(loggedInUserId, false);
 
-    UserUpdateNotification notification =
-        UserUpdateNotification.builder()
-            .recipientEmail(user.getEmail())
-            .recipientFirstName(user.getFirstName())
-            .recipientLastName(user.getLastName())
-            .build();
+    if (user != null && admin != null) {
+      UserNameUpdateNotification not =
+          UserNameUpdateNotification.builder()
+              .recipientEmail(user.getEmail())
+              .recipientFirstName(user.getFirstName())
+              .recipientLastName(user.getLastName())
+              .adminEmail(admin.getEmail())
+              .adminFullName(String.format("%s %s", admin.getFirstName(), admin.getLastName()))
+              .build();
 
-    notifications.add(notification);
+      notifications.add(not);
+    } else {
+      log.warn("Could not create profile update email notification.");
+    }
+
+    return notifications;
+  }
+
+  private List<Notification> collectRolesUpdateNotification(
+      String userId,
+      String loggedInUserId,
+      Role[] rolesAdded,
+      Role[] rolesRemoved,
+      Set<Role> allRoles) {
+
+    List<Notification> notifications = new LinkedList<>();
+    User user = getUserById(userId, false);
+    User admin = getUserById(loggedInUserId, false);
+
+    if (user != null && admin != null) {
+      RolesUpdateNotification notification =
+          RolesUpdateNotification.builder()
+              .recipientEmail(user.getEmail())
+              .recipientFirstName(user.getFirstName())
+              .recipientLastName(user.getLastName())
+              .adminEmail(admin.getEmail())
+              .adminFullName(String.format("%s %s", admin.getFirstName(), admin.getLastName()))
+              .rolesRemoved(
+                  Arrays.stream(rolesRemoved).map(Role::getName).collect(Collectors.toList()))
+              .rolesAdded(Arrays.stream(rolesAdded).map(Role::getName).collect(Collectors.toList()))
+              .allRoles(allRoles.stream().map(Role::getName).collect(Collectors.toList()))
+              .build();
+
+      notifications.add(notification);
+    }
 
     return notifications;
   }
@@ -350,9 +396,7 @@ public class UserService {
     }
   }
 
-  /**
-   * Evicts users cache every 8 hours
-   */
+  /** Evicts users cache every 8 hours */
   @Scheduled(fixedRate = 28800000)
   public void evictParametersCache() {
     var cache = cacheManager.getCache(USERS_CACHE);
@@ -362,33 +406,47 @@ public class UserService {
     }
   }
 
-  public void changeUserName(@NotNull String userIdToChange,
-      @NotNull UserNameDto userName, @NotNull String loggedInUserId, List<String> roles) {
+  public void changeUserName(
+      @NotNull String userIdToChange,
+      @NotNull UserNameDto userName,
+      @NotNull String loggedInUserId,
+      List<String> roles) {
+
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
     UserDetails userToChange = userDetailsService.checkIsUserApproved(userIdToChange);
-    if (Objects.equals(loggedInUser.getUserId(), userToChange.getUserId()) || roles.contains(
-        Roles.SUPER_ADMIN)) {
-      loadAndUpdateName(userIdToChange, userName);
-      return;
+
+    if (Roles.isSuperAdmin(roles)
+        || isSelf(loggedInUser, userToChange)
+        || (Roles.isOrganizationAdmin(roles)
+            && belongToSameOrganization(loggedInUser, userToChange))) {
+      updateName(userIdToChange, userName);
+    } else {
+      throw new ForbiddenException(
+          "Can only change own name, org admin names of the people in the organization and superuser all names.");
     }
 
-    if (roles.contains(Roles.ORGANIZATION_ADMIN) && loggedInUser.getOrganization() != null &&
-        userToChange.getOrganization() != null && loggedInUser.getOrganization().getId()
-        .equals(userToChange.getOrganization().getId())) {
-      loadAndUpdateName(userIdToChange, userName);
-      return;
-    }
-    throw new ForbiddenException(
-        "Can only change own name, org admin names of the people in the organization and superuser all names.");
+    notificationService.send(collectUserNameUpdateNotification(userIdToChange, loggedInUserId));
   }
 
-  private void loadAndUpdateName(String userId, UserNameDto userNameDto){
+  private void updateName(String userId, UserNameDto userNameDto) {
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
-    if(userRaw == null){
+    if (userRaw == null) {
       throw new SystemException("Fetching user from Keycloak failed");
     }
     userRaw.put("firstName", userNameDto.getFirstName());
     userRaw.put("lastName", userNameDto.getLastName());
     keycloakFeign.updateUser(userId, userRaw);
+  }
+
+  private boolean belongToSameOrganization(UserDetails user1, UserDetails user2) {
+    return user1 != null
+        && user2 != null
+        && user1.getOrganization() != null
+        && user2.getOrganization() != null
+        && user1.getOrganization().getId().equals(user2.getOrganization().getId());
+  }
+
+  private boolean isSelf(UserDetails user1, UserDetails user2) {
+    return Objects.equals(user1.getUserId(), user2.getUserId());
   }
 }
