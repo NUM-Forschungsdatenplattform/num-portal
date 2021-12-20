@@ -31,6 +31,15 @@ public class AqlDto {
 
   @ApiModelProperty private String purpose;
 
+  @ApiModelProperty(value = "The name of the aql, translated to a different language")
+  private String nameTranslated;
+
+  @ApiModelProperty(value = "The use of the aql, translated to a different language")
+  private String useTranslated;
+
+  @ApiModelProperty(value = "The purpose of the aql, translated to a different language")
+  private String purposeTranslated;
+
   @ApiModelProperty(required = true, value = "The query string of the aql")
   @NotBlank(message = "AQL query should not be blank")
   @NotNull(message = "AQL query is mandatory")
