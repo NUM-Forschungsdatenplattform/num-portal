@@ -118,6 +118,7 @@ public class UserService {
       throw new SystemException(
           "An error has occurred, cannot retrieve users, please try again later");
     } catch (FeignException.NotFound e) {
+      log.warn("User not found in keycloak: ", userId);
       throw new ResourceNotFound("User not found");
     }
   }
