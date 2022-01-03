@@ -27,17 +27,35 @@ public class AqlDto {
   @NotNull(message = "AQL name is mandatory")
   private String name;
 
-  @ApiModelProperty private String use;
+  @ApiModelProperty(required = true)
+  @NotBlank(message = "AQL use should not be blank")
+  @NotNull(message = "AQL use is mandatory")
+  private String use;
 
-  @ApiModelProperty private String purpose;
+  @ApiModelProperty(required = true)
+  @NotBlank(message = "AQL purpose should not be blank")
+  @NotNull(message = "AQL purpose is mandatory")
+  private String purpose;
 
-  @ApiModelProperty(value = "The name of the aql, translated to a different language")
+  @ApiModelProperty(
+      required = true,
+      value = "The name of the aql, translated to a different language")
+  @NotBlank(message = "AQL translated name should not be blank")
+  @NotNull(message = "AQL translated name is mandatory")
   private String nameTranslated;
 
-  @ApiModelProperty(value = "The use of the aql, translated to a different language")
+  @ApiModelProperty(
+      required = true,
+      value = "The use of the aql, translated to a different language")
+  @NotBlank(message = "AQL translated use should not be blank")
+  @NotNull(message = "AQL translated use is mandatory")
   private String useTranslated;
 
-  @ApiModelProperty(value = "The purpose of the aql, translated to a different language")
+  @ApiModelProperty(
+      required = true,
+      value = "The purpose of the aql, translated to a different language")
+  @NotBlank(message = "AQL translated purpose should not be blank")
+  @NotNull(message = "AQL translated purpose is mandatory")
   private String purposeTranslated;
 
   @ApiModelProperty(required = true, value = "The query string of the aql")
