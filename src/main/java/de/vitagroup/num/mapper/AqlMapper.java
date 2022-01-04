@@ -7,6 +7,7 @@ import de.vitagroup.num.web.exception.ResourceNotFound;
 import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,13 @@ public class AqlMapper {
     modelMapper.getConfiguration().setAmbiguityIgnored(true);
   }
 
+  /**
+   * Converts the aql entity to a dto; translated versions of name, purpose and use are populated at
+   * runtime at conversion in case they are empty or null
+   *
+   * @param aql
+   * @return
+   */
   public AqlDto convertToDto(Aql aql) {
     AqlDto aqlDto = modelMapper.map(aql, AqlDto.class);
 
@@ -33,6 +41,8 @@ public class AqlMapper {
       aqlDto.setOwner(null);
     }
 
+    setDefaultTranslatedFields(aqlDto, aql);
+
     return aqlDto;
   }
 
@@ -40,5 +50,19 @@ public class AqlMapper {
     Aql aql = modelMapper.map(aqlDto, Aql.class);
     aql.setId(null);
     return aql;
+  }
+
+  private void setDefaultTranslatedFields(AqlDto dto, Aql aql) {
+    if (StringUtils.isEmpty(dto.getNameTranslated())) {
+      dto.setNameTranslated(aql.getName());
+    }
+
+    if (StringUtils.isEmpty(dto.getPurposeTranslated())) {
+      dto.setPurposeTranslated(aql.getPurpose());
+    }
+
+    if (StringUtils.isEmpty(dto.getUseTranslated())) {
+      dto.setUseTranslated(aql.getUse());
+    }
   }
 }

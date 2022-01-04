@@ -62,7 +62,17 @@ public class AqlControllerIT extends IntegrationTest {
       roles = {RESEARCHER})
   public void shouldHandleNotApprovedUserWhenSavingAql() {
 
-    Aql aql = Aql.builder().name("t1").query("t3").publicAql(true).build();
+    Aql aql =
+        Aql.builder()
+            .name("t1")
+            .use("use")
+            .purpose("purpose")
+            .nameTranslated("t1_de")
+            .purposeTranslated("purpose_de")
+            .useTranslated("use_de")
+            .query("t3")
+            .publicAql(true)
+            .build();
     String aqlJson = mapper.writeValueAsString(aql);
 
     mockMvc

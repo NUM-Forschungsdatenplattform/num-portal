@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Aql;
@@ -16,10 +15,7 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.service.UserService;
-import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import feign.FeignException.NotFound;
-import feign.Request;
 import java.time.OffsetDateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,6 +50,40 @@ public class AqlMapperTest {
             .build();
 
     when(userService.getOwner("123456")).thenReturn(user);
+  }
+
+  @Test
+  public void shouldFallbackOnDefaultsIfNoTranlations() {
+    Aql aql =
+        Aql.builder()
+            .owner(
+                UserDetails.builder()
+                    .organization(Organization.builder().id(1L).build())
+                    .userId("123456")
+                    .build())
+            .name("name")
+            .use("use")
+            .purpose("purpose")
+            .publicAql(false)
+            .createDate(OffsetDateTime.now())
+            .modifiedDate(OffsetDateTime.now())
+            .build();
+
+    assertThat(aql.getPurposeTranslated(), nullValue());
+    assertThat(aql.getUseTranslated(), nullValue());
+    assertThat(aql.getNameTranslated(), nullValue());
+
+    AqlDto dto = mapper.convertToDto(aql);
+
+    assertThat(dto, notNullValue());
+
+    assertThat(dto.getName(), is(aql.getName()));
+    assertThat(dto.getUse(), is(aql.getUse()));
+    assertThat(dto.getPurpose(), is(aql.getPurpose()));
+
+    assertThat(dto.getNameTranslated(), is(aql.getName()));
+    assertThat(dto.getUseTranslated(), is(aql.getUse()));
+    assertThat(dto.getPurposeTranslated(), is(aql.getPurpose()));
   }
 
   @Test
