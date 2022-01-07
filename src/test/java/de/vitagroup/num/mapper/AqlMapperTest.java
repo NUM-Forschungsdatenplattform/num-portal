@@ -53,40 +53,6 @@ public class AqlMapperTest {
   }
 
   @Test
-  public void shouldFallbackOnDefaultsIfNoTranlations() {
-    Aql aql =
-        Aql.builder()
-            .owner(
-                UserDetails.builder()
-                    .organization(Organization.builder().id(1L).build())
-                    .userId("123456")
-                    .build())
-            .name("name")
-            .use("use")
-            .purpose("purpose")
-            .publicAql(false)
-            .createDate(OffsetDateTime.now())
-            .modifiedDate(OffsetDateTime.now())
-            .build();
-
-    assertThat(aql.getPurposeTranslated(), nullValue());
-    assertThat(aql.getUseTranslated(), nullValue());
-    assertThat(aql.getNameTranslated(), nullValue());
-
-    AqlDto dto = mapper.convertToDto(aql);
-
-    assertThat(dto, notNullValue());
-
-    assertThat(dto.getName(), is(aql.getName()));
-    assertThat(dto.getUse(), is(aql.getUse()));
-    assertThat(dto.getPurpose(), is(aql.getPurpose()));
-
-    assertThat(dto.getNameTranslated(), is(aql.getName()));
-    assertThat(dto.getUseTranslated(), is(aql.getUse()));
-    assertThat(dto.getPurposeTranslated(), is(aql.getPurpose()));
-  }
-
-  @Test
   public void shouldIgnoreMissingAqlOwnerInKeycloak() {
     when(userService.getOwner("missingUserId")).thenThrow(new ResourceNotFound("User not found"));
 
