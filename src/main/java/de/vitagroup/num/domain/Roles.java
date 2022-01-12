@@ -34,7 +34,7 @@ public class Roles {
 
   public static List<String> extractRoles(Jwt principal) {
     Map<String, Object> access = principal.getClaimAsMap(REALM_ACCESS_CLAIM);
-    if(access == null){
+    if (access == null) {
       return new ArrayList<>();
     }
     return (List<String>) access.get(ROLES_CLAIM);
@@ -50,5 +50,13 @@ public class Roles {
 
   public static boolean hasRole(String role, Jwt principal) {
     return extractRoles(principal).contains(role);
+  }
+
+  public static boolean isSuperAdmin(List<String> roles) {
+    return roles.contains(Roles.SUPER_ADMIN);
+  }
+
+  public static boolean isOrganizationAdmin(List<String> roles) {
+    return roles.contains(Roles.ORGANIZATION_ADMIN);
   }
 }

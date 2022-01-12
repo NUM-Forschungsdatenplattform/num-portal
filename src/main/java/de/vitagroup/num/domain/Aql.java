@@ -33,6 +33,12 @@ public class Aql implements Serializable {
 
   private String purpose;
 
+  private String nameTranslated;
+
+  private String useTranslated;
+
+  private String purposeTranslated;
+
   private String query;
 
   private boolean publicAql;

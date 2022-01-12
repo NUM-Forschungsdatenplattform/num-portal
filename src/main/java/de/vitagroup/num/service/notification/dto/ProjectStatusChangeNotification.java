@@ -7,13 +7,16 @@ import lombok.Builder;
 
 public class ProjectStatusChangeNotification extends Notification {
 
-  private static final String PROJECT_STATUS_CHANGE_SUBJECT_KEY = "mail.project-status-change.subject";
+  private static final String PROJECT_STATUS_CHANGE_SUBJECT_KEY =
+      "mail.project-status-change.subject";
   private static final String PROJECT_STATUS_CHANGE_BODY_KEY = "mail.project-status-change.body";
 
   private final String approverFirstName;
   private final String approverLastName;
   private final String projectTitle;
   private final ProjectStatus projectStatus;
+  private final ProjectStatus oldProjectStatus;
+  private final long projectId;
 
   @Builder
   public ProjectStatusChangeNotification(
@@ -23,7 +26,9 @@ public class ProjectStatusChangeNotification extends Notification {
       String approverFirstName,
       String approverLastName,
       String projectTitle,
-      ProjectStatus projectStatus) {
+      ProjectStatus projectStatus,
+      ProjectStatus oldProjectStatus,
+      long projectId) {
 
     this.recipientEmail = recipientEmail;
     this.recipientFirstName = recipientFirstName;
@@ -32,6 +37,8 @@ public class ProjectStatusChangeNotification extends Notification {
     this.approverLastName = approverLastName;
     this.projectTitle = projectTitle;
     this.projectStatus = projectStatus;
+    this.oldProjectStatus = oldProjectStatus;
+    this.projectId = projectId;
   }
 
   @Override
@@ -51,6 +58,8 @@ public class ProjectStatusChangeNotification extends Notification {
         approverFirstName,
         approverLastName,
         copyright,
-        url);
+        url,
+        getProjectPreviewUrl(url, projectId),
+        oldProjectStatus);
   }
 }

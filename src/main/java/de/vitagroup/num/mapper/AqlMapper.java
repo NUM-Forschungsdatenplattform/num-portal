@@ -1,14 +1,16 @@
 package de.vitagroup.num.mapper;
 
 import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.service.UserService;
+import de.vitagroup.num.web.exception.ResourceNotFound;
 import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @AllArgsConstructor
 public class AqlMapper {
@@ -23,8 +25,13 @@ public class AqlMapper {
 
   public AqlDto convertToDto(Aql aql) {
     AqlDto aqlDto = modelMapper.map(aql, AqlDto.class);
-    User aqlOwner = userService.getOwner(aql.getOwner().getUserId());
-    aqlDto.setOwner(aqlOwner);
+
+    try {
+      aqlDto.setOwner(userService.getOwner(aql.getOwner().getUserId()));
+    } catch (ResourceNotFound e) {
+      log.warn("Aql owner not found in keycloak: ", aql.getOwner().getUserId());
+      aqlDto.setOwner(null);
+    }
     return aqlDto;
   }
 

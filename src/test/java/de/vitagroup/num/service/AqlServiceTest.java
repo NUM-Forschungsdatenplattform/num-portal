@@ -89,6 +89,9 @@ public class AqlServiceTest {
     assertThat(createdAql.getName(), is(toSave.getName()));
     assertThat(createdAql.getUse(), is(toSave.getUse()));
     assertThat(createdAql.getPurpose(), is(toSave.getPurpose()));
+    assertThat(createdAql.getNameTranslated(), is(toSave.getNameTranslated()));
+    assertThat(createdAql.getUseTranslated(), is(toSave.getUseTranslated()));
+    assertThat(createdAql.getPurposeTranslated(), is(toSave.getPurposeTranslated()));
     assertThat(createdAql.isPublicAql(), is(toSave.isPublicAql()));
   }
 
@@ -247,6 +250,9 @@ public class AqlServiceTest {
         .name("name")
         .use("use")
         .purpose("purpose")
+        .nameTranslated("name - en")
+        .useTranslated("use - en")
+        .purposeTranslated("purpose - en")
         .publicAql(false)
         .createDate(createdAndModifiedDate)
         .modifiedDate(createdAndModifiedDate)

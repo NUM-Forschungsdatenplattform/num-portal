@@ -24,6 +24,9 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -65,11 +68,11 @@ public class UserServiceTest {
 
   @InjectMocks private UserService userService;
 
-  @Captor
-  ArgumentCaptor<Map<String,Object>> mapArgumentCaptor;
+  @Captor ArgumentCaptor<Map<String, Object>> mapArgumentCaptor;
 
-  @Captor
-  ArgumentCaptor<String> stringArgumentCaptor;
+  @Captor ArgumentCaptor<String> stringArgumentCaptor;
+
+  @Captor ArgumentCaptor<List<Notification>> notificationCaptor;
 
   private final Set<Role> roles =
       Set.of(
@@ -273,6 +276,12 @@ public class UserServiceTest {
 
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, times(1)).addRoles("4", new Role[] {new Role("R1", "SUPER_ADMIN")});
+
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(RolesUpdateNotification.class));
   }
 
   @Test
@@ -292,6 +301,12 @@ public class UserServiceTest {
         "4", Collections.emptyList(), "4", Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, times(1)).removeRoles("4", new Role[] {new Role("R2", "RESEARCHER")});
     verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
+
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(RolesUpdateNotification.class));
   }
 
   @Test
@@ -387,75 +402,68 @@ public class UserServiceTest {
   @Test(expected = ForbiddenException.class)
   public void shouldNotAllowOrgAdminChangeNameOtherOrgUser() {
     userService.changeUserName(
-        "5",
-        new UserNameDto("John", "Doe"),
-        "7",
-        Collections.singletonList("ORGANIZATION_ADMIN"));
+        "5", new UserNameDto("John", "Doe"), "7", Collections.singletonList("ORGANIZATION_ADMIN"));
   }
 
   @Test
   public void shouldAllowOrgAdminChangeNameSameOrgUser() {
     userService.changeUserName(
-        "5",
-        new UserNameDto("John", "Doe"),
-        "4",
-        Collections.singletonList("ORGANIZATION_ADMIN"));
-    verify(keycloakFeign, times(1)).updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
+        "5", new UserNameDto("John", "Doe"), "4", Collections.singletonList("ORGANIZATION_ADMIN"));
+    verify(keycloakFeign, times(1))
+        .updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
     Map<String, Object> captured = mapArgumentCaptor.getValue();
     assertEquals("John", captured.get("firstName"));
     assertEquals("Doe", captured.get("lastName"));
     assertEquals("5", stringArgumentCaptor.getValue());
+
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(UserNameUpdateNotification.class));
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldFailChangeNameSameOrgUserWithoutOrgAdmin() {
     userService.changeUserName(
-        "5",
-        new UserNameDto("John", "Doe"),
-        "4",
-        Collections.singletonList("RESEARCHER"));
+        "5", new UserNameDto("John", "Doe"), "4", Collections.singletonList("RESEARCHER"));
   }
 
   @Test
   public void shouldAllowChangeOwnName() {
-    userService.changeUserName(
-        "5",
-        new UserNameDto("John", "Doe"),
-        "5",
-        Collections.emptyList());
-    verify(keycloakFeign, times(1)).updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
+    userService.changeUserName("5", new UserNameDto("John", "Doe"), "5", Collections.emptyList());
+    verify(keycloakFeign, times(1))
+        .updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
     Map<String, Object> captured = mapArgumentCaptor.getValue();
     assertEquals("John", captured.get("firstName"));
     assertEquals("Doe", captured.get("lastName"));
     assertEquals("5", stringArgumentCaptor.getValue());
+
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(UserNameUpdateNotification.class));
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldFailChangeUnapprovedName() {
     userService.changeUserName(
-        "8",
-        new UserNameDto("John", "Doe"),
-        "5",
-        Collections.singletonList("SUPER_ADMIN"));
+        "8", new UserNameDto("John", "Doe"), "5", Collections.singletonList("SUPER_ADMIN"));
   }
 
   @Test(expected = ForbiddenException.class)
   public void unapprovedShouldFailChangeName() {
     userService.changeUserName(
-        "5",
-        new UserNameDto("John", "Doe"),
-        "8",
-        Collections.singletonList("SUPER_ADMIN"));
+        "5", new UserNameDto("John", "Doe"), "8", Collections.singletonList("SUPER_ADMIN"));
   }
 
   @Test
   public void shouldAllowSuperAdminChangeNameOtherOrgUser() {
     userService.changeUserName(
-        "5",
-        new UserNameDto("John", "Doe"),
-        "7",
-        Collections.singletonList("SUPER_ADMIN"));
-    verify(keycloakFeign, times(1)).updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
+        "5", new UserNameDto("John", "Doe"), "7", Collections.singletonList("SUPER_ADMIN"));
+    verify(keycloakFeign, times(1))
+        .updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
     Map<String, Object> captured = mapArgumentCaptor.getValue();
     assertEquals("John", captured.get("firstName"));
     assertEquals("Doe", captured.get("lastName"));
