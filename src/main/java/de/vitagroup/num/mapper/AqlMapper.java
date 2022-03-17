@@ -26,12 +26,7 @@ public class AqlMapper {
   public AqlDto convertToDto(Aql aql) {
     AqlDto aqlDto = modelMapper.map(aql, AqlDto.class);
 
-    try {
-      aqlDto.setOwner(userService.getOwner(aql.getOwner().getUserId()));
-    } catch (ResourceNotFound e) {
-      log.warn("Aql owner not found in keycloak: ", aql.getOwner().getUserId());
-      aqlDto.setOwner(null);
-    }
+    aqlDto.setOwner(userService.getOwner(aql.getOwner().getUserId()));
     return aqlDto;
   }
 
