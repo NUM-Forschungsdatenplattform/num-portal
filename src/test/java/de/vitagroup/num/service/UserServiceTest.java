@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,7 +33,10 @@ import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
+import feign.Feign;
 import feign.FeignException;
+
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +45,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import feign.Request;
+import feign.RequestTemplate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,23 +63,32 @@ import org.modelmapper.ModelMapper;
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
 
-  @Mock private KeycloakFeign keycloakFeign;
+  @Mock
+  private KeycloakFeign keycloakFeign;
 
-  @Mock private UserDetailsService userDetailsService;
+  @Mock
+  private UserDetailsService userDetailsService;
 
-  @Mock private NotificationService notificationService;
+  @Mock
+  private NotificationService notificationService;
 
-  @Spy private final ModelMapper modelMapper = new ModelMapper();
+  @Spy
+  private final ModelMapper modelMapper = new ModelMapper();
 
-  @Spy private final OrganizationMapper organizationMapper = new OrganizationMapper(modelMapper);
+  @Spy
+  private final OrganizationMapper organizationMapper = new OrganizationMapper(modelMapper);
 
-  @InjectMocks private UserService userService;
+  @InjectMocks
+  private UserService userService;
 
-  @Captor ArgumentCaptor<Map<String, Object>> mapArgumentCaptor;
+  @Captor
+  ArgumentCaptor<Map<String, Object>> mapArgumentCaptor;
 
-  @Captor ArgumentCaptor<String> stringArgumentCaptor;
+  @Captor
+  ArgumentCaptor<String> stringArgumentCaptor;
 
-  @Captor ArgumentCaptor<List<Notification>> notificationCaptor;
+  @Captor
+  ArgumentCaptor<List<Notification>> notificationCaptor;
 
   private final Set<Role> roles =
       Set.of(
@@ -113,7 +129,7 @@ public class UserServiceTest {
 
     when(keycloakFeign.getRoles()).thenReturn(roles);
 
-    when(keycloakFeign.searchUsers(any())).thenReturn(allValidUsers);
+    when(keycloakFeign.searchUsers(any(), eq(100000))).thenReturn(allValidUsers);
 
     when(userDetailsService.getUserDetailsById("4"))
         .thenReturn(
@@ -326,7 +342,7 @@ public class UserServiceTest {
     Set<User> users = new HashSet<>();
     users.add(User.builder().firstName("John").id("4").build());
 
-    when(keycloakFeign.searchUsers(null)).thenReturn(users);
+    when(keycloakFeign.searchUsers(null, 100000)).thenReturn(users);
     Set<de.vitagroup.num.domain.admin.User> userReturn =
         userService.searchUsers("user", null, null, true, List.of(Roles.SUPER_ADMIN));
 
@@ -346,12 +362,21 @@ public class UserServiceTest {
     Set<User> users = new HashSet<>();
     users.add(User.builder().firstName("John").id("4").build());
 
-    when(keycloakFeign.searchUsers(null)).thenReturn(users);
+    when(keycloakFeign.searchUsers(null, 100000)).thenReturn(users);
     Set<de.vitagroup.num.domain.admin.User> userReturn =
         userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
 
     assertNull(userReturn.iterator().next().getRoles());
     verify(keycloakFeign, times(0)).getRolesOfUser("4");
+  }
+
+  @Test
+  public void shouldHandleMissingOwner() {
+    when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null), null));
+    de.vitagroup.num.domain.admin.User userReturn = userService.getOwner("missingUserId");
+
+    assertNull(userReturn);
+    verify(keycloakFeign, times(1)).getUser("missingUserId");
   }
 
   @Test
@@ -477,8 +502,8 @@ public class UserServiceTest {
         boolean success = testAddRole(role, userRole.getName());
         if (userRole.getName().equals("SUPER_ADMIN")
             || (userRole.getName().equals("ORGANIZATION_ADMIN")
-                && !role.getName().equals("SUPER_ADMIN")
-                && !role.getName().equals("CONTENT_ADMIN"))) {
+            && !role.getName().equals("SUPER_ADMIN")
+            && !role.getName().equals("CONTENT_ADMIN"))) {
           assertTrue(
               success,
               "User " + userRole.getName() + " should be allowed to add role " + role.getName());
@@ -501,8 +526,8 @@ public class UserServiceTest {
         boolean success = testRemoveRole(role, userRole.getName());
         if (userRole.getName().equals("SUPER_ADMIN")
             || (userRole.getName().equals("ORGANIZATION_ADMIN")
-                && !role.getName().equals("SUPER_ADMIN")
-                && !role.getName().equals("CONTENT_ADMIN"))) {
+            && !role.getName().equals("SUPER_ADMIN")
+            && !role.getName().equals("CONTENT_ADMIN"))) {
           assertTrue(
               success,
               "User " + userRole.getName() + " should be allowed to remove role " + role.getName());
@@ -524,8 +549,8 @@ public class UserServiceTest {
           "5", Collections.singletonList(role.getName()), "4", Collections.singletonList(userRole));
       if (userRole.equals("SUPER_ADMIN")
           || (userRole.equals("ORGANIZATION_ADMIN")
-              && !"SUPER_ADMIN".equals(role.getName())
-              && !"CONTENT_ADMIN".equals(role.getName()))) {
+          && !"SUPER_ADMIN".equals(role.getName())
+          && !"CONTENT_ADMIN".equals(role.getName()))) {
         verify(keycloakFeign, times(1)).addRoles("5", new Role[] {role});
         Mockito.clearInvocations(keycloakFeign);
         return true;
@@ -554,8 +579,8 @@ public class UserServiceTest {
           "6", allButWantedToRemoveRoles, "4", Collections.singletonList(userRole));
       if (userRole.equals("SUPER_ADMIN")
           || (userRole.equals("ORGANIZATION_ADMIN")
-              && !"SUPER_ADMIN".equals(role.getName())
-              && !"CONTENT_ADMIN".equals(role.getName()))) {
+          && !"SUPER_ADMIN".equals(role.getName())
+          && !"CONTENT_ADMIN".equals(role.getName()))) {
         verify(keycloakFeign, times(1)).removeRoles("6", new Role[] {role});
         Mockito.clearInvocations(keycloakFeign);
         return true;

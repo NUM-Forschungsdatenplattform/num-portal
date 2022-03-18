@@ -7,7 +7,7 @@
 
   <groupId>de.vitagroup.num-portal</groupId>
   <artifactId>num-portal</artifactId>
-  <version>1.8.0</version>
+  <version>1.8.1</version>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
@@ -30,8 +30,8 @@
     <commons-csv.version>1.8</commons-csv.version>
     <jacoco.version>0.8.7</jacoco.version>
     <dependency-check.version>6.2.2</dependency-check.version>
-    <failsafe.version>2.22.2</failsafe.version>
-    <surefire.version>2.22.2</surefire.version>
+    <failsafe.version>3.0.0-M5</failsafe.version>
+    <surefire.version>3.0.0-M5</surefire.version>
     <ehcache.version>3.9.4</ehcache.version>
     <git-commit-id-plugin.version>4.9.9</git-commit-id-plugin.version>
     <skip.integration.tests>false</skip.integration.tests>

@@ -73,8 +73,8 @@ feign:
   client:
     config:
       numPortal:
-        connectTimeout: 1000
-        readTimeout: 1200
+        connectTimeout: 10000
+        readTimeout: 10000
         loggerLevel: FULL
 
 logging:

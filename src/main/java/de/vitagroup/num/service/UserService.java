@@ -8,8 +8,8 @@ import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -40,6 +41,8 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class UserService {
+
+  private static final int MAX_USER_COUNT = 100000;
 
   private final KeycloakFeign keycloakFeign;
 
@@ -92,8 +95,13 @@ public class UserService {
    */
   @Transactional
   @Cacheable(value = USERS_CACHE, key = "#userId")
+  @Nullable
   public User getOwner(String userId) {
-    return getUserById(userId, false);
+    try {
+      return getUserById(userId, false);
+    } catch (ResourceNotFound e){
+      return null;
+    }
   }
 
   /**
@@ -118,7 +126,7 @@ public class UserService {
       throw new SystemException(
           "An error has occurred, cannot retrieve users, please try again later");
     } catch (FeignException.NotFound e) {
-      log.warn("User not found in keycloak: ", userId);
+      log.warn("User not found in keycloak: {}", userId);
       throw new ResourceNotFound("User not found");
     }
   }
@@ -137,7 +145,7 @@ public class UserService {
   /**
    * Assigns roles to a particular user
    *
-   * @param userId the user to update roles of
+   * @param userId    the user to update roles of
    * @param roleNames The list of roles of the user
    */
   public List<String> setUserRoles(
@@ -156,9 +164,9 @@ public class UserService {
     if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)
         && !callerRoles.contains(Roles.SUPER_ADMIN)
         && !callerDetails
-            .getOrganization()
-            .getId()
-            .equals(userToChange.getOrganization().getId())) {
+        .getOrganization()
+        .getId()
+        .equals(userToChange.getOrganization().getId())) {
       throw new ForbiddenException(
           "Organization admin can only manage users in their own organization.");
     }
@@ -256,8 +264,8 @@ public class UserService {
   /**
    * Retrieved a list of users that match the search criteria
    *
-   * @param approved Indicates that the user has been approved by the admin
-   * @param search A string contained in username, first or last name, or email
+   * @param approved  Indicates that the user has been approved by the admin
+   * @param search    A string contained in username, first or last name, or email
    * @param withRoles flag whether to add roles to the user structure, if present, or not
    * @return the users that match the search parameters and with optional roles if indicated
    */
@@ -270,7 +278,7 @@ public class UserService {
 
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    Set<User> users = keycloakFeign.searchUsers(search);
+    Set<User> users = keycloakFeign.searchUsers(search, MAX_USER_COUNT);
     if (users == null) {
       return Collections.emptySet();
     }
@@ -397,7 +405,9 @@ public class UserService {
     }
   }
 
-  /** Evicts users cache every 8 hours */
+  /**
+   * Evicts users cache every 8 hours
+   */
   @Scheduled(fixedRate = 28800000)
   public void evictParametersCache() {
     var cache = cacheManager.getCache(USERS_CACHE);
@@ -419,7 +429,7 @@ public class UserService {
     if (Roles.isSuperAdmin(roles)
         || isSelf(loggedInUser, userToChange)
         || (Roles.isOrganizationAdmin(roles)
-            && belongToSameOrganization(loggedInUser, userToChange))) {
+        && belongToSameOrganization(loggedInUser, userToChange))) {
       updateName(userIdToChange, userName);
     } else {
       throw new ForbiddenException(

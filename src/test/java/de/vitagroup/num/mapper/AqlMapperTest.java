@@ -54,7 +54,7 @@ public class AqlMapperTest {
 
   @Test
   public void shouldIgnoreMissingAqlOwnerInKeycloak() {
-    when(userService.getOwner("missingUserId")).thenThrow(new ResourceNotFound("User not found"));
+    when(userService.getOwner("missingUserId")).thenReturn(null);
 
     Aql aql = createAql();
     aql.setOwner(
