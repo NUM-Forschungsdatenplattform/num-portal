@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "keycloak", url = "${userstore.url}")
 public interface KeycloakFeign {
+
   @GetMapping("/users/{userId}")
   User getUser(@PathVariable String userId);
 
@@ -34,7 +35,7 @@ public interface KeycloakFeign {
   Set<Role> getRoles();
 
   @GetMapping("/users")
-  Set<User> searchUsers(@RequestParam(required = false) String search);
+  Set<User> searchUsers(@RequestParam(required = false) String search, @RequestParam int max);
 
   @GetMapping("/roles/{roleName}/users")
   Set<User> getByRole(@PathVariable String roleName);
