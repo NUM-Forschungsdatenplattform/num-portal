@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -92,8 +93,13 @@ public class UserService {
    */
   @Transactional
   @Cacheable(value = USERS_CACHE, key = "#userId")
+  @Nullable
   public User getOwner(String userId) {
-    return getUserById(userId, false);
+    try {
+      return getUserById(userId, false);
+    } catch (ResourceNotFound e){
+      return null;
+    }
   }
 
   /**
@@ -118,7 +124,7 @@ public class UserService {
       throw new SystemException(
           "An error has occurred, cannot retrieve users, please try again later");
     } catch (FeignException.NotFound e) {
-      log.warn("User not found in keycloak: ", userId);
+      log.warn("User not found in keycloak: {}", userId);
       throw new ResourceNotFound("User not found");
     }
   }

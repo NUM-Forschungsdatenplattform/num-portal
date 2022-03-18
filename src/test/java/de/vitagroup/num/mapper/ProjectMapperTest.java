@@ -3,7 +3,9 @@ package de.vitagroup.num.mapper;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Cohort;
@@ -47,6 +49,7 @@ public class ProjectMapperTest {
                 TemplateInfoDto.builder().templateId("param2").name("value2").build()));
 
     when(userService.getOwner("123")).thenReturn(User.builder().build());
+    when(userService.getOwner("nonExistentUserId")).thenReturn(null);
   }
 
   @Test
@@ -75,8 +78,40 @@ public class ProjectMapperTest {
     assertThat(dto.getFirstHypotheses(), is(project.getFirstHypotheses()));
     assertThat(dto.getSecondHypotheses(), is(project.getSecondHypotheses()));
     assertThat(dto.getCohortId(), is(cohort.getId()));
-    assertThat(dto.getTemplates().stream().anyMatch(c -> c.getTemplateId() == "param1"), is(true));
-    assertThat(dto.getTemplates().stream().anyMatch(c -> c.getTemplateId() == "param2"), is(true));
+    assertThat(dto.getTemplates().stream().anyMatch(c -> c.getTemplateId().equals("param1")), is(true));
+    assertThat(dto.getTemplates().stream().anyMatch(c -> c.getTemplateId().equals("param2")), is(true));
     assertThat(dto.getId(), is(project.getId()));
+  }
+
+  @Test
+  public void shouldCorrectlyConvertProjectToProjectDtoWithNonExistentOwner() {
+    Cohort cohort = Cohort.builder().id(1L).build();
+
+    Project project =
+            Project.builder()
+                    .id(1L)
+                    .name("Study name")
+                    .cohort(cohort)
+                    .description("Study description")
+                    .firstHypotheses("first")
+                    .secondHypotheses("second")
+                    .status(ProjectStatus.DRAFT)
+                    .coordinator(UserDetails.builder().userId("nonExistentUserId").build())
+                    .templates(Map.of("param1", "value1", "param2", "value2"))
+                    .build();
+
+    ProjectDto dto = projectMapper.convertToDto(project);
+
+    assertThat(dto, notNullValue());
+
+    assertThat(dto.getName(), is(project.getName()));
+    assertThat(dto.getDescription(), is(project.getDescription()));
+    assertThat(dto.getFirstHypotheses(), is(project.getFirstHypotheses()));
+    assertThat(dto.getSecondHypotheses(), is(project.getSecondHypotheses()));
+    assertThat(dto.getCohortId(), is(cohort.getId()));
+    assertThat(dto.getTemplates().stream().anyMatch(c -> c.getTemplateId().equals("param1")), is(true));
+    assertThat(dto.getTemplates().stream().anyMatch(c -> c.getTemplateId().equals("param2")), is(true));
+    assertThat(dto.getId(), is(project.getId()));
+    assertThat(dto.getCoordinator(), nullValue());
   }
 }

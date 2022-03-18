@@ -3,7 +3,6 @@ package de.vitagroup.num.mapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.service.UserService;
-import de.vitagroup.num.web.exception.ResourceNotFound;
 import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +25,7 @@ public class AqlMapper {
   public AqlDto convertToDto(Aql aql) {
     AqlDto aqlDto = modelMapper.map(aql, AqlDto.class);
 
-    try {
-      aqlDto.setOwner(userService.getOwner(aql.getOwner().getUserId()));
-    } catch (ResourceNotFound e) {
-      log.warn("Aql owner not found in keycloak: ", aql.getOwner().getUserId());
-      aqlDto.setOwner(null);
-    }
+    aqlDto.setOwner(userService.getOwner(aql.getOwner().getUserId()));
     return aqlDto;
   }
 

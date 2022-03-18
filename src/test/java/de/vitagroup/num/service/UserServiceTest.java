@@ -32,7 +32,10 @@ import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
+import feign.Feign;
 import feign.FeignException;
+
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +44,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import feign.Request;
+import feign.RequestTemplate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -352,6 +358,15 @@ public class UserServiceTest {
 
     assertNull(userReturn.iterator().next().getRoles());
     verify(keycloakFeign, times(0)).getRolesOfUser("4");
+  }
+
+  @Test
+  public void shouldHandleMissingOwner() {
+    when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null), null));
+    de.vitagroup.num.domain.admin.User userReturn = userService.getOwner("missingUserId");
+
+    assertNull(userReturn);
+    verify(keycloakFeign, times(1)).getUser("missingUserId");
   }
 
   @Test
