@@ -37,6 +37,7 @@
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
     <skip.dependency.check>false</skip.dependency.check>
+    <hapi-fhir.version>5.5.1</hapi-fhir.version>
   </properties>
 
   <repositories>
@@ -146,6 +147,16 @@
       <groupId>org.modelmapper</groupId>
       <artifactId>modelmapper</artifactId>
       <version>${modelmapper.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ca.uhn.hapi.fhir</groupId>
+      <artifactId>hapi-fhir-base</artifactId>
+      <version>${hapi-fhir.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ca.uhn.hapi.fhir</groupId>
+      <artifactId>hapi-fhir-structures-r4</artifactId>
+      <version>${hapi-fhir.version}</version>
     </dependency>
     <dependency>
       <groupId>org.assertj</groupId>

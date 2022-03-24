@@ -12,7 +12,6 @@ import de.vitagroup.num.mapper.CommentMapper;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.service.CommentService;
 import de.vitagroup.num.service.ProjectService;
-import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.web.exception.ResourceNotFound;
@@ -55,7 +54,6 @@ public class ProjectController {
   private final CommentService commentService;
   private final ProjectMapper projectMapper;
   private final CommentMapper commentMapper;
-  private final Pseudonymity pseudonymity;
 
   @AuditLog
   @GetMapping()
@@ -268,17 +266,6 @@ public class ProjectController {
   }
 
   @AuditLog
-  @GetMapping("/{id}/resolve/{pseudonym}")
-  @ApiOperation(value = "Archive a project")
-  @PreAuthorize(Role.MANAGER)
-  public ResponseEntity<String> resolvePseudonym(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @PathVariable Long id,
-      @NotEmpty @PathVariable String pseudonym) {
-    return ResponseEntity.ok(pseudonymity.getEhrIdFromPseudonym(pseudonym, id));
-  }
-
-  @AuditLog
   @GetMapping("/{id}/document")
   @ApiOperation(value = "Get the project info as a document", produces = MediaType.TEXT_PLAIN_VALUE)
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
@@ -286,11 +273,12 @@ public class ProjectController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable Long id,
       @RequestParam
-  @ApiParam(
-      value =
-          "The language the document should be returned in (en/de)")
-      String locale) {
-    byte[] docBytes = projectService.getInfoDocBytes(id, principal.getSubject(), new Locale(locale));
+      @ApiParam(
+          value =
+              "The language the document should be returned in (en/de)")
+          String locale) {
+    byte[] docBytes =
+        projectService.getInfoDocBytes(id, principal.getSubject(), new Locale(locale));
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE);
     headers.add(HttpHeaders.CONTENT_DISPOSITION,

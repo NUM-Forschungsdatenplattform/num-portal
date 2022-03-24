@@ -34,7 +34,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-/** Service using the EhrBaseSDK to talk to the EhrBaseAPI */
+/**
+ * Service using the EhrBaseSDK to talk to the EhrBaseAPI
+ */
 @Slf4j
 @Service
 public class EhrBaseService {
@@ -218,11 +220,10 @@ public class EhrBaseService {
   }
 
   private void addPseudonyms(
-      List<String> ehrIds, List<QueryResponseData> listOfResponseData, Long projectId) {
-    List<String> pseudonyms =
-        ehrIds.stream()
-            .map(ehrId -> pseudonymity.getPseudonym(ehrId, projectId))
-            .collect(Collectors.toList());
+      List<String> secondLevelPseudos, List<QueryResponseData> listOfResponseData, Long projectId) {
+
+    List<String> pseudonyms = pseudonymity.getPseudonyms(secondLevelPseudos, projectId);
+
     Map<String, String> pseudonymityColumn = new HashMap<>();
     pseudonymityColumn.put(PATH, PSEUDONYM);
     pseudonymityColumn.put(NAME, PSEUDONYM);
