@@ -106,7 +106,6 @@ public class PseudonymityTest {
 
     var originals = List.of("codex_CQ1A3X", "codex_CQ1A3Y");
 
-    System.out.println(pseudonyms);
   }
 
 

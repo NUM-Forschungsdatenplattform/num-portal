@@ -49,7 +49,7 @@ public class EhrBaseService {
   private static final String NAME = "name";
   private static final String PATH = "path";
   private static final String PSEUDONYM = "pseudonym";
-  private static final String EHR_ID_PATH = "/ehr_id/value";
+  private static final String EHR_STATUS_PATH = "/ehr_status/subject/external_ref/id/value";
 
   private static final String ERROR_MESSAGE = "An error has occurred while calling ehrbase";
 
@@ -109,7 +109,7 @@ public class EhrBaseService {
    */
   public List<QueryResponseData> executeRawQuery(AqlDto aqlDto, Long projectId) {
 
-    addSelectEhrId(aqlDto);
+    addSelectSecondlevelPseudonyms(aqlDto);
     Query<Record> query = new AqlBinder().bind(aqlDto).getLeft();
 
     try {
@@ -150,13 +150,13 @@ public class EhrBaseService {
     }
   }
 
-  private void addSelectEhrId(AqlDto aqlDto) {
+  private void addSelectSecondlevelPseudonyms(AqlDto aqlDto) {
     SelectDto selectDto = aqlDto.getSelect();
     List<SelectStatementDto> selectStatementDtos = selectDto.getStatement();
-    SelectFieldDto ehrIdStatement = new SelectFieldDto();
-    ehrIdStatement.setAqlPath(EhrFields.EHR_ID().getPath());
-    ehrIdStatement.setContainmentId(aqlDto.getEhr().getContainmentId());
-    selectStatementDtos.add(0, ehrIdStatement);
+    SelectFieldDto pseudosStatement = new SelectFieldDto();
+    pseudosStatement.setAqlPath(EHR_STATUS_PATH);
+    pseudosStatement.setContainmentId(aqlDto.getEhr().getContainmentId());
+    selectStatementDtos.add(0, pseudosStatement);
     selectDto.setStatement(selectStatementDtos);
   }
 
@@ -171,10 +171,10 @@ public class EhrBaseService {
 
   public List<QueryResponseData> flattenIfCompositionPresent(
       QueryResponseData responseData, Long projectId) {
-    List<String> ehrIds = getAndRemoveEhrIdColumn(responseData);
+    List<String> ehrStatusIds = getAndRemoveEhrStatusColumn(responseData);
     List<QueryResponseData> listOfResponseData = flattenCompositions(responseData);
     if (projectId != null) {
-      addPseudonyms(ehrIds, listOfResponseData, projectId);
+      addPseudonyms(ehrStatusIds, listOfResponseData, projectId);
     }
     return listOfResponseData;
   }
@@ -236,15 +236,15 @@ public class EhrBaseService {
     }
   }
 
-  private List<String> getAndRemoveEhrIdColumn(QueryResponseData compositions) {
+  private List<String> getAndRemoveEhrStatusColumn(QueryResponseData compositions) {
 
     List<Map<String, String>> columns = compositions.getColumns();
     if (columns == null || columns.size() < 2) {
       throw new BadRequestException("No data columns in the query result");
     }
-    String ehrIdPath = columns.get(0).get(PATH);
-    if (ehrIdPath == null || !ehrIdPath.equals(EHR_ID_PATH)) {
-      throw new SystemException("query result doesn't contain ehrId column");
+    String ehrStatusPath = columns.get(0).get(PATH);
+    if (ehrStatusPath == null || !ehrStatusPath.equals(EHR_STATUS_PATH)) {
+      throw new SystemException("query result doesn't contain ehr_status column");
     }
     columns.remove(0);
     return compositions.getRows().stream()

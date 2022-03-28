@@ -7,12 +7,12 @@ spring:
     hikari:
       data-source-properties:
         stringtype: unspecified
-    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=num
+    url: jdbc:postgresql://localhost:5434/numportal?currentSchema=num
     driver-class-name: org.postgresql.Driver
-    username: postgres
-    password: postgres
+    username: num-portal
+    password: 5pC0IO3ioUdCzPZ9FfFmFdp63A6HGxHQYA72b77aylU4RSOvqefa98ww7yNbMHRa
   flyway:
-    enabled: true
+    enabled: false
     user: postgres
     password: postgres
   jpa:
@@ -114,9 +114,9 @@ zars:
 
 # use local ehrbase until we get central one
 ehrbase:
-  rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
-  username: ehrbase-user
-  password: SuperSecretPassword
+  rest-api-url: http://localhost:8082/ehrbase/rest/openehr/v1/
+  username: ehrbaseAuth
+  password: witless9bomb6farmland2festal*violent-loaf*CLOSER9being9descent
 
 cors:
   allowedOrigins:
@@ -131,6 +131,15 @@ num:
 
 consent:
   allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
+
+fttp:
+  url: https://basic-test-fttp-w.num.med.uni-greifswald.de/ttp-fhir/fhir/dispatcher/$requestPsnWorkflow
+  certificatePath: /certificates/fttp.num.p12
+  certificateKey: fttp123
+  useBasicAuth: true
+  username: karlea
+  password: test123#
+
 
 ---
 spring:

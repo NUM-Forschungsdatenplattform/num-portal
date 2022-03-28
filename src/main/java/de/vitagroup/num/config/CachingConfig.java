@@ -18,7 +18,7 @@ public class CachingConfig {
     SimpleCacheManager cacheManager = new SimpleCacheManager();
 
     Cache aqlParametersCache = new ConcurrentMapCache("aqlParameters", false);
-    Cache usersCache = new ConcurrentMapCache("users", false);
+    Cache usersCache = new ConcurrentMapCache("users", true);
 
     cacheManager.setCaches(Arrays.asList(aqlParametersCache, usersCache));
 
