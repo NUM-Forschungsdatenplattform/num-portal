@@ -97,3 +97,11 @@ privacy:
 zars:
   enabled: false
   email: foo@foo.bar
+
+fttp:
+  url: https://basic-test-fttp-w.num.med.uni-greifswald.de/ttp-fhir/fhir/dispatcher/$requestPsnWorkflow
+  certificatePath: /certificates/fttp.num.p12
+  certificateKey: fttp123
+  useBasicAuth: true
+  username: karlea
+  password: test123#
