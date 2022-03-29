@@ -56,7 +56,7 @@ userstore:
   url: ${keycloak.url}/auth/admin/realms/Num
 
 keycloak:
-  url: http://num-keycloak-http
+  url: http://localhost:8099
 
 hapi:
   fhir:
@@ -82,9 +82,9 @@ logging:
     root: debug
 
 ehrbase:
-  rest-api-url: http://ehrbase-service:8080/ehrbase/rest/openehr/v1/
-  username: ehrbaseAuth
-  password: witless9bomb6farmland2festal*violent-loaf*CLOSER9being9descent
+  rest-api-url: http://localhost:8099/ehrbase/rest/openehr/v1/
+  username: ehrbase-user
+  password: SuperSecretPassword
 
 cors:
   allowedOrigins:
