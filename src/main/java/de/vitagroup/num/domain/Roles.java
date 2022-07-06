@@ -25,7 +25,7 @@ public class Roles {
           STUDY_APPROVER,
           RESEARCHER);
   private static final List<String> ORGANIZATION_ADMIN_ASSIGNABLE =
-      Lists.newArrayList(ORGANIZATION_ADMIN, STUDY_COORDINATOR, STUDY_APPROVER, RESEARCHER);
+      Lists.newArrayList(ORGANIZATION_ADMIN, STUDY_COORDINATOR, RESEARCHER);
 
   private static final String REALM_ACCESS_CLAIM = "realm_access";
   private static final String ROLES_CLAIM = "roles";
