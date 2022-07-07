@@ -10,7 +10,7 @@ spring:
     url: jdbc:postgresql://localhost:5434/numportal?currentSchema=num
     driver-class-name: org.postgresql.Driver
     username: num-portal
-    password: 5pC0IO3ioUdCzPZ9FfFmFdp63A6HGxHQYA72b77aylU4RSOvqefa98ww7yNbMHRa
+    password: HF1ZidZUQbSFQVN31nM026c8IG9pRLYrKJ6DMoML6XBVOyO2dawbt9CuMtpqai6f
   flyway:
     enabled: false
     user: postgres
@@ -29,7 +29,7 @@ spring:
           userStoreClient:
             authorization-grant-type: client_credentials
             client-id: num-portal
-            client-secret: 89dddc8f-0f25-4faf-a58d-6cda681f6ed3
+            client-secret: 3e6e93f9-3638-4084-b376-49aebc75accb
         provider:
           userStoreClient:
             token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
@@ -77,7 +77,7 @@ userstore:
   url: ${keycloak.url}/auth/admin/realms/crr
 
 keycloak:
-  url: https://keycloak.dev.num-codex.de
+  url: https://keycloak.pre-prod.num-codex.de
 
 hapi:
   fhir:
@@ -116,7 +116,7 @@ zars:
 ehrbase:
   rest-api-url: http://localhost:8082/ehrbase/rest/openehr/v1/
   username: ehrbaseAuth
-  password: witless9bomb6farmland2festal*violent-loaf*CLOSER9being9descent
+  password: brigand_OUTWARD*shaken0hydro5bumpy2braze1graffito_warlord8voguish
 
 cors:
   allowedOrigins:
@@ -126,7 +126,7 @@ privacy:
   pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
 
 num:
-  url: https://dev.num-codex.de/home
+  url: https://pre-prod.num-codex.de
   locale: en
 
 consent:

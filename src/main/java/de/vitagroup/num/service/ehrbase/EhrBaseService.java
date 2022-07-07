@@ -154,7 +154,7 @@ public class EhrBaseService {
     SelectDto selectDto = aqlDto.getSelect();
     List<SelectStatementDto> selectStatementDtos = selectDto.getStatement();
     SelectFieldDto pseudosStatement = new SelectFieldDto();
-    pseudosStatement.setAqlPath(EHR_STATUS_PATH);
+    pseudosStatement.setAqlPath("/ehr_status/subject/external_ref/id/value");
     pseudosStatement.setContainmentId(aqlDto.getEhr().getContainmentId());
     selectStatementDtos.add(0, pseudosStatement);
     selectDto.setStatement(selectStatementDtos);

@@ -34,8 +34,6 @@ public class Pseudonymity {
   public List<String> getPseudonyms(List<String> secondLevelPseudonyms, Long projectId) {
     var parameters = intiParameters(projectId);
 
-    secondLevelPseudonyms = secondLevelPseudonyms.stream().map(this::tempFormatId).collect(Collectors.toList());
-
     secondLevelPseudonyms.forEach(original -> parameters.addParameter(ORIGINAL, original));
 
     var thirdLevelPseudonyms = retrievePseudonyms(parameters);
@@ -52,14 +50,6 @@ public class Pseudonymity {
     } else {
       throw new ResourceNotFound(PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
     }
-  }
-
-  private String tempFormatId(String id) {
-    if (id.length() < 2) {
-      id = id + "2";
-    }
-    id = id.substring(0, 2);
-    return "codex_CQ1A" + id;
   }
 
   private Optional<Parameters> retrievePseudonyms(Parameters parameters) {

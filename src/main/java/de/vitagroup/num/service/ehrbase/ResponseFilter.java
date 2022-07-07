@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 @NoArgsConstructor
 @Slf4j
 public class ResponseFilter {
+
   private HashSet<String> pathFilters;
   private List<Pattern> regexpFilters;
 
@@ -29,15 +30,16 @@ public class ResponseFilter {
       File pathResource = new ClassPathResource("resultfilters/pathfilters.txt").getFile();
       pathFilters = new HashSet<>(Files.readAllLines(pathResource.toPath()));
       File regexpResource = new ClassPathResource("resultfilters/regexpfilters.txt").getFile();
-      regexpFilters = Files.readAllLines(regexpResource.toPath()).stream().map(Pattern::compile).collect(
-          Collectors.toList());
+      regexpFilters =
+          Files.readAllLines(regexpResource.toPath()).stream().map(Pattern::compile).collect(
+              Collectors.toList());
     } catch (IOException e) {
       log.error("Failed to read project data filters, can't filter results.");
     }
   }
 
   public List<QueryResponseData> filterResponse(List<QueryResponseData> queryResponseDataList) {
-    if(pathFilters == null){
+    if (pathFilters == null) {
       return new ArrayList<>();
     }
     List<QueryResponseData> resultList = new ArrayList<>();
@@ -67,9 +69,10 @@ public class ResponseFilter {
 
   private boolean keepColumn(Map<String, String> column) {
     String path = column.get("path");
-    if(pathFilters.contains(path)){
+    if (pathFilters.contains(path)) {
       return false;
     }
-    return regexpFilters.stream().filter(regexp -> regexp.matcher(path).matches()).findFirst().isEmpty();
+    return regexpFilters.stream().filter(regexp -> regexp.matcher(path).matches()).findFirst()
+        .isEmpty();
   }
 }
