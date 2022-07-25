@@ -28,6 +28,7 @@ public class RolesUpdateNotification extends Notification {
     translationKeys.put(Roles.STUDY_COORDINATOR, "role.study_coordinator");
     translationKeys.put(Roles.STUDY_APPROVER, "role.study-approver");
     translationKeys.put(Roles.MANAGER, "role.manager");
+    translationKeys.put(Roles.CRITERIA_EDITOR, "role.criteria_editor");
   }
 
   @Builder
