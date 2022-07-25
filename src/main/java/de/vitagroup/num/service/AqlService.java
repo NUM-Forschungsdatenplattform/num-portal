@@ -124,8 +124,8 @@ public class AqlService {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + id));
 
-    if ((aql.isPublicAql() && (roles.contains(Roles.MANAGER) || roles.contains(Roles.SUPER_ADMIN)))
-        || (!aql.hasEmptyOrDifferentOwner(loggedInUserId) && roles.contains(Roles.MANAGER))) {
+    if ((aql.isPublicAql() && (roles.contains(Roles.CRITERIA_EDITOR) || roles.contains(Roles.SUPER_ADMIN)))
+        || (!aql.hasEmptyOrDifferentOwner(loggedInUserId) && roles.contains(Roles.CRITERIA_EDITOR))) {
       deleteAql(id);
     } else {
       throw new ForbiddenException("Cannot delete aql: " + id);

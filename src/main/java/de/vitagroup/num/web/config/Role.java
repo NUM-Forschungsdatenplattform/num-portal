@@ -7,16 +7,20 @@ public class Role {
   public static final String STUDY_COORDINATOR = "hasRole('STUDY_COORDINATOR')";
   public static final String STUDY_APPROVER = "hasRole('STUDY_APPROVER')";
   public static final String RESEARCHER = "hasRole('RESEARCHER')";
+  public static final String CRITERIA_EDITOR = "hasRole('CRITERIA_EDITOR')";
   public static final String CONTENT_ADMIN = "hasRole('CONTENT_ADMIN')";
   public static final String STUDY_COORDINATOR_OR_RESEARCHER =
       "hasAnyRole('STUDY_COORDINATOR', 'RESEARCHER')";
   public static final String MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER =
       "hasAnyRole('MANAGER', 'STUDY_COORDINATOR', 'RESEARCHER')";
+  public static final String MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR =
+          "hasAnyRole('MANAGER', 'STUDY_COORDINATOR', 'RESEARCHER', 'CRITERIA_EDITOR')";
+
   public static final String STUDY_COORDINATOR_OR_RESEARCHER_OR_SUPER_ADMIN =
       "hasAnyRole('STUDY_COORDINATOR', 'RESEARCHER', 'SUPER_ADMIN')";
   public static final String STUDY_COORDINATOR_OR_APPROVER =
       "hasAnyRole('STUDY_COORDINATOR', 'STUDY_APPROVER')";
-  public static final String MANAGER_OR_SUPER_ADMIN = "hasAnyRole('MANAGER', 'SUPER_ADMIN')";
+  public static final String CRITERIA_EDITOR_OR_SUPER_ADMIN = "hasAnyRole('CRITERIA_EDITOR', 'SUPER_ADMIN')";
   public static final String MANAGER_OR_STUDY_COORDINATOR =
       "hasAnyRole('MANAGER', 'STUDY_COORDINATOR')";
   public static final String STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER =

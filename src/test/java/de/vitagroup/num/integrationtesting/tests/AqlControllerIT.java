@@ -1,8 +1,6 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static de.vitagroup.num.domain.Roles.MANAGER;
-import static de.vitagroup.num.domain.Roles.RESEARCHER;
-import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
+import static de.vitagroup.num.domain.Roles.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -176,6 +174,13 @@ public class AqlControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {MANAGER})
   public void shouldGetAllCategories() {
     mockMvc.perform(get(AQL_PATH + "/category").with(csrf())).andExpect(status().isOk());
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {CRITERIA_EDITOR})
+  public void shouldGetAqlsAsCriteriaEditor() {
+    mockMvc.perform(get(AQL_PATH).with(csrf())).andExpect(status().isOk());
   }
 
   @Test
