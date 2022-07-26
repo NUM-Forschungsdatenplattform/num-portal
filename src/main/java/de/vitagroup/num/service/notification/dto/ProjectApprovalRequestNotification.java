@@ -50,6 +50,6 @@ public class ProjectApprovalRequestNotification extends Notification {
         projectTitle,
         copyright,
         url,
-        getProjectPreviewUrl(url, projectId));
+        getProjectReviewUrl(url, projectId));
   }
 }

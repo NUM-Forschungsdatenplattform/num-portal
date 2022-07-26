@@ -108,4 +108,15 @@ public class NotificationServiceTest {
 
     assertEquals(explorerUrl, expectedExplorerUrl);
   }
+
+  @Test
+  public void shouldCorrectlyComputeProjectReviewUrl() {
+    String portalUrl = "https://staging.num-codex.de/home";
+
+    Notification not = ProjectStartNotification.builder().build();
+    String reviewUrl = not.getProjectReviewUrl(portalUrl, 9L);
+    String expectedReviewUrl = "https://staging.num-codex.de/projects/9/editor?mode=review";
+
+    assertEquals(expectedReviewUrl, reviewUrl);
+  }
 }
