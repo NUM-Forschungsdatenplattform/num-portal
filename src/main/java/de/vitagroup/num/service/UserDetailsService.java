@@ -127,6 +127,7 @@ public class UserDetailsService {
         getUserDetailsById(userId).orElseThrow(() -> new SystemException("User not found"));
 
     if (user.isNotApproved()) {
+      log.warn("User {} is not approved", userId);
       throw new ForbiddenException("Cannot access this resource. User is not approved.");
     }
 
