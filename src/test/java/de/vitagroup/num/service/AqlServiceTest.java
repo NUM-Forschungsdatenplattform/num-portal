@@ -3,11 +3,7 @@ package de.vitagroup.num.service;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
@@ -29,6 +25,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.dao.EmptyResultDataAccessException;
 
@@ -113,6 +110,12 @@ public class AqlServiceTest {
     aqlService.updateAql(toEdit, 2L, "approvedUserId");
   }
 
+  @Test(expected = ForbiddenException.class)
+  public void shouldFailWhenDeletingIfManager() {
+    aqlService.deleteById(1L, "approvedUserId", List.of(Roles.MANAGER));
+    verify(aqlRepository, Mockito.never()).deleteById(1L);
+  }
+
   @Test(expected = SystemException.class)
   public void shouldHandleMissingOwner() {
     aqlService.createAql(Aql.builder().build(), "nonExistingUser");
@@ -132,12 +135,12 @@ public class AqlServiceTest {
   @Test(expected = ForbiddenException.class)
   public void shouldFailWhenDeletingIfCoordinator() {
     aqlService.deleteById(1L, "approvedUserId", List.of(Roles.STUDY_COORDINATOR));
-    verify(aqlRepository, times(1)).deleteById(1L);
+    verify(aqlRepository, Mockito.never()).deleteById(1L);
   }
 
   @Test
-  public void shouldCallRepoWhenDeletingIfManager() {
-    aqlService.deleteById(1L, "approvedUserId", List.of(Roles.MANAGER));
+  public void shouldCallRepoWhenDeletingIfCriteriaEditor() {
+    aqlService.deleteById(1L, "approvedUserId", List.of(Roles.CRITERIA_EDITOR));
     verify(aqlRepository, times(1)).deleteById(1L);
   }
 
@@ -149,12 +152,12 @@ public class AqlServiceTest {
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleMissingOwnerWhenDeleting() {
-    aqlService.deleteById(2L, "approvedUserId",  List.of(Roles.MANAGER));
+    aqlService.deleteById(2L, "approvedUserId",  List.of(Roles.CRITERIA_EDITOR));
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleMissingAqlOwnerWhenDeleting() {
-    aqlService.deleteById(3L, "approvedUserId",  List.of(Roles.MANAGER));
+    aqlService.deleteById(3L, "approvedUserId",  List.of(Roles.CRITERIA_EDITOR));
   }
 
   @Test(expected = SystemException.class)
@@ -242,7 +245,6 @@ public class AqlServiceTest {
     aqlService.getAqlCategories();
     verify(aqlCategoryRepository, times(1)).findAllCategories();
   }
-
 
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {
     return Aql.builder()
