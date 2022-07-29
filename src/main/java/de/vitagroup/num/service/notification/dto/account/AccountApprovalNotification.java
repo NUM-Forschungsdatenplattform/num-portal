@@ -31,10 +31,10 @@ public class AccountApprovalNotification extends Notification {
         ACCOUNT_APPROVAL_BODY,
         recipientFirstName,
         recipientLastName,
-        copyright,
-        url,
+        adminEmail,
         adminFullName,
-        adminEmail);
+        copyright,
+        url);
   }
 
   @Override
