@@ -78,7 +78,7 @@ public class RolesUpdateNotification extends Notification {
 
     roles.forEach(
         role -> {
-          String displayName = messageSource.getMessage(translationKeys.get(role));
+          String displayName = translationKeys.containsKey(role) ? messageSource.getMessage(translationKeys.get(role)) : StringUtils.EMPTY;
           if (StringUtils.isNotEmpty(displayName)) {
             message.append(displayName);
           } else {
