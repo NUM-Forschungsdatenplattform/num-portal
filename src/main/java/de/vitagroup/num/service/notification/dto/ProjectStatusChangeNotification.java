@@ -9,14 +9,14 @@ public class ProjectStatusChangeNotification extends Notification {
 
   private static final String PROJECT_STATUS_CHANGE_SUBJECT_KEY =
       "mail.project-status-change.subject";
-  private static final String PROJECT_STATUS_CHANGE_BODY_KEY = "mail.project-status-change.body";
+  protected static final String PROJECT_STATUS_CHANGE_BODY_KEY = "mail.project-status-change.body";
 
-  private final String approverFirstName;
-  private final String approverLastName;
-  private final String projectTitle;
-  private final ProjectStatus projectStatus;
-  private final ProjectStatus oldProjectStatus;
-  private final long projectId;
+  protected final String approverFirstName;
+  protected final String approverLastName;
+  protected final String projectTitle;
+  protected final ProjectStatus projectStatus;
+  protected final ProjectStatus oldProjectStatus;
+  protected final long projectId;
 
   @Builder
   public ProjectStatusChangeNotification(
