@@ -58,7 +58,7 @@ public class AqlController {
   @AuditLog
   @PostMapping()
   @ApiOperation(value = "Creates an aql; the logged in user is assigned as owner of the aql.")
-  @PreAuthorize(Role.MANAGER)
+  @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlDto> createAql(
       @AuthenticationPrincipal @NotNull Jwt principal, @Valid @NotNull @RequestBody AqlDto aqlDto) {
 
@@ -70,7 +70,7 @@ public class AqlController {
   @PutMapping(value = "/{id}")
   @ApiOperation(
       value = "Updates an aql; the logged in user is assigned as owner of the aql at creation time")
-  @PreAuthorize(Role.MANAGER)
+  @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlDto> updateAql(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @PathVariable("id") Long aqlId,
@@ -83,7 +83,7 @@ public class AqlController {
 
   @AuditLog
   @DeleteMapping("/{id}")
-  @PreAuthorize(Role.MANAGER_OR_SUPER_ADMIN)
+  @PreAuthorize(Role.CRITERIA_EDITOR_OR_SUPER_ADMIN)
   public void deleteAql(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
     aqlService.deleteById(id, principal.getSubject(), Roles.extractRoles(principal));
   }
@@ -109,7 +109,7 @@ public class AqlController {
   @GetMapping()
   @ApiOperation(
       value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
-  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<List<AqlDto>> getAqls(@AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(
         aqlService.getVisibleAqls(principal.getSubject()).stream()
@@ -120,7 +120,7 @@ public class AqlController {
   @AuditLog
   @PostMapping("/size")
   @ApiOperation(value = "Executes an aql and returns the count of matching ehr ids")
-  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<Long> getAqlSize(
       @AuthenticationPrincipal @NotNull Jwt principal, @Valid @RequestBody SlimAqlDto aql) {
     return ResponseEntity.ok(aqlService.getAqlSize(aql, principal.getSubject()));
@@ -129,7 +129,7 @@ public class AqlController {
   @AuditLog
   @PostMapping(value = "/category")
   @ApiOperation(value = "Creates a category. If there is an id in the DTO, it is ignored.")
-  @PreAuthorize(Role.MANAGER)
+  @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlCategoryDto> createCategory(
       @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
 
@@ -141,7 +141,7 @@ public class AqlController {
   @AuditLog
   @PutMapping(value = "/category/{id}")
   @ApiOperation(value = "Updates a category. If present, the id in the DTO is ignored.")
-  @PreAuthorize(Role.MANAGER)
+  @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlCategoryDto> updateCategory(
       @PathVariable("id") Long categoryId,
       @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
@@ -155,8 +155,8 @@ public class AqlController {
 
   @AuditLog
   @DeleteMapping(value = "/category/{id}")
-  @PreAuthorize(Role.MANAGER)
-  public void deleteAql(@PathVariable Long id) {
+  @PreAuthorize(Role.CRITERIA_EDITOR)
+  public void deleteAqlCategory(@PathVariable Long id) {
     aqlService.deleteCategoryById(id);
   }
 
@@ -173,7 +173,7 @@ public class AqlController {
   @AuditLog
   @GetMapping("/parameter/values")
   @ApiOperation(value = "Retrieves a list of possible values for an aql path")
-  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<ParameterOptionsDto> getParameterValues(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestParam @NotNull @NotEmpty String aqlPath,

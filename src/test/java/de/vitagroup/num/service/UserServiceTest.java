@@ -503,7 +503,8 @@ public class UserServiceTest {
         if (userRole.getName().equals("SUPER_ADMIN")
             || (userRole.getName().equals("ORGANIZATION_ADMIN")
             && !role.getName().equals("SUPER_ADMIN")
-            && !role.getName().equals("CONTENT_ADMIN"))) {
+            && !role.getName().equals("CONTENT_ADMIN"))
+            && !role.getName().equals("STUDY_APPROVER")) {
           assertTrue(
               success,
               "User " + userRole.getName() + " should be allowed to add role " + role.getName());
@@ -527,7 +528,8 @@ public class UserServiceTest {
         if (userRole.getName().equals("SUPER_ADMIN")
             || (userRole.getName().equals("ORGANIZATION_ADMIN")
             && !role.getName().equals("SUPER_ADMIN")
-            && !role.getName().equals("CONTENT_ADMIN"))) {
+            && !role.getName().equals("CONTENT_ADMIN")
+            && !role.getName().equals("STUDY_APPROVER"))) {
           assertTrue(
               success,
               "User " + userRole.getName() + " should be allowed to remove role " + role.getName());
