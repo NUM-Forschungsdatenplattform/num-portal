@@ -2,11 +2,13 @@ package de.vitagroup.num.service.notification.dto;
 
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.service.email.MessageSourceWrapper;
+import lombok.Builder;
 
 import java.time.Year;
 
 public class ProjectStatusChangeRequestNotification extends ProjectStatusChangeNotification {
 
+    @Builder(builderMethodName = "changeRequestBuilder")
     public ProjectStatusChangeRequestNotification(String recipientEmail, String recipientFirstName,
                                                   String recipientLastName, String approverFirstName,
                                                   String approverLastName, String projectTitle,

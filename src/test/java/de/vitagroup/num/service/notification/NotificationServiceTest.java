@@ -1,25 +1,28 @@
 package de.vitagroup.num.service.notification;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.properties.NumProperties;
 import de.vitagroup.num.service.email.EmailService;
 import de.vitagroup.num.service.email.MessageSourceWrapper;
 import de.vitagroup.num.service.notification.dto.*;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
+import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
 import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
-import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NotificationServiceTest {
@@ -62,9 +65,19 @@ public class NotificationServiceTest {
             ProjectStatusChangeNotification.builder().recipientEmail("anne.doe@vita.ag").build(),
             ProjectApprovalRequestNotification.builder()
                 .recipientEmail("ann.doe@vita.ag")
-                .build()));
+                .build(),
+            RolesUpdateNotification.builder()
+                    .recipientEmail("recipient.email@vita.ag")
+                    .rolesAdded(Arrays.asList(Roles.RESEARCHER, Roles.STUDY_APPROVER))
+                    .rolesRemoved(Collections.emptyList())
+                    .allRoles(Collections.emptyList())
+                    .build(),
+            ProjectStatusChangeRequestNotification.changeRequestBuilder()
+                    .projectId(99L)
+                    .recipientEmail("coordinator@vita.ag")
+                    .build()));
 
-    verify(emailService, times(4)).sendEmail(anyString(), anyString(), anyString());
+    verify(emailService, times(6)).sendEmail(anyString(), anyString(), anyString());
   }
 
   @Test
@@ -119,7 +132,7 @@ public class NotificationServiceTest {
   @Test
   public void shouldCorrectlyComputeProjectEditUrl() {
     String portalUrl = "https://staging.num-codex.de/home";
-    Notification not = ProjectStatusChangeRequestNotification.builder()
+    Notification not = ProjectStatusChangeRequestNotification.changeRequestBuilder()
             .recipientEmail("recipient-test@num-codex.de")
             .build();
     String editUrl = not.getProjectEditUrl(portalUrl, 9L);
