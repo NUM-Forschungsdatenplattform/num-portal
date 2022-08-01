@@ -10,11 +10,7 @@ import static org.mockito.Mockito.when;
 import de.vitagroup.num.properties.NumProperties;
 import de.vitagroup.num.service.email.EmailService;
 import de.vitagroup.num.service.email.MessageSourceWrapper;
-import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.ProjectApprovalRequestNotification;
-import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
-import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
-import de.vitagroup.num.service.notification.dto.ProjectStatusChangeNotification;
+import de.vitagroup.num.service.notification.dto.*;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
 import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import java.util.List;
@@ -118,5 +114,16 @@ public class NotificationServiceTest {
     String expectedReviewUrl = "https://staging.num-codex.de/projects/9/editor?mode=review";
 
     assertEquals(expectedReviewUrl, reviewUrl);
+  }
+
+  @Test
+  public void shouldCorrectlyComputeProjectEditUrl() {
+    String portalUrl = "https://staging.num-codex.de/home";
+    Notification not = ProjectStatusChangeRequestNotification.builder()
+            .recipientEmail("recipient-test@num-codex.de")
+            .build();
+    String editUrl = not.getProjectEditUrl(portalUrl, 9L);
+    String expectedEditUrl = "https://staging.num-codex.de/projects/9/editor?mode=edit";
+    assertEquals(expectedEditUrl, editUrl);
   }
 }

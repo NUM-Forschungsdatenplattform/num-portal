@@ -15,6 +15,8 @@ public abstract class Notification {
 
   protected static final String PROJECT_REVIEW_MODE = "/editor?mode=review";
 
+  protected static final String PROJECT_EDIT_MODE = "/editor?mode=edit";
+
   protected String recipientEmail;
   protected String recipientFirstName;
   protected String recipientLastName;
@@ -36,6 +38,10 @@ public abstract class Notification {
 
   public String getProjectReviewUrl(String portalUrl, Long projectId) {
     return getProjectUrl(portalUrl, projectId, PROJECT_REVIEW_MODE);
+  }
+
+  public String getProjectEditUrl(String portalUrl, Long projectId) {
+    return getProjectUrl(portalUrl, projectId, PROJECT_EDIT_MODE);
   }
 
   public String getProjectExplorerUrl(String portalUrl, Long projectId) {

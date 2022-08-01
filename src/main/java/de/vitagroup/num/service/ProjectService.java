@@ -2,21 +2,10 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.ExportType;
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
-import de.vitagroup.num.domain.ProjectTransition;
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.domain.dto.ProjectDto;
-import de.vitagroup.num.domain.dto.ProjectInfoDto;
-import de.vitagroup.num.domain.dto.TemplateInfoDto;
-import de.vitagroup.num.domain.dto.UserDetailsDto;
-import de.vitagroup.num.domain.dto.ZarsInfoDto;
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
 import de.vitagroup.num.mapper.ProjectMapper;
@@ -28,45 +17,9 @@ import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.service.executors.CohortQueryLister;
 import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.ProjectApprovalRequestNotification;
-import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
-import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
-import de.vitagroup.num.service.notification.dto.ProjectStatusChangeNotification;
-import de.vitagroup.num.service.policy.EhrPolicy;
-import de.vitagroup.num.service.policy.EuropeanConsentPolicy;
-import de.vitagroup.num.service.policy.Policy;
-import de.vitagroup.num.service.policy.ProjectPolicyService;
-import de.vitagroup.num.service.policy.TemplatesPolicy;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.PrivacyException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
+import de.vitagroup.num.service.notification.dto.*;
+import de.vitagroup.num.service.policy.*;
+import de.vitagroup.num.web.exception.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -85,6 +38,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+
+import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @Slf4j
@@ -693,19 +663,26 @@ public class ProjectService {
 
       var approver = userService.getUserById(approverUserId, false);
 
-      ProjectStatusChangeNotification notification =
-          ProjectStatusChangeNotification.builder()
-              .recipientFirstName(coordinator.getFirstName())
-              .recipientLastName(coordinator.getLastName())
-              .recipientEmail(coordinator.getEmail())
-              .projectTitle(project.getName())
-              .projectStatus(newStatus)
-              .approverFirstName(approver.getFirstName())
-              .approverLastName(approver.getLastName())
-              .projectId(project.getId())
-              .oldProjectStatus(oldStatus)
-              .build();
-      notifications.add(notification);
+      if (isTransitionToChangeRequest(oldStatus, newStatus)) {
+        ProjectStatusChangeRequestNotification notification = new ProjectStatusChangeRequestNotification(coordinator.getEmail(), coordinator.getFirstName(),
+                                                                  coordinator.getLastName(), approver.getFirstName(), approver.getLastName(),
+                                                                  project.getName(), newStatus, oldStatus, project.getId());
+        notifications.add(notification);
+      } else {
+        ProjectStatusChangeNotification notification =
+                ProjectStatusChangeNotification.builder()
+                        .recipientFirstName(coordinator.getFirstName())
+                        .recipientLastName(coordinator.getLastName())
+                        .recipientEmail(coordinator.getEmail())
+                        .projectTitle(project.getName())
+                        .projectStatus(newStatus)
+                        .approverFirstName(approver.getFirstName())
+                        .approverLastName(approver.getLastName())
+                        .projectId(project.getId())
+                        .oldProjectStatus(oldStatus)
+                        .build();
+        notifications.add(notification);
+      }
     }
 
     if (isTransitionToPublished(oldStatus, newStatus) && newResearchers != null) {
@@ -813,6 +790,10 @@ public class ProjectService {
   private boolean isTransitionToPublishedFromPublished(
       ProjectStatus oldStatus, ProjectStatus newStatus) {
     return ProjectStatus.PUBLISHED.equals(oldStatus) && ProjectStatus.PUBLISHED.equals(newStatus);
+  }
+
+  private boolean isTransitionToChangeRequest(ProjectStatus oldStatus, ProjectStatus newStatus) {
+    return ProjectStatus.CHANGE_REQUEST.equals(newStatus) && !newStatus.equals(oldStatus);
   }
 
   private void registerToZarsIfNecessary(
