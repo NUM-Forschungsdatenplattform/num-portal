@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintViolationException;
+
+import static de.vitagroup.num.common.ErrorMessageConstants.*;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -29,10 +31,10 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
       HttpStatus status,
       WebRequest request) {
 
-    log.error("Http message not readable", ex);
+    log.error(REQUEST_BODY_REQUIRED, ex);
 
     ErrorResponse response =
-        ErrorResponse.builder().errors(List.of("Http message not readable")).build();
+        ErrorResponse.builder().errors(List.of(REQUEST_BODY_REQUIRED)).build();
     return new ResponseEntity<>(response, headers, HttpStatus.BAD_REQUEST);
   }
 
@@ -57,7 +59,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     ErrorResponse response =
         ErrorResponse.builder()
-            .errors(Collections.singletonList("An unexpected error has occurred"))
+            .errors(Collections.singletonList(UNEXPECTED_ERROR))
             .build();
     return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
   }
@@ -76,7 +78,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     log.error(ex.getMessage(), ex);
 
     ErrorResponse response =
-        ErrorResponse.builder().errors(Collections.singletonList(ex.getMessage())).build();
+        ErrorResponse.builder().errors(Collections.singletonList(WRONG_STATUS_CODE_EXCEPTION)).build();
     return new ResponseEntity<>(response, new HttpHeaders(), HttpStatus.BAD_REQUEST);
   }
 
