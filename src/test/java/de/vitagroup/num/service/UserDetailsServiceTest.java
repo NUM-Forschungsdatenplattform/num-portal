@@ -8,19 +8,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Organization;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
 import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.feign.KeycloakFeign;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -129,5 +132,48 @@ public class UserDetailsServiceTest {
 
     assertThat(notificationSent.size(), is(1));
     assertThat(notificationSent.get(0).getClass(), is(AccountApprovalNotification.class));
+  }
+
+  @Test
+  public void shouldSendNotificationWhenCreateUserDetails() {
+    String userEmail = "dummyUser@vitagroup.de";
+    String userId = "dummyUserId";
+    Organization organization = Organization.builder()
+            .id(9L)
+            .name("Organization VitaGroup")
+            .build();
+    OrganizationDto organizationDto = OrganizationDto.builder()
+            .name("Organization VitaGroup")
+            .id(9L)
+            .build();
+    when(organizationService.resolveOrganization(userEmail)).thenReturn(Optional.of(organization));
+    User user =
+            User.builder()
+                    .id(userId)
+                    .organization(organizationDto)
+                    .approved(false)
+                    .email(userEmail)
+                    .firstName("user firstname")
+                    .lastName("lastname")
+                    .build();
+    User organizationAdmin = User.builder()
+            .firstName("organization admin")
+            .lastName("lastname")
+            .email("organization-admin@vitagroup.de")
+            .organization(organizationDto)
+            .build();
+    when(userDetailsRepository.save(any())).thenReturn(UserDetails.builder()
+            .userId(userId)
+            .organization(organization)
+            .build());
+    when(userService.getUserById(userId, false)).thenReturn(user);
+    when(userService.getByRole(Roles.ORGANIZATION_ADMIN)).thenReturn(new HashSet<>(Arrays.asList(organizationAdmin)));
+    userDetailsService.createUserDetails(userId, userEmail);
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(NewUserNotification.class));
+
   }
 }
