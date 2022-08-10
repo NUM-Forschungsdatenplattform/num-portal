@@ -1,5 +1,6 @@
 package de.vitagroup.num.service.ehrbase;
 
+import static de.vitagroup.num.common.ErrorMessageConstants.*;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.SystemException;
@@ -91,11 +92,11 @@ public class EhrBaseService {
       List<Record> results = restClient.aqlEndpoint().execute(pair.getLeft());
       return results.stream().map(result -> result.value(0).toString()).collect(Collectors.toSet());
     } catch (WrongStatusCodeException e) {
-      log.error("Malformed query exception", e);
+      log.error(INVALID_AQL_QUERY, e);
       throw e;
     } catch (ClientException e) {
       log.error(ERROR_MESSAGE, e);
-      throw new SystemException("An error has occurred, cannot execute aql");
+      throw new SystemException(EHR_CLIENT_EXCEPTION, e);
     }
   }
 
@@ -129,7 +130,7 @@ public class EhrBaseService {
       throw e;
     } catch (ClientException e) {
       log.error(ERROR_MESSAGE, e);
-      throw new SystemException("An error has occurred, cannot execute aql");
+      throw new SystemException(EHR_CLIENT_EXCEPTION, e);
     }
   }
 
@@ -140,11 +141,11 @@ public class EhrBaseService {
     try {
       return restClient.aqlEndpoint().executeRaw(query);
     } catch (WrongStatusCodeException e) {
-      log.error("Malformed query exception", e);
+      log.error(INVALID_AQL_QUERY, e);
       throw e;
     } catch (ClientException e) {
       log.error(ERROR_MESSAGE, e);
-      throw new SystemException("An error has occurred, cannot execute aql", e);
+      throw new SystemException(EHR_CLIENT_EXCEPTION, e);
     }
   }
 

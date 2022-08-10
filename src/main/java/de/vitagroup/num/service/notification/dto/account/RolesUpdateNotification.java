@@ -3,16 +3,24 @@ package de.vitagroup.num.service.notification.dto.account;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.service.email.MessageSourceWrapper;
 import de.vitagroup.num.service.notification.dto.Notification;
+import lombok.Builder;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import java.time.Year;
 import java.util.HashMap;
 import java.util.List;
-import lombok.Builder;
-import org.apache.commons.lang3.StringUtils;
 
 public class RolesUpdateNotification extends Notification {
 
   private static final String USER_ROLES_UPDATE_SUBJECT_KEY = "mail.user-roles-update.subject";
   private static final String USER_ROLES_UPDATE_BODY_KEY = "mail.user-roles.body";
+
+  private static final String OPEN_LIST_HTML_TAG = "<ul>";
+  private static final String CLOSE_LIST_HTML_TAG = "</ul>";
+  private static final String OPEN_LIST_ELEMENT_HTML_TAG = "<li>";
+  private static final String CLOSE_LIST_ELEMENT_HTML_TAG = "</li>";
+  private static final String HYPHEN = "-";
 
   private final List<String> rolesRemoved;
   private final List<String> rolesAdded;
@@ -75,20 +83,27 @@ public class RolesUpdateNotification extends Notification {
 
   private String getRolesDisplayString(List<String> roles, MessageSourceWrapper messageSource) {
     StringBuilder message = new StringBuilder();
+    if (CollectionUtils.isNotEmpty(roles)) {
+      message.append(OPEN_LIST_HTML_TAG);
+    }
 
     roles.forEach(
         role -> {
-          String displayName = messageSource.getMessage(translationKeys.get(role));
+          String displayName = translationKeys.containsKey(role) ? messageSource.getMessage(translationKeys.get(role)) : StringUtils.EMPTY;
+          message.append(OPEN_LIST_ELEMENT_HTML_TAG);
           if (StringUtils.isNotEmpty(displayName)) {
             message.append(displayName);
           } else {
             message.append(role);
           }
-          message.append(StringUtils.SPACE);
+          message.append(CLOSE_LIST_ELEMENT_HTML_TAG);
         });
 
     if (StringUtils.isEmpty(message)) {
-      message.append("-");
+      message.append(HYPHEN);
+    }
+    if (CollectionUtils.isNotEmpty(roles)) {
+      message.append(CLOSE_LIST_HTML_TAG);
     }
 
     return message.toString();

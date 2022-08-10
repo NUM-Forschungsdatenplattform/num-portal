@@ -32,9 +32,7 @@ import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
-import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
+import de.vitagroup.num.service.notification.dto.*;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
@@ -1045,6 +1043,38 @@ public class ProjectServiceTest {
 
     assertThat(notificationSent.size(), is(2));
     assertThat(notificationSent.get(0).getClass(), is(ProjectCloseNotification.class));
+  }
+
+  @Test
+  public void shouldSendNotificationWhenChangeRequestProject() {
+      Project projectEntity = Project.builder().id(99L)
+              .name("Project T001")
+              .status(ProjectStatus.REVIEWING)
+              .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+              .researchers(List.of(UserDetails.builder().userId("researcher1").build()))
+              .build();
+      when(projectRepository.findById(99L)).thenReturn(Optional.of(projectEntity));
+
+    ProjectDto projectDto =
+            ProjectDto.builder()
+                    .name("Project T001")
+                    .id(99L)
+                    .status(ProjectStatus.CHANGE_REQUEST)
+                    .coordinator(User.builder().id("approvedCoordinatorId").build())
+                    .researchers(List.of(UserDetailsDto.builder().userId("researcher1").build()))
+                    .build();
+    projectService.updateProject(
+            projectDto,
+            99L,
+            "approvedCoordinatorId",
+            List.of(STUDY_APPROVER));
+
+    verify(projectRepository, times(1)).save(any());
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(ProjectStatusChangeRequestNotification.class));
   }
 
   @Before

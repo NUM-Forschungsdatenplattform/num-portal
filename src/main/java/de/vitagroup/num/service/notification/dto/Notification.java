@@ -11,6 +11,12 @@ public abstract class Notification {
 
   protected static final String COPYRIGHT_KEY = "num.copyright";
 
+  protected static final String PROJECT_PREVIEW_MODE = "/editor?mode=preview";
+
+  protected static final String PROJECT_REVIEW_MODE = "/editor?mode=review";
+
+  protected static final String PROJECT_EDIT_MODE = "/editor?mode=edit";
+
   protected String recipientEmail;
   protected String recipientFirstName;
   protected String recipientLastName;
@@ -27,12 +33,15 @@ public abstract class Notification {
   public abstract String getNotificationSubject(MessageSourceWrapper messageSource);
 
   public String getProjectPreviewUrl(String portalUrl, Long projectId) {
-    String baseUrl = getBaseUrl(portalUrl);
-    if (StringUtils.isNotEmpty(baseUrl)) {
-      return String.format("%s%s%d%s", baseUrl, "/projects/", projectId, "/editor?mode=preview");
-    } else {
-      return "-";
-    }
+    return getProjectUrl(portalUrl, projectId, PROJECT_PREVIEW_MODE);
+  }
+
+  public String getProjectReviewUrl(String portalUrl, Long projectId) {
+    return getProjectUrl(portalUrl, projectId, PROJECT_REVIEW_MODE);
+  }
+
+  public String getProjectEditUrl(String portalUrl, Long projectId) {
+    return getProjectUrl(portalUrl, projectId, PROJECT_EDIT_MODE);
   }
 
   public String getProjectExplorerUrl(String portalUrl, Long projectId) {
@@ -54,5 +63,14 @@ public abstract class Notification {
       }
     }
     return StringUtils.EMPTY;
+  }
+
+  private String getProjectUrl(String portalUrl, Long projectId, String mode) {
+    String baseUrl = getBaseUrl(portalUrl);
+    if (StringUtils.isNotEmpty(baseUrl)) {
+      return String.format("%s%s%d%s", baseUrl, "/projects/", projectId, mode);
+    } else {
+      return "-";
+    }
   }
 }
