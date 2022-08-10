@@ -75,9 +75,17 @@ public class NotificationServiceTest {
             ProjectStatusChangeRequestNotification.changeRequestBuilder()
                     .projectId(99L)
                     .recipientEmail("coordinator@vita.ag")
+                    .build(),
+            NewUserNotification.builder()
+                    .newUserEmail("newAccount@vita.ag")
+                    .newUserFirstName("super firstname")
+                    .newUserLastName("lastname")
+                    .requestedRole("Researcher")
+                    .department("some department")
+                    .recipientEmail("recipient@vita.ag")
                     .build()));
 
-    verify(emailService, times(6)).sendEmail(anyString(), anyString(), anyString());
+    verify(emailService, times(7)).sendEmail(anyString(), anyString(), anyString());
   }
 
   @Test

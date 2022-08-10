@@ -26,7 +26,8 @@ public class NewUserNotification extends Notification {
           String newUserEmail,
           String newUserFirstName,
           String newUserLastName,
-          String requestedRole, String department, String notes, String recipientEmail,
+          String requestedRole, String department,
+          String notes, String recipientEmail,
           String recipientFirstName,
           String recipientLastName) {
 
