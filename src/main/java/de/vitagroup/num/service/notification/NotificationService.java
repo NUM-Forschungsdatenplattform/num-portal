@@ -22,7 +22,7 @@ public class NotificationService {
 
   private final NumProperties numProperties;
 
-  //@Async
+  @Async
   public void send(List<Notification> notifications) {
     notifications.forEach(
         notification -> {
