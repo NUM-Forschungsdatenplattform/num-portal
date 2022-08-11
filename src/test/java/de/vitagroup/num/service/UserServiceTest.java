@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import feign.Request;
 import feign.RequestTemplate;
@@ -91,13 +92,13 @@ public class UserServiceTest {
   ArgumentCaptor<List<Notification>> notificationCaptor;
 
   private final Set<Role> roles =
-      Set.of(
+      Stream.of(
           new Role("R1", "SUPER_ADMIN"),
           new Role("R2", "RESEARCHER"),
           new Role("R3", "ORGANIZATION_ADMIN"),
           new Role("R4", "STUDY_COORDINATOR"),
           new Role("R5", "CONTENT_ADMIN"),
-          new Role("R6", "STUDY_APPROVER"));
+          new Role("R6", "STUDY_APPROVER")).collect(Collectors.toSet());
 
   private final Set<User> allValidUsers =
       Sets.newHashSet(
@@ -119,7 +120,7 @@ public class UserServiceTest {
     when(keycloakFeign.getRolesOfUser("1")).thenThrow(FeignException.BadRequest.class);
     when(keycloakFeign.getRolesOfUser("2")).thenThrow(FeignException.InternalServerError.class);
     when(keycloakFeign.getRolesOfUser("3")).thenThrow(FeignException.NotFound.class);
-    when(keycloakFeign.getRolesOfUser("4")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
+    when(keycloakFeign.getRolesOfUser("4")).thenReturn(Stream.of(new Role("R2", "RESEARCHER")).collect(Collectors.toSet()));
     when(keycloakFeign.getRolesOfUser("5")).thenReturn(Collections.emptySet());
     when(keycloakFeign.getRolesOfUser("6")).thenReturn(roles);
     when(keycloakFeign.getRolesOfUser("7")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
@@ -304,7 +305,7 @@ public class UserServiceTest {
   public void shouldNotSetExistingRole() {
     userService.setUserRoles(
         "4",
-        Collections.singletonList("RESEARCHER"),
+        Collections.singletonList(Roles.RESEARCHER),
         "4",
         Collections.singletonList(Roles.SUPER_ADMIN));
     verify(keycloakFeign, never()).removeRoles(anyString(), any(Role[].class));

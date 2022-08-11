@@ -56,6 +56,8 @@ public class UserService {
 
   private static final String USERS_CACHE = "users";
 
+  private static final String KEYCLOACK_DEFAULT_ROLES_PREFIX = "default-roles-";
+
   @Transactional
   public void deleteUser(String userId, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
@@ -338,6 +340,7 @@ public class UserService {
     List<Notification> notifications = new LinkedList<>();
     User user = getUserById(userId, false);
     User admin = getUserById(loggedInUserId, false);
+    allRoles.removeIf(r -> r.getName().startsWith(KEYCLOACK_DEFAULT_ROLES_PREFIX));
 
     if (user != null && admin != null) {
       RolesUpdateNotification notification =
