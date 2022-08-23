@@ -7,9 +7,9 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -25,6 +25,14 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_UPDATE_ORGANIZATION;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_MAIL_DOMAIN;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_NAME_MUST_BE_UNIQUE;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_NOT_FOUND;
 
 /** Service responsible for retrieving organization information from the terminology server */
 @Slf4j
@@ -107,7 +115,7 @@ public class OrganizationService {
 
     return organizationRepository
         .findById(id)
-        .orElseThrow(() -> new ResourceNotFound("Organization not found:" + id));
+        .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, id)));
   }
 
   @Transactional
@@ -118,8 +126,8 @@ public class OrganizationService {
         .findByName(organizationDto.getName())
         .ifPresent(
             d -> {
-              throw new BadRequestException(
-                  "Organization name must be unique: " + organizationDto.getName());
+              throw new BadRequestException(Organization.class, ORGANIZATION_NAME_MUST_BE_UNIQUE,
+                  String.format(ORGANIZATION_NAME_MUST_BE_UNIQUE, organizationDto.getName()));
             });
     validateMailDomains(organizationDto.getMailDomains());
     organizationDto
@@ -129,7 +137,8 @@ public class OrganizationService {
               Optional<MailDomain> mailDomain =
                   mailDomainRepository.findByName(domain.toLowerCase());
               if (mailDomain.isPresent()) {
-                throw new BadRequestException("Organization mail domain already exists: " + domain);
+                throw new BadRequestException(Organization.class, ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS,
+                        String.format(ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS, organizationDto.getName()));
               }
             });
 
@@ -160,15 +169,15 @@ public class OrganizationService {
     Organization organizationToEdit =
         organizationRepository
             .findById(organizationId)
-            .orElseThrow(() -> new ResourceNotFound("Organization not found: " + organizationId));
+            .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
 
     organizationRepository
         .findByName(organizationDto.getName())
         .ifPresent(
             d -> {
               if (!d.getId().equals(organizationToEdit.getId())) {
-                throw new BadRequestException(
-                    "Organization name must be unique: " + organizationDto.getName());
+                throw new BadRequestException(OrganizationService.class, ORGANIZATION_NAME_MUST_BE_UNIQUE,
+                        String.format(ORGANIZATION_NAME_MUST_BE_UNIQUE, organizationDto.getName()));
               }
             });
     validateMailDomains(organizationDto.getMailDomains());
@@ -185,7 +194,8 @@ public class OrganizationService {
                       .getOrganization()
                       .getId()
                       .equals(organizationToEdit.getId())) {
-                throw new BadRequestException("Organization mail domain already exists: " + domain);
+                throw new BadRequestException(OrganizationService.class, ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS,
+                        String.format(ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS, domain));
               }
             });
 
@@ -196,10 +206,10 @@ public class OrganizationService {
       if (user.getOrganization().getId().equals(organizationId)) {
         updateOrganization(organizationDto, organizationToEdit);
       } else {
-        throw new ForbiddenException("Cannot update organization:" + organizationId);
+        throw new ForbiddenException(OrganizationService.class, CANNOT_UPDATE_ORGANIZATION, String.format(CANNOT_UPDATE_ORGANIZATION, organizationId));
       }
     } else {
-      throw new ForbiddenException("Cannot access this resource");
+      throw new ForbiddenException(OrganizationService.class, CANNOT_ACCESS_THIS_RESOURCE);
     }
 
     return organizationRepository.save(organizationToEdit);
@@ -209,11 +219,12 @@ public class OrganizationService {
     domains.forEach(
         domain -> {
           if (StringUtils.isEmpty(domain)) {
-            throw new BadRequestException("Organization mail domain cannot be null or empty");
+            throw new BadRequestException(OrganizationService.class, ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY);
           }
 
           if (!Pattern.matches(DOMAIN_VALIDATION_REGEX, domain.toLowerCase())) {
-            throw new BadRequestException("Invalid mail domain: " + domain);
+            throw new BadRequestException(OrganizationService.class, INVALID_MAIL_DOMAIN,
+                    String.format(INVALID_MAIL_DOMAIN, domain));
           }
         });
   }

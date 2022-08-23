@@ -3,7 +3,7 @@ package de.vitagroup.num.service.exception;
 import lombok.Getter;
 
 @Getter
-public class IllegalArgumentException extends RuntimeException {
+public class BadRequestException extends RuntimeException {
 
     private final Class<?> entity;
 
@@ -11,14 +11,14 @@ public class IllegalArgumentException extends RuntimeException {
 
     private final String parameter;
 
-/*    public IllegalArgumentException(Class<?> entity, String paramValue, String parameter) {
+    public BadRequestException(Class<?> entity, String paramValue, String parameter) {
         super(parameter);
         this.entity = entity;
         this.paramValue = paramValue;
         this.parameter = parameter;
-    }*/
+    }
 
-    public IllegalArgumentException(Class<?> entity, String parameter) {
+    public BadRequestException(Class<?> entity, String parameter) {
         super(parameter);
         this.entity = entity;
         this.paramValue = parameter;

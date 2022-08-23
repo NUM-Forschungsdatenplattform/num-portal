@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.SetUtils;
 import org.springframework.stereotype.Service;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_EXECUTE_AN_EMPTY_COHORT;
+
 @Slf4j
 @Service
 @AllArgsConstructor
@@ -27,7 +29,7 @@ public class CohortExecutor {
   public Set<String> execute(Cohort cohort, Boolean allowUsageOutsideEu) {
 
     if (cohort == null || cohort.getCohortGroup() == null) {
-      throw new IllegalArgumentException("Cannot execute an empty cohort");
+      throw new IllegalArgumentException(CohortExecutor.class, CANNOT_EXECUTE_AN_EMPTY_COHORT);
     }
 
     return executeGroup(cohort.getCohortGroup(), allowUsageOutsideEu);

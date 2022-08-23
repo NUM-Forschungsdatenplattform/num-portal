@@ -8,6 +8,7 @@ import de.vitagroup.num.domain.dto.CohortSizeDto;
 import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
 import de.vitagroup.num.mapper.CohortMapper;
 import de.vitagroup.num.service.CohortService;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
@@ -33,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(value = "/cohort", produces = "application/json")
-public class CohortController {
+public class CohortController extends CustomizedExceptionHandler {
 
   private final CohortService cohortService;
 

@@ -1,5 +1,9 @@
 package de.vitagroup.num.service;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_MAIL_DOMAIN;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -15,10 +19,10 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -75,7 +79,7 @@ public class OrganizationServiceTest {
 
     invalidDomains.forEach(
         domain -> {
-          Exception exception =
+          BadRequestException exception =
               assertThrows(
                   BadRequestException.class,
                   () ->
@@ -83,8 +87,8 @@ public class OrganizationServiceTest {
                           "approvedUserId",
                           OrganizationDto.builder().name("B").mailDomains(Set.of(domain)).build()));
 
-          String expectedMessage = String.format("%s %s", "Invalid mail domain:", domain);
-          assertThat(exception.getMessage(), is(expectedMessage));
+          String expectedMessage = String.format(INVALID_MAIL_DOMAIN, domain);
+          assertThat(exception.getParameter(), is(expectedMessage));
         });
 
     verify(organizationRepository, times(0)).save(any());
@@ -266,16 +270,16 @@ public class OrganizationServiceTest {
     when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
 
     when(userDetailsService.checkIsUserApproved("missingUserId"))
-        .thenThrow(new SystemException("User not found"));
+        .thenThrow(new SystemException(OrganizationServiceTest.class, USER_NOT_FOUND));
 
     when(userDetailsService.checkIsUserApproved("notApprovedUserId"))
-        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
+        .thenThrow(new ForbiddenException(OrganizationServiceTest.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED));
 
     when(organizationRepository.findByName("Existing organization"))
         .thenReturn(
             Optional.of(Organization.builder().id(5L).name("Existing organization").build()));
 
-    when(organizationRepository.findById(1L)).thenThrow(new ResourceNotFound());
+    when(organizationRepository.findById(1L)).thenThrow(new ResourceNotFound(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, 1L)));
 
     when(organizationRepository.findById(3L))
         .thenReturn(Optional.of(Organization.builder().id(3L).name("Existing").build()));

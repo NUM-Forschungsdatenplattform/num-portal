@@ -10,10 +10,10 @@ import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
 import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
 import java.util.Arrays;
@@ -36,6 +36,22 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_ENABLED_USER;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_APPROVED_USER;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CAN_ONLY_CHANGE_OWN_NAME_ORG_ADMIN_NAMES_OF_THE_PEOPLE_IN_THE_ORGANIZATION_AND_SUPERUSER_ALL_NAMES;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.FETCHING_USER_FROM_KEYCLOAK_FAILED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NOT_ALLOWED_TO_REMOVE_THAT_ROLE;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NOT_ALLOWED_TO_SET_THAT_ROLE;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_ROLES_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_ADMIN_CAN_ONLY_MANAGE_USERS_IN_THEIR_OWN_ORGANIZATION;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ROLE_OR_USER_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.UNKNOWN_ROLE;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
 
 @Slf4j
 @Service
@@ -70,8 +86,8 @@ public class UserService {
         deleteNotVerifiedUser(userId);
         userDetailsService.deleteUserDetails(userId);
       } else {
-        throw new BadRequestException(
-            String.format("Cannot delete user: %s; user is approved", userId));
+        throw new BadRequestException(UserService.class, CANNOT_DELETE_APPROVED_USER,
+                String.format(CANNOT_DELETE_APPROVED_USER, userId));
       }
     }
   }
@@ -125,11 +141,11 @@ public class UserService {
       return user;
 
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException(
-          "An error has occurred, cannot retrieve users, please try again later");
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
       log.warn("User not found in keycloak: {}", userId);
-      throw new ResourceNotFound("User not found");
+      throw new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, userId));
     }
   }
 
@@ -159,7 +175,8 @@ public class UserService {
     UserDetails userToChange =
         userDetailsService
             .getUserDetailsById(userId)
-            .orElseThrow(() -> new SystemException("User not found"));
+            .orElseThrow(() -> new SystemException(UserService.class, USER_NOT_FOUND,
+                    String.format(USER_NOT_FOUND, userId)));
 
     UserDetails callerDetails = userDetailsService.checkIsUserApproved(callerUserId);
 
@@ -169,8 +186,7 @@ public class UserService {
         .getOrganization()
         .getId()
         .equals(userToChange.getOrganization().getId())) {
-      throw new ForbiddenException(
-          "Organization admin can only manage users in their own organization.");
+      throw new ForbiddenException(UserService.class, ORGANIZATION_ADMIN_CAN_ONLY_MANAGE_USERS_IN_THEIR_OWN_ORGANIZATION);
     }
 
     Role[] removeRoles;
@@ -195,7 +211,7 @@ public class UserService {
               .peek(
                   role -> {
                     if (role == null) {
-                      throw new BadRequestException("Unknown Role");
+                      throw new BadRequestException(UserService.class, UNKNOWN_ROLE);
                     }
                   })
               .collect(Collectors.toList())
@@ -203,11 +219,11 @@ public class UserService {
 
       if (Arrays.stream(removeRoles)
           .anyMatch(role -> !Roles.isAllowedToSet(role.getName(), callerRoles))) {
-        throw new ForbiddenException("Not allowed to remove that role");
+        throw new ForbiddenException(UserService.class, NOT_ALLOWED_TO_REMOVE_THAT_ROLE);
       }
       if (Arrays.stream(addRoles)
           .anyMatch(role -> !Roles.isAllowedToSet(role.getName(), callerRoles))) {
-        throw new ForbiddenException("Not allowed to set that role");
+        throw new ForbiddenException(UserService.class, NOT_ALLOWED_TO_SET_THAT_ROLE);
       }
 
       if (removeRoles.length > 0) {
@@ -219,9 +235,10 @@ public class UserService {
       }
 
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException("An error has occurred, please try again later");
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
-      throw new ResourceNotFound("Role or user not found");
+      throw new ResourceNotFound(UserService.class, ROLE_OR_USER_NOT_FOUND);
     }
 
     Set<Role> current = keycloakFeign.getRolesOfUser(userId);
@@ -235,10 +252,10 @@ public class UserService {
     try {
       return keycloakFeign.getRolesOfUser(userId);
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException(
-          "An error has occurred, cannot retrieve user roles, please try again later");
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
-      throw new ResourceNotFound("No roles found");
+      throw new ResourceNotFound(UserService.class, NO_ROLES_FOUND);
     }
   }
 
@@ -399,12 +416,11 @@ public class UserService {
       if (user != null && BooleanUtils.isFalse(user.getEmailVerified())) {
         keycloakFeign.deleteUser(userId);
       } else {
-        throw new BadRequestException(
-            "Cannot delete user. User is enabled and email address is verified");
+        throw new BadRequestException(UserService.class, CANNOT_DELETE_ENABLED_USER);
       }
     } catch (Exception e) {
-      throw new SystemException(
-          "An error has occurred while deleting user. Please try again later");
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     }
   }
 
@@ -435,8 +451,8 @@ public class UserService {
         && belongToSameOrganization(loggedInUser, userToChange))) {
       updateName(userIdToChange, userName);
     } else {
-      throw new ForbiddenException(
-          "Can only change own name, org admin names of the people in the organization and superuser all names.");
+      throw new ForbiddenException(UserService.class,
+              CAN_ONLY_CHANGE_OWN_NAME_ORG_ADMIN_NAMES_OF_THE_PEOPLE_IN_THE_ORGANIZATION_AND_SUPERUSER_ALL_NAMES);
     }
 
     notificationService.send(collectUserNameUpdateNotification(userIdToChange, loggedInUserId));
@@ -445,7 +461,7 @@ public class UserService {
   private void updateName(String userId, UserNameDto userNameDto) {
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
     if (userRaw == null) {
-      throw new SystemException("Fetching user from Keycloak failed");
+      throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
     }
     userRaw.put("firstName", userNameDto.getFirstName());
     userRaw.put("lastName", userNameDto.getLastName());

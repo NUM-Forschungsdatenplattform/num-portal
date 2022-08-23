@@ -4,6 +4,7 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.OrganizationService;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
@@ -28,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/organization", produces = "application/json")
 @AllArgsConstructor
-public class OrganizationController {
+public class OrganizationController extends CustomizedExceptionHandler {
 
   private final OrganizationService organizationService;
   private final OrganizationMapper mapper;

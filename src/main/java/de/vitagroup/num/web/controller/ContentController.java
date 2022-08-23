@@ -6,6 +6,7 @@ import de.vitagroup.num.domain.dto.MetricsDto;
 import de.vitagroup.num.domain.dto.NavigationItemDto;
 import de.vitagroup.num.domain.dto.ProjectInfoDto;
 import de.vitagroup.num.service.ContentService;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -33,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @AllArgsConstructor
 @RequestMapping(value = "/content", produces = "application/json")
-public class ContentController {
+public class ContentController extends CustomizedExceptionHandler {
 
   private final ContentService contentService;
 

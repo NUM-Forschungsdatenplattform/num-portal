@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RELATIVE_COMPLEMENT_REQUIRES_TWO_VALID_SETS;
+
 @Service
 public class SetOperationsService {
 
@@ -44,7 +46,7 @@ public class SetOperationsService {
   public Set<String> exclude(Set<String> from, Set<String> excludeSet) {
 
     if (CollectionUtils.isEmpty(from) || CollectionUtils.isEmpty(excludeSet)) {
-      throw new IllegalArgumentException("Relative complement requires two valid sets");
+      throw new IllegalArgumentException(SetOperationsService.class, RELATIVE_COMPLEMENT_REQUIRES_TWO_VALID_SETS);
     }
 
     Set<String> fromCopy = new HashSet<>(from);

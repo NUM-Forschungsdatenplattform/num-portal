@@ -15,11 +15,15 @@ import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.email.ZarsService;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.PrivacyException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import de.vitagroup.num.service.executors.CohortQueryLister;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.*;
 import de.vitagroup.num.service.policy.*;
-import de.vitagroup.num.web.exception.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -56,12 +60,35 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_OWNER;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ARCHIVE_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_PROJECT_INVALID_STATUS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_UPDATE_PROJECT_INVALID_PROJECT_STATUS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ISSUE_HAS_OCCURRED_CANNOT_EXECUTE_AQL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_CREATING_THE_PROJECT_PDF;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_WHILE_CREATING_THE_CSV_FILE;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_WHILE_RETRIEVING_DATA;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_PROJECT_STATUS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_PROJECT_STATUS_PARAM;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.MORE_THAN_ONE_TRANSITION_FROM_PUBLISHED_TO_CLOSED_FOR_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_PERMISSIONS_TO_EDIT_THIS_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_COHORT_CANNOT_BE_NULL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_TEMPLATES_CANNOT_BE_NULL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESEARCHER_NOT_APPROVED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESEARCHER_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
+
 @Service
 @Slf4j
 @AllArgsConstructor
 public class ProjectService {
 
-  private static final String PROJECT_NOT_FOUND = "Project not found: ";
   private static final String ZIP_FILE_ENDING = ".zip";
   private static final String JSON_FILE_ENDING = ".json";
   private static final String ZIP_MEDIA_TYPE = "application/zip";
@@ -105,7 +132,6 @@ public class ProjectService {
 
   private final ProjectMapper projectMapper;
 
-  private static final String ERROR_MESSAGE = "An issue has occurred, cannot execute aql";
 
   public void deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
@@ -113,18 +139,17 @@ public class ProjectService {
     var project =
         projectRepository
             .findById(projectId)
-            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
+            .orElseThrow(() -> new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId)));
 
     if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
-      throw new ForbiddenException(String.format("Cannot delete project: %s", projectId));
+      throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT, String.format(CANNOT_DELETE_PROJECT, projectId));
     }
 
     if (project.isDeletable()) {
       projectRepository.deleteById(projectId);
     } else {
-      throw new ForbiddenException(
-          String.format(
-              "Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
+      throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT_INVALID_STATUS,
+              String.format(CANNOT_DELETE_PROJECT_INVALID_STATUS, projectId, project.getStatus()));
     }
   }
 
@@ -135,10 +160,10 @@ public class ProjectService {
     var project =
         projectRepository
             .findById(projectId)
-            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
+            .orElseThrow(() -> new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId)));
 
     if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
-      throw new ForbiddenException(String.format("Cannot archive project: %s", projectId));
+      throw new ForbiddenException(ProjectService.class, CANNOT_ARCHIVE_PROJECT, String.format(CANNOT_ARCHIVE_PROJECT, projectId));
     }
 
     validateStatus(project.getStatus(), ProjectStatus.ARCHIVED, roles);
@@ -195,7 +220,7 @@ public class ProjectService {
     try {
       return mapper.writeValueAsString(responseData);
     } catch (JsonProcessingException e) {
-      throw new SystemException(ERROR_MESSAGE);
+      throw new SystemException(ProjectService.class, AN_ISSUE_HAS_OCCURRED_CANNOT_EXECUTE_AQL);
     }
   }
 
@@ -209,7 +234,7 @@ public class ProjectService {
     Set<String> ehrIds = cohortService.executeCohort(cohort, false);
 
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(PrivacyProperties.RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(ProjectService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
 
     List<QueryResponseData> response = new LinkedList<>();
@@ -290,7 +315,8 @@ public class ProjectService {
 
     } catch (Exception e) {
       atnaService.logDataExport(userId, project.getId(), project, false);
-      throw new SystemException("Error while retrieving data:" + e.getLocalizedMessage());
+      throw new SystemException(ProjectService.class, ERROR_WHILE_RETRIEVING_DATA,
+              String.format(ERROR_WHILE_RETRIEVING_DATA, e.getLocalizedMessage()));
     }
     atnaService.logDataExport(userId, project.getId(), project, true);
     return queryResponse;
@@ -318,8 +344,8 @@ public class ProjectService {
       }
     } catch (IOException e) {
       log.error("Error creating a zip file for data export.", e);
-      throw new SystemException(
-          "Error creating a zip file for data export: " + e.getLocalizedMessage());
+      throw new SystemException(ProjectService.class, ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT,
+              String.format(ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT, e.getLocalizedMessage()));
     }
   }
 
@@ -342,7 +368,8 @@ public class ProjectService {
       }
       printer.flush();
     } catch (IOException e) {
-      throw new SystemException("Error while creating the CSV file");
+      throw new SystemException(ProjectService.class, ERROR_WHILE_CREATING_THE_CSV_FILE,
+              String.format(ERROR_WHILE_CREATING_THE_CSV_FILE, e.getMessage()));
     }
   }
 
@@ -398,7 +425,7 @@ public class ProjectService {
     try {
       json = mapper.writeValueAsString(response);
     } catch (JsonProcessingException e) {
-      throw new SystemException(ERROR_MESSAGE);
+      throw new SystemException(ProjectService.class, AN_ISSUE_HAS_OCCURRED_CANNOT_EXECUTE_AQL);
     }
     return outputStream -> {
       outputStream.write(json.getBytes());
@@ -489,14 +516,12 @@ public class ProjectService {
     var projectToEdit =
         projectRepository
             .findById(id)
-            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + id));
+            .orElseThrow(() -> new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, id)));
 
     if (ProjectStatus.ARCHIVED.equals(projectToEdit.getStatus())
         || ProjectStatus.CLOSED.equals(projectToEdit.getStatus())) {
-      throw new ForbiddenException(
-          String.format(
-              "Cannot update project: %s, invalid project status: %s",
-              id, projectToEdit.getStatus()));
+      throw new ForbiddenException(ProjectService.class, CANNOT_UPDATE_PROJECT_INVALID_PROJECT_STATUS,
+              String.format(CANNOT_UPDATE_PROJECT_INVALID_PROJECT_STATUS, id, projectToEdit.getStatus()));
     }
 
     if (CollectionUtils.isNotEmpty(roles)
@@ -506,7 +531,7 @@ public class ProjectService {
     } else if (CollectionUtils.isNotEmpty(roles) && roles.contains(Roles.STUDY_APPROVER)) {
       return updateProjectStatus(projectDto, roles, user, projectToEdit);
     } else {
-      throw new ForbiddenException("No permissions to edit this project");
+      throw new ForbiddenException(ProjectService.class, NO_PERMISSIONS_TO_EDIT_THIS_PROJECT);
     }
   }
 
@@ -881,11 +906,11 @@ public class ProjectService {
         Optional<UserDetails> researcher = userDetailsService.getUserDetailsById(dto.getUserId());
 
         if (researcher.isEmpty()) {
-          throw new BadRequestException("Researcher not found.");
+          throw new BadRequestException(ProjectService.class, RESEARCHER_NOT_FOUND);
         }
 
         if (researcher.get().isNotApproved()) {
-          throw new BadRequestException("Researcher not approved.");
+          throw new BadRequestException(ProjectService.class, RESEARCHER_NOT_APPROVED);
         }
 
         newResearchersList.add(researcher.get());
@@ -898,12 +923,12 @@ public class ProjectService {
       ProjectStatus initialStatus, ProjectStatus nextStatus, List<String> roles) {
 
     if (nextStatus == null) {
-      throw new BadRequestException("Invalid project status");
+      throw new BadRequestException(ProjectService.class, INVALID_PROJECT_STATUS);
     }
 
     if (initialStatus == null) {
       if (!isValidInitialStatus(nextStatus)) {
-        throw new BadRequestException("Invalid project status: " + nextStatus);
+        throw new BadRequestException(ProjectService.class, INVALID_PROJECT_STATUS_PARAM, String.format(INVALID_PROJECT_STATUS_PARAM, nextStatus));
       }
     } else if (initialStatus.nextStatusesAndRoles().containsKey(nextStatus)) {
       List<String> allowedRoles = initialStatus.nextStatusesAndRoles().get(nextStatus);
@@ -912,16 +937,12 @@ public class ProjectService {
           roles.stream().distinct().filter(allowedRoles::contains).collect(Collectors.toSet());
 
       if (intersectionSet.isEmpty()) {
-        throw new ForbiddenException(
-            "Project status transition from "
-                + initialStatus
-                + " to "
-                + nextStatus
-                + " not allowed");
+        throw new ForbiddenException(ProjectService.class, PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED,
+                String.format(PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED, initialStatus, nextStatus));
       }
     } else {
-      throw new BadRequestException(
-          "Project status transition from " + initialStatus + " to " + nextStatus + " not allowed");
+      throw new BadRequestException(ProjectService.class, PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED,
+           String.format(PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED, initialStatus ,nextStatus ));
     }
   }
 
@@ -957,7 +978,7 @@ public class ProjectService {
 
   private void validateCoordinatorIsOwner(Project project, String loggedInUser) {
     if (project.hasEmptyOrDifferentOwner(loggedInUser)) {
-      throw new ForbiddenException("Cannot access this resource. User is not owner.");
+      throw new ForbiddenException(ProjectService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_OWNER);
     }
   }
 
@@ -1062,8 +1083,8 @@ public class ProjectService {
                 project.getId(), ProjectStatus.PUBLISHED, ProjectStatus.CLOSED)
             .orElse(Collections.emptyList());
     if (transitions.size() > 1) {
-      throw new SystemException(
-          "More than one transition from PUBLISHED to CLOSED for project " + project.getId());
+      throw new SystemException(ProjectService.class, MORE_THAN_ONE_TRANSITION_FROM_PUBLISHED_TO_CLOSED_FOR_PROJECT,
+              String.format(MORE_THAN_ONE_TRANSITION_FROM_PUBLISHED_TO_CLOSED_FOR_PROJECT, project.getId()));
     }
     if (transitions.size() == 1) {
       return transitions.get(0).getCreateDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
@@ -1075,24 +1096,24 @@ public class ProjectService {
     Project project =
         projectRepository
             .findById(projectId)
-            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
+            .orElseThrow(() -> new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId)));
 
     if (project.getStatus() == null || !project.getStatus().equals(ProjectStatus.PUBLISHED)) {
-      throw new ForbiddenException("Data explorer available for published projects only");
+      throw new ForbiddenException(ProjectService.class, DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY);
     }
 
     if (!project.isProjectResearcher(userId) && project.hasEmptyOrDifferentOwner(userId)) {
-      throw new ForbiddenException("Cannot access this project");
+      throw new ForbiddenException(ProjectService.class, CANNOT_ACCESS_THIS_PROJECT);
     }
 
     if (project.getCohort() == null) {
-      throw new BadRequestException(
-          String.format("Project: %s cohort cannot be null", project.getId()));
+      throw new BadRequestException(ProjectService.class, PROJECT_COHORT_CANNOT_BE_NULL,
+              String.format(PROJECT_COHORT_CANNOT_BE_NULL, project.getId()));
     }
 
     if (project.getTemplates() == null) {
-      throw new BadRequestException(
-          String.format("Project: %s templates cannot be null", project.getId()));
+      throw new BadRequestException(ProjectService.class, PROJECT_TEMPLATES_CANNOT_BE_NULL,
+              String.format(PROJECT_TEMPLATES_CANNOT_BE_NULL, project.getId()));
     }
     return project;
   }
@@ -1120,13 +1141,14 @@ public class ProjectService {
             .findById(id)
             .orElseThrow(
                 () -> {
-                  throw new BadRequestException("Project not found");
+                  throw new BadRequestException(ProjectService.class, PROJECT_NOT_FOUND);
                 });
     ProjectDto projectDto = projectMapper.convertToDto(project);
     try {
       return projectDocCreator.getDocBytesOfProject(projectDto, locale);
     } catch (IOException e) {
-      throw new SystemException("Error creating the project PDF");
+      throw new SystemException(ProjectService.class, ERROR_CREATING_THE_PROJECT_PDF,
+              String.format(ERROR_CREATING_THE_PROJECT_PDF, e.getMessage()));
     }
   }
 }

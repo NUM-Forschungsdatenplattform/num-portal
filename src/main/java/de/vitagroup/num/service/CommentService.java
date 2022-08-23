@@ -1,17 +1,26 @@
 package de.vitagroup.num.service;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_COMMENT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COMMENT_EDIT_FOR_COMMENT_WITH_ID_IS_NOT_ALLOWED_COMMENT_HAS_DIFFERENT_AUTHOR;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COMMENT_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_COMMENTID_ID;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_DOES_NOT_EXIST;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.stereotype.Service;
+
 import de.vitagroup.num.domain.Comment;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.CommentRepository;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import java.time.OffsetDateTime;
-import java.util.List;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
 import lombok.AllArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
@@ -24,7 +33,7 @@ public class CommentService {
   public List<Comment> getComments(Long projectId, String userId) {
     userDetailsService.checkIsUserApproved(userId);
     if (!projectService.exists(projectId)) {
-      throw new ResourceNotFound("Project does not exist");
+      throw new ResourceNotFound(CommentService.class, PROJECT_DOES_NOT_EXIST);
     }
 
     return commentRepository.findByProjectId(projectId);
@@ -36,7 +45,7 @@ public class CommentService {
     Project project =
         projectService
             .getProjectById(projectId)
-            .orElseThrow(() -> new ResourceNotFound("Project not found " + projectId));
+            .orElseThrow(() -> new ResourceNotFound(CommentService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId)));
 
     comment.setProject(project);
     comment.setAuthor(author);
@@ -50,21 +59,17 @@ public class CommentService {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (!projectService.exists(projectId)) {
-      throw new ResourceNotFound("Project not found: " + projectId);
+      throw new ResourceNotFound(CommentService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId));
     }
 
     Comment commentToEdit =
         commentRepository
             .findById(commentId)
-            .orElseThrow(() -> new ResourceNotFound("Comment not found " + commentId));
+            .orElseThrow(() -> new ResourceNotFound(CommentService.class, COMMENT_NOT_FOUND, String.format(COMMENT_NOT_FOUND, commentId)));
 
     if (commentToEdit.hasEmptyOrDifferentAuthor(loggedInUserId)) {
-      throw new ForbiddenException(
-          String.format(
-              "%s: %s %s.",
-              "Comment edit for comment with id",
-              commentId,
-              "not allowed. Comment has different author"));
+      throw new ForbiddenException(CommentService.class, COMMENT_EDIT_FOR_COMMENT_WITH_ID_IS_NOT_ALLOWED_COMMENT_HAS_DIFFERENT_AUTHOR,
+          String.format(COMMENT_EDIT_FOR_COMMENT_WITH_ID_IS_NOT_ALLOWED_COMMENT_HAS_DIFFERENT_AUTHOR, commentId));
     }
 
     commentToEdit.setText(comment.getText());
@@ -75,22 +80,22 @@ public class CommentService {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (!projectService.exists(projectId)) {
-      throw new ResourceNotFound("Project does not exist");
+      throw new ResourceNotFound(CommentService.class, PROJECT_DOES_NOT_EXIST);
     }
 
     Comment comment =
         commentRepository
             .findById(commentId)
-            .orElseThrow(() -> new ResourceNotFound("Comment not found " + commentId));
+            .orElseThrow(() -> new ResourceNotFound(CommentService.class, COMMENT_NOT_FOUND, String.format(COMMENT_NOT_FOUND, commentId)));
 
     if (comment.hasEmptyOrDifferentAuthor(loggedInUserId)) {
-      throw new ForbiddenException("Cannot delete comment: " + commentId);
+      throw new ForbiddenException(CommentService.class, CANNOT_DELETE_COMMENT, String.format(CANNOT_DELETE_COMMENT, commentId));
     }
 
     try {
       commentRepository.deleteById(commentId);
     } catch (EmptyResultDataAccessException e) {
-      throw new BadRequestException(String.format("%s: %s", "Invalid commentId id", commentId));
+      throw new BadRequestException(EmptyResultDataAccessException.class, INVALID_COMMENTID_ID, String.format("%s: %s", INVALID_COMMENTID_ID, commentId));
     }
   }
 }

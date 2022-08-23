@@ -1,6 +1,6 @@
 package de.vitagroup.num.service.policy;
 
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.SystemException;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder;
@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.Value;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
 
 /** Restricts the aql to a set of templates defined by the project */
 @Slf4j
@@ -30,7 +32,7 @@ public class TemplatesPolicy extends Policy {
     }
 
     if (aql == null) {
-      throw new SystemException(AQL_ERROR_MESSAGE);
+      throw new SystemException(TemplatesPolicy.class, INVALID_AQL);
     }
 
     List<Value> templateValues = toSimpleValueList(templatesMap.keySet());

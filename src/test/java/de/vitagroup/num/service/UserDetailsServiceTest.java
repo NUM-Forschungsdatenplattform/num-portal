@@ -19,7 +19,7 @@ import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
 import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
-import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 
 import java.util.*;

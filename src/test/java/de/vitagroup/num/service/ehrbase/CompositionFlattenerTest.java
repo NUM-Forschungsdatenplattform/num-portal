@@ -7,7 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.nedap.archie.rm.composition.Composition;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.SystemException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;

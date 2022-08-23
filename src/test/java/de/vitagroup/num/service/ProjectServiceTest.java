@@ -3,6 +3,8 @@ package de.vitagroup.num.service;
 import static de.vitagroup.num.domain.Roles.RESEARCHER;
 import static de.vitagroup.num.domain.Roles.STUDY_APPROVER;
 import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -34,9 +36,9 @@ import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.*;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.SystemException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -456,7 +458,7 @@ public class ProjectServiceTest {
                     "approvedCoordinatorId",
                     List.of(STUDY_COORDINATOR, STUDY_APPROVER, RESEARCHER)));
 
-    String expectedMessage = "Project status transition from DRAFT to APPROVED not allowed";
+    String expectedMessage = "Project status transition from DRAFT to APPROVED is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -481,7 +483,7 @@ public class ProjectServiceTest {
                 projectService.updateProject(
                     projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Project status transition from DRAFT to PUBLISHED not allowed";
+    String expectedMessage = "Project status transition from DRAFT to PUBLISHED is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -506,7 +508,7 @@ public class ProjectServiceTest {
                 projectService.updateProject(
                     projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Project status transition from DRAFT to CLOSED not allowed";
+    String expectedMessage = "Project status transition from DRAFT to CLOSED is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -619,7 +621,7 @@ public class ProjectServiceTest {
                 projectService.updateProject(
                     projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Project status transition from PENDING to REVIEWING not allowed";
+    String expectedMessage = "Project status transition from PENDING to REVIEWING is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -669,7 +671,7 @@ public class ProjectServiceTest {
                 projectService.updateProject(
                     projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Project status transition from REVIEWING to APPROVED not allowed";
+    String expectedMessage = "Project status transition from REVIEWING to APPROVED is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -743,7 +745,7 @@ public class ProjectServiceTest {
                     "approvedCoordinatorId",
                     List.of(STUDY_COORDINATOR, RESEARCHER)));
 
-    String expectedMessage = "Project status transition from REVIEWING to DENIED not allowed";
+    String expectedMessage = "Project status transition from REVIEWING to DENIED is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -1112,10 +1114,10 @@ public class ProjectServiceTest {
         .thenReturn(approvedCoordinator);
 
     when(userDetailsService.checkIsUserApproved("notApprovedCoordinatorId"))
-        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
+        .thenThrow(new ForbiddenException(ProjectServiceTest.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED));
 
     when(userDetailsService.checkIsUserApproved("nonExistingCoordinatorId"))
-        .thenThrow(new SystemException("User not found"));
+        .thenThrow(new SystemException(ProjectServiceTest.class, USER_NOT_FOUND));
 
     when(projectRepository.findById(3L))
         .thenReturn(

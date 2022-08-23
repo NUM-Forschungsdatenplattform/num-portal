@@ -9,7 +9,7 @@ import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.SystemException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -24,6 +24,8 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CAN_T_FIND_THE_COHORT_BY_ID;
 
 @Component
 @AllArgsConstructor
@@ -100,7 +102,8 @@ public class ProjectDocCreator {
       return StringUtils.EMPTY;
     }
     Cohort cohort = cohortRepository.findById(cohortId)
-        .orElseThrow(() -> new SystemException("Can't find the cohort"));
+        .orElseThrow(() -> new SystemException(ProjectDocCreator.class, CAN_T_FIND_THE_COHORT_BY_ID,
+                String.format(CAN_T_FIND_THE_COHORT_BY_ID, cohortId)));
     CohortGroup group = cohort.getCohortGroup();
     if (group == null) {
       return StringUtils.EMPTY;

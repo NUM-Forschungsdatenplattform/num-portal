@@ -6,8 +6,10 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
+import de.vitagroup.num.service.exception.implementation.CustomException;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import java.util.List;
@@ -31,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/admin/user", produces = "application/json")
 @AllArgsConstructor
-public class AdminController {
+public class AdminController extends CustomizedExceptionHandler {
 
   private static final String SUCCESS_REPLY = "Success";
   private static final String EMAIL_CLAIM = "email";
