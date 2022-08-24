@@ -1,11 +1,11 @@
-package de.vitagroup.num.service.exception.implementation;
+package de.vitagroup.num.service.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class TokenIsNotValidException extends RuntimeException  {
+public class EntityNotFoundException extends RuntimeException  {
 
   private final Class<?> entity;
   private final String entityId;

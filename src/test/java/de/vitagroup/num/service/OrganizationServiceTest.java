@@ -88,7 +88,7 @@ public class OrganizationServiceTest {
                           OrganizationDto.builder().name("B").mailDomains(Set.of(domain)).build()));
 
           String expectedMessage = String.format(INVALID_MAIL_DOMAIN, domain);
-          assertThat(exception.getParameter(), is(expectedMessage));
+          assertThat(exception.getMessage(), is(expectedMessage));
         });
 
     verify(organizationRepository, times(0)).save(any());

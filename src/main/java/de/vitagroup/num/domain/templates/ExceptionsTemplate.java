@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.vitagroup.num.service.exception.ExceptionDto;
+import de.vitagroup.num.service.exception.dto.ExceptionDto;
 
 public class ExceptionsTemplate {
     public final static String TOKEN_IS_NOT_VALID_MSG = "Token is not valid";

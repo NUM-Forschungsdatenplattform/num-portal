@@ -1,4 +1,4 @@
-package de.vitagroup.num.service.exception.implementation;
+package de.vitagroup.num.service.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

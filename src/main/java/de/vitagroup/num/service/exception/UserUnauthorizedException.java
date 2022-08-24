@@ -1,4 +1,4 @@
-package de.vitagroup.num.service.exception.implementation;
+package de.vitagroup.num.service.exception;
 
 import de.vitagroup.num.domain.admin.UserDetails;
 import lombok.AllArgsConstructor;

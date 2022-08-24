@@ -1,12 +1,6 @@
 package de.vitagroup.num.service.exception;
 
-import de.vitagroup.num.service.exception.implementation.CustomException;
-import de.vitagroup.num.service.exception.implementation.BadCredentialsException;
-import de.vitagroup.num.service.exception.implementation.EntityNotFoundException;
-import de.vitagroup.num.service.exception.implementation.SameEntityExistsException;
-import de.vitagroup.num.service.exception.implementation.TokenIsNotValidException;
-import de.vitagroup.num.service.exception.implementation.UserUnauthorizedException;
-import de.vitagroup.num.service.exception.implementation.UsernameNotFoundOrNoLongerActiveException;
+import de.vitagroup.num.service.exception.dto.ErrorDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.springframework.http.HttpHeaders;
@@ -14,18 +8,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL_ID;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PASS_NOT_MATCHING;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RECORD_ALREADY_EXISTS;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RECORD_NOT_FOUND_MSG;
@@ -167,7 +158,7 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
             BadRequestException exception) {
 
         var className = nonNull(exception.getEntity()) ? exception.getEntity().getSimpleName() : null;
-        var description = exception.getParameter();
+        var description = exception.getMessage();
 
         var errors = Map.of( "Error Message",
                 nonNull(exception.getMessage()) ? exception.getMessage() : description);
@@ -187,7 +178,7 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
             ForbiddenException exception) {
 
         var className = nonNull(exception.getEntity()) ? exception.getEntity().getSimpleName() : null;
-        var description = exception.getParameter();
+        var description = exception.getMessage();
 
         var errors = Map.of( "Error Message",
                 nonNull(exception.getMessage()) ? exception.getMessage() : description);
@@ -207,7 +198,7 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
             PrivacyException exception) {
 
         var className = nonNull(exception.getEntity()) ? exception.getEntity().getSimpleName() : null;
-        var description = exception.getParameter();
+        var description = exception.getMessage();
 
         var errors = Map.of( "Error Message",
                 nonNull(exception.getMessage()) ? exception.getMessage() : description);
@@ -227,7 +218,7 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
             ResourceNotFound exception) {
 
         var className = nonNull(exception.getEntity()) ? exception.getEntity().getSimpleName() : null;
-        var description = exception.getParameter();
+        var description = exception.getMessage();
 
         var errors = Map.of( "Error Message",
                 nonNull(exception.getMessage()) ? exception.getMessage() : description);
@@ -247,7 +238,7 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
             SystemException exception) {
 
         var className = nonNull(exception.getEntity()) ? exception.getEntity().getSimpleName() : null;
-        var description = exception.getParameter();
+        var description = exception.getMessage();
 
         var errors = Map.of( "Error Message",
                 nonNull(exception.getMessage()) ? exception.getMessage() : description);
@@ -267,7 +258,7 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
             IllegalArgumentException exception) {
 
         var className = nonNull(exception.getEntity()) ? exception.getEntity().getSimpleName() : null;
-        var description = exception.getParameter();
+        var description = exception.getMessage();
 
         var errors = Map.of( "Error Message",
                 nonNull(exception.getMessage()) ? exception.getMessage() : description);

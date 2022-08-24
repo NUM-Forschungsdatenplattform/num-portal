@@ -1,4 +1,4 @@
-package de.vitagroup.num.service.exception;
+package de.vitagroup.num.service.exception.dto;
 
 import lombok.Builder;
 import lombok.Data;

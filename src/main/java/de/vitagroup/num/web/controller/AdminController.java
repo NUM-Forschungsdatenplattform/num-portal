@@ -6,7 +6,6 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
-import de.vitagroup.num.service.exception.implementation.CustomException;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
