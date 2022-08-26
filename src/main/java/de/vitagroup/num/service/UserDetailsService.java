@@ -15,11 +15,11 @@ import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotif
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+
+import java.util.*;
+
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -33,6 +33,11 @@ public class UserDetailsService {
   private OrganizationService organizationService;
   private NotificationService notificationService;
   private UserService userService;
+
+  private static final String USER_ATTRIBUTE_DEPARTMENT = "department";
+  private static final String USER_ATTRIBUTE_REQUESTED_ROLE = "requested-role";
+  private static final String USER_ATTRIBUTE_ADDITIONAl_NOTES = "notes";
+
 
   @Autowired
   public UserDetailsService(
@@ -194,6 +199,9 @@ public class UserDetailsService {
         u ->
             u.getOrganization() == null
                 || !u.getOrganization().getName().equals(user.getOrganization().getName()));
+    String userDepartment = getUserAttribute(user, USER_ATTRIBUTE_DEPARTMENT);
+    String requestedRole = getUserAttribute(user, USER_ATTRIBUTE_REQUESTED_ROLE);
+    String notes = getUserAttribute(user, USER_ATTRIBUTE_ADDITIONAl_NOTES);
 
     admins.forEach(
         admin -> {
@@ -205,6 +213,9 @@ public class UserDetailsService {
                   .recipientEmail(admin.getEmail())
                   .recipientFirstName(admin.getFirstName())
                   .recipientLastName(admin.getLastName())
+                  .department(userDepartment)
+                  .requestedRole(requestedRole)
+                  .notes(notes)
                   .build();
 
           notifications.add(notification);
@@ -233,5 +244,10 @@ public class UserDetailsService {
           notifications.add(notification);
         });
     return notifications;
+  }
+
+  private String getUserAttribute(User user, String attributeName) {
+    List<String> attribute = user.getAttributes() != null ? (List<String>) user.getAttributes().getOrDefault(attributeName, Collections.EMPTY_LIST) : Collections.EMPTY_LIST;
+    return !attribute.isEmpty() ? attribute.get(0) : StringUtils.EMPTY;
   }
 }
