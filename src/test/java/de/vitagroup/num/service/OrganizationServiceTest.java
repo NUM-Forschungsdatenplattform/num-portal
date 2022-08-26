@@ -15,21 +15,25 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
+import de.vitagroup.num.domain.specification.OrganizationSpecification;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.exception.SystemException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+
+import java.util.*;
+
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OrganizationServiceTest {
@@ -252,6 +256,25 @@ public class OrganizationServiceTest {
         List.of(Roles.SUPER_ADMIN),
         "approvedUserId");
     verify(organizationRepository, times(1)).save(any());
+  }
+
+  @Test
+  public void shouldGetAllOrganizationWithPagination() {
+    Pageable pageable = PageRequest.of(0,50);
+    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", null, pageable);
+    verify(organizationRepository, times(1)).findAll(Mockito.any(OrganizationSpecification.class), Mockito.eq(pageable));
+  }
+
+  @Test
+  public void shouldGetAllOrganizationWithPaginationAndFilter() {
+    Pageable pageable = PageRequest.of(1,3);
+    ArgumentCaptor<OrganizationSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(OrganizationSpecification.class);
+    Map<String, String> filterByName = new HashMap<>();
+    filterByName.put("name", "dummy name");
+    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", filterByName, pageable);
+    verify(organizationRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
+    OrganizationSpecification capturedInput = specificationArgumentCaptor.getValue();
+    Assert.assertEquals(filterByName, capturedInput.getFilter());
   }
 
   @Before
