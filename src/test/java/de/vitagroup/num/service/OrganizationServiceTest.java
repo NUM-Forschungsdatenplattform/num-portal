@@ -277,6 +277,19 @@ public class OrganizationServiceTest {
     Assert.assertEquals(filterByName, capturedInput.getFilter());
   }
 
+  @Test
+  public void shouldGetOrganizationAdminOrganization() {
+    Pageable pageable = PageRequest.of(0,25);
+    organizationService.getAllOrganizations(List.of(Roles.ORGANIZATION_ADMIN), "approvedUserId", null, pageable);
+    verify(organizationRepository, times(0)).findAll(Mockito.any(OrganizationSpecification.class), Mockito.eq(pageable));
+  }
+
+  @Test
+  public void shouldCountOrganizations() {
+    organizationService.countOrganizations();
+    verify(organizationRepository, times(1)).count();
+  }
+
   @Before
   public void setup() {
     UserDetails approvedUser =
