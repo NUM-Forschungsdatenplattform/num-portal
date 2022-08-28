@@ -76,7 +76,7 @@ public class CommentService {
     return commentRepository.save(commentToEdit);
   }
 
-  public void deleteComment(Long commentId, Long projectId, String loggedInUserId) {
+  public boolean deleteComment(Long commentId, Long projectId, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (!projectService.exists(projectId)) {
@@ -97,5 +97,6 @@ public class CommentService {
     } catch (EmptyResultDataAccessException e) {
       throw new BadRequestException(EmptyResultDataAccessException.class, INVALID_COMMENTID_ID, String.format("%s: %s", INVALID_COMMENTID_ID, commentId));
     }
+    return true;
   }
 }
