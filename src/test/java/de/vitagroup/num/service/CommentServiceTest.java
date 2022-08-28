@@ -57,9 +57,6 @@ public class CommentServiceTest {
     UserDetails approvedCoordinator =
             UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
 
-    when(projectService.exists(1L))
-            .thenReturn(true);
-
     when(commentRepository.findById(3L))
             .thenReturn(
                     Optional.of(
@@ -104,6 +101,8 @@ public class CommentServiceTest {
 
   @Test(expected = ForbiddenException.class)
   public void updateCommentBelongToAnotherAuthor() {
+    when(projectService.exists(1L))
+            .thenReturn(true);
     when(commentService.updateComment(comment, 3L, "userId", 1L))
             .thenThrow( new ForbiddenException(CommentService.class, COMMENT_EDIT_FOR_COMMENT_WITH_ID_IS_NOT_ALLOWED_COMMENT_HAS_DIFFERENT_AUTHOR,
                     String.format(COMMENT_EDIT_FOR_COMMENT_WITH_ID_IS_NOT_ALLOWED_COMMENT_HAS_DIFFERENT_AUTHOR, 3L)));
@@ -126,6 +125,8 @@ public class CommentServiceTest {
 
   @Test(expected = ForbiddenException.class)
   public void deleteCommentIsEmptyOrBelongToAnotherAuthor() {
+    when(projectService.exists(1L))
+            .thenReturn(true);
     when(commentService.deleteComment(3L, 1L, "userId"))
             .thenThrow(new ForbiddenException(CommentService.class, CANNOT_DELETE_COMMENT, String.format(CANNOT_DELETE_COMMENT, 3L)));
     commentService.deleteComment(3L, 1L, "userId");
@@ -133,6 +134,8 @@ public class CommentServiceTest {
 
   @Test(expected = BadRequestException.class)
   public void deleteCommentInvalidCommentId() {
+    when(projectService.exists(1L))
+            .thenReturn(true);
     when(commentService.deleteComment(3L, 1L, "approvedCoordinatorId"))
             .thenThrow(new BadRequestException(EmptyResultDataAccessException.class, INVALID_COMMENTID_ID, String.format("%s: %s", INVALID_COMMENTID_ID, 3L)));
     commentService.deleteComment(3L, 1L, "approvedCoordinatorId");
