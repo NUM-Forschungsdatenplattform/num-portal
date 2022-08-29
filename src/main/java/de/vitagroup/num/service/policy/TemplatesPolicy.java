@@ -25,10 +25,10 @@ public class TemplatesPolicy extends Policy {
   }
 
   @Override
-  public void apply(AqlDto aql) {
+  public boolean apply(AqlDto aql) {
     if (MapUtils.isEmpty(templatesMap)) {
       log.error("No templates attached to the project");
-      return;
+      return true;
     }
 
     if (aql == null) {
@@ -37,5 +37,6 @@ public class TemplatesPolicy extends Policy {
 
     List<Value> templateValues = toSimpleValueList(templatesMap.keySet());
     restrictAqlWithCompositionAttribute(aql, TEMPLATE_ID_PATH, templateValues);
+    return true;
   }
 }

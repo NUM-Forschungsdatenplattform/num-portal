@@ -136,6 +136,7 @@ public class ExceptionsTemplate {
 
     public final static String INVALID_AQL_QUERY = "Malformed query exception";
     public final static String ERROR_MESSAGE = "An error has occurred while calling ehrbase";
+    public final static String CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED = "Cannot check consent for data usage outside the European Union, oid not configured";
 
 
     public static Map<String, ExceptionDto> errorMap = new HashMap<>();
@@ -278,7 +279,7 @@ public class ExceptionsTemplate {
         //PrivacyException
         errorMap.put(RESULTS_WITHHELD_FOR_PRIVACY_REASONS, new ExceptionDto( 92, new ArrayList<>() ) );
         errorMap.put(INVALID_AQL_QUERY, new ExceptionDto( 93, new ArrayList<>() ) );
-        errorMap.put(ERROR_MESSAGE, new ExceptionDto( 94, new ArrayList<>() ) );
+        errorMap.put(CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED, new ExceptionDto( 95, new ArrayList<>() ) );
 
     }
 }
