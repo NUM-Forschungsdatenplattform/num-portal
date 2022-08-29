@@ -4,12 +4,10 @@ import de.vitagroup.num.domain.Comment;
 import de.vitagroup.num.domain.ExportType;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.dto.CommentDto;
-import de.vitagroup.num.domain.dto.ManagerProjectDto;
-import de.vitagroup.num.domain.dto.ProjectDto;
-import de.vitagroup.num.domain.dto.RawQueryDto;
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.mapper.CommentMapper;
 import de.vitagroup.num.mapper.ProjectMapper;
+import de.vitagroup.num.mapper.ProjectViewMapper;
 import de.vitagroup.num.service.CommentService;
 import de.vitagroup.num.service.ProjectService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
@@ -26,6 +24,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -57,6 +56,7 @@ public class ProjectController {
   private final CommentMapper commentMapper;
   private final Pseudonymity pseudonymity;
 
+  private final ProjectViewMapper projectViewMapper;
   @AuditLog
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
@@ -67,6 +67,17 @@ public class ProjectController {
         projectService.getProjects(principal.getSubject(), Roles.extractRoles(principal)).stream()
             .map(projectMapper::convertToDto)
             .collect(Collectors.toList()));
+  }
+
+  @AuditLog
+  @GetMapping("/all")
+  @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
+  public ResponseEntity<List<ProjectViewTO>> getProjects2(@AuthenticationPrincipal @NotNull Jwt principal, Pageable pageable) {
+    return ResponseEntity.ok(
+            projectService.getProjects(principal.getSubject(), Roles.extractRoles(principal)).stream()
+                    .map(projectViewMapper::convertToDto)
+                    .collect(Collectors.toList()));
   }
 
   @AuditLog

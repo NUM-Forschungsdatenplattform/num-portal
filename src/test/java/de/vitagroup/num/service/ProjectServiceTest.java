@@ -416,11 +416,9 @@ public class ProjectServiceTest {
     projectService.getProjects("coordinatorId", roles);
 
     verify(projectRepository, times(1))
-        .findByCoordinatorUserIdOrStatusIn(
+        .findByCoordinatorUserIdORStatusIn(
             "coordinatorId",
-            new ProjectStatus[] {
-              ProjectStatus.APPROVED, ProjectStatus.PUBLISHED, ProjectStatus.CLOSED
-            });
+            ProjectStatus.getAllProjectStatusToViewAsCoordinator());
     verify(projectRepository, times(0)).findAll();
   }
 

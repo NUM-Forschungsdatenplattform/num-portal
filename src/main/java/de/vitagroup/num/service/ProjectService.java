@@ -825,27 +825,17 @@ public class ProjectService {
 
     if (roles.contains(Roles.STUDY_COORDINATOR)) {
       projects.addAll(
-          projectRepository.findByCoordinatorUserIdOrStatusIn(
+          projectRepository.findByCoordinatorUserIdORStatusIn(
               userId,
-              new ProjectStatus[] {
-                ProjectStatus.APPROVED, ProjectStatus.PUBLISHED, ProjectStatus.CLOSED
-              }));
+             ProjectStatus.getAllProjectStatusToViewAsCoordinator()));
     }
     if (roles.contains(Roles.RESEARCHER)) {
       projects.addAll(
           projectRepository.findByResearchers_UserIdAndStatusIn(
-              userId, new ProjectStatus[] {ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
+              userId, ProjectStatus.getAllProjectStatusToViewAsResearcher()));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
-      ProjectStatus[] statuses =
-          Stream.of(ProjectStatus.values())
-              .filter(
-                  projectStatus ->
-                      projectStatus != ProjectStatus.DRAFT
-                          && projectStatus != ProjectStatus.ARCHIVED)
-              .collect(Collectors.toList())
-              .toArray(new ProjectStatus[] {});
-      projects.addAll(projectRepository.findByStatusIn(statuses));
+      projects.addAll(projectRepository.findByStatusIn(ProjectStatus.getAllProjectStatusToViewAsApprover()));
     }
 
     return projects.stream().distinct().collect(Collectors.toList());
