@@ -7,15 +7,12 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
+import de.vitagroup.num.domain.specification.OrganizationSpecification;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.ResourceNotFound;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
@@ -24,6 +21,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 /** Service responsible for retrieving organization information from the terminology server */
@@ -82,6 +82,7 @@ public class OrganizationService {
   }
 
   /**
+   * TODO remove this when FE is ready
    * Retrieves a list with available organizations
    *
    * @return List with available organizations
@@ -95,6 +96,17 @@ public class OrganizationService {
       return List.of(user.getOrganization());
     }
     return List.of();
+  }
+
+  public Page<Organization> getAllOrganizations(List<String> roles, String loggedInUserId, Map<String, ?> filter, Pageable pageable) {
+    UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
+    OrganizationSpecification organizationSpecification = new OrganizationSpecification(filter);
+    if (roles.contains(Roles.SUPER_ADMIN)) {
+      return organizationRepository.findAll(organizationSpecification, pageable);
+    } else if (roles.contains(Roles.ORGANIZATION_ADMIN)) {
+      return new PageImpl<>(List.of(user.getOrganization()));
+    }
+    return new PageImpl<>(Collections.emptyList());
   }
 
   /**
