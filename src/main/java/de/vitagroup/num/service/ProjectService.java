@@ -30,7 +30,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
+import org.leadpony.justify.internal.annotation.Spec;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
@@ -39,6 +44,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import javax.persistence.criteria.JoinType;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -825,7 +831,7 @@ public class ProjectService {
 
     if (roles.contains(Roles.STUDY_COORDINATOR)) {
       projects.addAll(
-          projectRepository.findByCoordinatorUserIdORStatusIn(
+          projectRepository.findByCoordinatorUserIdOrStatusIn(
               userId,
              ProjectStatus.getAllProjectStatusToViewAsCoordinator()));
     }
@@ -839,6 +845,45 @@ public class ProjectService {
     }
 
     return projects.stream().distinct().collect(Collectors.toList());
+  }
+
+  public Page<Project> getProjectsWithPagination(String userId, List<String> roles, Map<String, ?> filter, Pageable pageable) {
+
+    Specification<Project> projectSpecification = Specification.where(null);
+    if (roles.contains(Roles.STUDY_COORDINATOR)) {
+      projectSpecification = projectSpecification.or(searchByCoordinatorId(userId)
+                              .or(searchByStatus(ProjectStatus.getAllProjectStatusToViewAsCoordinator())));
+    }
+    if (roles.contains(Roles.RESEARCHER)) {
+          projectSpecification = projectSpecification.or(
+                                    searchByStatus(ProjectStatus.getAllProjectStatusToViewAsResearcher())
+                                    .and(searchByResearcherId(userId)));
+    }
+    if (roles.contains(Roles.STUDY_APPROVER)) {
+      projectSpecification = projectSpecification.or(searchByStatus(ProjectStatus.getAllProjectStatusToViewAsApprover()));
+    }
+    return projectRepository.findAll(projectSpecification, pageable);
+  }
+
+  private Specification<Project> searchByResearcherId(String keyword) {
+    return ((root, query, criteriaBuilder) ->
+            criteriaBuilder.equal(root.join("researchers", JoinType.LEFT).get("userId"), keyword));
+  }
+
+  private Specification<Project> searchByCoordinatorId(String keyword) {
+    return ((root, query, criteriaBuilder) ->
+            criteriaBuilder.equal(root.get("coordinator").get("userId"), keyword));
+  }
+
+  private Specification<Project> searchByStatus(List<ProjectStatus> statuses) {
+    return ((root, query, criteriaBuilder) -> {
+      if(CollectionUtils.isNotEmpty(statuses)) {
+        query.groupBy(root.get("id"));
+        return root.get("status").in(statuses);
+      } else {
+        return criteriaBuilder.and();
+      }
+    });
   }
 
   public String getExportFilenameBody(Long projectId) {

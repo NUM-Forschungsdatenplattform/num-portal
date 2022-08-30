@@ -1,9 +1,6 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.Comment;
-import de.vitagroup.num.domain.ExportType;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.mapper.CommentMapper;
 import de.vitagroup.num.mapper.ProjectMapper;
@@ -24,6 +21,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -73,11 +72,13 @@ public class ProjectController {
   @GetMapping("/all")
   @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<List<ProjectViewTO>> getProjects2(@AuthenticationPrincipal @NotNull Jwt principal, Pageable pageable) {
-    return ResponseEntity.ok(
-            projectService.getProjects(principal.getSubject(), Roles.extractRoles(principal)).stream()
-                    .map(projectViewMapper::convertToDto)
-                    .collect(Collectors.toList()));
+  public ResponseEntity<Page<ProjectViewTO>> getProjectsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, Pageable pageable, SearchCriteria criteria) {
+    Page<Project> projectPage = projectService.getProjectsWithPagination(principal.getSubject(), Roles.extractRoles(principal), criteria.getFilter(), pageable);
+    List<ProjectViewTO> content = projectPage.getContent()
+            .stream()
+            .map(projectViewMapper::convertToDto)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(new PageImpl<>(content, pageable, projectPage.getTotalElements()));
   }
 
   @AuditLog
