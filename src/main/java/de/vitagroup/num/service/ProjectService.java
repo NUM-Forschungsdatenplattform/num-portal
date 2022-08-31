@@ -8,6 +8,7 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
+import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.properties.PrivacyProperties;
@@ -848,44 +849,9 @@ public class ProjectService {
   }
 
   public Page<Project> getProjectsWithPagination(String userId, List<String> roles, Map<String, ?> filter, Pageable pageable) {
-
-    Specification<Project> projectSpecification = Specification.where(null);
-    if (roles.contains(Roles.STUDY_COORDINATOR)) {
-      projectSpecification = projectSpecification.or(searchByCoordinatorId(userId)
-                              .or(searchByStatus(ProjectStatus.getAllProjectStatusToViewAsCoordinator())));
-    }
-    if (roles.contains(Roles.RESEARCHER)) {
-          projectSpecification = projectSpecification.or(
-                                    searchByStatus(ProjectStatus.getAllProjectStatusToViewAsResearcher())
-                                    .and(searchByResearcherId(userId)));
-    }
-    if (roles.contains(Roles.STUDY_APPROVER)) {
-      projectSpecification = projectSpecification.or(searchByStatus(ProjectStatus.getAllProjectStatusToViewAsApprover()));
-    }
+    ProjectSpecification projectSpecification = new ProjectSpecification(filter, roles, userId);
     return projectRepository.findAll(projectSpecification, pageable);
   }
-
-  private Specification<Project> searchByResearcherId(String keyword) {
-    return ((root, query, criteriaBuilder) ->
-            criteriaBuilder.equal(root.join("researchers", JoinType.LEFT).get("userId"), keyword));
-  }
-
-  private Specification<Project> searchByCoordinatorId(String keyword) {
-    return ((root, query, criteriaBuilder) ->
-            criteriaBuilder.equal(root.get("coordinator").get("userId"), keyword));
-  }
-
-  private Specification<Project> searchByStatus(List<ProjectStatus> statuses) {
-    return ((root, query, criteriaBuilder) -> {
-      if(CollectionUtils.isNotEmpty(statuses)) {
-        query.groupBy(root.get("id"));
-        return root.get("status").in(statuses);
-      } else {
-        return criteriaBuilder.and();
-      }
-    });
-  }
-
   public String getExportFilenameBody(Long projectId) {
     return String.format(
             "Project_%d_%s",

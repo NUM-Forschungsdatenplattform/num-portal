@@ -15,5 +15,5 @@ import java.util.Map;
 @AllArgsConstructor
 public class SearchCriteria {
 
-    private Map<String,?> filter;
+    private Map<String, ?> filter;
 }

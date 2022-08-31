@@ -3,7 +3,6 @@ package de.vitagroup.num.domain.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.admin.User;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
