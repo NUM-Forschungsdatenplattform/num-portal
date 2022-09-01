@@ -17,10 +17,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
@@ -37,12 +34,8 @@ import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.web.exception.BadRequestException;
 import de.vitagroup.num.web.exception.ForbiddenException;
 import de.vitagroup.num.web.exception.SystemException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.ehrbase.aql.binder.AqlBinder;
@@ -416,10 +409,32 @@ public class ProjectServiceTest {
     projectService.getProjects("coordinatorId", roles);
 
     verify(projectRepository, times(1))
-        .findByCoordinatorUserIdORStatusIn(
+        .findByCoordinatorUserIdOrStatusIn(
             "coordinatorId",
             ProjectStatus.getAllProjectStatusToViewAsCoordinator());
     verify(projectRepository, times(0)).findAll();
+  }
+
+  @Test
+  public void shouldFilterWhenSearchingProjectsWithResearcher() {
+    List<String> roles = new ArrayList<>();
+    roles.add(RESEARCHER);
+    projectService.getProjects("researcherId", roles);
+
+    verify(projectRepository, times(1))
+            .findByResearchers_UserIdAndStatusIn(
+                    "researcherId",
+                    ProjectStatus.getAllProjectStatusToViewAsResearcher());
+  }
+
+  @Test
+  public void shouldFilterWhenSearchingProjectsWithApprover() {
+    List<String> roles = new ArrayList<>();
+    roles.add(STUDY_APPROVER);
+    projectService.getProjects("approverId", roles);
+
+    verify(projectRepository, times(1))
+            .findByStatusIn(ProjectStatus.getAllProjectStatusToViewAsApprover());
   }
 
   @Test
@@ -1073,6 +1088,94 @@ public class ProjectServiceTest {
 
     assertThat(notificationSent.size(), is(1));
     assertThat(notificationSent.get(0).getClass(), is(ProjectStatusChangeRequestNotification.class));
+  }
+
+  @Test
+  public void shouldGetLatestProjectsInfoTest() {
+    List<String> roles = new ArrayList<>();
+    roles.add(STUDY_COORDINATOR);
+
+    Project pr1 = Project.builder().id(1L)
+            .name("project one")
+            .status(ProjectStatus.APPROVED)
+            .coordinator(UserDetails.builder()
+                    .userId("approvedCoordinatorId")
+                    .approved(true)
+                    .organization(Organization.builder()
+                            .name("some organization")
+                            .id(3L).build())
+                    .build())
+            .build();
+    Project pr2 = Project.builder().id(2l)
+            .name("project two")
+            .status(ProjectStatus.PUBLISHED)
+            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").approved(true).build())
+            .build();
+    Mockito.when(projectRepository.findLatestProjects(10, ProjectStatus.APPROVED.name(),
+                 ProjectStatus.PUBLISHED.name(), ProjectStatus.CLOSED.name()))
+                .thenReturn(Arrays.asList(pr1,pr2));
+    projectService.getLatestProjectsInfo(10, roles);
+    verify(projectRepository, times(1)).findLatestProjects(10, ProjectStatus.APPROVED.name(),
+            ProjectStatus.PUBLISHED.name(), ProjectStatus.CLOSED.name());
+  }
+
+  @Test
+  public void deleteProjectTest() {
+    String userId = "approvedCoordinatorId";
+    UserDetails userDetails = UserDetails.builder()
+            .userId(userId)
+            .approved(true)
+            .build();
+    when(projectRepository.findById(9L))
+            .thenReturn(
+                    Optional.of(
+                            Project.builder()
+                                    .id(3L)
+                                    .status(ProjectStatus.CHANGE_REQUEST)
+                                    .coordinator(userDetails)
+                                    .build()));
+    projectService.deleteProject(9L, userId, Arrays.asList(STUDY_COORDINATOR));
+    verify(projectRepository, times(1)).deleteById(9L);
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldRejectDeleteNotOwnedProject() {
+    when(projectRepository.findById(1L))
+            .thenReturn(
+                    Optional.of(
+                            Project.builder()
+                                    .id(1L)
+                                    .coordinator(UserDetails.builder().userId("some-user-id").approved(true).build())
+                                    .build()));
+
+    projectService.deleteProject(1L, "approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR));
+    verify(projectRepository, times(0)).deleteById(1L);
+  }
+
+  @Test
+  public void archiveProjectTest() {
+    when(projectRepository.findById(5L))
+            .thenReturn(
+                    Optional.of(
+                            Project.builder()
+                                    .id(5L)
+                                    .status(ProjectStatus.CLOSED)
+                                    .coordinator(UserDetails.builder().userId("approvedCoordinatorId").approved(true).build())
+                                    .build()));
+    projectService.archiveProject(5L, "approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR));
+    verify(projectRepository, times(1)).save(any());
+  }
+
+  @Test
+  public void countProjectsTest() {
+    projectService.countProjects();
+    verify(projectRepository, times(1)).count();
+  }
+
+  @Test
+  public void retrieveDataTest() {
+    projectService.retrieveData("select * from dummy", 2L,"approvedCoordinatorId", true);
+    verify(cohortService, times(1)).executeCohort(Mockito.any(Cohort.class), Mockito.eq(false));
   }
 
   @Before
