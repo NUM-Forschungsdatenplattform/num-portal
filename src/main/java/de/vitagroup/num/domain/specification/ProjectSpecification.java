@@ -4,10 +4,10 @@ import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.UserDetails;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.annotation.Nonnull;
@@ -17,14 +17,10 @@ import java.util.*;
 @AllArgsConstructor
 public class ProjectSpecification implements Specification<Project> {
 
-    private static final String COLUMN_PROJECT_ID = "id";
-
     private static final String COLUMN_PROJECT_NAME = "name";
 
-    private static final String ARCHIVED_FILTER = "archived";
+    private static final String FILTER_TYPE = "type";
 
-    private static final String MY_ORGANIZATION_FILTER = "organizationId";
-    private static final String MY_PROJECTS_FILTER = "coordinatorId";
     private static final String WILDCARD_PERCENTAGE_SIGN = "%";
 
     private Map<String, ?> filter;
@@ -33,12 +29,19 @@ public class ProjectSpecification implements Specification<Project> {
 
     private String loggedInUserId;
 
+    private Long loggedInUserOrganizationId;
+
     @Override
     public Predicate toPredicate(Root<Project> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
         List<Predicate> roleBasedPredicates = new ArrayList<>();
-        query.groupBy(root.get(COLUMN_PROJECT_ID));
+        query.groupBy(root.get("id"));
+
+        //root.fetch("coordinator").fetch("organization");
+        Join<Project, UserDetails> coordinator = root.join("coordinator", JoinType.INNER);
+        Join<UserDetails, Organization> coordinatorOrganization = coordinator.join("organization", JoinType.INNER);
+
         if (roles.contains(Roles.STUDY_COORDINATOR)) {
-            Predicate coordinatorPredicate = criteriaBuilder.equal(root.get("coordinator").get("userId"), loggedInUserId);
+            Predicate coordinatorPredicate = criteriaBuilder.equal(coordinator.get("userId"), loggedInUserId);
             Predicate coordinatorStatuses = searchByStatus(root, ProjectStatus.getAllProjectStatusToViewAsCoordinator());
             Predicate combined = criteriaBuilder.or(coordinatorPredicate, coordinatorStatuses);
             roleBasedPredicates.add(combined);
@@ -58,27 +61,34 @@ public class ProjectSpecification implements Specification<Project> {
             List<Predicate> predicates = new ArrayList<>();
             for (Map.Entry<String, ?> entry : filter.entrySet()) {
                 if (COLUMN_PROJECT_NAME.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
-                    predicates.add(criteriaBuilder.like(
-                            criteriaBuilder.lower(root.get(entry.getKey())),
-                            WILDCARD_PERCENTAGE_SIGN + ((String) entry.getValue()).toLowerCase() + WILDCARD_PERCENTAGE_SIGN));
+                    String searchValue = WILDCARD_PERCENTAGE_SIGN + ((String) entry.getValue()).toLowerCase() + WILDCARD_PERCENTAGE_SIGN;
+                    Predicate projectNameLike = criteriaBuilder.like(criteriaBuilder.lower(root.get(entry.getKey())), searchValue);
+                    predicates.add(projectNameLike);
                 }
-                if (ARCHIVED_FILTER.equals(entry.getKey())) {
-                    if (Boolean.TRUE.equals(entry.getKey())) {
-                        predicates.add(searchByStatus(root, Arrays.asList(ProjectStatus.ARCHIVED)));
+                if(FILTER_TYPE.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry .getValue())) {
+                    ProjectFilterType typeValue = ProjectFilterType.valueOf((String) entry.getValue());
+                    switch (typeValue) {
+                        case MY_PROJECTS: {
+                            predicates.add(criteriaBuilder.equal(coordinator.get("userId"), loggedInUserId));
+                            predicates.add(criteriaBuilder.notEqual(root.get("status"), ProjectStatus.ARCHIVED));
+                            break;
+                        }
+                        case MY_ORGANIZATION: {
+                            predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
+                            predicates.add(criteriaBuilder.notEqual(root.get("status"), ProjectStatus.ARCHIVED));
+                            break;
+                        }
+                        case ARCHIVED: {
+                            predicates.add(searchByStatus(root, Arrays.asList(ProjectStatus.ARCHIVED)));
+                            break;
+                        }
                     }
-                }
-                if (MY_PROJECTS_FILTER.equals(entry.getKey())) {
-                    predicates.add(criteriaBuilder.equal(root.get("coordinator").get("userId"), entry.getValue()));
-                }
-
-                // maybe add same condition as in FE to exclud archived projects
-                if (MY_ORGANIZATION_FILTER.equals(entry.getKey())) {
-                    Join<Project, UserDetails> coordinator = root.join("coordinator");
-                    Join<UserDetails, Organization> organizationJoin = coordinator.join("organization");
-                    predicates.add(criteriaBuilder.equal(organizationJoin.get("id"), entry.getValue()));
                 }
             }
             filterPredicate = criteriaBuilder.and(predicates.toArray(Predicate[]::new));
+        } else {
+            // IN FE all tag shows all projects based on roles except archived ones
+            filterPredicate = criteriaBuilder.notEqual(root.get("status"), ProjectStatus.ARCHIVED);
         }
         if (Objects.nonNull(filterPredicate)) {
             return criteriaBuilder.and(finalRoleBasedPredicate, filterPredicate);
@@ -93,6 +103,5 @@ public class ProjectSpecification implements Specification<Project> {
             throw new IllegalArgumentException("status cannot be null");
         }
         return root.get("status").in(statuses);
-
     }
 }
