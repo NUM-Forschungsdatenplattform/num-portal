@@ -7,7 +7,6 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.annotation.Nonnull;
@@ -17,11 +16,9 @@ import java.util.*;
 @AllArgsConstructor
 public class ProjectSpecification implements Specification<Project> {
 
-    private static final String COLUMN_PROJECT_NAME = "name";
+    private static final String COLUMN_PROJECT_STATUS = "status";
 
     private static final String FILTER_TYPE = "type";
-
-    private static final String WILDCARD_PERCENTAGE_SIGN = "%";
 
     private Map<String, ?> filter;
 
@@ -36,7 +33,6 @@ public class ProjectSpecification implements Specification<Project> {
         List<Predicate> roleBasedPredicates = new ArrayList<>();
         query.groupBy(root.get("id"));
 
-        //root.fetch("coordinator").fetch("organization");
         Join<Project, UserDetails> coordinator = root.join("coordinator", JoinType.INNER);
         Join<UserDetails, Organization> coordinatorOrganization = coordinator.join("organization", JoinType.INNER);
 
@@ -56,26 +52,21 @@ public class ProjectSpecification implements Specification<Project> {
             roleBasedPredicates.add(searchByStatus(root, ProjectStatus.getAllProjectStatusToViewAsApprover()));
         }
         Predicate finalRoleBasedPredicate = criteriaBuilder.or(roleBasedPredicates.toArray(Predicate[]::new));
-        Predicate filterPredicate = null;
-        if (Objects.nonNull(filter)) {
+        Predicate filterPredicate;
+        if (Objects.nonNull(filter) && filter.containsKey(FILTER_TYPE)) {
             List<Predicate> predicates = new ArrayList<>();
             for (Map.Entry<String, ?> entry : filter.entrySet()) {
-                if (COLUMN_PROJECT_NAME.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
-                    String searchValue = WILDCARD_PERCENTAGE_SIGN + ((String) entry.getValue()).toLowerCase() + WILDCARD_PERCENTAGE_SIGN;
-                    Predicate projectNameLike = criteriaBuilder.like(criteriaBuilder.lower(root.get(entry.getKey())), searchValue);
-                    predicates.add(projectNameLike);
-                }
-                if(FILTER_TYPE.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry .getValue())) {
+                if (FILTER_TYPE.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
                     ProjectFilterType typeValue = ProjectFilterType.valueOf((String) entry.getValue());
                     switch (typeValue) {
                         case MY_PROJECTS: {
                             predicates.add(criteriaBuilder.equal(coordinator.get("userId"), loggedInUserId));
-                            predicates.add(criteriaBuilder.notEqual(root.get("status"), ProjectStatus.ARCHIVED));
+                            predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;
                         }
                         case MY_ORGANIZATION: {
                             predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
-                            predicates.add(criteriaBuilder.notEqual(root.get("status"), ProjectStatus.ARCHIVED));
+                            predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;
                         }
                         case ARCHIVED: {
@@ -88,7 +79,7 @@ public class ProjectSpecification implements Specification<Project> {
             filterPredicate = criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         } else {
             // IN FE all tag shows all projects based on roles except archived ones
-            filterPredicate = criteriaBuilder.notEqual(root.get("status"), ProjectStatus.ARCHIVED);
+            filterPredicate = criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED);
         }
         if (Objects.nonNull(filterPredicate)) {
             return criteriaBuilder.and(finalRoleBasedPredicate, filterPredicate);
@@ -102,6 +93,6 @@ public class ProjectSpecification implements Specification<Project> {
         if (Objects.isNull(statuses)) {
             throw new IllegalArgumentException("status cannot be null");
         }
-        return root.get("status").in(statuses);
+        return root.get(COLUMN_PROJECT_STATUS).in(statuses);
     }
 }

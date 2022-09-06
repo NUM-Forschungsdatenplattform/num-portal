@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -72,8 +73,8 @@ public class ProjectController {
   @GetMapping("/all")
   @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<Page<ProjectViewTO>> getProjectsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, Pageable pageable, SearchCriteria criteria) {
-    Page<Project> projectPage = projectService.getProjectsWithPagination(principal.getSubject(), Roles.extractRoles(principal), criteria.getFilter(), pageable);
+  public ResponseEntity<Page<ProjectViewTO>> getProjectsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable, SearchCriteria criteria) {
+    Page<Project> projectPage = projectService.getProjectsWithPagination(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable);
     List<ProjectViewTO> content = projectPage.getContent()
             .stream()
             .map(projectViewMapper::convertToDto)

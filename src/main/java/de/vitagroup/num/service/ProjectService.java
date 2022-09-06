@@ -31,12 +31,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
-import org.leadpony.justify.internal.annotation.Spec;
 import org.modelmapper.ModelMapper;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
@@ -45,7 +41,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import javax.persistence.criteria.JoinType;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -59,7 +54,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -73,6 +67,8 @@ public class ProjectService {
   private static final String JSON_FILE_ENDING = ".json";
   private static final String ZIP_MEDIA_TYPE = "application/zip";
   private static final String CSV_FILE_PATTERN = "%s_%s.csv";
+
+  private final List<String> availableSortFields = Arrays.asList("name", "author", "organization", "status");
 
   private final ProjectRepository projectRepository;
 
@@ -848,10 +844,80 @@ public class ProjectService {
     return projects.stream().distinct().collect(Collectors.toList());
   }
 
-  public Page<Project> getProjectsWithPagination(String userId, List<String> roles, Map<String, ?> filter, Pageable pageable) {
-    ProjectSpecification projectSpecification = new ProjectSpecification(filter, roles, userId);
-    return projectRepository.findAll(projectSpecification, pageable);
+  public Page<Project> getProjectsWithPagination(String userId, List<String> roles, SearchCriteria searchCriteria, Pageable pageable) {
+
+    Optional<UserDetails> loggedInUser = userDetailsService.getUserDetailsById(userId);
+    if (loggedInUser.isEmpty()) {
+      throw new ResourceNotFound(String.format("User %s not found", userId));
+    }
+    Optional<Sort> optSortBy = validateAndGetSort(searchCriteria);
+    List<Project> projects;
+    Page<Project> projectPage;
+    ProjectSpecification projectSpecification = new ProjectSpecification(searchCriteria.getFilter(), roles, userId, loggedInUser.get().getOrganization().getId());
+    if (optSortBy.isPresent() && isSortByProjectColumns(searchCriteria)) {
+      PageRequest pageRequestWithSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), optSortBy.get());
+      projectPage = projectRepository.findAll(projectSpecification, pageRequestWithSort);
+      projects = new ArrayList<>(projectPage.getContent());
+    } else {
+      // if sort by author or organization name -> sort it via code
+      PageRequest pageRequestWithoutSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+      projectPage = projectRepository.findAll(projectSpecification, pageRequestWithoutSort);
+      projects = new ArrayList<>(projectPage.getContent());
+      sortProjects(projects, optSortBy);
+    }
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey("name")) {
+      String searchValue = (String) searchCriteria.getFilter().get("name");
+      List<Project> filteredProjects = projects.stream()
+              .filter(project -> StringUtils.containsIgnoreCase(project.getName(), searchValue) ||
+                                       StringUtils.containsIgnoreCase(userService.getOwner(project.getCoordinator().getUserId()).getFullName(),
+                                               searchValue.toUpperCase()))
+              .collect(Collectors.toList());
+      return new PageImpl<>(filteredProjects, pageable, filteredProjects.size());
+    }
+    return new PageImpl<>(projects, pageable, projectPage.getTotalElements());
   }
+
+  private Optional<Sort> validateAndGetSort(SearchCriteria searchCriteria) {
+    if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
+      if (!availableSortFields.contains(searchCriteria.getSortBy())) {
+        throw new BadRequestException(String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
+      }
+      return Optional.of(Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
+              searchCriteria.getSortBy()));
+    }
+    return Optional.empty();
+  }
+
+  private boolean isSortByProjectColumns(SearchCriteria searchCriteria) {
+    return "name".equals(searchCriteria.getSortBy()) || "status".equals(searchCriteria.getSortBy());
+  }
+
+  private void sortProjects(List<Project> projects, Optional<Sort> sortByOptional) {
+    if (sortByOptional.isPresent()) {
+      Sort sortBy = sortByOptional.get();
+      if (sortBy.getOrderFor("organization") != null) {
+        Comparator<Project> byOrgName = Comparator.comparing(project -> project.getCoordinator().getOrganization().getName());
+        Sort.Direction sortOrder = sortBy.getOrderFor("organization").getDirection();
+        if (sortOrder.isAscending()) {
+          Collections.sort(projects, Comparator.nullsLast(byOrgName));
+        } else {
+          Collections.sort(projects, Comparator.nullsLast(byOrgName.reversed()));
+        }
+      } else if (sortBy.getOrderFor("author") != null) {
+        Comparator<Project> byAuthorName = Comparator.comparing(project -> {
+          User coordinator = userService.getOwner(project.getCoordinator().getUserId());
+          return coordinator.getFullName();
+        });
+        Sort.Direction sortOrder = sortBy.getOrderFor("author").getDirection();
+        if (sortOrder.isAscending()) {
+          Collections.sort(projects, Comparator.nullsLast(byAuthorName));
+        } else {
+          Collections.sort(projects, Comparator.nullsLast(byAuthorName.reversed()));
+        }
+      }
+    }
+  }
+
   public String getExportFilenameBody(Long projectId) {
     return String.format(
             "Project_%d_%s",

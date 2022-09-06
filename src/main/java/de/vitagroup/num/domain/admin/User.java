@@ -73,4 +73,9 @@ public class User {
   public boolean isNotApproved() {
     return !approved;
   }
+
+  @JsonIgnore
+  public String getFullName() {
+    return this.firstName + " " + this.lastName;
+  }
 }
