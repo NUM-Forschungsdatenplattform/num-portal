@@ -31,8 +31,8 @@ public class OrganizationSpecification implements Specification<Organization> {
             for (Map.Entry<String, ?> entry : filter.entrySet()) {
                 if (COLUMN_ORGANIZATION_NAME.equals(entry.getKey())) {
                     predicates.add(criteriaBuilder.like(
-                            criteriaBuilder.lower(root.get(entry.getKey())),
-                            WILDCARD_PERCENTAGE_SIGN + ((String) entry.getValue()).toLowerCase() + WILDCARD_PERCENTAGE_SIGN));
+                            criteriaBuilder.upper(root.get(entry.getKey())),
+                            WILDCARD_PERCENTAGE_SIGN + ((String) entry.getValue()).toUpperCase() + WILDCARD_PERCENTAGE_SIGN));
                 }
             }
             return criteriaBuilder.and(predicates.toArray(Predicate[]::new));

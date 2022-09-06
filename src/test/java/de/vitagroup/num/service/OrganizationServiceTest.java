@@ -13,6 +13,7 @@ import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.specification.OrganizationSpecification;
@@ -34,6 +35,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OrganizationServiceTest {
@@ -261,7 +263,7 @@ public class OrganizationServiceTest {
   @Test
   public void shouldGetAllOrganizationWithPagination() {
     Pageable pageable = PageRequest.of(0,50);
-    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", null, pageable);
+    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", new SearchCriteria(), pageable);
     verify(organizationRepository, times(1)).findAll(Mockito.any(OrganizationSpecification.class), Mockito.eq(pageable));
   }
 
@@ -271,7 +273,10 @@ public class OrganizationServiceTest {
     ArgumentCaptor<OrganizationSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(OrganizationSpecification.class);
     Map<String, String> filterByName = new HashMap<>();
     filterByName.put("name", "dummy name");
-    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", filterByName, pageable);
+    SearchCriteria searchCriteria = SearchCriteria.builder()
+            .filter(filterByName)
+            .build();
+    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", searchCriteria, pageable);
     verify(organizationRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     OrganizationSpecification capturedInput = specificationArgumentCaptor.getValue();
     Assert.assertEquals(filterByName, capturedInput.getFilter());
@@ -280,7 +285,7 @@ public class OrganizationServiceTest {
   @Test
   public void shouldGetOrganizationAdminOrganization() {
     Pageable pageable = PageRequest.of(0,25);
-    organizationService.getAllOrganizations(List.of(Roles.ORGANIZATION_ADMIN), "approvedUserId", null, pageable);
+    organizationService.getAllOrganizations(List.of(Roles.ORGANIZATION_ADMIN), "approvedUserId", new SearchCriteria(), pageable);
     verify(organizationRepository, times(0)).findAll(Mockito.any(OrganizationSpecification.class), Mockito.eq(pageable));
   }
 
