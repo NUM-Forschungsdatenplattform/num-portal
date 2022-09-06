@@ -4,9 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import de.vitagroup.num.domain.MailDomain;
 import de.vitagroup.num.domain.Organization;
@@ -36,6 +34,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OrganizationServiceTest {
@@ -269,12 +268,14 @@ public class OrganizationServiceTest {
 
   @Test
   public void shouldGetAllOrganizationWithPaginationAndFilter() {
-    Pageable pageable = PageRequest.of(1,3);
+    Pageable pageable = PageRequest.of(1,3).withSort(Sort.by(Sort.Direction.DESC, "name"));
     ArgumentCaptor<OrganizationSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(OrganizationSpecification.class);
     Map<String, String> filterByName = new HashMap<>();
     filterByName.put("name", "dummy name");
     SearchCriteria searchCriteria = SearchCriteria.builder()
             .filter(filterByName)
+            .sortBy("name")
+            .sort("DESC")
             .build();
     organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", searchCriteria, pageable);
     verify(organizationRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
@@ -293,6 +294,17 @@ public class OrganizationServiceTest {
   public void shouldCountOrganizations() {
     organizationService.countOrganizations();
     verify(organizationRepository, times(1)).count();
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleInvalidSortWhenGetAllOrganizationWithPagination() {
+    Pageable pageable = PageRequest.of(0,50);
+    SearchCriteria searchCriteria = SearchCriteria.builder()
+            .sort("dummyName")
+            .sortBy("ASC")
+            .build();
+    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", searchCriteria, pageable);
+    verify(organizationRepository, never());
   }
 
   @Before
