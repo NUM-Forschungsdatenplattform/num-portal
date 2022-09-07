@@ -70,6 +70,14 @@ public class ProjectService {
 
   private final List<String> availableSortFields = Arrays.asList("name", "author", "organization", "status");
 
+  private final String AUTHOR_NAME = "author";
+
+  private final String ORGANIZATION_NAME = "organization";
+
+  private final String PROJECT_NAME = "name";
+
+  private final String PROJECT_STATUS = "status";
+
   private final ProjectRepository projectRepository;
 
   private final UserDetailsService userDetailsService;
@@ -865,8 +873,8 @@ public class ProjectService {
       projects = new ArrayList<>(projectPage.getContent());
       sortProjects(projects, optSortBy);
     }
-    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey("name")) {
-      String searchValue = (String) searchCriteria.getFilter().get("name");
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(PROJECT_NAME)) {
+      String searchValue = (String) searchCriteria.getFilter().get(PROJECT_NAME);
       List<Project> filteredProjects = projects.stream()
               .filter(project -> StringUtils.containsIgnoreCase(project.getName(), searchValue) ||
                                        StringUtils.containsIgnoreCase(userService.getOwner(project.getCoordinator().getUserId()).getFullName(),
@@ -889,26 +897,26 @@ public class ProjectService {
   }
 
   private boolean isSortByProjectColumns(SearchCriteria searchCriteria) {
-    return "name".equals(searchCriteria.getSortBy()) || "status".equals(searchCriteria.getSortBy());
+    return PROJECT_NAME.equals(searchCriteria.getSortBy()) || PROJECT_STATUS.equals(searchCriteria.getSortBy());
   }
 
   private void sortProjects(List<Project> projects, Optional<Sort> sortByOptional) {
     if (sortByOptional.isPresent()) {
       Sort sortBy = sortByOptional.get();
-      if (sortBy.getOrderFor("organization") != null) {
+      if (sortBy.getOrderFor(ORGANIZATION_NAME) != null) {
         Comparator<Project> byOrgName = Comparator.comparing(project -> project.getCoordinator().getOrganization().getName());
-        Sort.Direction sortOrder = sortBy.getOrderFor("organization").getDirection();
+        Sort.Direction sortOrder = sortBy.getOrderFor(ORGANIZATION_NAME) != null ? sortBy.getOrderFor(ORGANIZATION_NAME).getDirection() : Sort.Direction.ASC;
         if (sortOrder.isAscending()) {
           Collections.sort(projects, Comparator.nullsLast(byOrgName));
         } else {
           Collections.sort(projects, Comparator.nullsLast(byOrgName.reversed()));
         }
-      } else if (sortBy.getOrderFor("author") != null) {
+      } else if (sortBy.getOrderFor(AUTHOR_NAME) != null) {
         Comparator<Project> byAuthorName = Comparator.comparing(project -> {
           User coordinator = userService.getOwner(project.getCoordinator().getUserId());
           return coordinator.getFullName();
         });
-        Sort.Direction sortOrder = sortBy.getOrderFor("author").getDirection();
+        Sort.Direction sortOrder = sortBy.getOrderFor(AUTHOR_NAME) != null ?  sortBy.getOrderFor(AUTHOR_NAME).getDirection() : Sort.Direction.ASC;
         if (sortOrder.isAscending()) {
           Collections.sort(projects, Comparator.nullsLast(byAuthorName));
         } else {

@@ -67,15 +67,6 @@ public class Project implements Serializable {
 
   private String goal;
 
-  public Project(Long id, String name, ProjectStatus status, LocalDate startDate, LocalDate endDate, UserDetails coordinator) {
-    this.id = id;
-    this.name = name;
-    this.status = status;
-    this.startDate = startDate;
-    this.endDate = endDate;
-    this.coordinator = coordinator;
-  }
-
   @Enumerated(EnumType.STRING)
   private ProjectStatus status;
 
