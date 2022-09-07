@@ -23,6 +23,7 @@ import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
+import de.vitagroup.num.domain.specification.OrganizationSpecification;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.PrivacyProperties;
@@ -460,13 +461,15 @@ public class ProjectServiceTest {
   public void getAllProjectsWithPagination() {
     setupDataForProjectsWithPagination();
     Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.DESC, "name"));
+    ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     List<Project> projects = projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
                     SearchCriteria.builder()
                                   .sort("DESC")
                                   .sortBy("name")
                                   .build(), pageable).getContent();
-    Mockito.verify(projectRepository, times(1)).findAll(Mockito.any(ProjectSpecification.class), Mockito.eq(pageable));
+    Mockito.verify(projectRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     Assert.assertEquals(Long.valueOf(1L), projects.get(0).getId());
+    Assert.assertEquals("approvedCoordinatorId", specificationArgumentCaptor.getValue().getLoggedInUserId());
   }
 
   @Test
@@ -484,16 +487,17 @@ public class ProjectServiceTest {
   }
 
   @Test
-  public void getAllProjectsWithPaginationAndFilterByName() {
+  public void getAllProjectsWithPaginationAndFilter() {
     setupDataForProjectsWithPagination();
     Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.ASC, "name"));
-    Map<String, String> filterByName = new HashMap<>();
-    filterByName.put("name", "OnE");
+    Map<String, String> filter = new HashMap<>();
+    filter.put("name", "OnE");
+    filter.put("type", "MY_PROJECTS");
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
             SearchCriteria.builder()
                     .sort("ASC")
                     .sortBy("name")
-                    .filter(filterByName)
+                    .filter(filter)
                     .build(), pageable);
     Mockito.verify(projectRepository, times(1)).findAll(Mockito.any(ProjectSpecification.class), Mockito.eq(pageable));
     List<Project> projects = filteredProjects.getContent();
@@ -521,6 +525,18 @@ public class ProjectServiceTest {
     Pageable pageable = PageRequest.of(0,50);
     SearchCriteria searchCriteria = SearchCriteria.builder()
             .sort("dummyName")
+            .sortBy("ASC")
+            .build();
+    when(userDetailsService.getUserDetailsById("approvedCoordinatorId"))
+            .thenReturn(Optional.of(UserDetails.builder().build()));
+    projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR), searchCriteria, pageable);
+    verify(projectRepository, never());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleMissingSortFieldWhenGetProjectsWithPagination() {
+    Pageable pageable = PageRequest.of(0,50);
+    SearchCriteria searchCriteria = SearchCriteria.builder()
             .sortBy("ASC")
             .build();
     when(userDetailsService.getUserDetailsById("approvedCoordinatorId"))
