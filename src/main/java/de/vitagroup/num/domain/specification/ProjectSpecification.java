@@ -6,6 +6,8 @@ import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -14,6 +16,7 @@ import javax.persistence.criteria.*;
 import java.util.*;
 
 @AllArgsConstructor
+@Getter
 public class ProjectSpecification implements Specification<Project> {
 
     private static final String COLUMN_PROJECT_STATUS = "status";
@@ -89,8 +92,8 @@ public class ProjectSpecification implements Specification<Project> {
     }
 
     private Predicate searchByStatus(Root<Project> root,
-                                     @Nonnull List<ProjectStatus> statuses) {
-        if (Objects.isNull(statuses)) {
+                                     List<ProjectStatus> statuses) {
+        if (CollectionUtils.isEmpty(statuses)) {
             throw new IllegalArgumentException("status cannot be null");
         }
         return root.get(COLUMN_PROJECT_STATUS).in(statuses);
