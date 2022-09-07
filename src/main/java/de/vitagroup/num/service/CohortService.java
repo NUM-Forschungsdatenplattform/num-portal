@@ -17,10 +17,10 @@ import de.vitagroup.num.service.policy.EhrPolicy;
 import de.vitagroup.num.service.policy.Policy;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.service.policy.TemplatesPolicy;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.PrivacyException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.PrivacyException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -37,6 +37,15 @@ import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CHANGING_COHORT_ONLY_ALLOWED_BY_THE_OWNER_OF_THE_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_CHANGE_ONLY_ALLOWED_ON_PROJECT_STATUS_DRAFT_OR_PENDING;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_GROUP_CANNOT_BE_EMPTY;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL_ID;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_COHORT_GROUP_AQL_MISSING;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
 
 @Slf4j
 @Service
@@ -72,7 +81,8 @@ public class CohortService {
 
   public Cohort getCohort(Long cohortId, String userId) {
     userDetailsService.checkIsUserApproved(userId);
-    return cohortRepository.findById(cohortId).orElseThrow(ResourceNotFound::new);
+    return cohortRepository.findById(cohortId).orElseThrow(
+            () -> new ResourceNotFound(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId)));
   }
 
   public Cohort createCohort(CohortDto cohortDto, String userId) {
@@ -82,7 +92,7 @@ public class CohortService {
         projectRepository
             .findById(cohortDto.getProjectId())
             .orElseThrow(
-                () -> new ResourceNotFound("Project not found: " + cohortDto.getProjectId()));
+                () -> new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, cohortDto.getProjectId())));
 
     checkProjectModifiable(project, userId);
 
@@ -109,7 +119,7 @@ public class CohortService {
   public Set<String> executeCohort(long cohortId, Boolean allowUsageOutsideEu) {
     Optional<Cohort> cohort = cohortRepository.findById(cohortId);
     return cohortExecutor.execute(
-        cohort.orElseThrow(() -> new BadRequestException("Cohort not found: " + cohortId)),
+        cohort.orElseThrow(() -> new BadRequestException(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId))),
         allowUsageOutsideEu);
   }
 
@@ -124,7 +134,7 @@ public class CohortService {
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(PrivacyProperties.RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds.size();
   }
@@ -144,7 +154,7 @@ public class CohortService {
 
     Set<String> ehrIds = cohortExecutor.execute(cohort, false);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(PrivacyProperties.RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
 
     return determineTemplatesHits(ehrIds, requestDto.getTemplateIds());
@@ -185,7 +195,7 @@ public class CohortService {
     Cohort cohortToEdit =
         cohortRepository
             .findById(cohortId)
-            .orElseThrow(() -> new ResourceNotFound("Cohort not found: " + cohortId));
+            .orElseThrow(() -> new ResourceNotFound(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId)));
 
     Project project = cohortToEdit.getProject();
 
@@ -199,19 +209,19 @@ public class CohortService {
 
   private void checkProjectModifiable(Project project, String userId) {
     if (project.hasEmptyOrDifferentOwner(userId)) {
-      throw new ForbiddenException("Changing cohort only allowed by the owner of the project");
+      throw new ForbiddenException(AqlService.class, CHANGING_COHORT_ONLY_ALLOWED_BY_THE_OWNER_OF_THE_PROJECT);
     }
 
     if (project.getStatus() != ProjectStatus.DRAFT
         && project.getStatus() != ProjectStatus.PENDING
         && project.getStatus() != ProjectStatus.CHANGE_REQUEST) {
-      throw new ForbiddenException("Cohort change only allowed on project status draft or pending");
+      throw new ForbiddenException(AqlService.class, COHORT_CHANGE_ONLY_ALLOWED_ON_PROJECT_STATUS_DRAFT_OR_PENDING);
     }
   }
 
   private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto) {
     if (cohortGroupDto == null) {
-      throw new BadRequestException("Cohort group cannot be empty");
+      throw new BadRequestException(CohortGroup.class, COHORT_GROUP_CANNOT_BE_EMPTY);
     }
 
     CohortGroup cohortGroup = modelMapper.map(cohortGroupDto, CohortGroup.class);
@@ -222,11 +232,11 @@ public class CohortService {
 
         if (!aqlService.existsById(cohortGroupDto.getQuery().getId())) {
           throw new BadRequestException(
-              String.format("%s %s", "Invalid aql id:", cohortGroupDto.getQuery().getId()));
+                CohortGroup.class, INVALID_AQL_ID, String.format("%s: %s", INVALID_AQL_ID, cohortGroupDto.getQuery().getId()));
         }
 
       } else {
-        throw new BadRequestException("Invalid cohort group. Aql missing.");
+        throw new BadRequestException(CohortGroup.class, INVALID_COHORT_GROUP_AQL_MISSING);
       }
     }
 
@@ -252,7 +262,7 @@ public class CohortService {
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(PrivacyProperties.RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     int count = ehrIds.size();
 

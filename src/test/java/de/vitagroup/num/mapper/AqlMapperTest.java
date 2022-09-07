@@ -15,7 +15,7 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.service.UserService;
-import de.vitagroup.num.web.exception.ResourceNotFound;
+
 import java.time.OffsetDateTime;
 import org.junit.Before;
 import org.junit.Test;

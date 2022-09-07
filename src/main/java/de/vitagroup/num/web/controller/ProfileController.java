@@ -2,6 +2,7 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.service.UserService;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import io.swagger.annotations.ApiOperation;
 import javax.validation.constraints.NotNull;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/profile", produces = "application/json")
 @AllArgsConstructor
-public class ProfileController {
+public class ProfileController extends CustomizedExceptionHandler {
 
   private final UserService userService;
 

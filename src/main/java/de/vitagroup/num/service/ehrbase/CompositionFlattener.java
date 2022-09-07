@@ -3,7 +3,7 @@ package de.vitagroup.num.service.ehrbase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nedap.archie.rm.composition.Composition;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.SystemException;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
@@ -25,6 +25,9 @@ import org.ehrbase.webtemplate.model.WebTemplate;
 import org.ehrbase.webtemplate.templateprovider.CachedTemplateProvider;
 import org.openehr.schemas.v1.OPERATIONALTEMPLATE;
 import org.springframework.stereotype.Component;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID;
 
 @Component
 @RequiredArgsConstructor
@@ -49,9 +52,10 @@ public class CompositionFlattener {
       String templateId = composition.getArchetypeDetails().getTemplateId().getValue();
       return mapper.readValue(getFlatJson(templateId).marshal(composition), Map.class);
     } catch (JsonProcessingException e) {
-      throw new SystemException("Cannot parse results", e);
+      throw new SystemException(CompositionFlattener.class, CANNOT_PARSE_RESULTS,
+              String.format(CANNOT_PARSE_RESULTS, e.getMessage()));
     } catch (SdkException e) {
-      throw new SystemException(e.getMessage());
+      throw new SystemException(SdkException.class, e.getMessage());
     }
   }
 
@@ -74,7 +78,7 @@ public class CompositionFlattener {
     if (composition.getArchetypeDetails() == null
         || composition.getArchetypeDetails().getTemplateId() == null
         || composition.getArchetypeDetails().getTemplateId().getValue() == null) {
-      throw new SystemException("Cannot parse results, composition missing template id");
+      throw new SystemException(CompositionFlattener.class, CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID);
     }
   }
 

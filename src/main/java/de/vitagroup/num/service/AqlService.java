@@ -11,10 +11,10 @@ import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.PrivacyException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.PrivacyException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +28,20 @@ import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AQL_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_AQL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_AQL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_FIND_AQL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CATEGORY_BY_ID_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CATEGORY_ID_CANT_BE_NULL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CATEGORY_WITH_ID_DOES_NOT_EXIST;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL_ID;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.THE_CATEGORY_IS_NOT_EMPTY_CANT_DELETE_IT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
 
 @Slf4j
 @Service
@@ -59,12 +73,13 @@ public class AqlService {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
     var aql =
-        aqlRepository.findById(id).orElseThrow(() -> new ResourceNotFound("Aql not found: " + id));
+        aqlRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFound(AqlService.class, AQL_NOT_FOUND, String.format(AQL_NOT_FOUND, id)));
 
     if (aql.isViewable(loggedInUserId)) {
       return aql;
     } else {
-      throw new ForbiddenException("Cannot access this aql.");
+      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_AQL);
     }
   }
 
@@ -77,7 +92,7 @@ public class AqlService {
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (userDetails.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
+      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
     }
 
     aql.setOwner(userDetails);
@@ -93,13 +108,11 @@ public class AqlService {
     var aqlToEdit =
         aqlRepository
             .findById(aqlId)
-            .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + aqlId));
+            .orElseThrow(() -> new ResourceNotFound(AqlService.class, CANNOT_FIND_AQL, String.format(CANNOT_FIND_AQL, aqlId)));
 
     if (aqlToEdit.hasEmptyOrDifferentOwner(loggedInUserId)) {
-      throw new ForbiddenException(
-          String.format(
-              "%s: %s %s.",
-              "Aql edit for aql with id", aqlId, "not allowed. Aql has different owner"));
+      throw new ForbiddenException( AqlService.class, AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER,
+          String.format(AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER, aqlId));
     }
 
     aqlToEdit.setName(aql.getName());
@@ -122,13 +135,13 @@ public class AqlService {
     var aql =
         aqlRepository
             .findById(id)
-            .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + id));
+            .orElseThrow(() -> new ResourceNotFound(AqlService.class, CANNOT_FIND_AQL, String.format(CANNOT_FIND_AQL, id)));
 
     if ((aql.isPublicAql() && (roles.contains(Roles.CRITERIA_EDITOR) || roles.contains(Roles.SUPER_ADMIN)))
         || (!aql.hasEmptyOrDifferentOwner(loggedInUserId) && roles.contains(Roles.CRITERIA_EDITOR))) {
       deleteAql(id);
     } else {
-      throw new ForbiddenException("Cannot delete aql: " + id);
+      throw new ForbiddenException(AqlService.class, CANNOT_DELETE_AQL, String.format(CANNOT_DELETE_AQL, id));
     }
   }
 
@@ -146,7 +159,7 @@ public class AqlService {
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (userDetails.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
+      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
     }
 
     switch (filter) {
@@ -172,11 +185,11 @@ public class AqlService {
       ehrIds =
           ehrBaseService.retrieveEligiblePatientIds(Aql.builder().query(aql.getQuery()).build());
     } catch (AqlParseException e) {
-      throw new BadRequestException(e.getMessage());
+      throw new BadRequestException(AqlParseException.class, e.getLocalizedMessage(), e.getMessage());
     }
 
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
+      throw new PrivacyException(AqlService.class, TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds.size();
   }
@@ -191,10 +204,10 @@ public class AqlService {
 
   public AqlCategory updateAqlCategory(AqlCategory aqlCategory, Long categoryId) {
     if (categoryId == null) {
-      throw new BadRequestException("Category id can't be null");
+      throw new BadRequestException(AqlCategory.class, CATEGORY_ID_CANT_BE_NULL);
     }
     if (!aqlCategoryRepository.existsById(categoryId)) {
-      throw new ResourceNotFound("Category by id " + categoryId + "Not found");
+      throw new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND, String.format(CATEGORY_BY_ID_NOT_FOUND, categoryId));
     }
     aqlCategory.setId(categoryId);
     return aqlCategoryRepository.save(aqlCategory);
@@ -206,10 +219,10 @@ public class AqlService {
       if (aqlCategoryRepository.existsById(id)) {
         aqlCategoryRepository.deleteById(id);
       } else {
-        throw new ResourceNotFound("Category with id " + id + " does not exist.");
+        throw new ResourceNotFound(AqlService.class, CATEGORY_WITH_ID_DOES_NOT_EXIST, String.format(CATEGORY_WITH_ID_DOES_NOT_EXIST, id));
       }
     } else {
-      throw new BadRequestException("The category is not empty, can't delete it.");
+      throw new BadRequestException(AqlService.class, THE_CATEGORY_IS_NOT_EMPTY_CANT_DELETE_IT);
     }
   }
 
@@ -222,9 +235,10 @@ public class AqlService {
         aqlEditorAqlService.validateAql(Result.builder().q(query).build());
     if (!response.isValid()) {
       try {
-        throw new BadRequestException(mapper.writeValueAsString(response));
+        throw new BadRequestException(QueryValidationResponse.class, COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE,
+                String.format(COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE, mapper.writeValueAsString(response)));
       } catch (JsonProcessingException e) {
-        log.error("Could not serialize aql validation response", e);
+        log.error(COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE, e);
       }
     }
   }
@@ -233,7 +247,7 @@ public class AqlService {
     try {
       aqlRepository.deleteById(id);
     } catch (EmptyResultDataAccessException e) {
-      throw new BadRequestException(String.format("%s: %s", "Invalid aql id", id));
+      throw new BadRequestException(AqlService.class, INVALID_AQL_ID, String.format("%s: %s", INVALID_AQL_ID, id));
     }
   }
 }

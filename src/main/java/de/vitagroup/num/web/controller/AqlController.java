@@ -10,6 +10,7 @@ import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.service.ehrbase.ParameterService;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
@@ -38,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @AllArgsConstructor
 @RequestMapping(value = "/aql", produces = "application/json")
-public class AqlController {
+public class AqlController extends CustomizedExceptionHandler {
 
   private final AqlService aqlService;
   private final ParameterService parameterService;
