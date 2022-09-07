@@ -133,7 +133,7 @@ public class ProjectService {
   private final ProjectMapper projectMapper;
 
 
-  public void deleteProject(Long projectId, String userId, List<String> roles) {
+  public boolean deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
     var project =
@@ -151,10 +151,11 @@ public class ProjectService {
       throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT_INVALID_STATUS,
               String.format(CANNOT_DELETE_PROJECT_INVALID_STATUS, projectId, project.getStatus()));
     }
+    return true;
   }
 
   @Transactional
-  public void archiveProject(Long projectId, String userId, List<String> roles) {
+  public boolean archiveProject(Long projectId, String userId, List<String> roles) {
     var user = userDetailsService.checkIsUserApproved(userId);
 
     var project =
@@ -171,6 +172,7 @@ public class ProjectService {
 
     project.setStatus(ProjectStatus.ARCHIVED);
     projectRepository.save(project);
+    return true;
   }
 
   /**
@@ -322,7 +324,7 @@ public class ProjectService {
     return queryResponse;
   }
 
-  public void streamResponseAsZip(
+  public boolean streamResponseAsZip(
       List<QueryResponseData> queryResponseDataList,
       String filenameStart,
       OutputStream outputStream) {
@@ -347,6 +349,7 @@ public class ProjectService {
       throw new SystemException(ProjectService.class, ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT,
               String.format(ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT, e.getLocalizedMessage()));
     }
+    return true;
   }
 
   private void addResponseAsCsv(
