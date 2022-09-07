@@ -7,6 +7,7 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
+import de.vitagroup.num.domain.specification.OrganizationSpecification;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
@@ -24,6 +25,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE;
@@ -49,7 +53,7 @@ public class OrganizationService {
   private static final String DOMAIN_SEPARATOR = "@";
 
   private static final String DOMAIN_VALIDATION_REGEX =
-      "^(\\*\\.)?((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}$";
+          "^(\\*\\.)?((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}$";
 
   /**
    * Resolves organization based on user email address
@@ -76,8 +80,8 @@ public class OrganizationService {
    */
   public List<String> getAllMailDomains() {
     return mailDomainRepository.findAll().stream()
-        .map(MailDomain::getName)
-        .collect(Collectors.toList());
+            .map(MailDomain::getName)
+            .collect(Collectors.toList());
   }
 
   /**
@@ -90,6 +94,7 @@ public class OrganizationService {
   }
 
   /**
+   * TODO remove this when FE is ready
    * Retrieves a list with available organizations
    *
    * @return List with available organizations
@@ -105,6 +110,16 @@ public class OrganizationService {
     return List.of();
   }
 
+  public Page<Organization> getAllOrganizations(List<String> roles, String loggedInUserId, Map<String, ?> filter, Pageable pageable) {
+    UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
+    OrganizationSpecification organizationSpecification = new OrganizationSpecification(filter);
+    if (roles.contains(Roles.SUPER_ADMIN)) {
+      return organizationRepository.findAll(organizationSpecification, pageable);
+    } else if (roles.contains(Roles.ORGANIZATION_ADMIN)) {
+      return new PageImpl<>(List.of(user.getOrganization()));
+    }
+    return new PageImpl<>(Collections.emptyList());
+  }
   /**
    * Retrieves an organization by external identifier
    *
@@ -114,8 +129,8 @@ public class OrganizationService {
   public Organization getOrganizationById(Long id) {
 
     return organizationRepository
-        .findById(id)
-        .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, id)));
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, id)));
   }
 
   @Transactional
@@ -123,81 +138,81 @@ public class OrganizationService {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
     organizationRepository
-        .findByName(organizationDto.getName())
-        .ifPresent(
-            d -> {
-              throw new BadRequestException(Organization.class, ORGANIZATION_NAME_MUST_BE_UNIQUE,
-                  String.format(ORGANIZATION_NAME_MUST_BE_UNIQUE, organizationDto.getName()));
-            });
+            .findByName(organizationDto.getName())
+            .ifPresent(
+                    d -> {
+                      throw new BadRequestException(Organization.class, ORGANIZATION_NAME_MUST_BE_UNIQUE,
+                              String.format(ORGANIZATION_NAME_MUST_BE_UNIQUE, organizationDto.getName()));
+                    });
     validateMailDomains(organizationDto.getMailDomains());
     organizationDto
-        .getMailDomains()
-        .forEach(
-            domain -> {
-              Optional<MailDomain> mailDomain =
-                  mailDomainRepository.findByName(domain.toLowerCase());
-              if (mailDomain.isPresent()) {
-                throw new BadRequestException(Organization.class, ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS,
-                        String.format(ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS, organizationDto.getName()));
-              }
-            });
+            .getMailDomains()
+            .forEach(
+                    domain -> {
+                      Optional<MailDomain> mailDomain =
+                              mailDomainRepository.findByName(domain.toLowerCase());
+                      if (mailDomain.isPresent()) {
+                        throw new BadRequestException(Organization.class, ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS,
+                                String.format(ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS, organizationDto.getName()));
+                      }
+                    });
 
     Organization organization = Organization.builder().name(organizationDto.getName()).build();
 
     organization.setDomains(
-        organizationDto.getMailDomains().stream()
-            .map(
-                domain ->
-                    MailDomain.builder()
-                        .name(domain.toLowerCase())
-                        .organization(organization)
-                        .build())
-            .collect(Collectors.toSet()));
+            organizationDto.getMailDomains().stream()
+                    .map(
+                            domain ->
+                                    MailDomain.builder()
+                                            .name(domain.toLowerCase())
+                                            .organization(organization)
+                                            .build())
+                    .collect(Collectors.toSet()));
 
     return organizationRepository.save(organization);
   }
 
   @Transactional
   public Organization update(
-      Long organizationId,
-      OrganizationDto organizationDto,
-      List<String> roles,
-      String loggedInUserId) {
+          Long organizationId,
+          OrganizationDto organizationDto,
+          List<String> roles,
+          String loggedInUserId) {
 
     UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     Organization organizationToEdit =
-        organizationRepository
-            .findById(organizationId)
-            .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
+            organizationRepository
+                    .findById(organizationId)
+                    .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
 
     organizationRepository
-        .findByName(organizationDto.getName())
-        .ifPresent(
-            d -> {
-              if (!d.getId().equals(organizationToEdit.getId())) {
-                throw new BadRequestException(OrganizationService.class, ORGANIZATION_NAME_MUST_BE_UNIQUE,
-                        String.format(ORGANIZATION_NAME_MUST_BE_UNIQUE, organizationDto.getName()));
-              }
-            });
+            .findByName(organizationDto.getName())
+            .ifPresent(
+                    d -> {
+                      if (!d.getId().equals(organizationToEdit.getId())) {
+                        throw new BadRequestException(OrganizationService.class, ORGANIZATION_NAME_MUST_BE_UNIQUE,
+                                String.format(ORGANIZATION_NAME_MUST_BE_UNIQUE, organizationDto.getName()));
+                      }
+                    });
     validateMailDomains(organizationDto.getMailDomains());
 
     organizationDto
-        .getMailDomains()
-        .forEach(
-            domain -> {
-              Optional<MailDomain> mailDomain =
-                  mailDomainRepository.findByName(domain.toLowerCase());
-              if (mailDomain.isPresent()
-                  && !mailDomain
-                      .get()
-                      .getOrganization()
-                      .getId()
-                      .equals(organizationToEdit.getId())) {
-                throw new BadRequestException(OrganizationService.class, ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS,
-                        String.format(ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS, domain));
-              }
-            });
+            .getMailDomains()
+            .forEach(
+                    domain -> {
+                      Optional<MailDomain> mailDomain =
+                              mailDomainRepository.findByName(domain.toLowerCase());
+                      if (mailDomain.isPresent()
+                              && !mailDomain
+                              .get()
+                              .getOrganization()
+                              .getId()
+                              .equals(organizationToEdit.getId())) {
+                        throw new BadRequestException(OrganizationService.class, ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS,
+                                String.format(ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS, domain));
+                      }
+                    });
 
     if (roles.contains(Roles.SUPER_ADMIN)) {
       updateOrganization(organizationDto, organizationToEdit);
@@ -217,16 +232,16 @@ public class OrganizationService {
 
   private void validateMailDomains(Set<String> domains) {
     domains.forEach(
-        domain -> {
-          if (StringUtils.isEmpty(domain)) {
-            throw new BadRequestException(OrganizationService.class, ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY);
-          }
+            domain -> {
+              if (StringUtils.isEmpty(domain)) {
+                throw new BadRequestException(OrganizationService.class, ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY);
+              }
 
-          if (!Pattern.matches(DOMAIN_VALIDATION_REGEX, domain.toLowerCase())) {
-            throw new BadRequestException(OrganizationService.class, INVALID_MAIL_DOMAIN,
-                    String.format(INVALID_MAIL_DOMAIN, domain));
-          }
-        });
+              if (!Pattern.matches(DOMAIN_VALIDATION_REGEX, domain.toLowerCase())) {
+                throw new BadRequestException(OrganizationService.class, INVALID_MAIL_DOMAIN,
+                        String.format(INVALID_MAIL_DOMAIN, domain));
+              }
+            });
   }
 
   private void updateOrganization(OrganizationDto dto, Organization organization) {
@@ -235,21 +250,21 @@ public class OrganizationService {
     Set<MailDomain> newDomains = new HashSet<>();
 
     dto.getMailDomains()
-        .forEach(
-            domainName -> {
-              Optional<MailDomain> mailDomain =
-                  mailDomainRepository.findByName(domainName.toLowerCase());
-              if (mailDomain.isEmpty()) {
-                newDomains.add(
-                    mailDomainRepository.save(
-                        MailDomain.builder()
-                            .name(domainName.toLowerCase())
-                            .organization(organization)
-                            .build()));
-              } else {
-                newDomains.add(mailDomain.get());
-              }
-            });
+            .forEach(
+                    domainName -> {
+                      Optional<MailDomain> mailDomain =
+                              mailDomainRepository.findByName(domainName.toLowerCase());
+                      if (mailDomain.isEmpty()) {
+                        newDomains.add(
+                                mailDomainRepository.save(
+                                        MailDomain.builder()
+                                                .name(domainName.toLowerCase())
+                                                .organization(organization)
+                                                .build()));
+                      } else {
+                        newDomains.add(mailDomain.get());
+                      }
+                    });
 
     if (organization.getDomains() != null) {
       organization.getDomains().clear();
@@ -281,13 +296,13 @@ public class OrganizationService {
     List<MailDomainDetails> mailDomainDetails = new LinkedList<>();
 
     allDomains.forEach(
-        mailDomain ->
-            mailDomainDetails.add(
-                MailDomainDetails.builder()
-                    .domain(mailDomain.getName().toLowerCase())
-                    .regex(domainToRegex(mailDomain.getName().toLowerCase()))
-                    .organization(mailDomain.getOrganization())
-                    .build()));
+            mailDomain ->
+                    mailDomainDetails.add(
+                            MailDomainDetails.builder()
+                                    .domain(mailDomain.getName().toLowerCase())
+                                    .regex(domainToRegex(mailDomain.getName().toLowerCase()))
+                                    .organization(mailDomain.getOrganization())
+                                    .build()));
 
     for (MailDomainDetails d1 : mailDomainDetails) {
       for (MailDomainDetails d2 : mailDomainDetails) {
