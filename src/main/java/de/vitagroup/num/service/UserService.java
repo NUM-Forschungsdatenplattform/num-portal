@@ -33,6 +33,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -420,6 +421,7 @@ public class UserService {
     }
   }
 
+  @CacheEvict(cacheNames = USERS_CACHE, key = "#userIdToChange")
   public void changeUserName(
       @NotNull String userIdToChange,
       @NotNull UserNameDto userName,
