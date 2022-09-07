@@ -25,11 +25,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -72,6 +74,7 @@ import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
+import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
@@ -147,6 +150,10 @@ public class ProjectServiceTest {
   @Spy private ProjectPolicyService projectPolicyService;
 
   @Spy private ObjectMapper mapper;
+
+  @Mock private ProjectMapper projectMapper;
+
+  @Mock private ProjectDocCreator projectDocCreator;
 
   @InjectMocks private ProjectService projectService;
 
@@ -276,6 +283,44 @@ public class ProjectServiceTest {
     CohortDto cohortDto = CohortDto.builder().name("Cohort name").id(2L).build();
     when(mapper.writeValueAsString(any(Object.class))).thenThrow(new JsonProcessingException("Error"){});
     projectService.executeManagerProject(cohortDto, Arrays.asList("1", "2"), "ownerCoordinatorId");
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void getResearchersBadRequestException() {
+    ProjectDto project =
+            ProjectDto.builder().name("Project")
+                    .status(ProjectStatus.DRAFT)
+                    .researchers(Arrays.asList(new UserDetailsDto()))
+                    .build();
+
+    projectService.createProject(project, "ownerCoordinatorId", List.of(STUDY_COORDINATOR));
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void getNotApprovedResearchersBadRequestException() {
+    UserDetailsDto userDetailsDto = UserDetailsDto.builder()
+            .userId("1")
+            .approved(Boolean.FALSE).build();
+    ProjectDto project =
+            ProjectDto.builder().name("Project")
+                    .status(ProjectStatus.DRAFT)
+                    .researchers(Arrays.asList(userDetailsDto))
+                    .build();
+
+    when(userDetailsService.getUserDetailsById("1")).thenReturn(Optional.of(UserDetails.builder().userId("1").approved(Boolean.FALSE).build()));
+
+    projectService.createProject(project, "ownerCoordinatorId", List.of(STUDY_COORDINATOR));
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void getInfoDocBytes() {
+    projectService.getInfoDocBytes(1000000L, "ownerCoordinatorId", Locale.ENGLISH);
+  }
+
+  @Test//(expected = SystemException.class)
+  public void getInfoDocBytesSystemException() throws IOException {
+//    when(projectDocCreator.getDocBytesOfProject(new ProjectDto(), null)).thenThrow(new SystemException(ProjectService.class, ""){});
+    projectService.getInfoDocBytes(1L, "ownerCoordinatorId", null);
   }
 
   @Test
