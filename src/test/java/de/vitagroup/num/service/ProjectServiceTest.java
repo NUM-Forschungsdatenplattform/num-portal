@@ -3,6 +3,7 @@ package de.vitagroup.num.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
@@ -582,9 +583,11 @@ public class ProjectServiceTest {
   @Test
   public void getAllProjectsWithPagination() {
     setupDataForProjectsWithPagination();
+    List<String> roles = new ArrayList<>();
+    roles.add(STUDY_COORDINATOR);
     Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.DESC, "name"));
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
-    List<Project> projects = projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
+    List<Project> projects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
                     SearchCriteria.builder()
                                   .sort("DESC")
                                   .sortBy("name")
@@ -592,6 +595,8 @@ public class ProjectServiceTest {
     Mockito.verify(projectRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     Assert.assertEquals(Long.valueOf(1L), projects.get(0).getId());
     Assert.assertEquals("approvedCoordinatorId", specificationArgumentCaptor.getValue().getLoggedInUserId());
+    Assert.assertEquals(roles, specificationArgumentCaptor.getValue().getRoles());
+    Assert.assertNull(specificationArgumentCaptor.getValue().getFilter());
   }
 
   @Test
@@ -611,12 +616,15 @@ public class ProjectServiceTest {
   @Test
   public void getAllProjectsWithPaginationAndFilter() {
     setupDataForProjectsWithPagination();
+    List<String> roles = new ArrayList<>();
+    roles.add(STUDY_COORDINATOR);
+    roles.add(RESEARCHER);
     Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.ASC, "name"));
     Map<String, String> filter = new HashMap<>();
     filter.put("name", "OnE");
     filter.put("type", ProjectFilterType.MY_PROJECTS.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
-    Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
+    Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
             SearchCriteria.builder()
                     .sort("ASC")
                     .sortBy("name")
@@ -629,7 +637,7 @@ public class ProjectServiceTest {
     ProjectSpecification capturedInput = specificationArgumentCaptor.getValue();
     Assert.assertEquals(filter, capturedInput.getFilter());
     Assert.assertEquals("approvedCoordinatorId", capturedInput.getLoggedInUserId());
-    Assert.assertEquals(Arrays.asList(STUDY_COORDINATOR), capturedInput.getRoles());
+    Assert.assertEquals(roles, capturedInput.getRoles());
   }
 
   @Test
@@ -670,6 +678,35 @@ public class ProjectServiceTest {
             .thenReturn(Optional.of(UserDetails.builder().build()));
     projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR), searchCriteria, pageable);
     verify(projectRepository, never());
+  }
+
+  @Test
+  public void getAllProjectsWithStudyApprover() {
+    List<String> roles = new ArrayList<>();
+    roles.add(STUDY_APPROVER);
+    setupDataForProjectsWithPagination();
+    when(userDetailsService.getUserDetailsById("approverId"))
+            .thenReturn(Optional.of(UserDetails.builder()
+                    .userId("approverId")
+                    .approved(true)
+                    .organization(Organization.builder().id(1L).build())
+                    .build()));
+    Pageable pageable = PageRequest.of(0,50).withSort(Sort.by(Sort.Direction.DESC, "status"));
+    Map<String, String> filter = new HashMap<>();
+    filter.put("type", ProjectFilterType.MY_ORGANIZATION.name());
+    ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
+    projectService.getProjectsWithPagination("approverId", roles,
+            SearchCriteria.builder()
+                    .sort("DESC")
+                    .sortBy("status")
+                    .filter(filter)
+                    .build(), pageable);
+    Mockito.verify(projectRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
+    ProjectSpecification capturedInput = specificationArgumentCaptor.getValue();
+    Assert.assertEquals(filter, capturedInput.getFilter());
+    Assert.assertEquals("approverId", capturedInput.getLoggedInUserId());
+    Assert.assertEquals(roles, capturedInput.getRoles());
+    assertThat(1L, is(capturedInput.getLoggedInUserOrganizationId()));
   }
 
   private void setupDataForProjectsWithPagination() {
