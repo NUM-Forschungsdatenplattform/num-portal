@@ -73,7 +73,7 @@ public class ProjectService {
   private static final String ZIP_MEDIA_TYPE = "application/zip";
   private static final String CSV_FILE_PATTERN = "%s_%s.csv";
 
-  private final List<String> availableSortFields = Arrays.asList("name", "author", "organization", "status");
+  private final List<String> availableSortFields = Arrays.asList(PROJECT_NAME, AUTHOR_NAME, ORGANIZATION_NAME, PROJECT_STATUS);
 
   private static final String AUTHOR_NAME = "author";
 
