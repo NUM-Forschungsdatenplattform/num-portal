@@ -1,5 +1,7 @@
 package de.vitagroup.num.service;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -11,11 +13,12 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,10 +49,10 @@ public class AqlServiceTest {
         UserDetails.builder().userId("approvedUserId").approved(true).build();
 
     when(userDetailsService.checkIsUserApproved("notApprovedId"))
-        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
+        .thenThrow(new ForbiddenException(AqlServiceTest.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED));
 
     when(userDetailsService.checkIsUserApproved("nonExistingUser"))
-        .thenThrow(new SystemException("User not found"));
+        .thenThrow(new SystemException(AqlServiceTest.class, USER_NOT_FOUND));
 
     when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
 
@@ -130,6 +133,57 @@ public class AqlServiceTest {
   public void shouldCallRepoWhenSearchingAql() {
     aqlService.getAqlById(1L, "approvedUserId");
     verify(aqlRepository, times(1)).findById(any());
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void getAqlById() {
+    aqlService.getAqlById(1000L, "approvedUserId");
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void getAqlByIdForbiddenException() {
+    aqlService.getAqlById(2L, "approvedUserId");
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void updateAql() {
+    aqlService.updateAql(new Aql(), 1000L, "approvedUserId");
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void updateAqlForbiddenException() {
+    aqlService.updateAql(new Aql(), 2L, "approvedUserId");
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void deleteById() {
+    aqlService.deleteById(1000L, "approvedUserId", List.of(Roles.STUDY_COORDINATOR));
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void deleteByIdForbiddenException() {
+    aqlService.deleteById(1L, "approvedUserId", List.of());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void updateAqlCategory() {
+    aqlService.updateAqlCategory(new AqlCategory(),null);
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void updateAqlCategoryResourceNotFound() {
+    aqlService.updateAqlCategory(new AqlCategory(),1L);
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void deleteCategoryById() {
+    aqlService.deleteCategoryById(null);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void deleteCategoryByIdBadRequestException() {
+    when(aqlRepository.findByCategoryId(null)).thenReturn(Arrays.asList(new Aql()));
+    aqlService.deleteCategoryById(null);
   }
 
   @Test(expected = ForbiddenException.class)

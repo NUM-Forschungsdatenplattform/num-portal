@@ -1,11 +1,14 @@
 package de.vitagroup.num.service.policy;
 
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.SystemException;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.Value;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
 
 /**
  * Restricts the aql to a particular oid which defines the user consent for project data being used
@@ -25,18 +28,17 @@ public class EuropeanConsentPolicy extends Policy {
   }
 
   @Override
-  public void apply(AqlDto aql) {
+  public boolean apply(AqlDto aql) {
     if (oid == null) {
-      log.error(
-          "Cannot check consent for data usage outside the European Union, oid not configured");
-      return;
+      throw new SystemException(EuropeanConsentPolicy.class, CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED);
     }
 
     if (aql == null) {
-      throw new SystemException(AQL_ERROR_MESSAGE);
+      throw new SystemException(EuropeanConsentPolicy.class, INVALID_AQL);
     }
 
     List<Value> oidValues = toSimpleValueList(List.of(oid));
     restrictAqlWithCompositionAttribute(aql, FEEDER_AUDIT_PATH, oidValues);
+    return true;
   }
 }

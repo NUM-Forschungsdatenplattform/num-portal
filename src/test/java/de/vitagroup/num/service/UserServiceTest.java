@@ -28,12 +28,11 @@ import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
 import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
-import feign.Feign;
 import feign.FeignException;
 
 import java.nio.charset.Charset;
@@ -48,7 +47,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import feign.Request;
-import feign.RequestTemplate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

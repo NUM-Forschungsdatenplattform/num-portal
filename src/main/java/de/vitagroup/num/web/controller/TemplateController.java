@@ -2,6 +2,7 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.dto.TemplateMetadataDto;
 import de.vitagroup.num.service.TemplateService;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @AllArgsConstructor
 @RequestMapping(value = "/template", produces = "application/json")
-public class TemplateController {
+public class TemplateController extends CustomizedExceptionHandler {
 
   private final TemplateService templateService;
 

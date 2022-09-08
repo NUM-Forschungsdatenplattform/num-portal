@@ -1,6 +1,6 @@
 package de.vitagroup.num.domain.dto;
 
-import de.vitagroup.num.web.exception.BadRequestException;
+import de.vitagroup.num.service.exception.BadRequestException;
 import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,10 +25,10 @@ public class SearchCriteria {
 
     public boolean isValid() {
         if (StringUtils.isEmpty(this.sort) && StringUtils.isNotEmpty(this.sortBy)) {
-            throw new BadRequestException("Sort field is required when sortBy is provided");
+            throw new BadRequestException(SearchCriteria.class, "sort field is required when sortBy is provided");
         }
         if (StringUtils.isNotEmpty(this.sort) && StringUtils.isEmpty(this.sortBy)) {
-            throw new BadRequestException("sortBy field is required when sort is provided");
+            throw new BadRequestException(SearchCriteria.class, "sortBy field is required when sort is provided");
         }
         return true;
     }

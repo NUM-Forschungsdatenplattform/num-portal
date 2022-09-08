@@ -1,19 +1,6 @@
 package de.vitagroup.num.service;
 
-import static de.vitagroup.num.domain.Roles.RESEARCHER;
-import static de.vitagroup.num.domain.Roles.STUDY_APPROVER;
-import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.admin.User;
@@ -23,7 +10,6 @@ import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
-import de.vitagroup.num.domain.specification.OrganizationSpecification;
 import de.vitagroup.num.domain.specification.ProjectFilterType;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
@@ -31,20 +17,13 @@ import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
+import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.service.notification.dto.*;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStatusChangeRequestNotification;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.SystemException;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorDto;
@@ -61,17 +40,32 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static de.vitagroup.num.domain.ProjectStatus.*;
+import static de.vitagroup.num.domain.Roles.*;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProjectServiceTest {
@@ -181,6 +175,133 @@ public class ProjectServiceTest {
     }
 
     assertThat(count, is(1));
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void deleteProjectResourceNotFound() {
+    when(projectService.deleteProject(1000000L, "1", List.of()))
+            .thenThrow(new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, "1000000")));
+    projectService.deleteProject(1000000L, "1", List.of());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void deleteProjectForbiddenException() {
+    when(projectService.deleteProject(1L, "1", List.of()))
+            .thenThrow(new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT, String.format(CANNOT_DELETE_PROJECT, 1)));
+    projectService.deleteProject(1L, "1", List.of());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void deleteProjectForbiddenExceptionInvalidStatus() {
+    when(projectService.deleteProject(1L, "1", List.of(Roles.SUPER_ADMIN)))
+            .thenThrow(new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT, String.format(CANNOT_DELETE_PROJECT, 1)));
+    projectService.deleteProject(1L, "1", List.of(Roles.SUPER_ADMIN));
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void archiveProjectResourceNotFound() {
+    when(projectService.archiveProject(1000000L, "1", List.of()))
+            .thenThrow(new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, "1000000")));
+    projectService.archiveProject(1000000L, "1", List.of());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void archiveProjectForbiddenException() {
+    when(projectService.archiveProject(1L, "1", List.of()))
+            .thenThrow(new ForbiddenException(ProjectService.class, CANNOT_ARCHIVE_PROJECT, String.format(CANNOT_ARCHIVE_PROJECT, 1)));
+    projectService.archiveProject(1L, "1", List.of());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void archiveProjectBadRequestExceptionInvalidStatus() {
+    when(projectService.archiveProject(1L, "1", List.of(Roles.SUPER_ADMIN)))
+            .thenThrow(new BadRequestException(ProjectService.class, PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED,
+                    String.format(PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED, PUBLISHED ,ARCHIVED )));
+    projectService.archiveProject(1L, "1", List.of(Roles.SUPER_ADMIN));
+  }
+
+/*  @Test(expected = ForbiddenException.class)
+  public void archiveProjectBadRequestExceptionInvalidStatusArchived() {
+    when(projectService.archiveProject(5L, "1", List.of()))
+            .thenThrow(new ForbiddenException(ProjectService.class, PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED,
+                    String.format(PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED, PUBLISHED, ARCHIVED)));
+    projectService.archiveProject(5L, "1", List.of());
+  }*/
+
+  @Test(expected = ResourceNotFound.class)
+  public void retrieveDataResourceNotFound() {
+    projectService.retrieveData("query", 10000L, "1", Boolean.TRUE);
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void retrieveDataForbiddenException() {
+    projectService.retrieveData("query", 1L, "1", Boolean.TRUE);
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void retrieveDataForbiddenExceptionWrongProjectStatus() {
+    projectService.retrieveData("query", 5L, "1", Boolean.TRUE);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void retrieveDataBadRequestExceptionWrongCohort() {
+    projectService.retrieveData("query", 6L, "ownerCoordinatorId", Boolean.TRUE);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void retrieveDataBadRequestExceptionWrongTemplates() {
+    projectService.retrieveData("query", 7L, "ownerCoordinatorId", Boolean.TRUE);
+  }
+
+  @Test(expected = PrivacyException.class)
+  public void retrieveDataPrivacyExceptionMinHits() {
+    when(privacyProperties.getMinHits()).thenReturn(10);
+    projectService.retrieveData("query", 8L, "ownerCoordinatorId", Boolean.TRUE);
+  }
+
+  @Test(expected = SystemException.class)
+  public void executeManagerProjectSystemException() throws JsonProcessingException {
+    CohortDto cohortDto = CohortDto.builder().name("Cohort name").id(2L).build();
+    when(mapper.writeValueAsString(any(Object.class))).thenThrow(new JsonProcessingException("Error"){});
+    projectService.executeManagerProject(cohortDto, Arrays.asList("1", "2"), "ownerCoordinatorId");
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void getResearchersBadRequestException() {
+    ProjectDto project =
+            ProjectDto.builder().name("Project")
+                    .status(ProjectStatus.DRAFT)
+                    .researchers(Arrays.asList(new UserDetailsDto()))
+                    .build();
+
+    projectService.createProject(project, "ownerCoordinatorId", List.of(STUDY_COORDINATOR));
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void getNotApprovedResearchersBadRequestException() {
+    UserDetailsDto userDetailsDto = UserDetailsDto.builder()
+            .userId("1")
+            .approved(Boolean.FALSE).build();
+    ProjectDto project =
+            ProjectDto.builder().name("Project")
+                    .status(ProjectStatus.DRAFT)
+                    .researchers(Arrays.asList(userDetailsDto))
+                    .build();
+
+    when(userDetailsService.getUserDetailsById("1")).thenReturn(Optional.of(UserDetails.builder().userId("1").approved(Boolean.FALSE).build()));
+
+    projectService.createProject(project, "ownerCoordinatorId", List.of(STUDY_COORDINATOR));
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void getInfoDocBytes() {
+    projectService.getInfoDocBytes(1000000L, "ownerCoordinatorId", Locale.ENGLISH);
+  }
+
+  @Test//(expected = SystemException.class)
+  public void getInfoDocBytesSystemException() throws IOException {
+//    when(projectDocCreator.getDocBytesOfProject(new ProjectDto(), null)).thenThrow(new SystemException(ProjectService.class, ""){});
+    projectService.getInfoDocBytes(1L, "ownerCoordinatorId", null);
   }
 
   @Test
@@ -623,7 +744,7 @@ public class ProjectServiceTest {
                     "approvedCoordinatorId",
                     List.of(STUDY_COORDINATOR, STUDY_APPROVER, RESEARCHER)));
 
-    String expectedMessage = "Project status transition from DRAFT to APPROVED not allowed";
+    String expectedMessage = "Project status transition from DRAFT to APPROVED is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -639,7 +760,7 @@ public class ProjectServiceTest {
     when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
     ProjectDto projectDto =
-        ProjectDto.builder().name("Project is edited").status(ProjectStatus.PUBLISHED).build();
+        ProjectDto.builder().name("Project is edited").status(PUBLISHED).build();
 
     Exception exception =
         assertThrows(
@@ -648,7 +769,7 @@ public class ProjectServiceTest {
                 projectService.updateProject(
                     projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Project status transition from DRAFT to PUBLISHED not allowed";
+    String expectedMessage = "Project status transition from DRAFT to PUBLISHED is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -664,7 +785,7 @@ public class ProjectServiceTest {
     when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
 
     ProjectDto projectDto =
-        ProjectDto.builder().name("Project is edited").status(ProjectStatus.CLOSED).build();
+        ProjectDto.builder().name("Project is edited").status(CLOSED).build();
 
     Exception exception =
         assertThrows(
@@ -673,7 +794,7 @@ public class ProjectServiceTest {
                 projectService.updateProject(
                     projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Project status transition from DRAFT to CLOSED not allowed";
+    String expectedMessage = "Project status transition from DRAFT to CLOSED is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -682,7 +803,7 @@ public class ProjectServiceTest {
     Project projectToEdit =
         Project.builder()
             .name("Project")
-            .status(ProjectStatus.CLOSED)
+            .status(CLOSED)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
@@ -699,7 +820,7 @@ public class ProjectServiceTest {
     Project projectToEdit =
         Project.builder()
             .name("Project")
-            .status(ProjectStatus.CLOSED)
+            .status(CLOSED)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .build();
 
@@ -786,7 +907,7 @@ public class ProjectServiceTest {
                 projectService.updateProject(
                     projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Project status transition from PENDING to REVIEWING not allowed";
+    String expectedMessage = "Project status transition from PENDING to REVIEWING is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -836,7 +957,7 @@ public class ProjectServiceTest {
                 projectService.updateProject(
                     projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
 
-    String expectedMessage = "Project status transition from REVIEWING to APPROVED not allowed";
+    String expectedMessage = "Project status transition from REVIEWING to APPROVED is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -910,7 +1031,7 @@ public class ProjectServiceTest {
                     "approvedCoordinatorId",
                     List.of(STUDY_COORDINATOR, RESEARCHER)));
 
-    String expectedMessage = "Project status transition from REVIEWING to DENIED not allowed";
+    String expectedMessage = "Project status transition from REVIEWING to DENIED is not allowed";
     assertThat(exception.getMessage(), is(expectedMessage));
   }
 
@@ -920,7 +1041,7 @@ public class ProjectServiceTest {
         ProjectDto.builder()
             .name("new project")
             .financed(false)
-            .status(ProjectStatus.CLOSED)
+            .status(CLOSED)
             .build();
 
     Exception exception =
@@ -1062,7 +1183,7 @@ public class ProjectServiceTest {
             Optional.of(
                 Project.builder()
                     .id(1L)
-                    .status(ProjectStatus.CLOSED)
+                    .status(CLOSED)
                     .coordinator(new UserDetails("approvedCoordinatorId", null, true))
                     .build()));
 
@@ -1071,7 +1192,7 @@ public class ProjectServiceTest {
             .id(1L)
             .name("existing Project")
             .financed(false)
-            .status(ProjectStatus.CLOSED)
+            .status(CLOSED)
             .build();
     projectService.updateProject(
         existingStudy, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
@@ -1112,7 +1233,7 @@ public class ProjectServiceTest {
         ProjectDto.builder()
             .name("Project is edited")
             .id(66L)
-            .status(ProjectStatus.PUBLISHED)
+            .status(PUBLISHED)
             .coordinator(User.builder().id("approvedCoordinatorId").build())
             .researchers(
                 List.of(
@@ -1140,7 +1261,7 @@ public class ProjectServiceTest {
         Project.builder()
             .name("Project")
             .id(66L)
-            .status(ProjectStatus.PUBLISHED)
+            .status(PUBLISHED)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .researchers(
                 List.of(
@@ -1154,7 +1275,7 @@ public class ProjectServiceTest {
         ProjectDto.builder()
             .name("Project is edited")
             .id(66L)
-            .status(ProjectStatus.PUBLISHED)
+            .status(PUBLISHED)
             .coordinator(User.builder().id("approvedCoordinatorId").build())
             .researchers(List.of(UserDetailsDto.builder().userId("researcher1").build()))
             .build();
@@ -1179,7 +1300,7 @@ public class ProjectServiceTest {
         Project.builder()
             .name("Project")
             .id(77L)
-            .status(ProjectStatus.PUBLISHED)
+            .status(PUBLISHED)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
             .researchers(
                 List.of(
@@ -1193,7 +1314,7 @@ public class ProjectServiceTest {
         ProjectDto.builder()
             .name("Project is edited")
             .id(77L)
-            .status(ProjectStatus.CLOSED)
+            .status(CLOSED)
             .coordinator(User.builder().id("approvedCoordinatorId").build())
             .researchers(List.of(UserDetailsDto.builder().userId("researcher1").build()))
             .build();
@@ -1402,17 +1523,17 @@ public class ProjectServiceTest {
         .thenReturn(approvedCoordinator);
 
     when(userDetailsService.checkIsUserApproved("notApprovedCoordinatorId"))
-        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
+        .thenThrow(new ForbiddenException(ProjectServiceTest.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED));
 
     when(userDetailsService.checkIsUserApproved("nonExistingCoordinatorId"))
-        .thenThrow(new SystemException("User not found"));
+        .thenThrow(new SystemException(ProjectServiceTest.class, USER_NOT_FOUND));
 
     when(projectRepository.findById(3L))
         .thenReturn(
             Optional.of(
                 Project.builder()
                     .id(3L)
-                    .status(ProjectStatus.PUBLISHED)
+                    .status(PUBLISHED)
                     .researchers(List.of(approvedCoordinator))
                     .build()));
 
@@ -1421,7 +1542,7 @@ public class ProjectServiceTest {
             Optional.of(
                 Project.builder()
                     .id(1L)
-                    .status(ProjectStatus.PUBLISHED)
+                    .status(PUBLISHED)
                     .cohort(Cohort.builder().id(2L).build())
                     .researchers(List.of(approvedCoordinator))
                     .build()));
@@ -1431,7 +1552,7 @@ public class ProjectServiceTest {
             Optional.of(
                 Project.builder()
                     .id(2L)
-                    .status(ProjectStatus.PUBLISHED)
+                    .status(PUBLISHED)
                     .cohort(Cohort.builder().id(2L).build())
                     .researchers(List.of(approvedCoordinator))
                     .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
@@ -1450,11 +1571,51 @@ public class ProjectServiceTest {
             Optional.of(
                 Project.builder()
                     .id(4L)
-                    .status(ProjectStatus.PUBLISHED)
+                    .status(PUBLISHED)
                     .cohort(Cohort.builder().id(4L).build())
                     .researchers(List.of(approvedCoordinator))
                     .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
                     .build()));
+
+    when(projectRepository.findById(5L))
+            .thenReturn(
+                    Optional.of(
+                            Project.builder()
+                                    .id(5L)
+                                    .cohort(Cohort.builder().id(5L).build())
+                                    .build()));
+
+    when(projectRepository.findById(6L))
+            .thenReturn(
+                    Optional.of(
+                            Project.builder()
+                                    .id(6L)
+                                    .status(PUBLISHED)
+                                    .coordinator(new UserDetails("ownerCoordinatorId", null, true))
+                                    .build()));
+
+    when(projectRepository.findById(7L))
+            .thenReturn(
+                    Optional.of(
+                            Project.builder()
+                                    .id(7L)
+                                    .cohort(Cohort.builder().id(5L).build())
+                                    .status(PUBLISHED)
+                                    .coordinator(new UserDetails("ownerCoordinatorId", null, true))
+                                    .build()));
+
+    Map<String, String> map = new HashMap<>();
+    map.put("1", "1");
+    when(projectRepository.findById(8L))
+            .thenReturn(
+                    Optional.of(
+                            Project.builder()
+                                    .id(8L)
+                                    .cohort(Cohort.builder().id(8L).build())
+                                    .status(PUBLISHED)
+                                    .templates(map)
+                                    .coordinator(new UserDetails("ownerCoordinatorId", null, true))
+                                    .build()));
 
     when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));

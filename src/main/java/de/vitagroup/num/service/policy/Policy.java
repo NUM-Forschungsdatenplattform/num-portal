@@ -24,10 +24,9 @@ import org.ehrbase.aql.dto.select.SelectFieldDto;
 /** Defines a certain project policy to be applied to an aql query */
 public abstract class Policy {
 
-  protected static final String AQL_ERROR_MESSAGE = "Invalid aql";
   private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
 
-  public abstract void apply(AqlDto aql);
+  public abstract boolean apply(AqlDto aql);
 
   protected void restrictAqlWithCompositionAttribute(
       AqlDto aql, String attributePath, List<Value> attributeValues) {

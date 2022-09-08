@@ -1,20 +1,28 @@
 package de.vitagroup.num.service.exception;
 
+import lombok.Getter;
+
+@Getter
 public class IllegalArgumentException extends RuntimeException {
 
-    public IllegalArgumentException() {
-        super();
-    }
+    private final Class<?> entity;
 
-    public IllegalArgumentException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    private final String paramValue;
 
-    public IllegalArgumentException(String message) {
+    private final String message;
+
+/*    public IllegalArgumentException(Class<?> entity, String paramValue, String parameter) {
+        super(parameter);
+        this.entity = entity;
+        this.paramValue = paramValue;
+        this.parameter = parameter;
+    }*/
+
+    public IllegalArgumentException(Class<?> entity, String message) {
         super(message);
+        this.entity = entity;
+        this.paramValue = message;
+        this.message = message;
     }
 
-    public IllegalArgumentException(Throwable cause) {
-        super(cause);
-    }
 }
