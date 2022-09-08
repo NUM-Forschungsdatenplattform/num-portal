@@ -24,6 +24,7 @@ import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.specification.OrganizationSpecification;
+import de.vitagroup.num.domain.specification.ProjectFilterType;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.PrivacyProperties;
@@ -492,17 +493,22 @@ public class ProjectServiceTest {
     Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.ASC, "name"));
     Map<String, String> filter = new HashMap<>();
     filter.put("name", "OnE");
-    filter.put("type", "MY_PROJECTS");
+    filter.put("type", ProjectFilterType.MY_PROJECTS.name());
+    ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
             SearchCriteria.builder()
                     .sort("ASC")
                     .sortBy("name")
                     .filter(filter)
                     .build(), pageable);
-    Mockito.verify(projectRepository, times(1)).findAll(Mockito.any(ProjectSpecification.class), Mockito.eq(pageable));
+    Mockito.verify(projectRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     List<Project> projects = filteredProjects.getContent();
     Assert.assertEquals(1, projects.size());
     Assert.assertEquals(Long.valueOf(1L), projects.get(0).getId());
+    ProjectSpecification capturedInput = specificationArgumentCaptor.getValue();
+    Assert.assertEquals(filter, capturedInput.getFilter());
+    Assert.assertEquals("approvedCoordinatorId", capturedInput.getLoggedInUserId());
+    Assert.assertEquals(Arrays.asList(STUDY_COORDINATOR), capturedInput.getRoles());
   }
 
   @Test
