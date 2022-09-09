@@ -6,6 +6,7 @@ import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
@@ -16,17 +17,24 @@ import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.PrivacyException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER;
@@ -47,6 +55,8 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.TOO_FEW_MATCH
 @Service
 @AllArgsConstructor
 public class AqlService {
+
+  private final List<String> availableSortFields = Arrays.asList("name-de", "name-en");
 
   private final AqlRepository aqlRepository;
   private final AqlCategoryRepository aqlCategoryRepository;
@@ -196,6 +206,27 @@ public class AqlService {
 
   public List<AqlCategory> getAqlCategories() {
     return aqlCategoryRepository.findAllCategories();
+  }
+
+  public Page<AqlCategory> getAqlCategories(Pageable pageable, SearchCriteria searchCriteria) {
+    Optional<Sort> sortBy = validateAndGetSort(searchCriteria);
+    PageRequest pageRequest = sortBy.isPresent() ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortBy.get()) :
+                                                   PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+    return aqlCategoryRepository.findAllCategories(pageRequest);
+  }
+
+  private Optional<Sort> validateAndGetSort(SearchCriteria searchCriteria) {
+    if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
+      if (!availableSortFields.contains(searchCriteria.getSortBy())) {
+        throw new BadRequestException(AqlService.class, String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
+      }
+      if ("name-de".equals(searchCriteria.getSortBy())) {
+        return Optional.of(JpaSort.unsafe(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()), "name->>'de'"));
+      } else if ("name-en".equals(searchCriteria.getSortBy())) {
+        return Optional.of(JpaSort.unsafe(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()), "name->>'en'"));
+      }
+    }
+    return Optional.empty();
   }
 
   public AqlCategory createAqlCategory(AqlCategory aqlCategory) {
