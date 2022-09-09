@@ -8,15 +8,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import de.vitagroup.num.domain.MailDomain;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.service.exception.BadRequestException;
@@ -42,6 +41,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OrganizationServiceTest {
@@ -269,17 +270,22 @@ public class OrganizationServiceTest {
   @Test
   public void shouldGetAllOrganizationWithPagination() {
     Pageable pageable = PageRequest.of(0,50);
-    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", null, pageable);
+    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", new SearchCriteria(), pageable);
     verify(organizationRepository, times(1)).findAll(Mockito.any(OrganizationSpecification.class), Mockito.eq(pageable));
   }
 
   @Test
   public void shouldGetAllOrganizationWithPaginationAndFilter() {
-    Pageable pageable = PageRequest.of(1,3);
+    Pageable pageable = PageRequest.of(1,3).withSort(Sort.by(Sort.Direction.DESC, "name"));
     ArgumentCaptor<OrganizationSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(OrganizationSpecification.class);
     Map<String, String> filterByName = new HashMap<>();
     filterByName.put("name", "dummy name");
-    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", filterByName, pageable);
+    SearchCriteria searchCriteria = SearchCriteria.builder()
+            .filter(filterByName)
+            .sortBy("name")
+            .sort("DESC")
+            .build();
+    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", searchCriteria, pageable);
     verify(organizationRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     OrganizationSpecification capturedInput = specificationArgumentCaptor.getValue();
     Assert.assertEquals(filterByName, capturedInput.getFilter());
@@ -288,7 +294,7 @@ public class OrganizationServiceTest {
   @Test
   public void shouldGetOrganizationAdminOrganization() {
     Pageable pageable = PageRequest.of(0,25);
-    organizationService.getAllOrganizations(List.of(Roles.ORGANIZATION_ADMIN), "approvedUserId", null, pageable);
+    organizationService.getAllOrganizations(List.of(Roles.ORGANIZATION_ADMIN), "approvedUserId", new SearchCriteria(), pageable);
     verify(organizationRepository, times(0)).findAll(Mockito.any(OrganizationSpecification.class), Mockito.eq(pageable));
   }
 
@@ -296,6 +302,17 @@ public class OrganizationServiceTest {
   public void shouldCountOrganizations() {
     organizationService.countOrganizations();
     verify(organizationRepository, times(1)).count();
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleInvalidSortWhenGetAllOrganizationWithPagination() {
+    Pageable pageable = PageRequest.of(0,50);
+    SearchCriteria searchCriteria = SearchCriteria.builder()
+            .sort("dummyName")
+            .sortBy("ASC")
+            .build();
+    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", searchCriteria, pageable);
+    verify(organizationRepository, never());
   }
 
   @Before

@@ -74,7 +74,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
                                                                                  SearchCriteria criteria) {
 
     Page<Organization> organizationPage = organizationService
-            .getAllOrganizations(Roles.extractRoles(principal), principal.getSubject(), criteria.getFilter(), pageable);
+            .getAllOrganizations(Roles.extractRoles(principal), principal.getSubject(), criteria, pageable);
     List<OrganizationDto> content = organizationPage.getContent()
             .stream()
             .map(mapper::convertToDto)

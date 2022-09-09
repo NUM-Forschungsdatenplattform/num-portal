@@ -5,41 +5,27 @@ import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.specification.OrganizationSpecification;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_UPDATE_ORGANIZATION;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_MAIL_DOMAIN;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_NAME_MUST_BE_UNIQUE;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_NOT_FOUND;
+import javax.transaction.Transactional;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 /** Service responsible for retrieving organization information from the terminology server */
 @Slf4j
@@ -113,11 +99,13 @@ public class OrganizationService {
     return List.of();
   }
 
-  public Page<Organization> getAllOrganizations(List<String> roles, String loggedInUserId, Map<String, ?> filter, Pageable pageable) {
+  public Page<Organization> getAllOrganizations(List<String> roles, String loggedInUserId, SearchCriteria searchCriteria, Pageable pageable) {
     UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
-    OrganizationSpecification organizationSpecification = new OrganizationSpecification(filter);
+    OrganizationSpecification organizationSpecification = new OrganizationSpecification(searchCriteria.getFilter());
+    Optional<Sort> sortBy = validateAndGetSort(searchCriteria);
     if (roles.contains(Roles.SUPER_ADMIN)) {
-      return organizationRepository.findAll(organizationSpecification, pageable);
+      PageRequest pageRequest = sortBy.isPresent() ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortBy.get()) : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+      return organizationRepository.findAll(organizationSpecification, pageRequest);
     } else if (roles.contains(Roles.ORGANIZATION_ADMIN)) {
       return new PageImpl<>(List.of(user.getOrganization()));
     }
@@ -321,6 +309,17 @@ public class OrganizationService {
   private String domainToRegex(String domain) {
     String newDomain = domain.replace(".", "\\.");
     return newDomain.replace("*", ".*");
+  }
+
+  private Optional<Sort> validateAndGetSort(SearchCriteria searchCriteria) {
+    if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
+      if (!"name".equals(searchCriteria.getSortBy())) {
+        throw new BadRequestException(OrganizationService.class, String.format("Invalid %s sortBy field for organization", searchCriteria.getSortBy()));
+      }
+      return Optional.of(Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
+              searchCriteria.getSortBy()));
+    }
+    return Optional.empty();
   }
 
   @Data
