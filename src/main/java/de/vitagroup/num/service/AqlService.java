@@ -211,7 +211,7 @@ public class AqlService {
   public Page<AqlCategory> getAqlCategories(Pageable pageable, SearchCriteria searchCriteria) {
     Optional<Sort> sortBy = validateAndGetSort(searchCriteria);
     PageRequest pageRequest = sortBy.isPresent() ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortBy.get()) :
-                                                   PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+                                                   PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
     return aqlCategoryRepository.findAllCategories(pageRequest);
   }
 
