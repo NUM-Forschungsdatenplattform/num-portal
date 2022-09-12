@@ -26,7 +26,7 @@ public abstract class Policy {
 
   private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
 
-  public abstract void apply(AqlDto aql);
+  public abstract boolean apply(AqlDto aql);
 
   protected void restrictAqlWithCompositionAttribute(
       AqlDto aql, String attributePath, List<Value> attributeValues) {

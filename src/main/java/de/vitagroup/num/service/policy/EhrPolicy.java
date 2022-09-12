@@ -25,7 +25,7 @@ public class EhrPolicy extends Policy {
   }
 
   @Override
-  public void apply(AqlDto aql) {
+  public boolean apply(AqlDto aql) {
     if (aql == null) {
       throw new SystemException(EhrPolicy.class, INVALID_AQL);
     }
@@ -39,5 +39,6 @@ public class EhrPolicy extends Policy {
     select.setContainmentId(aql.getEhr().getContainmentId());
 
     extendWhereClause(aql, List.of(select), toSimpleValueList(cohortEhrIds));
+    return true;
   }
 }

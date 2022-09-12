@@ -10,6 +10,7 @@ import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.Value;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_TEMPLATES_ATTACHED_TO_THE_PROJECT;
 
 /** Restricts the aql to a set of templates defined by the project */
 @Slf4j
@@ -25,10 +26,10 @@ public class TemplatesPolicy extends Policy {
   }
 
   @Override
-  public void apply(AqlDto aql) {
+  public boolean apply(AqlDto aql) {
     if (MapUtils.isEmpty(templatesMap)) {
-      log.error("No templates attached to the project");
-      return;
+      log.error(NO_TEMPLATES_ATTACHED_TO_THE_PROJECT);
+      return true;
     }
 
     if (aql == null) {
@@ -37,5 +38,6 @@ public class TemplatesPolicy extends Policy {
 
     List<Value> templateValues = toSimpleValueList(templatesMap.keySet());
     restrictAqlWithCompositionAttribute(aql, TEMPLATE_ID_PATH, templateValues);
+    return true;
   }
 }

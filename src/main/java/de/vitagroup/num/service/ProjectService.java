@@ -8,6 +8,7 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
+import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.properties.PrivacyProperties;
@@ -35,6 +36,7 @@ import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
@@ -56,33 +58,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_PROJECT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_OWNER;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ARCHIVE_PROJECT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_PROJECT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_PROJECT_INVALID_STATUS;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_UPDATE_PROJECT_INVALID_PROJECT_STATUS;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ISSUE_HAS_OCCURRED_CANNOT_EXECUTE_AQL;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_CREATING_THE_PROJECT_PDF;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_WHILE_CREATING_THE_CSV_FILE;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_WHILE_RETRIEVING_DATA;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_PROJECT_STATUS;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_PROJECT_STATUS_PARAM;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.MORE_THAN_ONE_TRANSITION_FROM_PUBLISHED_TO_CLOSED_FOR_PROJECT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_PERMISSIONS_TO_EDIT_THIS_PROJECT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_COHORT_CANNOT_BE_NULL;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_TEMPLATES_CANNOT_BE_NULL;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESEARCHER_NOT_APPROVED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESEARCHER_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Service
 @Slf4j
@@ -93,6 +72,16 @@ public class ProjectService {
   private static final String JSON_FILE_ENDING = ".json";
   private static final String ZIP_MEDIA_TYPE = "application/zip";
   private static final String CSV_FILE_PATTERN = "%s_%s.csv";
+
+  private final List<String> availableSortFields = Arrays.asList(PROJECT_NAME, AUTHOR_NAME, ORGANIZATION_NAME, PROJECT_STATUS);
+
+  private static final String AUTHOR_NAME = "author";
+
+  private static final String ORGANIZATION_NAME = "organization";
+
+  private static final String PROJECT_NAME = "name";
+
+  private static final String PROJECT_STATUS = "status";
 
   private final ProjectRepository projectRepository;
 
@@ -133,7 +122,7 @@ public class ProjectService {
   private final ProjectMapper projectMapper;
 
 
-  public void deleteProject(Long projectId, String userId, List<String> roles) {
+  public boolean deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
     var project =
@@ -151,10 +140,11 @@ public class ProjectService {
       throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT_INVALID_STATUS,
               String.format(CANNOT_DELETE_PROJECT_INVALID_STATUS, projectId, project.getStatus()));
     }
+    return true;
   }
 
   @Transactional
-  public void archiveProject(Long projectId, String userId, List<String> roles) {
+  public boolean archiveProject(Long projectId, String userId, List<String> roles) {
     var user = userDetailsService.checkIsUserApproved(userId);
 
     var project =
@@ -171,6 +161,7 @@ public class ProjectService {
 
     project.setStatus(ProjectStatus.ARCHIVED);
     projectRepository.save(project);
+    return true;
   }
 
   /**
@@ -322,7 +313,7 @@ public class ProjectService {
     return queryResponse;
   }
 
-  public void streamResponseAsZip(
+  public boolean streamResponseAsZip(
       List<QueryResponseData> queryResponseDataList,
       String filenameStart,
       OutputStream outputStream) {
@@ -347,6 +338,7 @@ public class ProjectService {
       throw new SystemException(ProjectService.class, ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT,
               String.format(ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT, e.getLocalizedMessage()));
     }
+    return true;
   }
 
   private void addResponseAsCsv(
@@ -852,28 +844,94 @@ public class ProjectService {
       projects.addAll(
           projectRepository.findByCoordinatorUserIdOrStatusIn(
               userId,
-              new ProjectStatus[] {
-                ProjectStatus.APPROVED, ProjectStatus.PUBLISHED, ProjectStatus.CLOSED
-              }));
+             ProjectStatus.getAllProjectStatusToViewAsCoordinator()));
     }
     if (roles.contains(Roles.RESEARCHER)) {
       projects.addAll(
           projectRepository.findByResearchers_UserIdAndStatusIn(
-              userId, new ProjectStatus[] {ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
+              userId, ProjectStatus.getAllProjectStatusToViewAsResearcher()));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
-      ProjectStatus[] statuses =
-          Stream.of(ProjectStatus.values())
-              .filter(
-                  projectStatus ->
-                      projectStatus != ProjectStatus.DRAFT
-                          && projectStatus != ProjectStatus.ARCHIVED)
-              .collect(Collectors.toList())
-              .toArray(new ProjectStatus[] {});
-      projects.addAll(projectRepository.findByStatusIn(statuses));
+      projects.addAll(projectRepository.findByStatusIn(ProjectStatus.getAllProjectStatusToViewAsApprover()));
     }
 
     return projects.stream().distinct().collect(Collectors.toList());
+  }
+
+  public Page<Project> getProjectsWithPagination(String userId, List<String> roles, SearchCriteria searchCriteria, Pageable pageable) {
+
+    Optional<UserDetails> loggedInUser = userDetailsService.getUserDetailsById(userId);
+    if (loggedInUser.isEmpty()) {
+      throw new ResourceNotFound(ProjectService.class, String.format(USER_NOT_FOUND, userId));
+    }
+    Optional<Sort> optSortBy = validateAndGetSort(searchCriteria);
+    List<Project> projects;
+    Page<Project> projectPage;
+    ProjectSpecification projectSpecification = new ProjectSpecification(searchCriteria.getFilter(), roles, userId, loggedInUser.get().getOrganization().getId());
+    if (optSortBy.isPresent() && isSortByProjectColumns(searchCriteria)) {
+      PageRequest pageRequestWithSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), optSortBy.get());
+      projectPage = projectRepository.findAll(projectSpecification, pageRequestWithSort);
+      projects = new ArrayList<>(projectPage.getContent());
+    } else {
+      // if sort by author or organization name -> sort it via code
+      PageRequest pageRequestWithoutSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+      projectPage = projectRepository.findAll(projectSpecification, pageRequestWithoutSort);
+      projects = new ArrayList<>(projectPage.getContent());
+      sortProjects(projects, optSortBy);
+    }
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(PROJECT_NAME)) {
+      String searchValue = (String) searchCriteria.getFilter().get(PROJECT_NAME);
+      List<Project> filteredProjects = projects.stream()
+              .filter(project -> StringUtils.containsIgnoreCase(project.getName(), searchValue) ||
+                                       StringUtils.containsIgnoreCase(userService.getOwner(project.getCoordinator().getUserId()).getFullName(),
+                                               searchValue.toUpperCase()))
+              .collect(Collectors.toList());
+      return new PageImpl<>(filteredProjects, pageable, filteredProjects.size());
+    }
+    return new PageImpl<>(projects, pageable, projectPage.getTotalElements());
+  }
+
+  private Optional<Sort> validateAndGetSort(SearchCriteria searchCriteria) {
+    if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
+      if (!availableSortFields.contains(searchCriteria.getSortBy())) {
+        throw new BadRequestException(ProjectService.class, String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
+      }
+      return Optional.of(Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
+              searchCriteria.getSortBy()));
+    }
+    return Optional.empty();
+  }
+
+  private boolean isSortByProjectColumns(SearchCriteria searchCriteria) {
+    return PROJECT_NAME.equals(searchCriteria.getSortBy()) || PROJECT_STATUS.equals(searchCriteria.getSortBy());
+  }
+
+  private void sortProjects(List<Project> projects, Optional<Sort> sortByOptional) {
+    if (sortByOptional.isPresent()) {
+      Sort sortBy = sortByOptional.get();
+      Sort.Order orgOrder = sortBy.getOrderFor(ORGANIZATION_NAME);
+      Sort.Order authorOrder = sortBy.getOrderFor(AUTHOR_NAME);
+      if (orgOrder != null) {
+        Comparator<Project> byOrgName = Comparator.comparing(project -> project.getCoordinator().getOrganization().getName());
+        Sort.Direction sortOrder = orgOrder.getDirection();
+        if (sortOrder.isAscending()) {
+          Collections.sort(projects, Comparator.nullsLast(byOrgName));
+        } else {
+          Collections.sort(projects, Comparator.nullsLast(byOrgName.reversed()));
+        }
+      } else if (authorOrder != null) {
+        Comparator<Project> byAuthorName = Comparator.comparing(project -> {
+          User coordinator = userService.getOwner(project.getCoordinator().getUserId());
+          return coordinator.getFullName();
+        });
+        Sort.Direction sortOrder = authorOrder.getDirection();
+        if (sortOrder.isAscending()) {
+          Collections.sort(projects, Comparator.nullsLast(byAuthorName));
+        } else {
+          Collections.sort(projects, Comparator.nullsLast(byAuthorName.reversed()));
+        }
+      }
+    }
   }
 
   public String getExportFilenameBody(Long projectId) {

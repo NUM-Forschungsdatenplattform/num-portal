@@ -9,13 +9,13 @@ public class PrivacyException extends RuntimeException {
 
   private final String paramValue;
 
-  private final String parameter;
+  private final String message;
 
-  public PrivacyException(Class<?> entity, String parameter) {
-    super(parameter);
+  public PrivacyException(Class<?> entity, String message) {
+    super(message);
     this.entity = entity;
-    this.paramValue = parameter;
-    this.parameter = parameter;
+    this.paramValue = message;
+    this.message = message;
   }
 
 /*  public PrivacyException(Class<?> entity, String paramValue, String parameter) {

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.vitagroup.num.service.exception.ExceptionDto;
+import de.vitagroup.num.service.exception.dto.ExceptionDto;
 
 public class ExceptionsTemplate {
     public final static String TOKEN_IS_NOT_VALID_MSG = "Token is not valid";
@@ -129,6 +129,7 @@ public class ExceptionsTemplate {
     //Policy
     public final static String INVALID_AQL = "Invalid aql";
     public final static String COHORT_SIZE_CANNOT_BE_0 = "Cohort size cannot be 0";
+    public final static String NO_TEMPLATES_ATTACHED_TO_THE_PROJECT = "No templates attached to the project";
 
     //IllegalArgumentException
     public final static String CANNOT_EXECUTE_AN_EMPTY_COHORT = "Cannot execute an empty cohort";
@@ -136,6 +137,7 @@ public class ExceptionsTemplate {
 
     public final static String INVALID_AQL_QUERY = "Malformed query exception";
     public final static String ERROR_MESSAGE = "An error has occurred while calling ehrbase";
+    public final static String CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED = "Cannot check consent for data usage outside the European Union, oid not configured";
 
 
     public static Map<String, ExceptionDto> errorMap = new HashMap<>();
@@ -278,7 +280,9 @@ public class ExceptionsTemplate {
         //PrivacyException
         errorMap.put(RESULTS_WITHHELD_FOR_PRIVACY_REASONS, new ExceptionDto( 92, new ArrayList<>() ) );
         errorMap.put(INVALID_AQL_QUERY, new ExceptionDto( 93, new ArrayList<>() ) );
-        errorMap.put(ERROR_MESSAGE, new ExceptionDto( 94, new ArrayList<>() ) );
+        errorMap.put(CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED, new ExceptionDto( 95, new ArrayList<>() ) );
 
+        //Policy
+        errorMap.put(NO_TEMPLATES_ATTACHED_TO_THE_PROJECT, new ExceptionDto( 96, new ArrayList<>() ) );
     }
 }

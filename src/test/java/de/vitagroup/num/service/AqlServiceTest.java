@@ -18,6 +18,7 @@ import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.exception.SystemException;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -132,6 +133,57 @@ public class AqlServiceTest {
   public void shouldCallRepoWhenSearchingAql() {
     aqlService.getAqlById(1L, "approvedUserId");
     verify(aqlRepository, times(1)).findById(any());
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void getAqlById() {
+    aqlService.getAqlById(1000L, "approvedUserId");
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void getAqlByIdForbiddenException() {
+    aqlService.getAqlById(2L, "approvedUserId");
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void updateAql() {
+    aqlService.updateAql(new Aql(), 1000L, "approvedUserId");
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void updateAqlForbiddenException() {
+    aqlService.updateAql(new Aql(), 2L, "approvedUserId");
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void deleteById() {
+    aqlService.deleteById(1000L, "approvedUserId", List.of(Roles.STUDY_COORDINATOR));
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void deleteByIdForbiddenException() {
+    aqlService.deleteById(1L, "approvedUserId", List.of());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void updateAqlCategory() {
+    aqlService.updateAqlCategory(new AqlCategory(),null);
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void updateAqlCategoryResourceNotFound() {
+    aqlService.updateAqlCategory(new AqlCategory(),1L);
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void deleteCategoryById() {
+    aqlService.deleteCategoryById(null);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void deleteCategoryByIdBadRequestException() {
+    when(aqlRepository.findByCategoryId(null)).thenReturn(Arrays.asList(new Aql()));
+    aqlService.deleteCategoryById(null);
   }
 
   @Test(expected = ForbiddenException.class)

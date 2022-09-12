@@ -1,7 +1,10 @@
 package de.vitagroup.num.web.controller;
 
+import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.dto.*;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
 
+import de.vitagroup.num.mapper.ProjectViewMapper;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -10,7 +13,11 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Page;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -62,6 +69,7 @@ public class ProjectController extends CustomizedExceptionHandler {
   private final CommentMapper commentMapper;
   private final Pseudonymity pseudonymity;
 
+  private final ProjectViewMapper projectViewMapper;
   @AuditLog
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
@@ -72,6 +80,19 @@ public class ProjectController extends CustomizedExceptionHandler {
         projectService.getProjects(principal.getSubject(), Roles.extractRoles(principal)).stream()
             .map(projectMapper::convertToDto)
             .collect(Collectors.toList()));
+  }
+
+  @AuditLog
+  @GetMapping("/all")
+  @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
+  public ResponseEntity<Page<ProjectViewTO>> getProjectsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable, SearchCriteria criteria) {
+    Page<Project> projectPage = projectService.getProjectsWithPagination(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable);
+    List<ProjectViewTO> content = projectPage.getContent()
+            .stream()
+            .map(projectViewMapper::convertToDto)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(new PageImpl<>(content, pageable, projectPage.getTotalElements()));
   }
 
   @AuditLog

@@ -1,11 +1,13 @@
 package de.vitagroup.num.service.ehrbase;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
+import com.nedap.archie.rm.archetyped.Archetyped;
 import com.nedap.archie.rm.composition.Composition;
 import de.vitagroup.num.service.exception.SystemException;
 import java.io.IOException;
@@ -101,6 +103,24 @@ public class CompositionFlattenerTest {
     assertThat(composition, notNullValue());
 
     composition.getArchetypeDetails().setTemplateId(null);
+
+    flattener.flatten(composition);
+  }
+
+  @Test(expected = SystemException.class)
+  public void validateCompositionSystemException() {
+    Composition composition = new Composition();
+    when(flattener.flatten(composition))
+            .thenThrow(new SystemException(CompositionFlattener.class, CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID));
+
+    flattener.flatten(composition);
+  }
+
+  @Test(expected = SystemException.class)
+  public void flattenSystemException() {
+    Composition composition = new Composition();
+    Archetyped archetyped = new Archetyped();
+    composition.setArchetypeDetails(archetyped);
 
     flattener.flatten(composition);
   }

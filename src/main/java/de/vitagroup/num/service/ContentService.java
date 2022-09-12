@@ -102,33 +102,33 @@ public class ContentService {
   }
 
   public String getNavigationItems() {
-    List<Content> contents =
-        contentItemRepository.findByType(ContentType.NAVIGATION).orElse(new ArrayList<>());
-    if (contents.isEmpty()) {
-      return "[]";
-    } else {
-      try {
-        return contents.get(0).getContent();
+    try {
+		List<Content> contents =
+			contentItemRepository.findByType(ContentType.NAVIGATION).orElse(new ArrayList<>());
+		if (contents.isEmpty()) {
+		  return "[]";
+		} else {
+			return contents.get(0).getContent();
+		}
       } catch (Exception e) {
         log.error("Couldn't parse navigation content", e);
         throw new SystemException(ContentService.class, COULDN_T_PARSE_NAVIGATION_CONTENT, String.format(COULDN_T_PARSE_NAVIGATION_CONTENT, e.getMessage()));
       }
-    }
   }
 
   public void setNavigationItems(List<NavigationItemDto> navigationItemDtos) {
-    List<Content> contents =
-        contentItemRepository.findByType(ContentType.NAVIGATION).orElse(new ArrayList<>());
-    Content navigation;
-    if (contents.isEmpty()) {
-      navigation = Content.builder().type(ContentType.NAVIGATION).build();
-    } else {
-      navigation = contents.get(0);
-    }
+	try {
+		List<Content> contents =
+			contentItemRepository.findByType(ContentType.NAVIGATION).orElse(new ArrayList<>());
+		Content navigation;
+		if (contents.isEmpty()) {
+		  navigation = Content.builder().type(ContentType.NAVIGATION).build();
+		} else {
+		  navigation = contents.get(0);
+		}
 
-    try {
-      navigation.setContent(mapper.writeValueAsString(navigationItemDtos));
-      contentItemRepository.save(navigation);
+		navigation.setContent(mapper.writeValueAsString(navigationItemDtos));
+		contentItemRepository.save(navigation);
     } catch (Exception e) {
       log.error("Couldn't save navigation content", e);
       throw new SystemException(ContentService.class, COULDN_T_SAVE_NAVIGATION_CONTENT,
@@ -137,34 +137,35 @@ public class ContentService {
   }
 
   public String getCards() {
-    List<Content> contents =
-        contentItemRepository.findByType(ContentType.CARD).orElse(new ArrayList<>());
-    if (contents.isEmpty()) {
-      return "[]";
-    } else {
-      try {
-        return contents.get(0).getContent();
+	  try {
+		List<Content> contents =
+			contentItemRepository.findByType(ContentType.CARD).orElse(new ArrayList<>());
+		if (contents.isEmpty()) {
+		  return "[]";
+		} else {
+
+			return contents.get(0).getContent();
+		}
       } catch (Exception e) {
         log.error("Couldn't parse card", e);
         throw new SystemException(ContentService.class, COULDN_T_PARSE_CARD,
                 String.format(COULDN_T_PARSE_CARD, e.getMessage()));
       }
-    }
   }
 
   public void setCards(List<CardDto> cardDtos) {
-    List<Content> contents =
-        contentItemRepository.findByType(ContentType.CARD).orElse(new ArrayList<>());
-    Content navigation;
-    if (contents.isEmpty()) {
-      navigation = Content.builder().type(ContentType.CARD).build();
-    } else {
-      navigation = contents.get(0);
-    }
-
     try {
-      navigation.setContent(mapper.writeValueAsString(cardDtos));
-      contentItemRepository.save(navigation);
+		List<Content> contents =
+			contentItemRepository.findByType(ContentType.CARD).orElse(new ArrayList<>());
+		Content navigation;
+		if (contents.isEmpty()) {
+		  navigation = Content.builder().type(ContentType.CARD).build();
+		} else {
+		  navigation = contents.get(0);
+		}
+
+		navigation.setContent(mapper.writeValueAsString(cardDtos));
+		contentItemRepository.save(navigation);
     } catch (Exception e) {
       log.error("Couldn't save card", e);
       throw new SystemException(ContentService.class, COULDN_T_SAVE_CARD,

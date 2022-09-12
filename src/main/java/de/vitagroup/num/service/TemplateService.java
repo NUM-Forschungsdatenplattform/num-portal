@@ -63,7 +63,7 @@ public class TemplateService {
       } else {
         throw new BadRequestException(TemplateService.class, CANNOT_FIND_TEMPLATE, String.format(CANNOT_FIND_TEMPLATE, templateId));
       }
-    } catch (Exception e) {
+    } catch (SystemException e) {
       throw new SystemException(TemplateService.class, CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID,
               String.format(CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID, templateId));
     }

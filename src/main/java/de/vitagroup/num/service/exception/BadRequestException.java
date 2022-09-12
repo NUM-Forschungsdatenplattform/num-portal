@@ -9,20 +9,20 @@ public class BadRequestException extends RuntimeException {
 
     private final String paramValue;
 
-    private final String parameter;
+    private final String message;
 
-    public BadRequestException(Class<?> entity, String paramValue, String parameter) {
-        super(parameter);
+    public BadRequestException(Class<?> entity, String paramValue, String message) {
+        super(message);
         this.entity = entity;
         this.paramValue = paramValue;
-        this.parameter = parameter;
+        this.message = message;
     }
 
-    public BadRequestException(Class<?> entity, String parameter) {
-        super(parameter);
+    public BadRequestException(Class<?> entity, String message) {
+        super(message);
         this.entity = entity;
-        this.paramValue = parameter;
-        this.parameter = parameter;
+        this.paramValue = message;
+        this.message = message;
     }
 
 }
