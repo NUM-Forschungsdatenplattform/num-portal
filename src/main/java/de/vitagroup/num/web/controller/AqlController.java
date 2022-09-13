@@ -1,5 +1,6 @@
 package de.vitagroup.num.web.controller;
 
+import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.*;
@@ -116,6 +117,20 @@ public class AqlController extends CustomizedExceptionHandler {
         aqlService.getVisibleAqls(principal.getSubject()).stream()
             .map(mapper::convertToDto)
             .collect(Collectors.toList()));
+  }
+
+  @AuditLog
+  @GetMapping("/all")
+  @ApiOperation(
+          value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
+  public ResponseEntity<Page<AqlDto>> getAqlsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                            @PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
+    Page<Aql> searchResult = aqlService.getVisibleAqls(principal.getSubject(), pageable, searchCriteria);
+    List<AqlDto> content = searchResult.getContent().stream()
+            .map(aqlQuery -> mapper.convertToDto(aqlQuery))
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
 
   @AuditLog
