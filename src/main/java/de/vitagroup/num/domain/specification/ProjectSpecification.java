@@ -61,12 +61,12 @@ public class ProjectSpecification implements Specification<Project> {
                 if (FILTER_TYPE.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
                     ProjectFilterType typeValue = ProjectFilterType.valueOf((String) entry.getValue());
                     switch (typeValue) {
-                        case MY_PROJECTS: {
+                        case OWNED: {
                             predicates.add(criteriaBuilder.equal(coordinator.get("userId"), loggedInUserId));
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;
                         }
-                        case MY_ORGANIZATION: {
+                        case ORGANIZATION: {
                             predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;

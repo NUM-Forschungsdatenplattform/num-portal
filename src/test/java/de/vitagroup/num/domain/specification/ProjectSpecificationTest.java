@@ -44,7 +44,7 @@ public class ProjectSpecificationTest {
         Path statusPath = Mockito.mock(Path.class);
         Mockito.when(root.get("status")).thenReturn(statusPath);
         Map<String, String> filter = new HashMap<>();
-        filter.put("type", ProjectFilterType.MY_ORGANIZATION.name());
+        filter.put("type", ProjectFilterType.ORGANIZATION.name());
         ProjectSpecification ps = new ProjectSpecification(filter, Arrays.asList(Roles.STUDY_APPROVER), "userId", 3L);
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");

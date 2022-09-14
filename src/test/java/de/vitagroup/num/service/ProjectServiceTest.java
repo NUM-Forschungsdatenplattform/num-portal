@@ -3,7 +3,6 @@ package de.vitagroup.num.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.*;
-import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortDto;
@@ -622,7 +621,7 @@ public class ProjectServiceTest {
     Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.ASC, "name"));
     Map<String, String> filter = new HashMap<>();
     filter.put("name", "OnE");
-    filter.put("type", ProjectFilterType.MY_PROJECTS.name());
+    filter.put("type", ProjectFilterType.OWNED.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
             SearchCriteria.builder()
@@ -693,7 +692,7 @@ public class ProjectServiceTest {
                     .build()));
     Pageable pageable = PageRequest.of(0,50).withSort(Sort.by(Sort.Direction.DESC, "status"));
     Map<String, String> filter = new HashMap<>();
-    filter.put("type", ProjectFilterType.MY_ORGANIZATION.name());
+    filter.put("type", ProjectFilterType.ORGANIZATION.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     projectService.getProjectsWithPagination("approverId", roles,
             SearchCriteria.builder()
