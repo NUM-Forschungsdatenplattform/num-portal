@@ -867,26 +867,30 @@ public class ProjectService {
     Optional<Sort> optSortBy = validateAndGetSort(searchCriteria);
     List<Project> projects;
     Page<Project> projectPage;
-    ProjectSpecification projectSpecification = new ProjectSpecification(searchCriteria.getFilter(), roles, userId, loggedInUser.get().getOrganization().getId());
-    if (optSortBy.isPresent() && isSortByProjectColumns(searchCriteria)) {
-      PageRequest pageRequestWithSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), optSortBy.get());
-      projectPage = projectRepository.findAll(projectSpecification, pageRequestWithSort);
-      projects = new ArrayList<>(projectPage.getContent());
+    Pageable pageRequest;
+    Set<String> usersUUID = null;
+    boolean sortByProjectColumns = isSortByProjectColumns(searchCriteria);
+    if (optSortBy.isPresent() && sortByProjectColumns) {
+      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), optSortBy.get());
     } else {
       // if sort by author or organization name -> sort it via code
-      PageRequest pageRequestWithoutSort = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-      projectPage = projectRepository.findAll(projectSpecification, pageRequestWithoutSort);
-      projects = new ArrayList<>(projectPage.getContent());
-      sortProjects(projects, optSortBy);
+      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     }
     if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
       String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
-      List<Project> filteredProjects = projects.stream()
-              .filter(project -> StringUtils.containsIgnoreCase(project.getName(), searchValue) ||
-                                       StringUtils.containsIgnoreCase(userService.getOwner(project.getCoordinator().getUserId()).getFullName(),
-                                               searchValue.toUpperCase()))
-              .collect(Collectors.toList());
-      return new PageImpl<>(filteredProjects, pageable, filteredProjects.size());
+      usersUUID = userService.findUsersUUID(searchValue, (int) pageRequest.getOffset(), pageRequest.getPageSize());
+    }
+    ProjectSpecification projectSpecification = ProjectSpecification.builder()
+            .filter(searchCriteria.getFilter())
+            .roles(roles)
+            .loggedInUserId(userId)
+            .loggedInUserOrganizationId(loggedInUser.get().getOrganization().getId())
+            .ownersUUID(usersUUID)
+            .build();
+    projectPage = projectRepository.findAll(projectSpecification, pageRequest);
+    projects = new ArrayList<>(projectPage.getContent());
+    if (optSortBy.isPresent() && !sortByProjectColumns) {
+      sortProjects(projects, optSortBy);
     }
     return new PageImpl<>(projects, pageable, projectPage.getTotalElements());
   }
