@@ -620,8 +620,8 @@ public class ProjectServiceTest {
     roles.add(RESEARCHER);
     Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.ASC, "name"));
     Map<String, String> filter = new HashMap<>();
-    filter.put("name", "OnE");
-    filter.put("type", ProjectFilterType.OWNED.name());
+    filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "OnE");
+    filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, ProjectFilterType.OWNED.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
             SearchCriteria.builder()
@@ -692,7 +692,7 @@ public class ProjectServiceTest {
                     .build()));
     Pageable pageable = PageRequest.of(0,50).withSort(Sort.by(Sort.Direction.DESC, "status"));
     Map<String, String> filter = new HashMap<>();
-    filter.put("type", ProjectFilterType.ORGANIZATION.name());
+    filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, ProjectFilterType.ORGANIZATION.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     projectService.getProjectsWithPagination("approverId", roles,
             SearchCriteria.builder()

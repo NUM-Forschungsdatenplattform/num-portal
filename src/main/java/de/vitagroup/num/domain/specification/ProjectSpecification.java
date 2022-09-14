@@ -5,6 +5,7 @@ import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.collections.CollectionUtils;
@@ -19,8 +20,6 @@ import java.util.*;
 public class ProjectSpecification implements Specification<Project> {
 
     private static final String COLUMN_PROJECT_STATUS = "status";
-
-    private static final String FILTER_TYPE = "type";
 
     private Map<String, ?> filter;
 
@@ -55,10 +54,10 @@ public class ProjectSpecification implements Specification<Project> {
         }
         Predicate finalRoleBasedPredicate = criteriaBuilder.or(roleBasedPredicates.toArray(Predicate[]::new));
         Predicate filterPredicate;
-        if (Objects.nonNull(filter) && filter.containsKey(FILTER_TYPE)) {
+        if (Objects.nonNull(filter) && filter.containsKey(SearchCriteria.FILTER_BY_TYPE_KEY)) {
             List<Predicate> predicates = new ArrayList<>();
             for (Map.Entry<String, ?> entry : filter.entrySet()) {
-                if (FILTER_TYPE.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
+                if (SearchCriteria.FILTER_BY_TYPE_KEY.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
                     ProjectFilterType typeValue = ProjectFilterType.valueOf((String) entry.getValue());
                     switch (typeValue) {
                         case OWNED: {

@@ -1,6 +1,7 @@
 package de.vitagroup.num.domain.specification;
 
 import de.vitagroup.num.domain.Organization;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,7 +21,6 @@ import java.util.Objects;
 @Getter
 public class OrganizationSpecification implements Specification<Organization> {
 
-    private static final String COLUMN_ORGANIZATION_NAME = "name";
     private static final String WILDCARD_PERCENTAGE_SIGN = "%";
     private Map<String, ?> filter;
 
@@ -29,7 +29,7 @@ public class OrganizationSpecification implements Specification<Organization> {
         if(Objects.nonNull(filter)) {
             List<Predicate> predicates = new ArrayList<>();
             for (Map.Entry<String, ?> entry : filter.entrySet()) {
-                if (COLUMN_ORGANIZATION_NAME.equals(entry.getKey())) {
+                if (SearchCriteria.FILTER_SEARCH_BY_KEY.equals(entry.getKey())) {
                     predicates.add(criteriaBuilder.like(
                             criteriaBuilder.upper(root.get(entry.getKey())),
                             WILDCARD_PERCENTAGE_SIGN + ((String) entry.getValue()).toUpperCase() + WILDCARD_PERCENTAGE_SIGN));

@@ -17,11 +17,17 @@ import java.util.Map;
 @AllArgsConstructor
 public class SearchCriteria {
 
+    public static final String FILTER_SEARCH_BY_KEY = "search";
+
+    public static final String FILTER_BY_TYPE_KEY = "type";
+
     private Map<String, ?> filter;
 
     private String sort;
 
     private String sortBy;
+
+    private String language;
 
     public boolean isValid() {
         if (StringUtils.isEmpty(this.sort) && StringUtils.isNotEmpty(this.sortBy)) {

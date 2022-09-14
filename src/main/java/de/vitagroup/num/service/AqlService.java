@@ -54,9 +54,7 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.TOO_FEW_MATCH
 public class AqlService {
 
   private static final List<String> AQL_CATEGORY_SORT_FIELDS = Arrays.asList("name-de", "name-en");
-
   private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList("name", "author", "organization", "createDate", "category");
-
   private final AqlRepository aqlRepository;
   private final AqlCategoryRepository aqlCategoryRepository;
   private final EhrBaseService ehrBaseService;
@@ -114,8 +112,8 @@ public class AqlService {
     }
     if (Objects.nonNull(searchCriteria.getFilter())) {
       Map<String, ?> searchFilter = searchCriteria.getFilter();
-      String searchInput = StringUtils.isNotEmpty((String) searchFilter.get("name")) ? ((String) searchFilter.get("name")).toUpperCase() : null;
-      AqlSearchFilter filterType = searchFilter.containsKey("type") ? AqlSearchFilter.valueOf((String) searchFilter.get("type")) : AqlSearchFilter.ALL;
+      String searchInput = StringUtils.isNotEmpty((String) searchFilter.get(SearchCriteria.FILTER_SEARCH_BY_KEY)) ? ((String) searchFilter.get(SearchCriteria.FILTER_SEARCH_BY_KEY)).toUpperCase() : null;
+      AqlSearchFilter filterType = searchFilter.containsKey(SearchCriteria.FILTER_BY_TYPE_KEY) ? AqlSearchFilter.valueOf((String) searchFilter.get(SearchCriteria.FILTER_BY_TYPE_KEY)) : AqlSearchFilter.ALL;
       Set<String> usersUUID = null;
       switch (filterType) {
         case ALL: {

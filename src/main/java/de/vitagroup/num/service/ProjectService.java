@@ -879,8 +879,8 @@ public class ProjectService {
       projects = new ArrayList<>(projectPage.getContent());
       sortProjects(projects, optSortBy);
     }
-    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(PROJECT_NAME)) {
-      String searchValue = (String) searchCriteria.getFilter().get(PROJECT_NAME);
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
+      String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
       List<Project> filteredProjects = projects.stream()
               .filter(project -> StringUtils.containsIgnoreCase(project.getName(), searchValue) ||
                                        StringUtils.containsIgnoreCase(userService.getOwner(project.getCoordinator().getUserId()).getFullName(),
