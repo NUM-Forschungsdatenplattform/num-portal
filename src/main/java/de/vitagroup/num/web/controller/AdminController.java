@@ -17,6 +17,9 @@ import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/admin/user", produces = "application/json")
+@RequestMapping(value = "/admin/", produces = "application/json")
 @AllArgsConstructor
 public class AdminController extends CustomizedExceptionHandler {
 
@@ -42,15 +45,26 @@ public class AdminController extends CustomizedExceptionHandler {
 
   private final UserDetailsService userDetailsService;
 
+  private final HealthEndpoint healthEndpoint;
+
+  @GetMapping("health")
+  public ResponseEntity<Status> health() {
+    if (healthEndpoint.health().getStatus() == Status.UP) {
+      return ResponseEntity.ok(healthEndpoint.health().getStatus());
+    } else {
+      return ResponseEntity.badRequest().body(healthEndpoint.health().getStatus());
+    }
+  }
+
   @AuditLog
-  @DeleteMapping("/{userId}")
+  @DeleteMapping("user/{userId}")
   @PreAuthorize(Role.SUPER_ADMIN)
   public void deleteUser(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable String userId) {
     userService.deleteUser(userId, principal.getSubject());
   }
 
   @AuditLog
-  @GetMapping("/{userId}")
+  @GetMapping("user/{userId}")
   @ApiOperation(value = "Retrieves the information about the given user")
   public ResponseEntity<User> getUser(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
@@ -58,7 +72,7 @@ public class AdminController extends CustomizedExceptionHandler {
   }
 
   @AuditLog
-  @GetMapping("/{userId}/role")
+  @GetMapping("user/{userId}/role")
   @ApiOperation(value = "Retrieves the roles of the given user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<Set<de.vitagroup.num.domain.admin.Role>> getRolesOfUser(
@@ -67,7 +81,7 @@ public class AdminController extends CustomizedExceptionHandler {
   }
 
   @AuditLog
-  @PostMapping("/{userId}/role")
+  @PostMapping("user/{userId}/role")
   @ApiOperation(value = "Updates the users roles to the given set.")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<List<String>> updateRoles(
@@ -81,7 +95,7 @@ public class AdminController extends CustomizedExceptionHandler {
   }
 
   @AuditLog
-  @PostMapping("/{userId}/organization")
+  @PostMapping("user/{userId}/organization")
   @ApiOperation(value = "Sets the user's organization")
   @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<String> setOrganization(
@@ -94,7 +108,7 @@ public class AdminController extends CustomizedExceptionHandler {
   }
 
   @AuditLog
-  @PostMapping("/{userId}")
+  @PostMapping("user/{userId}")
   @ApiOperation(value = "Creates user details")
   public ResponseEntity<String> createUserOnFirstLogin(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
@@ -104,7 +118,7 @@ public class AdminController extends CustomizedExceptionHandler {
   }
 
   @AuditLog
-  @PostMapping("/{userId}/name")
+  @PostMapping("user/{userId}/name")
   @ApiOperation(value = "Changes user name")
   public ResponseEntity<String> changeUserName(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId,
@@ -114,7 +128,7 @@ public class AdminController extends CustomizedExceptionHandler {
   }
 
   @AuditLog
-  @PostMapping("/{userId}/approve")
+  @PostMapping("user/{userId}/approve")
   @ApiOperation(value = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<String> approveUser(
@@ -124,7 +138,7 @@ public class AdminController extends CustomizedExceptionHandler {
   }
 
   @AuditLog
-  @GetMapping()
+  @GetMapping("user")
   @ApiOperation(value = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
   public ResponseEntity<Set<User>> searchUsers(
