@@ -2,11 +2,7 @@ package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.dto.AqlCategoryDto;
-import de.vitagroup.num.domain.dto.AqlDto;
-import de.vitagroup.num.domain.dto.AqlSearchFilter;
-import de.vitagroup.num.domain.dto.ParameterOptionsDto;
-import de.vitagroup.num.domain.dto.SlimAqlDto;
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.service.ehrbase.ParameterService;
@@ -22,6 +18,10 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -169,6 +169,17 @@ public class AqlController extends CustomizedExceptionHandler {
         aqlService.getAqlCategories().stream()
             .map(category -> modelMapper.map(category, AqlCategoryDto.class))
             .collect(Collectors.toList()));
+  }
+
+  @AuditLog
+  @GetMapping(value = "/category/all")
+  @ApiOperation(value = "Retrieves the list of categories.")
+  public ResponseEntity<Page<AqlCategoryDto>> getAqlCategoriesWithPagination(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
+    Page<AqlCategory> searchResult = aqlService.getAqlCategories(pageable, searchCriteria);
+    List<AqlCategoryDto> content = searchResult.getContent().stream()
+            .map(category -> modelMapper.map(category, AqlCategoryDto.class))
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
 
   @AuditLog

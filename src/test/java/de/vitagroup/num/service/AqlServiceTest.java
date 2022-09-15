@@ -1,36 +1,40 @@
 package de.vitagroup.num.service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.Mockito.*;
-
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.exception.SystemException;
-import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
+
+import java.time.OffsetDateTime;
+import java.util.*;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AqlServiceTest {
@@ -299,6 +303,56 @@ public class AqlServiceTest {
     aqlService.getAqlCategories();
     verify(aqlCategoryRepository, times(1)).findAllCategories();
   }
+
+  @Test
+  public void getAqlCategoriesWithPaginationTest() {
+    Pageable pageable = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));;
+    aqlService.getAqlCategories(pageable, new SearchCriteria());
+    verify(aqlCategoryRepository, times(1)).findAllCategories(Mockito.eq(pageable));
+  }
+
+  @Test
+  public void getAqlCategoriesWithPaginationAndSortByGermanNameTest() {
+    Pageable pageableWithourSort = PageRequest.of(0,30);
+    aqlService.getAqlCategories(pageableWithourSort, SearchCriteria.builder()
+            .sortBy("name-de")
+            .sort("ASC").build());
+    Pageable pageableWithSort = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
+    ArgumentCaptor<Pageable> pageableWithSortCapture = ArgumentCaptor.forClass(Pageable.class);
+    verify(aqlCategoryRepository, times(1)).findAllCategories(pageableWithSortCapture.capture());
+    Pageable capturedInput = pageableWithSortCapture.getValue();
+    Assert.assertEquals(pageableWithSort, capturedInput);
+  }
+
+  @Test
+  public void getAqlCategoriesWithPaginationAndSortByEnglishNameTest() {
+    Pageable pageableWithourSort = PageRequest.of(0,30);
+    aqlService.getAqlCategories(pageableWithourSort, SearchCriteria.builder()
+            .sortBy("name-en")
+            .sort("desc").build());
+    Pageable pageableWithSort = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.DESC, "name->>'en'"));
+    ArgumentCaptor<Pageable> pageableWithSortCapture = ArgumentCaptor.forClass(Pageable.class);
+    verify(aqlCategoryRepository, times(1)).findAllCategories(pageableWithSortCapture.capture());
+    Pageable capturedInput = pageableWithSortCapture.getValue();
+    Assert.assertEquals(pageableWithSort, capturedInput);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleMissingSortFieldWhenGetAqlCategories() {
+    Pageable pageable = PageRequest.of(0,50);
+    SearchCriteria searchCriteria = SearchCriteria.builder()
+            .sortBy("ASC")
+            .build();
+    aqlService.getAqlCategories(pageable, searchCriteria);
+    verify(aqlCategoryRepository, never());
+  }
+
+  @Test
+  public void countAqlsTest() {
+    aqlService.countAqls();
+    Mockito.verify(aqlRepository, Mockito.times(1)).count();
+  }
+
 
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {
     return Aql.builder()
