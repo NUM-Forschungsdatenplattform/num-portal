@@ -40,8 +40,6 @@ public class AqlSpecification implements Specification<Aql> {
         query.groupBy(root.get("id"));
 
         Join<Aql, UserDetails> owner = root.join("owner", JoinType.INNER);
-        Join<UserDetails, Organization> ownerOrganization = owner.join("organization", JoinType.INNER);
-        Join<Aql, AqlCategory> aqlCategory = root.join("category", JoinType.LEFT);
         Predicate ownedPred = criteriaBuilder.equal(owner.get("userId"), loggedInUserId);
         Predicate publicAql = criteriaBuilder.equal(root.get("publicAql"), Boolean.TRUE);
         Predicate ownedOrPublic = criteriaBuilder.or(ownedPred, publicAql);
@@ -52,10 +50,13 @@ public class AqlSpecification implements Specification<Aql> {
                 String searchInput = "%" + ((String) filter.get(SearchCriteria.FILTER_SEARCH_BY_KEY)).toUpperCase() + "%";
                 Predicate alqNameLike = criteriaBuilder.like(criteriaBuilder.upper(root.get("name")), searchInput);
                 nameLikePredicates.add(alqNameLike);
+
+                Join<Aql, AqlCategory> aqlCategory = root.join("category", JoinType.LEFT);
                 Predicate aqlCategoryNameLike = criteriaBuilder.like(criteriaBuilder.upper(
                         criteriaBuilder.function("json_extract_path_text", String.class, aqlCategory.get("name"),
                                 criteriaBuilder.literal(language))
                 ), searchInput);
+
                 nameLikePredicates.add(aqlCategoryNameLike);
                 if (CollectionUtils.isNotEmpty(ownersUUID)) {
                     Predicate ownerNameLike = owner.get("userId").in(ownersUUID);
@@ -74,6 +75,7 @@ public class AqlSpecification implements Specification<Aql> {
                     predicates.add(ownedPred);
                     break;
                 case ORGANIZATION: {
+                    Join<UserDetails, Organization> ownerOrganization = owner.join("organization", JoinType.INNER);
                     Predicate sameOrganization = criteriaBuilder.equal(ownerOrganization.get("id"), loggedInUserOrganizationId);
                     predicates.add(sameOrganization);
                     predicates.add(ownedOrPublic);
