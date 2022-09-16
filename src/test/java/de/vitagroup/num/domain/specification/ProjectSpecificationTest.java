@@ -31,7 +31,12 @@ public class ProjectSpecificationTest {
         Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(Mockito.mock(Join.class));
         Path statusPath = Mockito.mock(Path.class);
         Mockito.when(root.get("status")).thenReturn(statusPath);
-        ProjectSpecification ps = new ProjectSpecification(new HashMap<>(), Arrays.asList(Roles.STUDY_COORDINATOR), "userId", 3L);
+        ProjectSpecification ps = ProjectSpecification
+                .builder()
+                .roles(Arrays.asList(Roles.STUDY_COORDINATOR))
+                .loggedInUserId("userId")
+                .loggedInUserOrganizationId(3L)
+                .build();
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");
     }
@@ -45,7 +50,12 @@ public class ProjectSpecificationTest {
         Mockito.when(root.get("status")).thenReturn(statusPath);
         Map<String, String> filter = new HashMap<>();
         filter.put("type", ProjectFilterType.ORGANIZATION.name());
-        ProjectSpecification ps = new ProjectSpecification(filter, Arrays.asList(Roles.STUDY_APPROVER), "userId", 3L);
+        ProjectSpecification ps = ProjectSpecification.builder()
+                .filter(filter)
+                .roles(Arrays.asList(Roles.STUDY_APPROVER))
+                .loggedInUserId("userId")
+                .loggedInUserOrganizationId(3L)
+                .build();
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");
     }
