@@ -13,6 +13,7 @@ import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
+import de.vitagroup.num.domain.specification.AqlSpecification;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.BadRequestException;
@@ -105,50 +106,34 @@ public class AqlService {
     Page<Aql> aqlPage = null;
     List<Aql> aqlQueries;
     final boolean sortByAqlColumns = isSortByAqlQueryColumns(searchCriteria);
-    if(optSortBy.isPresent() && sortByAqlColumns) {
+    if (optSortBy.isPresent() && sortByAqlColumns) {
       pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), optSortBy.get());
     } else {
       pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     }
-    if (Objects.nonNull(searchCriteria.getFilter())) {
-      Map<String, ?> searchFilter = searchCriteria.getFilter();
-      String searchInput = StringUtils.isNotEmpty((String) searchFilter.get(SearchCriteria.FILTER_SEARCH_BY_KEY)) ? ((String) searchFilter.get(SearchCriteria.FILTER_SEARCH_BY_KEY)).toUpperCase() : null;
-      AqlSearchFilter filterType = searchFilter.containsKey(SearchCriteria.FILTER_BY_TYPE_KEY) ? AqlSearchFilter.valueOf((String) searchFilter.get(SearchCriteria.FILTER_BY_TYPE_KEY)) : AqlSearchFilter.ALL;
-      Set<String> usersUUID = null;
-      switch (filterType) {
-        case ALL: {
-          if(StringUtils.isNotEmpty(searchInput)) {
-            // find users that contain in name given search input
-            usersUUID = userService.findUsersUUID(searchInput, (int) pageRequest.getOffset(), pageRequest.getPageSize());
-          }
-          aqlPage = aqlRepository.findAllOwnedOrPublicByName(userDetails.getUserId(), searchInput, usersUUID, pageRequest);
-          break;
-        }
-        case OWNED:
-          // do not search by other author name because only owned queries are requested
-          aqlPage = aqlRepository.findAllOwnedByName(userDetails.getUserId(), searchInput, pageRequest);
-          break;
-        case ORGANIZATION: {
-          if (StringUtils.isNotEmpty(searchInput)) {
-            // find users that contain in name given search input
-            usersUUID = userService.findUsersUUID(searchInput.toUpperCase(), (int) pageRequest.getOffset(), pageRequest.getPageSize());
-          }
-          aqlPage = aqlRepository.findAllOrganizationOwnedByName(
-                  userDetails.getOrganization().getId(), userDetails.getUserId(), searchInput, usersUUID, pageRequest);
-          break;
-        }
-      }
-    } else {
-      aqlPage =  aqlRepository.findAllOwnedOrPublic(userDetails.getUserId(), pageRequest);
+    Set<String> usersUUID = null;
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
+      String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
+      usersUUID = userService.findUsersUUID(searchValue, (int) pageRequest.getOffset(), pageRequest.getPageSize());
     }
+    String language = StringUtils.isNotEmpty(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : "de";
+    AqlSpecification aqlSpecification = AqlSpecification.builder()
+            .filter(searchCriteria.getFilter())
+            .loggedInUserId(loggedInUserId)
+            .loggedInUserOrganizationId(userDetails.getOrganization().getId())
+            .ownersUUID(usersUUID)
+            .language(language)
+            .build();
+    aqlPage = aqlRepository.findAll(aqlSpecification, pageRequest);
     aqlQueries = new ArrayList<>(aqlPage.getContent());
-    if(optSortBy.isPresent() && !sortByAqlColumns) {
-      sortAqlQueries(aqlQueries, optSortBy);
+
+    if (optSortBy.isPresent() && !sortByAqlColumns) {
+      sortAqlQueries(aqlQueries, optSortBy, language);
     }
     return new PageImpl<>(aqlQueries, pageable, aqlPage.getTotalElements());
   }
 
-  private void sortAqlQueries(List<Aql> aqlQueries, Optional<Sort> sortOptional) {
+  private void sortAqlQueries(List<Aql> aqlQueries, Optional<Sort> sortOptional, String lang) {
     if (sortOptional.isPresent()) {
       Sort sort = sortOptional.get();
       if (sort.getOrderFor("organization") != null) {
@@ -172,9 +157,17 @@ public class AqlService {
         } else {
           Collections.sort(aqlQueries, Comparator.nullsLast(byAuthorName.reversed()));
         }
+      } else if (sort.getOrderFor("category") != null) {
+        Sort.Order aqlCategoryOrder = sort.getOrderFor("category");
+        Comparator<Aql> byAqlCategory = Comparator.comparing(aql -> aql.getCategory() != null ? aql.getCategory().getName().get(lang) : StringUtils.EMPTY);
+        Sort.Direction sortOrder = aqlCategoryOrder.getDirection();
+        if (sortOrder.isAscending()) {
+          Collections.sort(aqlQueries, Comparator.nullsLast(byAqlCategory));
+        } else {
+          Collections.sort(aqlQueries, Comparator.nullsLast(byAqlCategory.reversed()));
+        }
       }
     }
-    // TODO sort by aql category (missing language ? )
   }
 
   private boolean isSortByAqlQueryColumns(SearchCriteria searchCriteria) {
@@ -327,7 +320,6 @@ public class AqlService {
       throw new BadRequestException(AqlService.class, THE_CATEGORY_IS_NOT_EMPTY_CANT_DELETE_IT);
     }
   }
-
   public boolean existsById(Long aqlId) {
     return aqlRepository.existsById(aqlId);
   }
