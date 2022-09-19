@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import feign.Request;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,6 +59,7 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.CacheManager;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
@@ -70,6 +72,9 @@ public class UserServiceTest {
 
   @Mock
   private NotificationService notificationService;
+
+  @Mock
+  private CacheManager cacheManager;
 
   @Spy
   private final ModelMapper modelMapper = new ModelMapper();
@@ -542,6 +547,19 @@ public class UserServiceTest {
         }
       }
     }
+  }
+
+  @Test
+  public void findUsersUUIDTest() {
+    Set<User> users = new HashSet<>();
+    users.add(User.builder().firstName("John").lastName("Doe").id("4").build());
+    users.add(User.builder().firstName("Ana").lastName("John").id("99").build());
+
+    when(keycloakFeign.searchUsers(Mockito.eq("john"), Mockito.anyInt(), Mockito.anyInt())).thenReturn(users);
+    Set<String> userUUIDs =
+            userService.findUsersUUID("john", 0, 200);
+
+    Assert.assertEquals(1, userUUIDs.size());
   }
 
   private boolean testAddRole(Role role, String userRole) {
