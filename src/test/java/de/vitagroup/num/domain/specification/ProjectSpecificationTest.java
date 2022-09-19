@@ -9,9 +9,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.persistence.criteria.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProjectSpecificationTest {
@@ -58,6 +56,31 @@ public class ProjectSpecificationTest {
                 .build();
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");
+    }
+
+    @Test
+    public void roleResearcherWithFilterSpecificationTest() {
+        Join coordinator = Mockito.mock(Join.class);
+        Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(coordinator);
+        Mockito.when(coordinator.join("organization", JoinType.INNER)).thenReturn(Mockito.mock(Join.class));
+        Join reasearcher = Mockito.mock(Join.class);
+        Mockito.when(root.join("researchers", JoinType.LEFT)).thenReturn(reasearcher);
+        Path statusPath = Mockito.mock(Path.class);
+        Mockito.when(root.get("status")).thenReturn(statusPath);
+        Map<String, String> filter = new HashMap<>();
+        filter.put("search", "search me");
+        Set<String> usersUUID = new HashSet<>();
+        usersUUID.add("user-id-1");
+        usersUUID.add("user-id-2");
+        ProjectSpecification ps = ProjectSpecification.builder()
+                .filter(filter)
+                .roles(Arrays.asList(Roles.RESEARCHER))
+                .loggedInUserId("userId")
+                .loggedInUserOrganizationId(3L)
+                .build();
+        ps.toPredicate(root, query, criteriaBuilder);
+        Mockito.verify(root, Mockito.times(1)).get("status");
+        Mockito.verify(reasearcher, Mockito.times(1)).get("userId");
     }
 
 }
