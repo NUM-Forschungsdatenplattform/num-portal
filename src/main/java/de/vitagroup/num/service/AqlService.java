@@ -75,10 +75,6 @@ public class AqlService {
     return aqlRepository.count();
   }
 
-  public Optional<Aql> getAqlById(Long id) {
-    return aqlRepository.findById(id);
-  }
-
   public Aql getAqlById(Long id, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
