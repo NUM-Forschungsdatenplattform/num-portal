@@ -99,7 +99,7 @@ public class AqlService {
 
     Optional<Sort> optSortBy = validateAndGetSortForAQLQuery(searchCriteria);
     Pageable pageRequest;
-    Page<Aql> aqlPage = null;
+    Page<Aql> aqlPage;
     List<Aql> aqlQueries;
     final boolean sortByAqlColumns = isSortByAqlQueryColumns(searchCriteria);
     if (optSortBy.isPresent() && sortByAqlColumns) {
