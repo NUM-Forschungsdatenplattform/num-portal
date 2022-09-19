@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
-import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
@@ -20,9 +19,6 @@ import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.PrivacyException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
-import java.time.OffsetDateTime;
-import java.util.*;
-import javax.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -35,27 +31,22 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AQL_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_AQL;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_AQL;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_FIND_AQL;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CATEGORY_BY_ID_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CATEGORY_ID_CANT_BE_NULL;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CATEGORY_WITH_ID_DOES_NOT_EXIST;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL_ID;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.THE_CATEGORY_IS_NOT_EMPTY_CANT_DELETE_IT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
+import javax.transaction.Transactional;
+import java.time.OffsetDateTime;
+import java.util.*;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class AqlService {
 
+  private static final String AUTHOR_NAME = "author";
+
+  private static final String ORGANIZATION_NAME = "organization";
   private static final List<String> AQL_CATEGORY_SORT_FIELDS = Arrays.asList("name-de", "name-en");
-  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList("name", "author", "organization", "createDate", "category");
+  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList("name", AUTHOR_NAME, ORGANIZATION_NAME, "createDate", "category");
   private final AqlRepository aqlRepository;
   private final AqlCategoryRepository aqlCategoryRepository;
   private final EhrBaseService ehrBaseService;
@@ -132,8 +123,10 @@ public class AqlService {
   private void sortAqlQueries(List<Aql> aqlQueries, Optional<Sort> sortOptional, String lang) {
     if (sortOptional.isPresent()) {
       Sort sort = sortOptional.get();
-      if (sort.getOrderFor("organization") != null) {
-        Sort.Order organizationOrder = sort.getOrderFor("organization");
+      Sort.Order organizationOrder = sort.getOrderFor(ORGANIZATION_NAME);
+      Sort.Order authorOrder = sort.getOrderFor(AUTHOR_NAME);
+      Sort.Order aqlCategoryOrder = sort.getOrderFor("category");
+      if (organizationOrder != null) {
         Comparator<Aql> byOrgName = Comparator.comparing(aql -> aql.getOwner().getOrganization().getName());
         Sort.Direction sortOrder = organizationOrder.getDirection();
         if (sortOrder.isAscending()) {
@@ -141,8 +134,7 @@ public class AqlService {
         } else {
           Collections.sort(aqlQueries, Comparator.nullsLast(byOrgName.reversed()));
         }
-      } else if (sort.getOrderFor("author") != null) {
-        Sort.Order authorOrder = sort.getOrderFor("author");
+      } else if (authorOrder != null) {
         Comparator<Aql> byAuthorName = Comparator.comparing(aql -> {
           User owner = userService.getOwner(aql.getOwner().getUserId());
           return owner.getFullName();
@@ -153,8 +145,7 @@ public class AqlService {
         } else {
           Collections.sort(aqlQueries, Comparator.nullsLast(byAuthorName.reversed()));
         }
-      } else if (sort.getOrderFor("category") != null) {
-        Sort.Order aqlCategoryOrder = sort.getOrderFor("category");
+      } else if (aqlCategoryOrder != null) {
         Comparator<Aql> byAqlCategory = Comparator.comparing(aql -> aql.getCategory() != null ? aql.getCategory().getName().get(lang) : StringUtils.EMPTY);
         Sort.Direction sortOrder = aqlCategoryOrder.getDirection();
         if (sortOrder.isAscending()) {

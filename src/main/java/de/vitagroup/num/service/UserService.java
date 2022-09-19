@@ -484,7 +484,7 @@ public class UserService {
     }
     users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
 
-    return users.stream().map(user -> user.getId()).collect(Collectors.toSet());
+    return users.stream().map(User::getId).collect(Collectors.toSet());
   }
 
   private void updateName(String userId, UserNameDto userNameDto) {

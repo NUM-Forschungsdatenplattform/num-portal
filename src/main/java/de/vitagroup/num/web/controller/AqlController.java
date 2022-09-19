@@ -128,7 +128,7 @@ public class AqlController extends CustomizedExceptionHandler {
                                                             @PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
     Page<Aql> searchResult = aqlService.getVisibleAqls(principal.getSubject(), pageable, searchCriteria);
     List<AqlDto> content = searchResult.getContent().stream()
-            .map(aqlQuery -> mapper.convertToDto(aqlQuery))
+            .map(mapper::convertToDto)
             .collect(Collectors.toList());
     return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
