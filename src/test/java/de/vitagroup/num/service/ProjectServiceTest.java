@@ -623,6 +623,9 @@ public class ProjectServiceTest {
     filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "OnE");
     filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, ProjectFilterType.OWNED.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
+    Set<String> owners = new HashSet<>();
+    owners.add("approvedCoordinator");
+    Mockito.when(userService.findUsersUUID(Mockito.eq("OnE"), Mockito.anyInt(), Mockito.eq(100))).thenReturn(owners);
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
             SearchCriteria.builder()
                     .sort("ASC")
@@ -631,12 +634,12 @@ public class ProjectServiceTest {
                     .build(), pageable);
     Mockito.verify(projectRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     List<Project> projects = filteredProjects.getContent();
-    Assert.assertEquals(1, projects.size());
     Assert.assertEquals(Long.valueOf(1L), projects.get(0).getId());
     ProjectSpecification capturedInput = specificationArgumentCaptor.getValue();
     Assert.assertEquals(filter, capturedInput.getFilter());
     Assert.assertEquals("approvedCoordinatorId", capturedInput.getLoggedInUserId());
     Assert.assertEquals(roles, capturedInput.getRoles());
+    Assert.assertEquals(owners, capturedInput.getOwnersUUID());
   }
 
   @Test
