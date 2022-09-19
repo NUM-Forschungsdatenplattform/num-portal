@@ -4,12 +4,14 @@ import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.specification.AqlSpecification;
+import de.vitagroup.num.domain.specification.ProjectFilterType;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
@@ -45,6 +47,9 @@ public class AqlServiceTest {
   @Mock private AqlCategoryRepository aqlCategoryRepository;
 
   @Mock private UserDetailsService userDetailsService;
+
+  @Mock
+  private UserService userService;
 
   @InjectMocks private AqlService aqlService;
 
@@ -465,6 +470,45 @@ public class AqlServiceTest {
     Assert.assertEquals("de", aqlSpecification.getLanguage());
     List<Aql> filteredAql = aqlPage.getContent();
     Assert.assertEquals(Long.valueOf(2L), filteredAql.get(0).getId());
+  }
+
+  @Test
+  public void getVisibleAqlsWithPaginationAndSortByAuthorName() {
+    Pageable pageRequest = PageRequest.of(0, 100);
+    when(userService.getOwner("approvedUserId")).thenReturn(User.builder().id("approvedUserId").firstName("Approver first name").lastName("Doe").build());
+    when(userService.getOwner("2ndApprovedUserId")).thenReturn(User.builder().id("2ndApprovedUserId").firstName("Second approver first name").lastName("Doe").build());
+    Aql aqlOne = Aql.builder()
+            .id(1L)
+            .name("aql test one")
+            .publicAql(true)
+            .query("select * from dummy_table")
+            .owner(UserDetails.builder().userId("approvedUserId").build())
+            .build();
+    Aql aqlTwo = Aql.builder()
+            .id(2L)
+            .name("aql test two")
+            .publicAql(true)
+            .query("select * from dummy_table where dummy column = ")
+            .owner(UserDetails.builder().userId("2ndApprovedUserId").build())
+            .build();
+    Mockito.when(aqlRepository.findAll(Mockito.any(AqlSpecification.class), Mockito.any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Arrays.asList(aqlOne, aqlTwo)));
+    ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
+    ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
+    Map<String, String> filter = new HashMap<>();
+    filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "search dummy");
+    Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
+            .sortBy("author")
+            .sort("ASC")
+            .filter(filter)
+            .build());
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAll(specArgumentCaptor.capture(), pageableCapture.capture());
+    Pageable capturedInput = pageableCapture.getValue();
+    Assert.assertEquals(pageRequest, capturedInput);
+    AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
+    Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
+    List<Aql> filteredAql = aqlPage.getContent();
+    Assert.assertEquals(Long.valueOf(1L), filteredAql.get(0).getId());
   }
 
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {

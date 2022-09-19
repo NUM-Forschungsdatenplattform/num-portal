@@ -67,6 +67,7 @@ public class ProjectSpecificationTest {
         Mockito.when(root.join("researchers", JoinType.LEFT)).thenReturn(reasearcher);
         Path statusPath = Mockito.mock(Path.class);
         Mockito.when(root.get("status")).thenReturn(statusPath);
+        Mockito.when(coordinator.get("userId")).thenReturn(Mockito.mock(Path.class));
         Map<String, String> filter = new HashMap<>();
         filter.put("search", "search me");
         Set<String> usersUUID = new HashSet<>();
@@ -77,6 +78,7 @@ public class ProjectSpecificationTest {
                 .roles(Arrays.asList(Roles.RESEARCHER))
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(3L)
+                .ownersUUID(usersUUID)
                 .build();
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(1)).get("status");
