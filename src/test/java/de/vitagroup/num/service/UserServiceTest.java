@@ -238,6 +238,59 @@ public class UserServiceTest {
         .thenReturn(UserDetails.builder().userId("9").approved(true).build());
   }
 
+  @Test
+  public void deleteUserEmailNotVerifiedTest() {
+    User userToBeRemoved =
+            User.builder()
+                    .id("user-to-be-removed")
+                    .organization(OrganizationDto.builder().id(1L).name("org 1").build())
+                    .emailVerified(false)
+                    .build();
+    Mockito.when(keycloakFeign.getUser("user-to-be-removed")).thenReturn(userToBeRemoved);
+    userService.deleteUser("user-to-be-removed", "4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("user-to-be-removed");
+  }
+
+  @Test
+  public void deleteUserNotApprovedTest() {
+    User userToBeRemoved =
+            User.builder()
+                    .id("user-to-be-removed")
+                    .organization(OrganizationDto.builder().id(1L).name("org 1").build())
+                    .emailVerified(false)
+                    .build();
+    Mockito.when(keycloakFeign.getUser("user-to-be-removed")).thenReturn(userToBeRemoved);
+    Mockito.when(userDetailsService.getUserDetailsById("user-to-be-removed"))
+            .thenReturn(Optional.of(UserDetails.builder()
+                    .userId("user-to-be-removed")
+                    .approved(false)
+                    .build()));
+    userService.deleteUser("user-to-be-removed", "4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("user-to-be-removed");
+    Mockito.verify(userDetailsService, Mockito.times(1)).deleteUserDetails("user-to-be-removed");
+  }
+
+  @Test(expected = SystemException.class)
+  public void shouldHandleNotAllowedToDeleteEnabledUser() {
+    User userToBeRemoved =
+            User.builder()
+                    .id("user-to-be-removed")
+                    .organization(OrganizationDto.builder().id(1L).name("org 1").build())
+                    .emailVerified(true)
+                    .build();
+    Mockito.when(keycloakFeign.getUser("user-to-be-removed")).thenReturn(userToBeRemoved);
+    userService.deleteUser("user-to-be-removed", "4");
+    Mockito.verify(userDetailsService, Mockito.never()).deleteUserDetails("user-to-be-removed");
+  }
+
+  @Test
+  public void getUserProfileTest() {
+    userService.getUserProfile("4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getRolesOfUser("4");
+    Mockito.verify(userDetailsService, Mockito.times(1)).getUserDetailsById("4");
+  }
+
   @Test(expected = SystemException.class)
   public void shouldHandleGetUserBadRequest() {
     userService.getUserById("1", true);

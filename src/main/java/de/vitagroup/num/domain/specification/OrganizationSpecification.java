@@ -3,6 +3,7 @@ package de.vitagroup.num.domain.specification;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
