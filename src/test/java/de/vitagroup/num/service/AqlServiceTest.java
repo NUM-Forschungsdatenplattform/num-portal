@@ -123,8 +123,8 @@ public class AqlServiceTest {
 
   @Test
   public void searchOrganizationAqlsTest() {
-    aqlService.searchAqls(null, AqlSearchFilter.ORGANIZATION, "approvedUserId");
-    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOrganizationOwnedByName(1L, "approvedUserId", null);
+    aqlService.searchAqls(null, AqlSearchFilter.ORGANIZATION, "approvedCriteriaEditorId");
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOrganizationOwnedByName(1L, "approvedCriteriaEditorId", null);
   }
 
   @Test
