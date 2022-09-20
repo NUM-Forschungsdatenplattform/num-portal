@@ -28,6 +28,7 @@ import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
 
 import java.nio.charset.Charset;
 import java.util.*;
@@ -610,6 +611,23 @@ public class UserServiceTest {
             userService.findUsersUUID("john", 0, 200);
 
     Assert.assertEquals(1, userUUIDs.size());
+  }
+
+  @Test
+  public void findUsersUUIDFromCacheTest() {
+    ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+    usersCache.putIfAbsent("user-one", User.builder()
+            .id("user-one")
+            .firstName("John")
+            .lastName("Doe").build());
+    usersCache.putIfAbsent("user-two", User.builder()
+            .id("user-two")
+            .firstName("John")
+            .lastName("Foe").build());
+    Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+    Set<String> result = userService.findUsersUUID("doe", 0, 100);
+    Mockito.verify(keycloakFeign, Mockito.never()).searchUsers("doe", 0,100);
+    Assert.assertEquals(1, result.size());
   }
 
   private boolean testAddRole(Role role, String userRole) {
