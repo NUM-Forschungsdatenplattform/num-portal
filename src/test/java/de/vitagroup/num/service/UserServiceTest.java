@@ -1,20 +1,5 @@
 package de.vitagroup.num.service;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.google.common.collect.Sets;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
@@ -24,42 +9,36 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
-import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
-import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
-
-import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import feign.Request;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.CacheManager;
+
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
@@ -289,6 +268,24 @@ public class UserServiceTest {
     Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("4");
     Mockito.verify(keycloakFeign, Mockito.times(1)).getRolesOfUser("4");
     Mockito.verify(userDetailsService, Mockito.times(1)).getUserDetailsById("4");
+  }
+
+  @Test
+  public void getUserByIdTest() {
+    userService.getUserById("4", true, "4");
+    Mockito.verify(userDetailsService, Mockito.times(1)).checkIsUserApproved("4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getRolesOfUser("4");
+    Mockito.verify(userDetailsService, Mockito.times(1)).getUserDetailsById("4");
+  }
+
+  @Test
+  public void getByRoleTest() {
+    User userOne = User.builder().id("user1").build();
+    User userTwo = User.builder().id("4").build();
+    Mockito.when(keycloakFeign.getByRole(Roles.RESEARCHER)).thenReturn(new HashSet<>(Arrays.asList(userOne, userTwo)));
+    userService.getByRole(Roles.RESEARCHER);
+    Mockito.verify(userDetailsService, Mockito.times(2)).getUserDetailsById("4");
   }
 
   @Test(expected = SystemException.class)
