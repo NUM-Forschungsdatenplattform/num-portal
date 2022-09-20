@@ -8,14 +8,19 @@ import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.AqlSearchFilter;
 import de.vitagroup.num.domain.dto.SearchCriteria;
+import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.specification.AqlSpecification;
-import de.vitagroup.num.domain.specification.ProjectFilterType;
+import de.vitagroup.num.properties.PrivacyProperties;
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.exception.SystemException;
+import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
+import org.ehrbase.aqleditor.dto.aql.Result;
+import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,6 +55,13 @@ public class AqlServiceTest {
 
   @Mock
   private UserService userService;
+  @Mock
+  private AqlEditorAqlService aqlEditorAqlService;
+  @Mock
+  private EhrBaseService ehrBaseService;
+
+  @Mock
+  private PrivacyProperties privacyProperties;
 
   @InjectMocks private AqlService aqlService;
 
@@ -125,6 +137,23 @@ public class AqlServiceTest {
   public void searchOrganizationAqlsTest() {
     aqlService.searchAqls(null, AqlSearchFilter.ORGANIZATION, "approvedCriteriaEditorId");
     Mockito.verify(aqlRepository, Mockito.times(1)).findAllOrganizationOwnedByName(1L, "approvedCriteriaEditorId", null);
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldHandleNotApprovedUserWhenSearchAql() {
+    aqlService.searchAqls(null, AqlSearchFilter.OWNED, "notApprovedId");
+  }
+
+  @Test
+  public void getAqlSizeTest() {
+    SlimAqlDto aqlDto = new SlimAqlDto();
+    aqlDto.setQuery("select * from dummy_table");
+    Mockito.when(aqlEditorAqlService.validateAql(Mockito.any(Result.class))).thenReturn(QueryValidationResponse.builder()
+            .valid(true)
+            .build());
+    when(privacyProperties.getMinHits()).thenReturn(2);
+    Mockito.when(ehrBaseService.retrieveEligiblePatientIds(Mockito.any(Aql.class))).thenReturn(new HashSet<>(Arrays.asList("id1", "id2", "id3", "id4")));
+    aqlService.getAqlSize(aqlDto, "4");
   }
 
   @Test
