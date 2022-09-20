@@ -108,10 +108,23 @@ public class AqlServiceTest {
   }
 
   @Test
-  public void searchAqlsTest() {
+  public void searchOwnedAqlsTest() {
     String searchInput = "dummy search";
-      aqlService.searchAqls(searchInput, AqlSearchFilter.OWNED, "approvedUserId");
-      Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedByName(Mockito.eq("approvedUserId"), Mockito.eq(searchInput.toUpperCase()));
+    aqlService.searchAqls(searchInput, AqlSearchFilter.OWNED, "approvedUserId");
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedByName(Mockito.eq("approvedUserId"), Mockito.eq(searchInput.toUpperCase()));
+  }
+
+  @Test
+  public void searchAllAqlsTest() {
+    String searchInput = "text to search";
+    aqlService.searchAqls(searchInput, AqlSearchFilter.ALL, "approvedUserId");
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedOrPublicByName(Mockito.eq("approvedUserId"), Mockito.eq(searchInput.toUpperCase()));
+  }
+
+  @Test
+  public void searchOrganizationAqlsTest() {
+    aqlService.searchAqls(null, AqlSearchFilter.ORGANIZATION, "approvedUserId");
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOrganizationOwnedByName(1L, "approvedUserId", null);
   }
 
   @Test

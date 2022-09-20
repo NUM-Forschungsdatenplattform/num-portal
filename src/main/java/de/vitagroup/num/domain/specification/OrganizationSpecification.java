@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -28,13 +29,14 @@ public class OrganizationSpecification implements Specification<Organization> {
 
     @Override
     public Predicate toPredicate(Root<Organization> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-        if(Objects.nonNull(filter)) {
+        if (Objects.nonNull(filter)) {
             List<Predicate> predicates = new ArrayList<>();
-            for (Map.Entry<String, ?> entry : filter.entrySet()) {
-                if (SearchCriteria.FILTER_SEARCH_BY_KEY.equals(entry.getKey())) {
+            if (filter.containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
+                String entry = (String) filter.get(SearchCriteria.FILTER_SEARCH_BY_KEY);
+                if (StringUtils.isNotEmpty(entry)) {
                     predicates.add(criteriaBuilder.like(
                             criteriaBuilder.upper(root.get("name")),
-                            WILDCARD_PERCENTAGE_SIGN + ((String) entry.getValue()).toUpperCase() + WILDCARD_PERCENTAGE_SIGN));
+                            WILDCARD_PERCENTAGE_SIGN + entry.toUpperCase() + WILDCARD_PERCENTAGE_SIGN));
                 }
             }
             return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
