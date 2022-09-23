@@ -1,13 +1,16 @@
 package de.vitagroup.num.mapper;
 
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.dto.AqlCategoryDto;
 import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.service.UserService;
-import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -24,7 +27,9 @@ public class AqlMapper {
 
   public AqlDto convertToDto(Aql aql) {
     AqlDto aqlDto = modelMapper.map(aql, AqlDto.class);
-
+    if (Objects.nonNull(aql.getCategory())) {
+      aqlDto.setCategory(modelMapper.map(aql.getCategory(), AqlCategoryDto.class));
+    }
     aqlDto.setOwner(userService.getOwner(aql.getOwner().getUserId()));
     return aqlDto;
   }

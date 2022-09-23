@@ -1,20 +1,5 @@
 package de.vitagroup.num.service;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.google.common.collect.Sets;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
@@ -24,40 +9,37 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.mapper.OrganizationMapper;
-import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
-import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
-
-import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import feign.Request;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
+
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
@@ -70,6 +52,9 @@ public class UserServiceTest {
 
   @Mock
   private NotificationService notificationService;
+
+  @Mock
+  private CacheManager cacheManager;
 
   @Spy
   private final ModelMapper modelMapper = new ModelMapper();
@@ -231,6 +216,77 @@ public class UserServiceTest {
         .thenReturn(Optional.of(UserDetails.builder().userId("9").approved(true).build()));
     when(userDetailsService.checkIsUserApproved("9"))
         .thenReturn(UserDetails.builder().userId("9").approved(true).build());
+  }
+
+  @Test
+  public void deleteUserEmailNotVerifiedTest() {
+    User userToBeRemoved =
+            User.builder()
+                    .id("user-to-be-removed")
+                    .organization(OrganizationDto.builder().id(1L).name("org 1").build())
+                    .emailVerified(false)
+                    .build();
+    Mockito.when(keycloakFeign.getUser("user-to-be-removed")).thenReturn(userToBeRemoved);
+    userService.deleteUser("user-to-be-removed", "4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("user-to-be-removed");
+  }
+
+  @Test
+  public void deleteUserNotApprovedTest() {
+    User userToBeRemoved =
+            User.builder()
+                    .id("user-to-be-removed")
+                    .organization(OrganizationDto.builder().id(1L).name("org 1").build())
+                    .emailVerified(false)
+                    .build();
+    Mockito.when(keycloakFeign.getUser("user-to-be-removed")).thenReturn(userToBeRemoved);
+    Mockito.when(userDetailsService.getUserDetailsById("user-to-be-removed"))
+            .thenReturn(Optional.of(UserDetails.builder()
+                    .userId("user-to-be-removed")
+                    .approved(false)
+                    .build()));
+    userService.deleteUser("user-to-be-removed", "4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("user-to-be-removed");
+    Mockito.verify(userDetailsService, Mockito.times(1)).deleteUserDetails("user-to-be-removed");
+  }
+
+  @Test(expected = SystemException.class)
+  public void shouldHandleNotAllowedToDeleteEnabledUser() {
+    User userToBeRemoved =
+            User.builder()
+                    .id("user-to-be-removed")
+                    .organization(OrganizationDto.builder().id(1L).name("org 1").build())
+                    .emailVerified(true)
+                    .build();
+    Mockito.when(keycloakFeign.getUser("user-to-be-removed")).thenReturn(userToBeRemoved);
+    userService.deleteUser("user-to-be-removed", "4");
+    Mockito.verify(userDetailsService, Mockito.never()).deleteUserDetails("user-to-be-removed");
+  }
+
+  @Test
+  public void getUserProfileTest() {
+    userService.getUserProfile("4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getRolesOfUser("4");
+    Mockito.verify(userDetailsService, Mockito.times(1)).getUserDetailsById("4");
+  }
+
+  @Test
+  public void getUserByIdTest() {
+    userService.getUserById("4", true, "4");
+    Mockito.verify(userDetailsService, Mockito.times(1)).checkIsUserApproved("4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("4");
+    Mockito.verify(keycloakFeign, Mockito.times(1)).getRolesOfUser("4");
+    Mockito.verify(userDetailsService, Mockito.times(1)).getUserDetailsById("4");
+  }
+
+  @Test
+  public void getByRoleTest() {
+    User userOne = User.builder().id("user1").build();
+    User userTwo = User.builder().id("4").build();
+    Mockito.when(keycloakFeign.getByRole(Roles.RESEARCHER)).thenReturn(new HashSet<>(Arrays.asList(userOne, userTwo)));
+    userService.getByRole(Roles.RESEARCHER);
+    Mockito.verify(userDetailsService, Mockito.times(2)).getUserDetailsById("4");
   }
 
   @Test(expected = SystemException.class)
@@ -542,6 +598,36 @@ public class UserServiceTest {
         }
       }
     }
+  }
+
+  @Test
+  public void findUsersUUIDTest() {
+    Set<User> users = new HashSet<>();
+    users.add(User.builder().firstName("John").lastName("Doe").id("4").build());
+    users.add(User.builder().firstName("Ana").lastName("John").id("99").build());
+
+    when(keycloakFeign.searchUsers(Mockito.eq("john"), Mockito.anyInt(), Mockito.anyInt())).thenReturn(users);
+    Set<String> userUUIDs =
+            userService.findUsersUUID("john", 0, 200);
+
+    Assert.assertEquals(1, userUUIDs.size());
+  }
+
+  @Test
+  public void findUsersUUIDFromCacheTest() {
+    ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+    usersCache.putIfAbsent("user-one", User.builder()
+            .id("user-one")
+            .firstName("John")
+            .lastName("Doe").build());
+    usersCache.putIfAbsent("user-two", User.builder()
+            .id("user-two")
+            .firstName("John")
+            .lastName("Foe").build());
+    Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+    Set<String> result = userService.findUsersUUID("doe", 0, 100);
+    Mockito.verify(keycloakFeign, Mockito.never()).searchUsers("doe", 0,100);
+    Assert.assertEquals(1, result.size());
   }
 
   private boolean testAddRole(Role role, String userRole) {

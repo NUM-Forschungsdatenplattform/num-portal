@@ -16,15 +16,9 @@ import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.transaction.Transactional;
@@ -32,9 +26,11 @@ import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -458,6 +454,37 @@ public class UserService {
     }
 
     notificationService.send(collectUserNameUpdateNotification(userIdToChange, loggedInUserId));
+  }
+
+  /**
+   * Retrieved a list of users UUID that match the search criteria
+   * @param search A string contained in username, first or last name, or email
+   * @param maxUsersCount
+   * @return
+   */
+  public Set<String> findUsersUUID(String search, int offset, int maxUsersCount) {
+    Set<String> userUUIDs = new HashSet<>();
+    ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
+    if (usersCache != null && usersCache.getNativeCache().size() != 0) {
+      ConcurrentMap<Object, Object> users = usersCache.getNativeCache();
+      for (Map.Entry<Object, Object> entry : users.entrySet()) {
+        if (entry.getValue() instanceof User) {
+          User user = (User) entry.getValue();
+          if (StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) {
+            userUUIDs.add((String) entry.getKey());
+          }
+        }
+      }
+      return userUUIDs;
+    }
+
+    Set<User> users = keycloakFeign.searchUsers(search, offset, maxUsersCount);
+    if (users == null) {
+      return Collections.emptySet();
+    }
+    users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
+
+    return users.stream().map(User::getId).collect(Collectors.toSet());
   }
 
   private void updateName(String userId, UserNameDto userNameDto) {

@@ -5,7 +5,9 @@ import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -14,13 +16,14 @@ import org.springframework.data.jpa.domain.Specification;
 import javax.persistence.criteria.*;
 import java.util.*;
 
+@Builder
 @AllArgsConstructor
 @Getter
 public class ProjectSpecification implements Specification<Project> {
 
     private static final String COLUMN_PROJECT_STATUS = "status";
 
-    private static final String FILTER_TYPE = "type";
+    private static final String WILDCARD_PERCENTAGE_SIGN = "%";
 
     private Map<String, ?> filter;
 
@@ -29,6 +32,8 @@ public class ProjectSpecification implements Specification<Project> {
     private String loggedInUserId;
 
     private Long loggedInUserOrganizationId;
+
+    private Set<String> ownersUUID;
 
     @Override
     public Predicate toPredicate(Root<Project> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
@@ -55,18 +60,18 @@ public class ProjectSpecification implements Specification<Project> {
         }
         Predicate finalRoleBasedPredicate = criteriaBuilder.or(roleBasedPredicates.toArray(Predicate[]::new));
         Predicate filterPredicate;
-        if (Objects.nonNull(filter) && filter.containsKey(FILTER_TYPE)) {
+        if (Objects.nonNull(filter)) {
             List<Predicate> predicates = new ArrayList<>();
             for (Map.Entry<String, ?> entry : filter.entrySet()) {
-                if (FILTER_TYPE.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
+                if (SearchCriteria.FILTER_BY_TYPE_KEY.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
                     ProjectFilterType typeValue = ProjectFilterType.valueOf((String) entry.getValue());
                     switch (typeValue) {
-                        case MY_PROJECTS: {
+                        case OWNED: {
                             predicates.add(criteriaBuilder.equal(coordinator.get("userId"), loggedInUserId));
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;
                         }
-                        case MY_ORGANIZATION: {
+                        case ORGANIZATION: {
                             predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;
@@ -75,6 +80,19 @@ public class ProjectSpecification implements Specification<Project> {
                             predicates.add(searchByStatus(root, Arrays.asList(ProjectStatus.ARCHIVED)));
                             break;
                         }
+                    }
+                }
+                if (SearchCriteria.FILTER_SEARCH_BY_KEY.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
+                    String searchValue = WILDCARD_PERCENTAGE_SIGN + ((String) entry.getValue()).toUpperCase() + WILDCARD_PERCENTAGE_SIGN;
+                    Predicate projectNameLike = criteriaBuilder.like(criteriaBuilder.upper(root.get("name")), searchValue);
+                    Predicate authorNameLike = null;
+                    if (CollectionUtils.isNotEmpty(ownersUUID)) {
+                        authorNameLike = coordinator.get("userId").in(ownersUUID);
+                    }
+                    if (authorNameLike != null) {
+                        predicates.add(criteriaBuilder.or(projectNameLike, authorNameLike));
+                    } else {
+                        predicates.add(projectNameLike);
                     }
                 }
             }
