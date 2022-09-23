@@ -5,12 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.domain.dto.ProjectDto;
-import de.vitagroup.num.domain.dto.SearchCriteria;
-import de.vitagroup.num.domain.dto.UserDetailsDto;
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
-import de.vitagroup.num.domain.specification.ProjectFilterType;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.PrivacyProperties;
@@ -621,7 +617,7 @@ public class ProjectServiceTest {
     Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.ASC, "name"));
     Map<String, String> filter = new HashMap<>();
     filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "OnE");
-    filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, ProjectFilterType.OWNED.name());
+    filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.OWNED.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     Set<String> owners = new HashSet<>();
     owners.add("approvedCoordinator");
@@ -695,7 +691,7 @@ public class ProjectServiceTest {
                     .build()));
     Pageable pageable = PageRequest.of(0,50).withSort(Sort.by(Sort.Direction.DESC, "status"));
     Map<String, String> filter = new HashMap<>();
-    filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, ProjectFilterType.ORGANIZATION.name());
+    filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     projectService.getProjectsWithPagination("approverId", roles,
             SearchCriteria.builder()

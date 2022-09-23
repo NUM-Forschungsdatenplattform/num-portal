@@ -21,6 +21,12 @@ public class SearchCriteria {
 
     public static final String FILTER_BY_TYPE_KEY = "type";
 
+    // boolean flag used for users search/filter (optional -> omitting it returns both)
+    public static final String FILTER_APPROVED_KEY = "approved";
+
+    // boolean flag used for users search/filter (optional)
+    public static final String FILTER_USER_WITH_ROLES_KEY = "withRoles";
+
     private Map<String, ?> filter;
 
     private String sort;
