@@ -4,51 +4,45 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.SearchCriteria;
+import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.specification.UserDetailsSpecification;
 import de.vitagroup.num.mapper.OrganizationMapper;
-import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
-import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.notification.NotificationService;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
+import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_ENABLED_USER;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_APPROVED_USER;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CAN_ONLY_CHANGE_OWN_NAME_ORG_ADMIN_NAMES_OF_THE_PEOPLE_IN_THE_ORGANIZATION_AND_SUPERUSER_ALL_NAMES;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.FETCHING_USER_FROM_KEYCLOAK_FAILED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NOT_ALLOWED_TO_REMOVE_THAT_ROLE;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NOT_ALLOWED_TO_SET_THAT_ROLE;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_ROLES_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_ADMIN_CAN_ONLY_MANAGE_USERS_IN_THEIR_OWN_ORGANIZATION;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ROLE_OR_USER_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.UNKNOWN_ROLE;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
+import javax.annotation.Nullable;
+import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 @Service
@@ -70,6 +64,8 @@ public class UserService {
   private static final String USERS_CACHE = "users";
 
   private static final String KEYCLOACK_DEFAULT_ROLES_PREFIX = "default-roles-";
+
+  private final List<String> availableSortFields = Arrays.asList("firstname", "lastname", "organization", "registrationDate");
 
   @Transactional
   public void deleteUser(String userId, String loggedInUserId) {
@@ -256,6 +252,17 @@ public class UserService {
     }
   }
 
+  private Set<String> getUserRoleNames(String userId) {
+    try {
+      return keycloakFeign.getRolesOfUser(userId).stream().map(Role::getName).collect(Collectors.toSet());
+    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
+    } catch (FeignException.NotFound e) {
+      throw new ResourceNotFound(UserService.class, NO_ROLES_FOUND);
+    }
+  }
+
   private void addUserDetails(User user) {
     if (user == null) {
       return;
@@ -310,6 +317,109 @@ public class UserService {
     }
 
     return filterByCallerRole(users, callerRoles, loggedInUser);
+  }
+
+  public Page<User> searchUsersWithPagination(String loggedInUserId, List<String> callerRoles, SearchCriteria searchCriteria, Pageable pageable) {
+
+    UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
+    validateSort(searchCriteria);
+
+    Set<User> users = new HashSet<>();
+    boolean searchCriteriaProvided = searchCriteria.getFilter() != null &&
+            searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY);
+    if (searchCriteriaProvided) {
+      String searchValue = searchCriteria.getFilter() != null &&
+              searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY) ? (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY) : null;
+      users = keycloakFeign.searchUsers(searchValue, (int) pageable.getOffset(), 2 * pageable.getPageSize());
+    }
+    if (CollectionUtils.isEmpty(users) && searchCriteriaProvided) {
+      return Page.empty(pageable);
+    }
+    Set<String> usersUUID = users.stream().map(User::getId).collect(Collectors.toSet());
+
+    UserDetailsSpecification userDetailsSpecification = buildUserSpecification(loggedInUser, callerRoles, searchCriteria, usersUUID);
+
+    Page<UserDetails> userDetailsPage = userDetailsService.getUsers(pageable, userDetailsSpecification);
+    List<UserDetails> userDetailsList = userDetailsPage.getContent();
+    Set<String> filteredUsersUUID = userDetailsList.stream().map(UserDetails::getUserId).collect(Collectors.toSet());
+    List<User> filteredUsers = new ArrayList<>();
+
+    Boolean withRoles = searchCriteria.getFilter() != null &&
+            searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_USER_WITH_ROLES_KEY) ?
+            (Boolean) searchCriteria.getFilter().get(SearchCriteria.FILTER_USER_WITH_ROLES_KEY) : null;
+    boolean loadUserRoles = (withRoles != null && withRoles) || callerRoles.contains(Roles.STUDY_COORDINATOR);
+    for (String uuid : filteredUsersUUID) {
+      User user;
+      Optional<User> keycloackUser = users.stream().filter(u -> uuid.equals(u.getId())).findFirst();
+      if (keycloackUser.isEmpty()) {
+        user = getUserById(uuid, loadUserRoles);
+      } else {
+        user = keycloackUser.get();
+        addUserDetails(user);
+        if (loadUserRoles) {
+          addRoles(user);
+        }
+      }
+      filteredUsers.add(user);
+    }
+    if (!callerRoles.contains(Roles.SUPER_ADMIN) && callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+      filteredUsers.removeIf(user -> user.getRoles() != null && !user.getRoles().contains(Roles.RESEARCHER));
+    }
+    sortUsers(filteredUsers, searchCriteria);
+    return new PageImpl<>(new ArrayList<>(filteredUsers), pageable, userDetailsPage.getTotalElements());
+  }
+
+  private UserDetailsSpecification buildUserSpecification(UserDetails loggedInUser, List<String> callerRoles, SearchCriteria searchCriteria, Set<String> usersUUID) {
+    Boolean approved = null;
+    Long organizationId = null;
+
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_APPROVED_KEY)) {
+      approved = (boolean) searchCriteria.getFilter().get(SearchCriteria.FILTER_APPROVED_KEY);
+    }
+    if (!callerRoles.contains(Roles.SUPER_ADMIN) && callerRoles.contains(Roles.ORGANIZATION_ADMIN) && loggedInUser.getOrganization() != null) {
+      // super admin receives all users
+      // organization admin should receive users only for his organization
+      organizationId = loggedInUser.getOrganization().getId();
+    }
+    if (!callerRoles.contains(Roles.SUPER_ADMIN) && callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+      // project lead/study_coordinator should see only researchers
+      usersUUID.removeIf(uuid -> !getUserRoleNames(uuid).contains(Roles.RESEARCHER));
+    }
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_BY_TYPE_KEY)) {
+      if (SearchFilter.ORGANIZATION.equals(SearchFilter.valueOf((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_BY_TYPE_KEY)))) {
+        organizationId = loggedInUser.getOrganization().getId();
+      }
+    }
+    UserDetailsSpecification userDetailsSpecification = UserDetailsSpecification.builder()
+            .approved(approved)
+            .loggedInUserOrganizationId(organizationId)
+            .ownersUUID(usersUUID)
+            .build();
+    return userDetailsSpecification;
+  }
+
+  private void sortUsers(List<User> users, SearchCriteria searchCriteria) {
+    String field = searchCriteria.getSortBy() != null ? searchCriteria.getSortBy() : "registrationDate";
+    Sort.Direction sortOrder = searchCriteria.getSort() != null ? Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()) : Sort.Direction.DESC;
+    Comparator<User> userComparator = getComparator(field);
+    if (sortOrder.isAscending()) {
+      Collections.sort(users, Comparator.nullsLast(userComparator));
+    } else {
+      Collections.sort(users, Comparator.nullsLast(userComparator.reversed()));
+    }
+  }
+
+  private Comparator<User> getComparator(String field) {
+    switch (field) {
+      case "firstname":
+        return Comparator.comparing(User::getFirstName);
+      case "lastname":
+        return Comparator.comparing(User::getLastName);
+      case "organization":
+        return Comparator.comparing(user -> user.getOrganization() != null ? user.getOrganization().getName() : StringUtils.EMPTY);
+      default:
+        return Comparator.comparing(User::getCreatedTimestamp);
+    }
   }
 
   @Transactional
@@ -388,6 +498,7 @@ public class UserService {
       Long loggedInOrgId = loggedInUser.getOrganization().getId();
       users.forEach(
           user -> {
+            log.info("Processed user {} ", user);
             if (user.getOrganization() != null
                 && loggedInOrgId.equals(user.getOrganization().getId())) {
               outputSet.add(user);
@@ -507,5 +618,13 @@ public class UserService {
 
   private boolean isSelf(UserDetails user1, UserDetails user2) {
     return Objects.equals(user1.getUserId(), user2.getUserId());
+  }
+
+  private void validateSort(SearchCriteria searchCriteria) {
+    if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
+      if (!availableSortFields.contains(searchCriteria.getSortBy())) {
+        throw new BadRequestException(ProjectService.class, String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
+      }
+    }
   }
 }
