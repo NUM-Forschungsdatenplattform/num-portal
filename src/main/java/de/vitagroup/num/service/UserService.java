@@ -346,7 +346,7 @@ public class UserService {
 
     Boolean withRoles = searchCriteria.getFilter() != null &&
             searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_USER_WITH_ROLES_KEY) ?
-            (Boolean) searchCriteria.getFilter().get(SearchCriteria.FILTER_USER_WITH_ROLES_KEY) : null;
+            Boolean.valueOf((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_USER_WITH_ROLES_KEY)) : null;
     boolean loadUserRoles = (withRoles != null && withRoles) || Roles.isProjectLead(callerRoles);
     for (String uuid : filteredUsersUUID) {
       User user;

@@ -219,7 +219,8 @@ public class UserServiceTest {
                                         .build()));
         when(userDetailsService.checkIsUserApproved("8")).thenThrow(new ForbiddenException());
         when(userDetailsService.getUserDetailsById("9"))
-                .thenReturn(Optional.of(UserDetails.builder().userId("9").approved(true).build()));
+                .thenReturn(Optional.of(UserDetails.builder().userId("9")
+                        .approved(true).build()));
         when(userDetailsService.checkIsUserApproved("9"))
                 .thenReturn(UserDetails.builder().userId("9").approved(true).build());
     }
@@ -701,6 +702,53 @@ public class UserServiceTest {
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertNull(capturedInput.getApproved());
         assertThat(1L, is(capturedInput.getLoggedInUserOrganizationId()));
+    }
+
+    @Test
+    public void searchUsersWithPaginationAsOrganizationAdminTest() {
+        Pageable pageable = PageRequest.of(0, 50);
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .filter(filter)
+                .sort("DESC")
+                .sortBy("firstname")
+                .build();
+        UserDetails userOne = UserDetails.builder()
+                .userId("userId-one")
+                .organization(
+                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
+                .approved(true)
+                .build();
+        UserDetails userTwo = UserDetails.builder()
+                .userId("userId-two")
+                .organization(
+                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
+                .approved(true)
+                .build();
+        Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
+                .userId("user-55")
+                .organization(Organization.builder().id(99L).build())
+                .build());
+        Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
+                .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo)));
+        Mockito.when(keycloakFeign.getUser("userId-one")).thenReturn(User.builder()
+                .id("userId-one")
+                .firstName("Ana")
+                .lastName("Popescu")
+                .createdTimestamp(System.currentTimeMillis())
+                .build());
+        Mockito.when(keycloakFeign.getUser("userId-two")).thenReturn(User.builder()
+                .id("userId-two")
+                .firstName("Maria")
+                .lastName("Doe")
+                .createdTimestamp(System.currentTimeMillis())
+                .build());
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        userService.searchUsersWithPagination("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput = argumentCaptor.getValue();
+        Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
     }
 
     private boolean testAddRole(Role role, String userRole) {
