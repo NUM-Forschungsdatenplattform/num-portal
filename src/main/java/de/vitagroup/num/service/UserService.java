@@ -308,7 +308,7 @@ public class UserService {
     users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
     users.forEach(this::addUserDetails);
 
-    if ((withRoles != null && withRoles) || callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+    if ((withRoles != null && withRoles) || Roles.isProjectLead(callerRoles)) {
       users.forEach(this::addRoles);
     }
 
@@ -347,7 +347,7 @@ public class UserService {
     Boolean withRoles = searchCriteria.getFilter() != null &&
             searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_USER_WITH_ROLES_KEY) ?
             (Boolean) searchCriteria.getFilter().get(SearchCriteria.FILTER_USER_WITH_ROLES_KEY) : null;
-    boolean loadUserRoles = (withRoles != null && withRoles) || callerRoles.contains(Roles.STUDY_COORDINATOR);
+    boolean loadUserRoles = (withRoles != null && withRoles) || Roles.isProjectLead(callerRoles);
     for (String uuid : filteredUsersUUID) {
       User user;
       Optional<User> keycloackUser = users.stream().filter(u -> uuid.equals(u.getId())).findFirst();
@@ -362,7 +362,7 @@ public class UserService {
       }
       filteredUsers.add(user);
     }
-    if (!callerRoles.contains(Roles.SUPER_ADMIN) && callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+    if (!Roles.isSuperAdmin(callerRoles) && Roles.isProjectLead(callerRoles)) {
       filteredUsers.removeIf(user -> user.getRoles() != null && !user.getRoles().contains(Roles.RESEARCHER));
     }
     sortUsers(filteredUsers, searchCriteria);
@@ -376,12 +376,12 @@ public class UserService {
     if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_APPROVED_KEY)) {
       approved = (boolean) searchCriteria.getFilter().get(SearchCriteria.FILTER_APPROVED_KEY);
     }
-    if (!callerRoles.contains(Roles.SUPER_ADMIN) && callerRoles.contains(Roles.ORGANIZATION_ADMIN) && loggedInUser.getOrganization() != null) {
+    if (!Roles.isSuperAdmin(callerRoles) && Roles.isOrganizationAdmin(callerRoles) && loggedInUser.getOrganization() != null) {
       // super admin receives all users
       // organization admin should receive users only for his organization
       organizationId = loggedInUser.getOrganization().getId();
     }
-    if (!callerRoles.contains(Roles.SUPER_ADMIN) && callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+    if (!Roles.isSuperAdmin(callerRoles) && Roles.isProjectLead(callerRoles)) {
       // project lead/study_coordinator should see only researchers
       usersUUID.removeIf(uuid -> !getUserRoleNames(uuid).contains(Roles.RESEARCHER));
     }
@@ -400,7 +400,8 @@ public class UserService {
 
   private void sortUsers(List<User> users, SearchCriteria searchCriteria) {
     String field = searchCriteria.getSortBy() != null ? searchCriteria.getSortBy() : "registrationDate";
-    Sort.Direction sortOrder = searchCriteria.getSort() != null ? Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()) : Sort.Direction.DESC;
+    Sort.Direction sortOrder = searchCriteria.getSort() != null ?
+            Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()) : Sort.Direction.DESC;
     Comparator<User> userComparator = getComparator(field);
     if (sortOrder.isAscending()) {
       Collections.sort(users, Comparator.nullsLast(userComparator));
@@ -494,7 +495,7 @@ public class UserService {
 
     Set<User> outputSet = new HashSet<>();
 
-    if (callerRoles.contains(Roles.ORGANIZATION_ADMIN) && loggedInUser.getOrganization() != null) {
+    if (Roles.isOrganizationAdmin(callerRoles) && loggedInUser.getOrganization() != null) {
       Long loggedInOrgId = loggedInUser.getOrganization().getId();
       users.forEach(
           user -> {
@@ -506,7 +507,7 @@ public class UserService {
           });
     }
 
-    if (callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+    if (Roles.isProjectLead(callerRoles)) {
       users.forEach(
           user -> {
             if (user.getRoles() != null && user.getRoles().contains(Roles.RESEARCHER)) {
