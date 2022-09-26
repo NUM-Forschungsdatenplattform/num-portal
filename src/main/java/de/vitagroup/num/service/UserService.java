@@ -330,7 +330,7 @@ public class UserService {
     if (searchCriteriaProvided) {
       String searchValue = searchCriteria.getFilter() != null &&
               searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY) ? (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY) : null;
-      users = keycloakFeign.searchUsers(searchValue, (int) pageable.getOffset(), 2 * pageable.getPageSize());
+      users = keycloakFeign.searchUsers(searchValue, (int) pageable.getOffset(), pageable.getPageSize());
     }
     if (CollectionUtils.isEmpty(users) && searchCriteriaProvided) {
       return Page.empty(pageable);
@@ -374,7 +374,7 @@ public class UserService {
     Long organizationId = null;
 
     if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_APPROVED_KEY)) {
-      approved = (boolean) searchCriteria.getFilter().get(SearchCriteria.FILTER_APPROVED_KEY);
+      approved = Boolean.valueOf((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_APPROVED_KEY));
     }
     if (!Roles.isSuperAdmin(callerRoles) && Roles.isOrganizationAdmin(callerRoles) && loggedInUser.getOrganization() != null) {
       // super admin receives all users
