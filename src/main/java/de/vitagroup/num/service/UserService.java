@@ -319,6 +319,7 @@ public class UserService {
     return filterByCallerRole(users, callerRoles, loggedInUser);
   }
 
+  @Transactional
   public Page<User> searchUsersWithPagination(String loggedInUserId, List<String> callerRoles, SearchCriteria searchCriteria, Pageable pageable) {
 
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
