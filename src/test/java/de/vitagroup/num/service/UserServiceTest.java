@@ -675,6 +675,8 @@ public class UserServiceTest {
         filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
+                .sortBy("lastname")
+                .sort("asc")
                 .build();
         UserDetails userOne = UserDetails.builder()
                 .userId("userId-one")
@@ -691,7 +693,7 @@ public class UserServiceTest {
         Set<User> users = new HashSet<>();
         users.add(User.builder().firstName("John").lastName("Doe").id("userId-one").build());
         users.add(User.builder().firstName("Ana").lastName("John").id("userId-two").build());
-
+        when(keycloakFeign.getRolesOfUser("userId-one")).thenReturn(Stream.of(new Role("RR1", "RESEARCHER")).collect(Collectors.toSet()));
         when(keycloakFeign.searchUsers(Mockito.eq("some dummy search input"), Mockito.anyInt(), Mockito.anyInt())).thenReturn(users);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
                 .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo)));

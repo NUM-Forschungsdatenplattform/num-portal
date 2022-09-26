@@ -363,9 +363,6 @@ public class UserService {
       }
       filteredUsers.add(user);
     }
-    if (!Roles.isSuperAdmin(callerRoles) && Roles.isProjectLead(callerRoles)) {
-      filteredUsers.removeIf(user -> user.getRoles() != null && !user.getRoles().contains(Roles.RESEARCHER));
-    }
     sortUsers(filteredUsers, searchCriteria);
     return new PageImpl<>(new ArrayList<>(filteredUsers), pageable, userDetailsPage.getTotalElements());
   }
