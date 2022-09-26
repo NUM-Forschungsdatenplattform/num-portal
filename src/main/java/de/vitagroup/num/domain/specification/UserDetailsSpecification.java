@@ -20,15 +20,15 @@ public class UserDetailsSpecification implements Specification<UserDetails> {
 
     private Long loggedInUserOrganizationId;
 
-    private Set<String> ownersUUID;
+    private Set<String> usersUUID;
 
     private Boolean approved;
 
     @Override
     public Predicate toPredicate(Root<UserDetails> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
         List<Predicate> predicates = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(ownersUUID)) {
-            predicates.add(root.get("userId").in(ownersUUID));
+        if (CollectionUtils.isNotEmpty(usersUUID)) {
+            predicates.add(root.get("userId").in(usersUUID));
         }
         if (approved != null) {
             predicates.add(criteriaBuilder.equal(root.get("approved"), approved));

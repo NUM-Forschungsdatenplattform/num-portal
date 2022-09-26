@@ -393,7 +393,7 @@ public class UserService {
     UserDetailsSpecification userDetailsSpecification = UserDetailsSpecification.builder()
             .approved(approved)
             .loggedInUserOrganizationId(organizationId)
-            .ownersUUID(usersUUID)
+            .usersUUID(usersUUID)
             .build();
     return userDetailsSpecification;
   }
