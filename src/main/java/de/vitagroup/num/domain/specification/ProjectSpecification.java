@@ -6,6 +6,7 @@ import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.SearchCriteria;
+import de.vitagroup.num.domain.dto.SearchFilter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -64,7 +65,7 @@ public class ProjectSpecification implements Specification<Project> {
             List<Predicate> predicates = new ArrayList<>();
             for (Map.Entry<String, ?> entry : filter.entrySet()) {
                 if (SearchCriteria.FILTER_BY_TYPE_KEY.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
-                    ProjectFilterType typeValue = ProjectFilterType.valueOf((String) entry.getValue());
+                    SearchFilter typeValue = SearchFilter.valueOf((String) entry.getValue());
                     switch (typeValue) {
                         case OWNED: {
                             predicates.add(criteriaBuilder.equal(coordinator.get("userId"), loggedInUserId));

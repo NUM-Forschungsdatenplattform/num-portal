@@ -3,6 +3,7 @@ package de.vitagroup.num.web.controller;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
@@ -20,6 +21,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.health.Status;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -159,5 +163,18 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(
         userService.searchUsers(
             principal.getSubject(), approved, search, withRoles, Roles.extractRoles(principal)));
+  }
+
+  @AuditLog
+  @GetMapping("user/all")
+  @ApiOperation(value = "Retrieves a set of users that match the search string")
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
+  public ResponseEntity<Page<User>> searchUsersWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable,
+                                                              SearchCriteria criteria) {
+    // filter[approved] true, false (optional -> omitting it returns both)
+    // filter[search] search input (optional)
+    // filter[withRoles] true or false (optional)
+    return ResponseEntity.ok(
+            userService.searchUsersWithPagination(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
   }
 }

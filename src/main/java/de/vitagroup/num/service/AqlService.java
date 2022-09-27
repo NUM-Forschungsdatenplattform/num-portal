@@ -7,7 +7,7 @@ import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
@@ -227,7 +227,7 @@ public class AqlService {
    * @param loggedInUserId the user ID of the user sending the search request
    * @return the list of AQLs that match the search filters
    */
-  public List<Aql> searchAqls(String name, AqlSearchFilter filter, String loggedInUserId) {
+  public List<Aql> searchAqls(String name, SearchFilter filter, String loggedInUserId) {
 
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 

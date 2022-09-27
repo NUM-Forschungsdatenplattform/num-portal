@@ -4,7 +4,7 @@ import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -63,9 +63,9 @@ public class AqlSpecification implements Specification<Aql> {
                     nameLikePredicates.add(ownerNameLike);
                 }
             }
-            AqlSearchFilter filterType = filter.containsKey(SearchCriteria.FILTER_BY_TYPE_KEY) ?
-                    AqlSearchFilter.valueOf((String) filter.get(SearchCriteria.FILTER_BY_TYPE_KEY)) :
-                    AqlSearchFilter.ALL;
+            SearchFilter filterType = filter.containsKey(SearchCriteria.FILTER_BY_TYPE_KEY) ?
+                    SearchFilter.valueOf((String) filter.get(SearchCriteria.FILTER_BY_TYPE_KEY)) :
+                    SearchFilter.ALL;
             switch (filterType) {
                 case ALL: {
                     predicates.add(ownedOrPublic);

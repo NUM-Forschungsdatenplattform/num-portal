@@ -6,7 +6,7 @@ import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
@@ -122,26 +122,26 @@ public class AqlServiceTest {
   @Test
   public void searchOwnedAqlsTest() {
     String searchInput = "dummy search";
-    aqlService.searchAqls(searchInput, AqlSearchFilter.OWNED, "approvedUserId");
+    aqlService.searchAqls(searchInput, SearchFilter.OWNED, "approvedUserId");
     Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedByName(Mockito.eq("approvedUserId"), Mockito.eq(searchInput.toUpperCase()));
   }
 
   @Test
   public void searchAllAqlsTest() {
     String searchInput = "text to search";
-    aqlService.searchAqls(searchInput, AqlSearchFilter.ALL, "approvedUserId");
+    aqlService.searchAqls(searchInput, SearchFilter.ALL, "approvedUserId");
     Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedOrPublicByName(Mockito.eq("approvedUserId"), Mockito.eq(searchInput.toUpperCase()));
   }
 
   @Test
   public void searchOrganizationAqlsTest() {
-    aqlService.searchAqls(null, AqlSearchFilter.ORGANIZATION, "approvedCriteriaEditorId");
+    aqlService.searchAqls(null, SearchFilter.ORGANIZATION, "approvedCriteriaEditorId");
     Mockito.verify(aqlRepository, Mockito.times(1)).findAllOrganizationOwnedByName(1L, "approvedCriteriaEditorId", null);
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedUserWhenSearchAql() {
-    aqlService.searchAqls(null, AqlSearchFilter.OWNED, "notApprovedId");
+    aqlService.searchAqls(null, SearchFilter.OWNED, "notApprovedId");
   }
 
   @Test

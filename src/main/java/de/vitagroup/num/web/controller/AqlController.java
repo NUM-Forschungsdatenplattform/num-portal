@@ -100,7 +100,7 @@ public class AqlController extends CustomizedExceptionHandler {
           @RequestParam(required = false)
           String name,
       @ApiParam(value = "Type of the search", required = true) @RequestParam @Valid @NotNull
-          AqlSearchFilter filter) {
+      SearchFilter filter) {
     return ResponseEntity.ok(
         aqlService.searchAqls(name, filter, principal.getSubject()).stream()
             .map(mapper::convertToDto)

@@ -1,7 +1,7 @@
 package de.vitagroup.num.domain.specification;
 
 import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.dto.SearchFilter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -70,7 +70,7 @@ public class AqlSpecificationTest {
         Path publicAql = Mockito.mock(Path.class);
         Mockito.when(root.get("publicAql")).thenReturn(publicAql);
         Map<String, String> filter = new HashMap<>();
-        filter.put("type", AqlSearchFilter.ORGANIZATION.name());
+        filter.put("type", SearchFilter.ORGANIZATION.name());
         Join organization = Mockito.mock(Join.class);
         Mockito.when(owner.join("organization", JoinType.INNER)).thenReturn(organization);
 

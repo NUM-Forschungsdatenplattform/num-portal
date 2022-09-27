@@ -2,6 +2,7 @@ package de.vitagroup.num.domain.specification;
 
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.dto.SearchFilter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -47,7 +48,7 @@ public class ProjectSpecificationTest {
         Path statusPath = Mockito.mock(Path.class);
         Mockito.when(root.get("status")).thenReturn(statusPath);
         Map<String, String> filter = new HashMap<>();
-        filter.put("type", ProjectFilterType.ORGANIZATION.name());
+        filter.put("type", SearchFilter.ORGANIZATION.name());
         ProjectSpecification ps = ProjectSpecification.builder()
                 .filter(filter)
                 .roles(Arrays.asList(Roles.STUDY_APPROVER))
