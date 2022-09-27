@@ -208,9 +208,11 @@ public class UserDetailsService {
         u ->
             u.getOrganization() == null
                 || !u.getOrganization().getName().equals(user.getOrganization().getName()));
-    String userDepartment = getUserAttribute(user, USER_ATTRIBUTE_DEPARTMENT);
-    String requestedRole = getUserAttribute(user, USER_ATTRIBUTE_REQUESTED_ROLE);
-    String notes = getUserAttribute(user, USER_ATTRIBUTE_ADDITIONAl_NOTES);
+    List<String> departmentAtrs = getUserAttribute(user, USER_ATTRIBUTE_DEPARTMENT);
+    String userDepartment = !departmentAtrs.isEmpty() ? departmentAtrs.get(0) : StringUtils.EMPTY;
+    List<String> requestedRoles = getUserAttribute(user, USER_ATTRIBUTE_REQUESTED_ROLE);
+    List<String> notesAtrs = getUserAttribute(user, USER_ATTRIBUTE_ADDITIONAl_NOTES);
+    String notes = !notesAtrs.isEmpty() ? notesAtrs.get(0) : StringUtils.EMPTY;;
 
     admins.forEach(
         admin -> {
@@ -223,7 +225,7 @@ public class UserDetailsService {
                   .recipientFirstName(admin.getFirstName())
                   .recipientLastName(admin.getLastName())
                   .department(userDepartment)
-                  .requestedRole(requestedRole)
+                  .requestedRoles(requestedRoles)
                   .notes(notes)
                   .build();
 
@@ -255,8 +257,7 @@ public class UserDetailsService {
     return notifications;
   }
 
-  private String getUserAttribute(User user, String attributeName) {
-    List<String> attribute = user.getAttributes() != null ? (List<String>) user.getAttributes().getOrDefault(attributeName, Collections.EMPTY_LIST) : Collections.EMPTY_LIST;
-    return !attribute.isEmpty() ? attribute.get(0) : StringUtils.EMPTY;
+  private List<String> getUserAttribute(User user, String attributeName) {
+    return user.getAttributes() != null ? (List<String>) user.getAttributes().getOrDefault(attributeName, Collections.EMPTY_LIST) : Collections.EMPTY_LIST;
   }
 }
