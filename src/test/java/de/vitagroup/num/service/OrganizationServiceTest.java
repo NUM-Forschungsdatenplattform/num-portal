@@ -39,6 +39,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -161,26 +162,14 @@ public class OrganizationServiceTest {
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedUserWhenGettingAll() {
-    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "notApprovedUserId");
+    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "notApprovedUserId", new SearchCriteria(), Pageable.ofSize(20));
   }
 
   @Test
   public void shouldHandleNoRolesWhenGettingAll() {
-    List<Organization> organizations =
-            organizationService.getAllOrganizations(List.of(), "approvedUserId");
-    assertThat(organizations.size(), is(0));
-  }
-
-  @Test
-  public void shouldCorrectlyFilterBasedOnRole1() {
-    organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId");
-    verify(organizationRepository, times(1)).findAll();
-  }
-
-  @Test
-  public void shouldCorrectlyFilterBasedOnRole2() {
-    organizationService.getAllOrganizations(List.of(Roles.ORGANIZATION_ADMIN), "approvedUserId");
-    verify(organizationRepository, times(0)).findAll();
+    Page<Organization> pageContent =
+            organizationService.getAllOrganizations(List.of(), "approvedUserId", new SearchCriteria(), Pageable.ofSize(20));
+    assertThat(pageContent.getContent().size(), is(0));
   }
 
   @Test(expected = BadRequestException.class)
