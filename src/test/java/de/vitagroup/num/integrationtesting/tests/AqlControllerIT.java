@@ -178,6 +178,30 @@ public class AqlControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
+  @WithMockNumUser(roles = {MANAGER})
+  public void shouldGetAllCategoriesWithPaginationAndSorting() {
+    mockMvc.perform(get(AQL_PATH + "/category")
+            .queryParam("page", "0")
+            .queryParam("size", "15")
+            .queryParam("sortBy", "name-en")
+            .queryParam("sort", "DESC")
+            .with(csrf())).andExpect(status().isOk());
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {RESEARCHER})
+  public void shouldGetAqlsAsResearcherWithPagination() {
+    mockMvc.perform(get(AQL_PATH)
+            .queryParam("page", "0")
+            .queryParam("size", "20")
+            .queryParam("sortBy", "author")
+            .queryParam("sort", "DESC")
+            .with(csrf())).andExpect(status().isOk());
+  }
+
+  @Test
+  @SneakyThrows
   @WithMockNumUser(roles = {CRITERIA_EDITOR})
   public void shouldGetAqlsAsCriteriaEditor() {
     mockMvc.perform(get(AQL_PATH).with(csrf())).andExpect(status().isOk());

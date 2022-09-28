@@ -79,12 +79,6 @@ public class AqlService {
       throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_AQL);
     }
   }
-
-  public List<Aql> getVisibleAqls(String loggedInUserId) {
-    userDetailsService.checkIsUserApproved(loggedInUserId);
-    return aqlRepository.findAllOwnedOrPublic(loggedInUserId);
-  }
-
   public Page<Aql> getVisibleAqls(String loggedInUserId, Pageable pageable, SearchCriteria searchCriteria) {
     UserDetails userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
@@ -267,10 +261,6 @@ public class AqlService {
       throw new PrivacyException(AqlService.class, TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds.size();
-  }
-
-  public List<AqlCategory> getAqlCategories() {
-    return aqlCategoryRepository.findAllCategories();
   }
 
   public Page<AqlCategory> getAqlCategories(Pageable pageable, SearchCriteria searchCriteria) {
