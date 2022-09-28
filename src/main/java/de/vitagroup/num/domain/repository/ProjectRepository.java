@@ -12,12 +12,6 @@ import java.util.List;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpecificationExecutor<Project> {
 
-  List<Project> findByStatusIn(List<ProjectStatus> statuses);
-
-  List<Project> findByResearchers_UserIdAndStatusIn(String userId, List<ProjectStatus> statuses);
-
-  List<Project> findByCoordinatorUserIdOrStatusIn(String userId, List<ProjectStatus> statuses);
-
   @Query(
       value =
           "SELECT * FROM project WHERE project.status IN (:status1,:status2,:status3) ORDER BY project.create_date DESC FETCH FIRST :count ROWS ONLY",

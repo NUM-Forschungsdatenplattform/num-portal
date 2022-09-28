@@ -70,20 +70,9 @@ public class ProjectController extends CustomizedExceptionHandler {
   private final Pseudonymity pseudonymity;
 
   private final ProjectViewMapper projectViewMapper;
-  @AuditLog
-  @GetMapping()
-  @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
-  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<List<ProjectDto>> getProjects(
-      @AuthenticationPrincipal @NotNull Jwt principal) {
-    return ResponseEntity.ok(
-        projectService.getProjects(principal.getSubject(), Roles.extractRoles(principal)).stream()
-            .map(projectMapper::convertToDto)
-            .collect(Collectors.toList()));
-  }
 
   @AuditLog
-  @GetMapping("/all")
+  @GetMapping
   @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<Page<ProjectViewTO>> getProjectsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable, SearchCriteria criteria) {
