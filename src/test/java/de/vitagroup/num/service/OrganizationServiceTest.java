@@ -279,7 +279,7 @@ public class OrganizationServiceTest {
     Pageable pageable = PageRequest.of(1,3).withSort(Sort.by(Sort.Direction.DESC, "name"));
     ArgumentCaptor<OrganizationSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(OrganizationSpecification.class);
     Map<String, String> filterByName = new HashMap<>();
-    filterByName.put("name", "dummy name");
+    filterByName.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "dummy name");
     SearchCriteria searchCriteria = SearchCriteria.builder()
             .filter(filterByName)
             .sortBy("name")

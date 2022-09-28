@@ -3,15 +3,10 @@ package de.vitagroup.num.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.*;
-import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.domain.dto.ProjectDto;
-import de.vitagroup.num.domain.dto.SearchCriteria;
-import de.vitagroup.num.domain.dto.UserDetailsDto;
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
-import de.vitagroup.num.domain.specification.ProjectFilterType;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.PrivacyProperties;
@@ -621,9 +616,12 @@ public class ProjectServiceTest {
     roles.add(RESEARCHER);
     Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.ASC, "name"));
     Map<String, String> filter = new HashMap<>();
-    filter.put("name", "OnE");
-    filter.put("type", ProjectFilterType.MY_PROJECTS.name());
+    filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "OnE");
+    filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.OWNED.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
+    Set<String> owners = new HashSet<>();
+    owners.add("approvedCoordinator");
+    Mockito.when(userService.findUsersUUID(Mockito.eq("OnE"), Mockito.anyInt(), Mockito.eq(100))).thenReturn(owners);
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
             SearchCriteria.builder()
                     .sort("ASC")
@@ -632,12 +630,12 @@ public class ProjectServiceTest {
                     .build(), pageable);
     Mockito.verify(projectRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     List<Project> projects = filteredProjects.getContent();
-    Assert.assertEquals(1, projects.size());
     Assert.assertEquals(Long.valueOf(1L), projects.get(0).getId());
     ProjectSpecification capturedInput = specificationArgumentCaptor.getValue();
     Assert.assertEquals(filter, capturedInput.getFilter());
     Assert.assertEquals("approvedCoordinatorId", capturedInput.getLoggedInUserId());
     Assert.assertEquals(roles, capturedInput.getRoles());
+    Assert.assertEquals(owners, capturedInput.getOwnersUUID());
   }
 
   @Test
@@ -693,7 +691,7 @@ public class ProjectServiceTest {
                     .build()));
     Pageable pageable = PageRequest.of(0,50).withSort(Sort.by(Sort.Direction.DESC, "status"));
     Map<String, String> filter = new HashMap<>();
-    filter.put("type", ProjectFilterType.MY_ORGANIZATION.name());
+    filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     projectService.getProjectsWithPagination("approverId", roles,
             SearchCriteria.builder()

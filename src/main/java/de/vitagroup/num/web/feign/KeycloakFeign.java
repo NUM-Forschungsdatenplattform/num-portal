@@ -37,6 +37,16 @@ public interface KeycloakFeign {
   @GetMapping("/users")
   Set<User> searchUsers(@RequestParam(required = false) String search, @RequestParam int max);
 
+  /**
+   *
+   * @param search A String contained in username, first or last name, or email
+   * @param first Pagination offset
+   * @param max Maximum results size
+   * @return
+   */
+  @GetMapping("/users")
+  Set<User> searchUsers(@RequestParam(required = false) String search, @RequestParam int first, @RequestParam int max);
+
   @GetMapping("/roles/{roleName}/users")
   Set<User> getByRole(@PathVariable String roleName);
 

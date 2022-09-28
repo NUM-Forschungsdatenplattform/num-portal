@@ -2,9 +2,10 @@ package de.vitagroup.num.service.notification.dto;
 
 import de.vitagroup.num.service.email.MessageSourceWrapper;
 import lombok.Builder;
-import org.apache.commons.lang3.StringUtils;
 
 import java.time.Year;
+import java.util.Iterator;
+import java.util.List;
 
 public class NewUserNotification extends Notification {
 
@@ -17,7 +18,7 @@ public class NewUserNotification extends Notification {
   private final String newUserFirstName;
   private final String newUserLastName;
 
-  private final String requestedRole;
+  private final List<String> requestedRoles;
   private final String department;
   private final String notes;
 
@@ -26,7 +27,7 @@ public class NewUserNotification extends Notification {
           String newUserEmail,
           String newUserFirstName,
           String newUserLastName,
-          String requestedRole, String department,
+          List<String> requestedRoles, String department,
           String notes, String recipientEmail,
           String recipientFirstName,
           String recipientLastName) {
@@ -34,7 +35,7 @@ public class NewUserNotification extends Notification {
     this.newUserEmail = newUserEmail;
     this.newUserFirstName = newUserFirstName;
     this.newUserLastName = newUserLastName;
-    this.requestedRole = requestedRole;
+    this.requestedRoles = requestedRoles;
     this.department = department;
     this.notes = notes;
 
@@ -51,11 +52,6 @@ public class NewUserNotification extends Notification {
   @Override
   public String getNotificationBody(MessageSourceWrapper messageSource, String url) {
     String copyright = messageSource.getMessage(COPYRIGHT_KEY, Year.now());
-    String translatedRequestedRole = StringUtils.EMPTY;
-    if (StringUtils.isNotEmpty(requestedRole)) {
-      final String msgKey = TRANSLATION_KEY_PREFIX + requestedRole.toLowerCase();
-      translatedRequestedRole = messageSource.getMessage(msgKey);
-    }
     return messageSource.getMessage(
         NEW_USER_BODY_KEY,
         recipientFirstName,
@@ -65,6 +61,18 @@ public class NewUserNotification extends Notification {
         newUserEmail,
         copyright,
         url,
-        translatedRequestedRole, department, notes);
+        getTranslatedRequestedRoles(requestedRoles, messageSource), department, notes);
+  }
+
+  private String getTranslatedRequestedRoles(List<String> roles, MessageSourceWrapper messageSource) {
+    Iterator<String> iter = roles.iterator();
+    StringBuilder sb = new StringBuilder();
+
+    while (iter.hasNext()) {
+      final String msgKey = TRANSLATION_KEY_PREFIX + iter.next().toLowerCase();
+      String translatedRequestedRole = messageSource.getMessage(msgKey);
+      sb.append(translatedRequestedRole).append(iter.hasNext() ? ", " : "");
+    }
+    return sb.toString();
   }
 }

@@ -17,11 +17,23 @@ import java.util.Map;
 @AllArgsConstructor
 public class SearchCriteria {
 
+    public static final String FILTER_SEARCH_BY_KEY = "search";
+
+    public static final String FILTER_BY_TYPE_KEY = "type";
+
+    // boolean flag used for users search/filter (optional -> omitting it returns both)
+    public static final String FILTER_APPROVED_KEY = "approved";
+
+    // boolean flag used for users search/filter (optional)
+    public static final String FILTER_USER_WITH_ROLES_KEY = "withRoles";
+
     private Map<String, ?> filter;
 
     private String sort;
 
     private String sortBy;
+
+    private String language;
 
     public boolean isValid() {
         if (StringUtils.isEmpty(this.sort) && StringUtils.isNotEmpty(this.sortBy)) {

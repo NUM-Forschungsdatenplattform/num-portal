@@ -4,8 +4,10 @@ import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
+import de.vitagroup.num.domain.specification.UserDetailsSpecification;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.NewUserWithoutOrganizationNotification;
@@ -26,6 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
@@ -148,6 +152,10 @@ public class UserDetailsService {
     return user;
   }
 
+  public Page<UserDetails> getUsers(Pageable pageable, UserDetailsSpecification specification) {
+    return userDetailsRepository.findAll(specification, pageable);
+  }
+
   private List<Notification> collectAccountApprovalNotification(
       String userId, String loggedInUserId) {
     List<Notification> notifications = new LinkedList<>();
@@ -208,9 +216,11 @@ public class UserDetailsService {
         u ->
             u.getOrganization() == null
                 || !u.getOrganization().getName().equals(user.getOrganization().getName()));
-    String userDepartment = getUserAttribute(user, USER_ATTRIBUTE_DEPARTMENT);
-    String requestedRole = getUserAttribute(user, USER_ATTRIBUTE_REQUESTED_ROLE);
-    String notes = getUserAttribute(user, USER_ATTRIBUTE_ADDITIONAl_NOTES);
+    List<String> departmentAtrs = getUserAttribute(user, USER_ATTRIBUTE_DEPARTMENT);
+    String userDepartment = !departmentAtrs.isEmpty() ? departmentAtrs.get(0) : StringUtils.EMPTY;
+    List<String> requestedRoles = getUserAttribute(user, USER_ATTRIBUTE_REQUESTED_ROLE);
+    List<String> notesAtrs = getUserAttribute(user, USER_ATTRIBUTE_ADDITIONAl_NOTES);
+    String notes = !notesAtrs.isEmpty() ? notesAtrs.get(0) : StringUtils.EMPTY;;
 
     admins.forEach(
         admin -> {
@@ -223,7 +233,7 @@ public class UserDetailsService {
                   .recipientFirstName(admin.getFirstName())
                   .recipientLastName(admin.getLastName())
                   .department(userDepartment)
-                  .requestedRole(requestedRole)
+                  .requestedRoles(requestedRoles)
                   .notes(notes)
                   .build();
 
@@ -255,8 +265,7 @@ public class UserDetailsService {
     return notifications;
   }
 
-  private String getUserAttribute(User user, String attributeName) {
-    List<String> attribute = user.getAttributes() != null ? (List<String>) user.getAttributes().getOrDefault(attributeName, Collections.EMPTY_LIST) : Collections.EMPTY_LIST;
-    return !attribute.isEmpty() ? attribute.get(0) : StringUtils.EMPTY;
+  private List<String> getUserAttribute(User user, String attributeName) {
+    return user.getAttributes() != null ? (List<String>) user.getAttributes().getOrDefault(attributeName, Collections.EMPTY_LIST) : Collections.EMPTY_LIST;
   }
 }

@@ -7,6 +7,7 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
@@ -151,6 +152,8 @@ public class AqlMapperTest {
         .publicAql(false)
         .createDate(OffsetDateTime.now())
         .modifiedDate(OffsetDateTime.now())
+        .category(AqlCategory.builder()
+                .id(3L).build())
         .build();
   }
 }
