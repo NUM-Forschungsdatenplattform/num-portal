@@ -275,8 +275,7 @@ public class AqlService {
 
   public Page<AqlCategory> getAqlCategories(Pageable pageable, SearchCriteria searchCriteria) {
     Optional<Sort> sortBy = validateAndGetSort(searchCriteria);
-    PageRequest pageRequest = sortBy.isPresent() ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortBy.get()) :
-                                                   PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
+    PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortBy.get());
     return aqlCategoryRepository.findAllCategories(pageRequest);
   }
 
@@ -343,7 +342,7 @@ public class AqlService {
         return Optional.of(JpaSort.unsafe(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()), "name->>'en'"));
       }
     }
-    return Optional.empty();
+    return Optional.of(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
   }
   private Optional<Sort> validateAndGetSortForAQLQuery(SearchCriteria searchCriteria) {
     if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
