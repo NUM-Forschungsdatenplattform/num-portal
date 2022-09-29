@@ -45,7 +45,7 @@ public class NumLogger {
       logApiOperations(
           joinPoint, (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     } catch (Exception e) {
-      log.error("Cannot log audit log {}", e);
+      log.error("Cannot log audit log {}", e.getMessage());
     }
   }
 
@@ -55,7 +55,7 @@ public class NumLogger {
       return;
     }
 
-    Class clazz = joinPoint.getTarget().getClass();
+    Class<?> clazz = joinPoint.getTarget().getClass();
     String url = getRequestUrl(joinPoint, requestMethod, clazz);
 
     Logger logger = LoggerFactory.getLogger(clazz);
@@ -70,10 +70,10 @@ public class NumLogger {
             getPayload(joinPoint)));
   }
 
-  private String getRequestUrl(JoinPoint joinPoint, RequestMethod requestMethod, Class clazz) {
+  private String getRequestUrl(JoinPoint joinPoint, RequestMethod requestMethod, Class<?> clazz) {
     MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
     Method method = methodSignature.getMethod();
-    RequestMapping requestMapping = (RequestMapping) clazz.getAnnotation(RequestMapping.class);
+    RequestMapping requestMapping = clazz.getAnnotation(RequestMapping.class);
 
     switch (requestMethod.name()) {
       case POST:
