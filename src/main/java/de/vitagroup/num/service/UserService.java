@@ -287,38 +287,11 @@ public class UserService {
   /**
    * Retrieved a list of users that match the search criteria
    *
-   * @param approved  Indicates that the user has been approved by the admin
-   * @param search    A string contained in username, first or last name, or email
-   * @param withRoles flag whether to add roles to the user structure, if present, or not
+   * @param searchCriteria filter[approved]  Indicates that the user has been approved by the admin,
+   *                      filter[search]    A string contained in username, first or last name, or email
+   *                      filter[withRoles] flag whether to add roles to the user structure, if present, or not
    * @return the users that match the search parameters and with optional roles if indicated
    */
-  public Set<User> searchUsers(
-      String loggedInUserId,
-      Boolean approved,
-      String search,
-      Boolean withRoles,
-      List<String> callerRoles) {
-
-    UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
-
-    Set<User> users = keycloakFeign.searchUsers(search, MAX_USER_COUNT);
-    if (users == null) {
-      return Collections.emptySet();
-    }
-    users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
-    users.forEach(this::addUserDetails);
-
-    if ((withRoles != null && withRoles) || Roles.isProjectLead(callerRoles)) {
-      users.forEach(this::addRoles);
-    }
-
-    if (approved != null) {
-      users.removeIf(user -> approved ? user.isNotApproved() : user.isApproved());
-    }
-
-    return filterByCallerRole(users, callerRoles, loggedInUser);
-  }
-
   @Transactional
   public Page<User> searchUsersWithPagination(String loggedInUserId, List<String> callerRoles, SearchCriteria searchCriteria, Pageable pageable) {
 
@@ -484,39 +457,6 @@ public class UserService {
 
     return notifications;
   }
-
-  private Set<User> filterByCallerRole(
-      Set<User> users, List<String> callerRoles, UserDetails loggedInUser) {
-    if (callerRoles.contains(Roles.SUPER_ADMIN)) {
-      return users;
-    }
-
-    Set<User> outputSet = new HashSet<>();
-
-    if (Roles.isOrganizationAdmin(callerRoles) && loggedInUser.getOrganization() != null) {
-      Long loggedInOrgId = loggedInUser.getOrganization().getId();
-      users.forEach(
-          user -> {
-            log.info("Processed user {} ", user);
-            if (user.getOrganization() != null
-                && loggedInOrgId.equals(user.getOrganization().getId())) {
-              outputSet.add(user);
-            }
-          });
-    }
-
-    if (Roles.isProjectLead(callerRoles)) {
-      users.forEach(
-          user -> {
-            if (user.getRoles() != null && user.getRoles().contains(Roles.RESEARCHER)) {
-              outputSet.add(user);
-            }
-          });
-    }
-
-    return outputSet;
-  }
-
   private void deleteNotVerifiedUser(String userId) {
     try {
       User user = keycloakFeign.getUser(userId);

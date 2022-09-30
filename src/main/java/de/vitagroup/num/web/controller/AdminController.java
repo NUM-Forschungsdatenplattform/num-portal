@@ -7,18 +7,11 @@ import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
-import de.vitagroup.num.service.exception.implementation.CustomException;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
-import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import java.util.List;
-import java.util.Set;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.data.domain.Page;
@@ -28,14 +21,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping(value = "/admin/", produces = "application/json")
@@ -143,30 +134,6 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("user")
-  @ApiOperation(value = "Retrieves a set of users that match the search string")
-  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
-  public ResponseEntity<Set<User>> searchUsers(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @RequestParam(required = false)
-          @ApiParam(
-              value =
-                  "A flag for controlling whether to list approved or not approved users, omitting it returns both)")
-          Boolean approved,
-      @RequestParam(required = false)
-          @ApiParam(value = "A string contained in username, first or last name, or email")
-          String search,
-      @RequestParam(required = false)
-          @ApiParam(
-              value =
-                  "A flag for controlling whether to include user's roles in the response (a bit slower)")
-          Boolean withRoles) {
-    return ResponseEntity.ok(
-        userService.searchUsers(
-            principal.getSubject(), approved, search, withRoles, Roles.extractRoles(principal)));
-  }
-
-  @AuditLog
-  @GetMapping("user/all")
   @ApiOperation(value = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
   public ResponseEntity<Page<User>> searchUsersWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable,
