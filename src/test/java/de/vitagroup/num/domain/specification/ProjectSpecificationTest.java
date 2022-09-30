@@ -2,6 +2,7 @@ package de.vitagroup.num.domain.specification;
 
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,7 +49,7 @@ public class ProjectSpecificationTest {
         Path statusPath = Mockito.mock(Path.class);
         Mockito.when(root.get("status")).thenReturn(statusPath);
         Map<String, String> filter = new HashMap<>();
-        filter.put("type", SearchFilter.ORGANIZATION.name());
+        filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
         ProjectSpecification ps = ProjectSpecification.builder()
                 .filter(filter)
                 .roles(Arrays.asList(Roles.STUDY_APPROVER))
@@ -69,8 +70,10 @@ public class ProjectSpecificationTest {
         Path statusPath = Mockito.mock(Path.class);
         Mockito.when(root.get("status")).thenReturn(statusPath);
         Mockito.when(coordinator.get("userId")).thenReturn(Mockito.mock(Path.class));
+        Mockito.when(coordinator.get("userId").in(Mockito.anyCollection())).thenReturn(Mockito.mock(Predicate.class));
+        Mockito.when(criteriaBuilder.upper(root.get("name"))).thenReturn(Mockito.mock(Path.class));
         Map<String, String> filter = new HashMap<>();
-        filter.put("search", "search me");
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "search me");
         Set<String> usersUUID = new HashSet<>();
         usersUUID.add("user-id-1");
         usersUUID.add("user-id-2");
@@ -84,6 +87,23 @@ public class ProjectSpecificationTest {
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(1)).get("status");
         Mockito.verify(reasearcher, Mockito.times(1)).get("userId");
+    }
+
+    @Test
+    public void getOwnedSpecificationTest() {
+        Join coordinator = Mockito.mock(Join.class);
+        Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(coordinator);
+        Mockito.when(root.get("status")).thenReturn(Mockito.mock(Path.class));
+        Mockito.when(coordinator.get("userId")).thenReturn(Mockito.mock(Path.class));
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.OWNED.name());
+        ProjectSpecification projectSpecification = ProjectSpecification.builder()
+                .filter(filter)
+                .loggedInUserId("userId")
+                .roles(Arrays.asList(Roles.STUDY_COORDINATOR))
+                .build();
+        projectSpecification.toPredicate(root, query, criteriaBuilder);
+        Mockito.verify(root, Mockito.times(2)).get("status");
     }
 
 }

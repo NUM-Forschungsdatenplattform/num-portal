@@ -1,7 +1,6 @@
 package de.vitagroup.num.domain.repository;
 
 import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
