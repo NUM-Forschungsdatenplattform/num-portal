@@ -35,11 +35,11 @@ public class NumLogger {
   private static final String GET = "GET";
 
   @Before("@annotation(AuditLog)")
-  public void logMethodCall(JoinPoint joinPoint) {
+  public boolean logMethodCall(JoinPoint joinPoint) {
 
     try {
       if (SecurityContextHolder.getContext().getAuthentication() == null) {
-        return;
+        return true;
       }
 
       logApiOperations(
@@ -47,6 +47,7 @@ public class NumLogger {
     } catch (Exception e) {
       log.error("Cannot log audit log {}", e.getMessage());
     }
+    return true;
   }
 
   private void logApiOperations(JoinPoint joinPoint, Jwt principal) {
