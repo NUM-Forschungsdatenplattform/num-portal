@@ -83,6 +83,8 @@ public class ProjectSpecification implements Specification<Project> {
                             predicates.add(searchByStatus(root, Arrays.asList(ProjectStatus.ARCHIVED)));
                             break;
                         }
+                        case ALL:
+                            throw new IllegalArgumentException("Invalid filter type received");
                     }
                 }
                 if (SearchCriteria.FILTER_SEARCH_BY_KEY.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {

@@ -122,4 +122,20 @@ public class ProjectSpecificationTest {
         projectSpecification.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldHandleNotSupportedFilterType() {
+        Join coordinator = Mockito.mock(Join.class);
+        Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(coordinator);
+        Mockito.when(coordinator.join("organization", JoinType.INNER)).thenReturn(Mockito.mock(Join.class));
+        Mockito.when(root.get("status")).thenReturn(Mockito.mock(Path.class));
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ALL.name());
+        ProjectSpecification projectSpecification = ProjectSpecification.builder()
+                .filter(filter)
+                .loggedInUserId("userId")
+                .roles(Arrays.asList(Roles.STUDY_COORDINATOR))
+                .build();
+        projectSpecification.toPredicate(root, query, criteriaBuilder);
+    }
 }

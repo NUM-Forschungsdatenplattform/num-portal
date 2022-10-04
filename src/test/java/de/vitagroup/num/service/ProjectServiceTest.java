@@ -1530,6 +1530,12 @@ public class ProjectServiceTest {
     Assert.assertTrue(result);
   }
 
+  @Test
+  public void existsByIdTest() {
+    projectService.exists(9L);
+    Mockito.verify(projectRepository, Mockito.times(1)).existsById(Mockito.eq(9L));
+  }
+
   @Before
   public void setup() {
     when(userDetailsService.getUserDetailsById("researcher1"))
