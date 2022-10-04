@@ -1397,6 +1397,13 @@ public class ProjectServiceTest {
   }
 
   @Test
+  public void shouldNotGetAnyProject() {
+    List<ProjectInfoDto> result = projectService.getLatestProjectsInfo(0, Arrays.asList(STUDY_COORDINATOR));
+    Assert.assertTrue(result.isEmpty());
+    verify(projectRepository, times(0)).findLatestProjects(Mockito.anyInt(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+  }
+
+  @Test
   public void deleteProjectTest() {
     String userId = "approvedCoordinatorId";
     UserDetails userDetails = UserDetails.builder()
@@ -1488,6 +1495,12 @@ public class ProjectServiceTest {
     when(templateService.createSelectCompositionQuery(Mockito.any())).thenReturn(aqlDto);
     projectService.getExportResponseBody("select * from dummy", 2L, "approvedCoordinatorId", ExportType.json, true);
     Mockito.verify(cohortService, times(1)).executeCohort(Mockito.any(Cohort.class), Mockito.eq(false));
+  }
+
+  @Test
+  public void getExportResponseBodyAsCSVTest() {
+    projectService.getExportResponseBody(QUERY_5, 2L, "approvedCoordinatorId", ExportType.csv, false);
+    Mockito.verify(cohortService, times(1)).executeCohort(Mockito.anyLong(), Mockito.eq(false));
   }
 
   @Test

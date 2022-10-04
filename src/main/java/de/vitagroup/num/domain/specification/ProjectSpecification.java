@@ -73,7 +73,7 @@ public class ProjectSpecification implements Specification<Project> {
                             break;
                         }
                         case ORGANIZATION: {
-                            if(loggedInUserOrganizationId != null) {
+                            if (Objects.nonNull(loggedInUserOrganizationId)) {
                                 predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
                             }
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
