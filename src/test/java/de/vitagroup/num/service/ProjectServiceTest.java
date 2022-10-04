@@ -31,6 +31,7 @@ import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.ehrbase.client.aql.field.EhrFields;
+import org.ehrbase.response.openehr.QueryResponseData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -43,6 +44,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1486,6 +1488,21 @@ public class ProjectServiceTest {
     when(templateService.createSelectCompositionQuery(Mockito.any())).thenReturn(aqlDto);
     projectService.getExportResponseBody("select * from dummy", 2L, "approvedCoordinatorId", ExportType.json, true);
     Mockito.verify(cohortService, times(1)).executeCohort(Mockito.any(Cohort.class), Mockito.eq(false));
+  }
+
+  @Test
+  public void streamResponseAsZipTest() {
+    QueryResponseData responseData = new QueryResponseData();
+    responseData.setQuery("Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]");
+    List<Map<String, String>> columns = new ArrayList<>(List.of(Map.of("path", "/ehr_id/value"), Map.of("uuid", "c/uuid")));
+    List<List<Object>> rows =
+            List.of(
+                    new ArrayList<>(List.of("test-ehrId", Map.of("_type", "COMPOSITION", "uuid", "test1"))),
+                    new ArrayList<>(List.of("test-ehrId2", Map.of("_type", "COMPOSITION", "uuid", "test2"))));
+    responseData.setColumns(columns);
+    responseData.setRows(rows);
+    boolean result = projectService.streamResponseAsZip(Arrays.asList(responseData), "filestart", new ByteArrayOutputStream());
+    Assert.assertTrue(result);
   }
 
   @Before
