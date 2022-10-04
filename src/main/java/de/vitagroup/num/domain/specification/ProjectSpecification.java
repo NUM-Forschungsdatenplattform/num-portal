@@ -104,7 +104,7 @@ public class ProjectSpecification implements Specification<Project> {
             // IN FE all tag shows all projects based on roles except archived ones
             filterPredicate = criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED);
         }
-        if (Objects.nonNull(filterPredicate)) {
+        if (filterPredicate != null) {
             return criteriaBuilder.and(finalRoleBasedPredicate, filterPredicate);
         } else {
             return finalRoleBasedPredicate;
