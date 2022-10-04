@@ -1504,6 +1504,18 @@ public class ProjectServiceTest {
   }
 
   @Test
+  public void getManagerExportResponseBodyTest() {
+    CohortDto cohortDto =
+            CohortDto.builder().name("Cohort name").projectId(1L).build();
+    Mockito.when(userDetailsService.checkIsUserApproved("approvedManagerId")).thenReturn(UserDetails.builder()
+                    .approved(true)
+                    .userId("approvedManagerId")
+            .build());
+    projectService.getManagerExportResponseBody(cohortDto, Arrays.asList("template-1"), "approvedManagerId", ExportType.json);
+
+  }
+
+  @Test
   public void streamResponseAsZipTest() {
     QueryResponseData responseData = new QueryResponseData();
     responseData.setQuery("Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]");
