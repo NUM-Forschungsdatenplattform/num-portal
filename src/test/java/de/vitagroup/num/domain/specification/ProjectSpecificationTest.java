@@ -35,7 +35,6 @@ public class ProjectSpecificationTest {
                 .builder()
                 .roles(Arrays.asList(Roles.STUDY_COORDINATOR))
                 .loggedInUserId("userId")
-                .loggedInUserOrganizationId(3L)
                 .build();
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");
