@@ -17,10 +17,7 @@ import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
-import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
-import de.vitagroup.num.service.notification.dto.ProjectStatusChangeRequestNotification;
+import de.vitagroup.num.service.notification.dto.*;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
@@ -1354,6 +1351,50 @@ public class ProjectServiceTest {
 
     assertThat(notificationSent.size(), is(2));
     assertThat(notificationSent.get(0).getClass(), is(ProjectCloseNotification.class));
+  }
+
+  @Test
+  public void shouldSendNotificationWhenTransitionToPendingProject() {
+    Project projectToEdit =
+            Project.builder()
+                    .name("Project")
+                    .id(77L)
+                    .status(CHANGE_REQUEST)
+                    .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+                    .researchers(
+                            List.of(
+                                    UserDetails.builder().userId("researcher1").build(),
+                                    UserDetails.builder().userId("researcher2").build()))
+                    .build();
+
+    when(projectRepository.findById(77L)).thenReturn(Optional.of(projectToEdit));
+
+    ProjectDto projectDto =
+            ProjectDto.builder()
+                    .name("Project is edited")
+                    .id(77L)
+                    .status(PENDING)
+                    .coordinator(User.builder().id("approvedCoordinatorId").build())
+                    .researchers(List.of(UserDetailsDto.builder().userId("researcher1").build()))
+                    .build();
+    User user = User.builder()
+            .id("user-id")
+            .firstName("approver-firstname")
+            .emailVerified(true)
+            .email("approver@vitagroup.de").build();
+    Mockito.when(userService.getByRole(Roles.STUDY_APPROVER)).thenReturn(Set.of(user));
+    projectService.updateProject(
+            projectDto,
+            77L,
+            "approvedCoordinatorId",
+            List.of(STUDY_APPROVER, STUDY_COORDINATOR));
+
+    verify(projectRepository, times(1)).save(any());
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(ProjectApprovalRequestNotification.class));
   }
 
   @Test
