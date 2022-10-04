@@ -92,7 +92,7 @@ public class ProjectSpecification implements Specification<Project> {
                     if (CollectionUtils.isNotEmpty(ownersUUID)) {
                         authorNameLike = coordinator.get("userId").in(ownersUUID);
                     }
-                    if (authorNameLike != null) {
+                    if (Objects.nonNull(authorNameLike)) {
                         predicates.add(criteriaBuilder.or(projectNameLike, authorNameLike));
                     } else {
                         predicates.add(projectNameLike);
@@ -104,7 +104,7 @@ public class ProjectSpecification implements Specification<Project> {
             // IN FE all tag shows all projects based on roles except archived ones
             filterPredicate = criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED);
         }
-        if (filterPredicate != null) {
+        if (Objects.nonNull(filterPredicate)) {
             return criteriaBuilder.and(finalRoleBasedPredicate, filterPredicate);
         } else {
             return finalRoleBasedPredicate;
