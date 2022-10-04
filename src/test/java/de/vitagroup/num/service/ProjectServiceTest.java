@@ -7,12 +7,14 @@ import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
+import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
+import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
@@ -39,6 +41,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -46,7 +49,9 @@ import org.springframework.util.MultiValueMap;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -127,6 +132,15 @@ public class ProjectServiceTest {
 
   @Mock
   private TemplateService templateService;
+
+  @Mock
+  private ZarsService zarsService;
+
+  @Mock
+  private ProjectTransitionRepository projectTransitionRepository;
+
+  @Spy
+  private ModelMapper modelMapper;
 
   @Spy private ResponseFilter responseFilter;
 
@@ -918,8 +932,15 @@ public class ProjectServiceTest {
     Project projectToEdit =
         Project.builder()
             .name("Project")
-            .status(ProjectStatus.REVIEWING)
+            .status(REVIEWING)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+            .researchers(Arrays.asList(UserDetails.builder()
+                    .userId("approvedResearcherId")
+                    .organization(Organization.builder()
+                            .id(23L)
+                            .name("organization 23")
+                            .build())
+                    .build()))
             .build();
 
     when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
@@ -1461,6 +1482,25 @@ public class ProjectServiceTest {
     projectService.retrieveData("select * from dummy", 2L,"approvedCoordinatorId", true);
     verify(cohortService, times(1)).executeCohort(Mockito.any(Cohort.class), Mockito.eq(false));
   }
+  @Test
+  public void retrieveDataCustomConfigurationTest() {
+    when(projectRepository.findById(99L))
+            .thenReturn(
+                    Optional.of(
+                            Project.builder()
+                                    .id(99L)
+                                    .status(PUBLISHED)
+                                    .cohort(Cohort.builder().id(99L).build())
+                                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+                                    .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+                                    .usedOutsideEu(false)
+                                    .build()));
+    when(cohortService.executeCohort(99L, false)).thenReturn(Set.of("some-ehr-id"));
+    QueryResponseData queryResponseData = new QueryResponseData();
+    Mockito.when(ehrBaseService.executeRawQuery(Mockito.any(AqlDto.class), Mockito.eq(99L))).thenReturn(Arrays.asList(queryResponseData));
+    projectService.retrieveData(QUERY_1, 99L,"approvedCoordinatorId", false);
+    verify(cohortService, times(1)).executeCohort(Mockito.eq(99L), Mockito.eq(false));
+  }
 
   @Test
   public void getExportFilenameBodyTest() {
@@ -1669,5 +1709,9 @@ public class ProjectServiceTest {
     when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
     when(cohortService.executeCohort(any(), any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     when(privacyProperties.getMinHits()).thenReturn(0);
+    Mockito.when(projectTransitionRepository.findAllByProjectIdAndFromStatusAndToStatus(Mockito.anyLong(), Mockito.any(ProjectStatus.class), Mockito.any(ProjectStatus.class)))
+            .thenReturn(Optional.of(Arrays.asList(ProjectTransition.builder()
+                    .createDate(Instant.now().atOffset(ZoneOffset.UTC))
+                    .build())));
   }
 }
