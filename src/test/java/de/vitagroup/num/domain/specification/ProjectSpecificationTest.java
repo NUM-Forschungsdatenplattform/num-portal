@@ -41,10 +41,11 @@ public class ProjectSpecificationTest {
     }
 
     @Test
-    public void roleApproverWithFilterSpecificationTest() {
+    public void roleApproverWithFilterByOrganizationTest() {
         Join coordinator = Mockito.mock(Join.class);
         Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(coordinator);
-        Mockito.when(coordinator.join("organization", JoinType.INNER)).thenReturn(Mockito.mock(Join.class));
+        Join coordinatorOrganization = Mockito.mock(Join.class);
+        Mockito.when(coordinator.join("organization", JoinType.INNER)).thenReturn(coordinatorOrganization);
         Path statusPath = Mockito.mock(Path.class);
         Mockito.when(root.get("status")).thenReturn(statusPath);
         Map<String, String> filter = new HashMap<>();
@@ -57,13 +58,13 @@ public class ProjectSpecificationTest {
                 .build();
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");
+        Mockito.verify(coordinatorOrganization, Mockito.times(1)).get("id");
     }
 
     @Test
-    public void roleResearcherWithFilterSpecificationTest() {
+    public void roleResearcherWithSearchTest() {
         Join coordinator = Mockito.mock(Join.class);
         Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(coordinator);
-        Mockito.when(coordinator.join("organization", JoinType.INNER)).thenReturn(Mockito.mock(Join.class));
         Join reasearcher = Mockito.mock(Join.class);
         Mockito.when(root.join("researchers", JoinType.LEFT)).thenReturn(reasearcher);
         Path statusPath = Mockito.mock(Path.class);
@@ -80,7 +81,6 @@ public class ProjectSpecificationTest {
                 .filter(filter)
                 .roles(Arrays.asList(Roles.RESEARCHER))
                 .loggedInUserId("userId")
-                .loggedInUserOrganizationId(3L)
                 .ownersUUID(usersUUID)
                 .build();
         ps.toPredicate(root, query, criteriaBuilder);
@@ -126,7 +126,6 @@ public class ProjectSpecificationTest {
     public void shouldHandleNotSupportedFilterType() {
         Join coordinator = Mockito.mock(Join.class);
         Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(coordinator);
-        Mockito.when(coordinator.join("organization", JoinType.INNER)).thenReturn(Mockito.mock(Join.class));
         Mockito.when(root.get("status")).thenReturn(Mockito.mock(Path.class));
         Map<String, String> filter = new HashMap<>();
         filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ALL.name());
@@ -136,5 +135,22 @@ public class ProjectSpecificationTest {
                 .roles(Arrays.asList(Roles.STUDY_COORDINATOR))
                 .build();
         projectSpecification.toPredicate(root, query, criteriaBuilder);
+    }
+    @Test
+    public void approverWithoutOrganizationSpecificationTest() {
+        Join coordinator = Mockito.mock(Join.class);
+        Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(coordinator);
+        Path statusPath = Mockito.mock(Path.class);
+        Mockito.when(root.get("status")).thenReturn(statusPath);
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
+        ProjectSpecification ps = ProjectSpecification.builder()
+                .filter(filter)
+                .roles(Arrays.asList(Roles.STUDY_APPROVER))
+                .loggedInUserId("userId")
+                .build();
+        ps.toPredicate(root, query, criteriaBuilder);
+        Mockito.verify(root, Mockito.times(2)).get("status");
+        Mockito.verify(coordinator, Mockito.never()).join(Mockito.eq("organization"));
     }
 }

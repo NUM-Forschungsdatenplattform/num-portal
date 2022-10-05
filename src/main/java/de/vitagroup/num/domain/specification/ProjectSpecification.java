@@ -42,7 +42,6 @@ public class ProjectSpecification implements Specification<Project> {
         query.groupBy(root.get("id"));
 
         Join<Project, UserDetails> coordinator = root.join("coordinator", JoinType.INNER);
-        Join<UserDetails, Organization> coordinatorOrganization = coordinator.join("organization", JoinType.INNER);
 
         if (roles.contains(Roles.STUDY_COORDINATOR)) {
             Predicate coordinatorPredicate = criteriaBuilder.equal(coordinator.get("userId"), loggedInUserId);
@@ -74,6 +73,7 @@ public class ProjectSpecification implements Specification<Project> {
                         }
                         case ORGANIZATION: {
                             if (Objects.nonNull(loggedInUserOrganizationId)) {
+                                Join<UserDetails, Organization> coordinatorOrganization = coordinator.join("organization", JoinType.INNER);
                                 predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
                             }
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
