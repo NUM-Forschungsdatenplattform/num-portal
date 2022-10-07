@@ -13,6 +13,7 @@ public class ProjectStatusChangeNotification extends Notification {
 
   protected final String approverFirstName;
   protected final String approverLastName;
+  protected final String approverEmail;
   protected final String projectTitle;
   protected final ProjectStatus projectStatus;
   protected final ProjectStatus oldProjectStatus;
@@ -28,7 +29,7 @@ public class ProjectStatusChangeNotification extends Notification {
       String projectTitle,
       ProjectStatus projectStatus,
       ProjectStatus oldProjectStatus,
-      long projectId) {
+      long projectId, String approverEmail) {
 
     this.recipientEmail = recipientEmail;
     this.recipientFirstName = recipientFirstName;
@@ -39,6 +40,7 @@ public class ProjectStatusChangeNotification extends Notification {
     this.projectStatus = projectStatus;
     this.oldProjectStatus = oldProjectStatus;
     this.projectId = projectId;
+    this.approverEmail = approverEmail;
   }
 
   @Override
@@ -60,6 +62,7 @@ public class ProjectStatusChangeNotification extends Notification {
         copyright,
         url,
         getProjectPreviewUrl(url, projectId),
-        oldProjectStatus);
+        oldProjectStatus,
+        approverEmail);
   }
 }
