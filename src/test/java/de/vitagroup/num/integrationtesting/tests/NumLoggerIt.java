@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +23,13 @@ public class NumLoggerIt extends IntegrationTest {
     @InjectMocks
     private NumLogger numLogger;
 
+    @Before
+    public void setup() {
+        numLogger = org.mockito.Mockito.mock(NumLogger.class);
+    }
+
     @Test(expected = Exception.class)
     public void logMethodCallException() {
-        NumLogger numLogger = org.mockito.Mockito.mock(NumLogger.class);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(new BearerTokenAuthenticationToken(
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"));
@@ -37,7 +42,6 @@ public class NumLoggerIt extends IntegrationTest {
 
     @Test
     public void logMethodCallAuthentication() {
-        NumLogger numLogger = org.mockito.Mockito.mock(NumLogger.class);
         SecurityContextHolder.getContext().setAuthentication(null);
         when(numLogger.logMethodCall(null))
                 .thenReturn(Boolean.FALSE);
@@ -50,7 +54,6 @@ public class NumLoggerIt extends IntegrationTest {
         context.setAuthentication(new BearerTokenAuthenticationToken(
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"));
         SecurityContextHolder.setContext(context);
-        NumLogger numLogger = org.mockito.Mockito.mock(NumLogger.class);
         when(numLogger.logMethodCall(null))
                 .thenReturn(Boolean.TRUE);
         assertTrue(numLogger.logMethodCall(null));
