@@ -37,6 +37,7 @@ public class NumLoggerIt extends IntegrationTest {
 
     @Test
     public void logMethodCallAuthentication() {
+        NumLogger numLogger = org.mockito.Mockito.mock(NumLogger.class);
         SecurityContextHolder.getContext().setAuthentication(null);
         when(numLogger.logMethodCall(null))
                 .thenReturn(Boolean.FALSE);
