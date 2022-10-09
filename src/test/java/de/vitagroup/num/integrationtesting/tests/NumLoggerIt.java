@@ -38,6 +38,8 @@ public class NumLoggerIt extends IntegrationTest {
     @Test
     public void logMethodCallAuthentication() {
         SecurityContextHolder.getContext().setAuthentication(null);
+        when(numLogger.logMethodCall(null))
+                .thenReturn(Boolean.FALSE);
         assertFalse(numLogger.logMethodCall(null));
     }
 
