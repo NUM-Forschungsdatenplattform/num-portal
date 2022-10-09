@@ -39,7 +39,7 @@ public class NumLogger {
 
     try {
       if (SecurityContextHolder.getContext().getAuthentication() == null) {
-        return true;
+        return false;
       }
 
       logApiOperations(
