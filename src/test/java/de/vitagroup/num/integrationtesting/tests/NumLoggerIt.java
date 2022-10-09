@@ -1,5 +1,6 @@
 package de.vitagroup.num.integrationtesting.tests;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import org.junit.Test;
@@ -17,20 +18,23 @@ public class NumLoggerIt extends IntegrationTest {
     @Autowired
     public MockMvc mockMvc;
 
-    private static final String LOG_LEVEL_PATH = "/admin/log-level";
-
     @InjectMocks
     private NumLogger numLogger;
 
     @Test(expected = Exception.class)
-    public void healthEndPointTest() {
+    public void logMethodCallException() {
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(new BearerTokenAuthenticationToken(
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"));
         SecurityContextHolder.setContext(context);
         when(numLogger.logMethodCall(null))
                 .thenThrow(new Exception("Cannot log audit log class java.lang.String cannot be cast to class org.springframework.security.oauth2.jwt.Jwt (java.lang.String is in module java.base of loader 'bootstrap'; org.springframework.security.oauth2.jwt.Jwt is in unnamed module of loader 'app')"));
-        numLogger.logMethodCall(null);
+        assertTrue(numLogger.logMethodCall(null));
+    }
+
+    @Test
+    public void logMethodCallAuthentication() {
+        assertTrue(numLogger.logMethodCall(null));
     }
 
 }
