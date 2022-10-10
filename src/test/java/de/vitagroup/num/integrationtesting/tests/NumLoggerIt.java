@@ -2,35 +2,27 @@ package de.vitagroup.num.integrationtesting.tests;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.aspectj.lang.JoinPoint;
-import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.BearerTokenAuthenticationToken;
 
 import de.vitagroup.num.service.logger.NumLogger;
 
-public class NumLoggerIt /*extends IntegrationTest*/ {
+public class NumLoggerIt extends IntegrationTest {
 
-//    @Autowired
-//    public MockMvc mockMvc;
-
+    @InjectMocks
     private NumLogger numLogger;
 
     JoinPoint joinPoint = null;
 
-    @Before
-    public void setup() {
-        numLogger = mock(NumLogger.class);
-    }
-
     @Test(expected = Exception.class)
     public void logMethodCallException() {
+        NumLogger numLogger = org.mockito.Mockito.mock(NumLogger.class);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(new BearerTokenAuthenticationToken(
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"));
@@ -43,13 +35,7 @@ public class NumLoggerIt /*extends IntegrationTest*/ {
 
     @Test
     public void logMethodCallAuthentication() {
-//        SecurityContext context = SecurityContextHolder.createEmptyContext();
-//        context.setAuthentication(null);
-//        SecurityContextHolder.setContext(context);
-//        SecurityContextHolder.getContext().setAuthentication(null);
-        when(numLogger.logMethodCall(joinPoint))
-                .thenReturn(false);
-//        doReturn(false).when(numLogger).logMethodCall(null);
+        SecurityContextHolder.getContext().setAuthentication(null);
         assertFalse(numLogger.logMethodCall(joinPoint));
     }
 
@@ -59,6 +45,7 @@ public class NumLoggerIt /*extends IntegrationTest*/ {
         context.setAuthentication(new BearerTokenAuthenticationToken(
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"));
         SecurityContextHolder.setContext(context);
+        NumLogger numLogger = org.mockito.Mockito.mock(NumLogger.class);
         when(numLogger.logMethodCall(joinPoint))
                 .thenReturn(Boolean.TRUE);
         assertTrue(numLogger.logMethodCall(joinPoint));
