@@ -13,7 +13,7 @@ import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.service.ehrbase.CompositionResponseDataBuilder;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.SystemException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

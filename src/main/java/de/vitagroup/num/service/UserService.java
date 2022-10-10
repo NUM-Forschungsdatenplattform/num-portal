@@ -4,38 +4,45 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.SearchCriteria;
+import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.specification.UserDetailsSpecification;
 import de.vitagroup.num.mapper.OrganizationMapper;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
 import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
 import javax.annotation.Nullable;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 @Service
@@ -58,6 +65,8 @@ public class UserService {
 
   private static final String KEYCLOACK_DEFAULT_ROLES_PREFIX = "default-roles-";
 
+  private final List<String> availableSortFields = Arrays.asList("firstname", "lastname", "organization", "registrationDate");
+
   @Transactional
   public void deleteUser(String userId, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
@@ -70,8 +79,8 @@ public class UserService {
         deleteNotVerifiedUser(userId);
         userDetailsService.deleteUserDetails(userId);
       } else {
-        throw new BadRequestException(
-            String.format("Cannot delete user: %s; user is approved", userId));
+        throw new BadRequestException(UserService.class, CANNOT_DELETE_APPROVED_USER,
+                String.format(CANNOT_DELETE_APPROVED_USER, userId));
       }
     }
   }
@@ -125,11 +134,11 @@ public class UserService {
       return user;
 
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException(
-          "An error has occurred, cannot retrieve users, please try again later");
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
       log.warn("User not found in keycloak: {}", userId);
-      throw new ResourceNotFound("User not found");
+      throw new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, userId));
     }
   }
 
@@ -159,7 +168,8 @@ public class UserService {
     UserDetails userToChange =
         userDetailsService
             .getUserDetailsById(userId)
-            .orElseThrow(() -> new SystemException("User not found"));
+            .orElseThrow(() -> new SystemException(UserService.class, USER_NOT_FOUND,
+                    String.format(USER_NOT_FOUND, userId)));
 
     UserDetails callerDetails = userDetailsService.checkIsUserApproved(callerUserId);
 
@@ -169,8 +179,7 @@ public class UserService {
         .getOrganization()
         .getId()
         .equals(userToChange.getOrganization().getId())) {
-      throw new ForbiddenException(
-          "Organization admin can only manage users in their own organization.");
+      throw new ForbiddenException(UserService.class, ORGANIZATION_ADMIN_CAN_ONLY_MANAGE_USERS_IN_THEIR_OWN_ORGANIZATION);
     }
 
     Role[] removeRoles;
@@ -195,7 +204,7 @@ public class UserService {
               .peek(
                   role -> {
                     if (role == null) {
-                      throw new BadRequestException("Unknown Role");
+                      throw new BadRequestException(UserService.class, UNKNOWN_ROLE);
                     }
                   })
               .collect(Collectors.toList())
@@ -203,11 +212,11 @@ public class UserService {
 
       if (Arrays.stream(removeRoles)
           .anyMatch(role -> !Roles.isAllowedToSet(role.getName(), callerRoles))) {
-        throw new ForbiddenException("Not allowed to remove that role");
+        throw new ForbiddenException(UserService.class, NOT_ALLOWED_TO_REMOVE_THAT_ROLE);
       }
       if (Arrays.stream(addRoles)
           .anyMatch(role -> !Roles.isAllowedToSet(role.getName(), callerRoles))) {
-        throw new ForbiddenException("Not allowed to set that role");
+        throw new ForbiddenException(UserService.class, NOT_ALLOWED_TO_SET_THAT_ROLE);
       }
 
       if (removeRoles.length > 0) {
@@ -219,9 +228,10 @@ public class UserService {
       }
 
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException("An error has occurred, please try again later");
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
-      throw new ResourceNotFound("Role or user not found");
+      throw new ResourceNotFound(UserService.class, ROLE_OR_USER_NOT_FOUND);
     }
 
     Set<Role> current = keycloakFeign.getRolesOfUser(userId);
@@ -235,10 +245,21 @@ public class UserService {
     try {
       return keycloakFeign.getRolesOfUser(userId);
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException(
-          "An error has occurred, cannot retrieve user roles, please try again later");
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
-      throw new ResourceNotFound("No roles found");
+      throw new ResourceNotFound(UserService.class, NO_ROLES_FOUND);
+    }
+  }
+
+  private Set<String> getUserRoleNames(String userId) {
+    try {
+      return keycloakFeign.getRolesOfUser(userId).stream().map(Role::getName).collect(Collectors.toSet());
+    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
+    } catch (FeignException.NotFound e) {
+      throw new ResourceNotFound(UserService.class, NO_ROLES_FOUND);
     }
   }
 
@@ -287,7 +308,7 @@ public class UserService {
     users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
     users.forEach(this::addUserDetails);
 
-    if ((withRoles != null && withRoles) || callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+    if ((withRoles != null && withRoles) || Roles.isProjectLead(callerRoles)) {
       users.forEach(this::addRoles);
     }
 
@@ -296,6 +317,108 @@ public class UserService {
     }
 
     return filterByCallerRole(users, callerRoles, loggedInUser);
+  }
+
+  @Transactional
+  public Page<User> searchUsersWithPagination(String loggedInUserId, List<String> callerRoles, SearchCriteria searchCriteria, Pageable pageable) {
+
+    UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
+    validateSort(searchCriteria);
+
+    Set<User> users = new HashSet<>();
+    boolean searchCriteriaProvided = searchCriteria.getFilter() != null &&
+            searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY);
+    if (searchCriteriaProvided) {
+      String searchValue = searchCriteria.getFilter() != null &&
+              searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY) ? (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY) : null;
+      users = keycloakFeign.searchUsers(searchValue, (int) pageable.getOffset(), pageable.getPageSize());
+    }
+    if (CollectionUtils.isEmpty(users) && searchCriteriaProvided) {
+      return Page.empty(pageable);
+    }
+    Set<String> usersUUID = users.stream().map(User::getId).collect(Collectors.toSet());
+
+    UserDetailsSpecification userDetailsSpecification = buildUserSpecification(loggedInUser, callerRoles, searchCriteria, usersUUID);
+
+    Page<UserDetails> userDetailsPage = userDetailsService.getUsers(pageable, userDetailsSpecification);
+    List<UserDetails> userDetailsList = userDetailsPage.getContent();
+    Set<String> filteredUsersUUID = userDetailsList.stream().map(UserDetails::getUserId).collect(Collectors.toSet());
+    List<User> filteredUsers = new ArrayList<>();
+
+    Boolean withRoles = searchCriteria.getFilter() != null &&
+            searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_USER_WITH_ROLES_KEY) ?
+            Boolean.valueOf((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_USER_WITH_ROLES_KEY)) : null;
+    boolean loadUserRoles = (withRoles != null && withRoles) || Roles.isProjectLead(callerRoles);
+    for (String uuid : filteredUsersUUID) {
+      User user;
+      Optional<User> keycloackUser = users.stream().filter(u -> uuid.equals(u.getId())).findFirst();
+      if (keycloackUser.isEmpty()) {
+        user = getUserById(uuid, loadUserRoles);
+      } else {
+        user = keycloackUser.get();
+        addUserDetails(user);
+        if (loadUserRoles) {
+          addRoles(user);
+        }
+      }
+      filteredUsers.add(user);
+    }
+    sortUsers(filteredUsers, searchCriteria);
+    return new PageImpl<>(new ArrayList<>(filteredUsers), pageable, userDetailsPage.getTotalElements());
+  }
+
+  private UserDetailsSpecification buildUserSpecification(UserDetails loggedInUser, List<String> callerRoles, SearchCriteria searchCriteria, Set<String> usersUUID) {
+    Boolean approved = null;
+    Long organizationId = null;
+
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_APPROVED_KEY)) {
+      approved = Boolean.valueOf((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_APPROVED_KEY));
+    }
+    if (!Roles.isSuperAdmin(callerRoles) && Roles.isOrganizationAdmin(callerRoles) && loggedInUser.getOrganization() != null) {
+      // super admin receives all users
+      // organization admin should receive users only for his organization
+      organizationId = loggedInUser.getOrganization().getId();
+    }
+    if (!Roles.isSuperAdmin(callerRoles) && Roles.isProjectLead(callerRoles)) {
+      // project lead/study_coordinator should see only researchers
+      usersUUID.removeIf(uuid -> !getUserRoleNames(uuid).contains(Roles.RESEARCHER));
+    }
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_BY_TYPE_KEY)) {
+      if (SearchFilter.ORGANIZATION.equals(SearchFilter.valueOf((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_BY_TYPE_KEY)))) {
+        organizationId = loggedInUser.getOrganization().getId();
+      }
+    }
+    UserDetailsSpecification userDetailsSpecification = UserDetailsSpecification.builder()
+            .approved(approved)
+            .loggedInUserOrganizationId(organizationId)
+            .usersUUID(usersUUID)
+            .build();
+    return userDetailsSpecification;
+  }
+
+  private void sortUsers(List<User> users, SearchCriteria searchCriteria) {
+    String field = searchCriteria.getSortBy() != null ? searchCriteria.getSortBy() : "registrationDate";
+    Sort.Direction sortOrder = searchCriteria.getSort() != null ?
+            Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()) : Sort.Direction.DESC;
+    Comparator<User> userComparator = getComparator(field);
+    if (sortOrder.isAscending()) {
+      Collections.sort(users, Comparator.nullsLast(userComparator));
+    } else {
+      Collections.sort(users, Comparator.nullsLast(userComparator.reversed()));
+    }
+  }
+
+  private Comparator<User> getComparator(String field) {
+    switch (field) {
+      case "firstname":
+        return Comparator.comparing(User::getFirstName);
+      case "lastname":
+        return Comparator.comparing(User::getLastName);
+      case "organization":
+        return Comparator.comparing(user -> user.getOrganization() != null ? user.getOrganization().getName() : StringUtils.EMPTY);
+      default:
+        return Comparator.comparing(User::getCreatedTimestamp);
+    }
   }
 
   @Transactional
@@ -370,10 +493,11 @@ public class UserService {
 
     Set<User> outputSet = new HashSet<>();
 
-    if (callerRoles.contains(Roles.ORGANIZATION_ADMIN) && loggedInUser.getOrganization() != null) {
+    if (Roles.isOrganizationAdmin(callerRoles) && loggedInUser.getOrganization() != null) {
       Long loggedInOrgId = loggedInUser.getOrganization().getId();
       users.forEach(
           user -> {
+            log.info("Processed user {} ", user);
             if (user.getOrganization() != null
                 && loggedInOrgId.equals(user.getOrganization().getId())) {
               outputSet.add(user);
@@ -381,7 +505,7 @@ public class UserService {
           });
     }
 
-    if (callerRoles.contains(Roles.STUDY_COORDINATOR)) {
+    if (Roles.isProjectLead(callerRoles)) {
       users.forEach(
           user -> {
             if (user.getRoles() != null && user.getRoles().contains(Roles.RESEARCHER)) {
@@ -399,12 +523,11 @@ public class UserService {
       if (user != null && BooleanUtils.isFalse(user.getEmailVerified())) {
         keycloakFeign.deleteUser(userId);
       } else {
-        throw new BadRequestException(
-            "Cannot delete user. User is enabled and email address is verified");
+        throw new BadRequestException(UserService.class, CANNOT_DELETE_ENABLED_USER);
       }
     } catch (Exception e) {
-      throw new SystemException(
-          "An error has occurred while deleting user. Please try again later");
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     }
   }
 
@@ -420,6 +543,7 @@ public class UserService {
     }
   }
 
+  @CacheEvict(cacheNames = USERS_CACHE, key = "#userIdToChange")
   public void changeUserName(
       @NotNull String userIdToChange,
       @NotNull UserNameDto userName,
@@ -435,17 +559,48 @@ public class UserService {
         && belongToSameOrganization(loggedInUser, userToChange))) {
       updateName(userIdToChange, userName);
     } else {
-      throw new ForbiddenException(
-          "Can only change own name, org admin names of the people in the organization and superuser all names.");
+      throw new ForbiddenException(UserService.class,
+              CAN_ONLY_CHANGE_OWN_NAME_ORG_ADMIN_NAMES_OF_THE_PEOPLE_IN_THE_ORGANIZATION_AND_SUPERUSER_ALL_NAMES);
     }
 
     notificationService.send(collectUserNameUpdateNotification(userIdToChange, loggedInUserId));
   }
 
+  /**
+   * Retrieved a list of users UUID that match the search criteria
+   * @param search A string contained in username, first or last name, or email
+   * @param maxUsersCount
+   * @return
+   */
+  public Set<String> findUsersUUID(String search, int offset, int maxUsersCount) {
+    Set<String> userUUIDs = new HashSet<>();
+    ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
+    if (usersCache != null && usersCache.getNativeCache().size() != 0) {
+      ConcurrentMap<Object, Object> users = usersCache.getNativeCache();
+      for (Map.Entry<Object, Object> entry : users.entrySet()) {
+        if (entry.getValue() instanceof User) {
+          User user = (User) entry.getValue();
+          if (StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) {
+            userUUIDs.add((String) entry.getKey());
+          }
+        }
+      }
+      return userUUIDs;
+    }
+
+    Set<User> users = keycloakFeign.searchUsers(search, offset, maxUsersCount);
+    if (users == null) {
+      return Collections.emptySet();
+    }
+    users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
+
+    return users.stream().map(User::getId).collect(Collectors.toSet());
+  }
+
   private void updateName(String userId, UserNameDto userNameDto) {
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
     if (userRaw == null) {
-      throw new SystemException("Fetching user from Keycloak failed");
+      throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
     }
     userRaw.put("firstName", userNameDto.getFirstName());
     userRaw.put("lastName", userNameDto.getLastName());
@@ -462,5 +617,13 @@ public class UserService {
 
   private boolean isSelf(UserDetails user1, UserDetails user2) {
     return Objects.equals(user1.getUserId(), user2.getUserId());
+  }
+
+  private void validateSort(SearchCriteria searchCriteria) {
+    if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
+      if (!availableSortFields.contains(searchCriteria.getSortBy())) {
+        throw new BadRequestException(ProjectService.class, String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
+      }
+    }
   }
 }

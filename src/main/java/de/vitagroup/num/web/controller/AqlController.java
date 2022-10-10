@@ -1,15 +1,13 @@
 package de.vitagroup.num.web.controller;
 
+import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.dto.AqlCategoryDto;
-import de.vitagroup.num.domain.dto.AqlDto;
-import de.vitagroup.num.domain.dto.AqlSearchFilter;
-import de.vitagroup.num.domain.dto.ParameterOptionsDto;
-import de.vitagroup.num.domain.dto.SlimAqlDto;
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.service.ehrbase.ParameterService;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
@@ -21,6 +19,10 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @AllArgsConstructor
 @RequestMapping(value = "/aql", produces = "application/json")
-public class AqlController {
+public class AqlController extends CustomizedExceptionHandler {
 
   private final AqlService aqlService;
   private final ParameterService parameterService;
@@ -98,7 +100,7 @@ public class AqlController {
           @RequestParam(required = false)
           String name,
       @ApiParam(value = "Type of the search", required = true) @RequestParam @Valid @NotNull
-          AqlSearchFilter filter) {
+      SearchFilter filter) {
     return ResponseEntity.ok(
         aqlService.searchAqls(name, filter, principal.getSubject()).stream()
             .map(mapper::convertToDto)
@@ -115,6 +117,20 @@ public class AqlController {
         aqlService.getVisibleAqls(principal.getSubject()).stream()
             .map(mapper::convertToDto)
             .collect(Collectors.toList()));
+  }
+
+  @AuditLog
+  @GetMapping("/all")
+  @ApiOperation(
+          value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
+  public ResponseEntity<Page<AqlDto>> getAqlsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                            @PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
+    Page<Aql> searchResult = aqlService.getVisibleAqls(principal.getSubject(), pageable, searchCriteria);
+    List<AqlDto> content = searchResult.getContent().stream()
+            .map(mapper::convertToDto)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
 
   @AuditLog
@@ -168,6 +184,17 @@ public class AqlController {
         aqlService.getAqlCategories().stream()
             .map(category -> modelMapper.map(category, AqlCategoryDto.class))
             .collect(Collectors.toList()));
+  }
+
+  @AuditLog
+  @GetMapping(value = "/category/all")
+  @ApiOperation(value = "Retrieves the list of categories.")
+  public ResponseEntity<Page<AqlCategoryDto>> getAqlCategoriesWithPagination(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
+    Page<AqlCategory> searchResult = aqlService.getAqlCategories(pageable, searchCriteria);
+    List<AqlCategoryDto> content = searchResult.getContent().stream()
+            .map(category -> modelMapper.map(category, AqlCategoryDto.class))
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
 
   @AuditLog

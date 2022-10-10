@@ -5,35 +5,48 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.dto.AqlSearchFilter;
+import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.SearchFilter;
+import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
+import de.vitagroup.num.domain.specification.AqlSpecification;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.PrivacyException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import javax.transaction.Transactional;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.PrivacyException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
+
+import javax.transaction.Transactional;
+import java.time.OffsetDateTime;
+import java.util.*;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class AqlService {
 
+  private static final String AUTHOR_NAME = "author";
+
+  private static final String ORGANIZATION_NAME = "organization";
+  private static final List<String> AQL_CATEGORY_SORT_FIELDS = Arrays.asList("name-de", "name-en");
+  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList("name", AUTHOR_NAME, ORGANIZATION_NAME, "createDate", "category");
   private final AqlRepository aqlRepository;
   private final AqlCategoryRepository aqlCategoryRepository;
   private final EhrBaseService ehrBaseService;
@@ -41,6 +54,8 @@ public class AqlService {
   private final UserDetailsService userDetailsService;
   private final PrivacyProperties privacyProperties;
   private final AqlEditorAqlService aqlEditorAqlService;
+
+  private final UserService userService;
 
   /**
    * Counts the number of aql queries existing in the platform
@@ -51,20 +66,17 @@ public class AqlService {
     return aqlRepository.count();
   }
 
-  public Optional<Aql> getAqlById(Long id) {
-    return aqlRepository.findById(id);
-  }
-
   public Aql getAqlById(Long id, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
     var aql =
-        aqlRepository.findById(id).orElseThrow(() -> new ResourceNotFound("Aql not found: " + id));
+        aqlRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFound(AqlService.class, AQL_NOT_FOUND, String.format(AQL_NOT_FOUND, id)));
 
     if (aql.isViewable(loggedInUserId)) {
       return aql;
     } else {
-      throw new ForbiddenException("Cannot access this aql.");
+      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_AQL);
     }
   }
 
@@ -73,11 +85,87 @@ public class AqlService {
     return aqlRepository.findAllOwnedOrPublic(loggedInUserId);
   }
 
+  public Page<Aql> getVisibleAqls(String loggedInUserId, Pageable pageable, SearchCriteria searchCriteria) {
+    UserDetails userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
+
+    Optional<Sort> optSortBy = validateAndGetSortForAQLQuery(searchCriteria);
+    Pageable pageRequest;
+    Page<Aql> aqlPage;
+    List<Aql> aqlQueries;
+    final boolean sortByAqlColumns = isSortByAqlQueryColumns(searchCriteria);
+    if (optSortBy.isPresent() && sortByAqlColumns) {
+      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), optSortBy.get());
+    } else {
+      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+    }
+    Set<String> usersUUID = null;
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
+      String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
+      usersUUID = userService.findUsersUUID(searchValue, (int) pageRequest.getOffset(), pageRequest.getPageSize());
+    }
+    String language = StringUtils.isNotEmpty(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : "de";
+    AqlSpecification aqlSpecification = AqlSpecification.builder()
+            .filter(searchCriteria.getFilter())
+            .loggedInUserId(loggedInUserId)
+            .loggedInUserOrganizationId(userDetails.getOrganization().getId())
+            .ownersUUID(usersUUID)
+            .language(language)
+            .build();
+    aqlPage = aqlRepository.findAll(aqlSpecification, pageRequest);
+    aqlQueries = new ArrayList<>(aqlPage.getContent());
+
+    if (optSortBy.isPresent() && !sortByAqlColumns) {
+      sortAqlQueries(aqlQueries, optSortBy, language);
+    }
+    return new PageImpl<>(aqlQueries, pageable, aqlPage.getTotalElements());
+  }
+
+  private void sortAqlQueries(List<Aql> aqlQueries, Optional<Sort> sortOptional, String lang) {
+    if (sortOptional.isPresent()) {
+      Sort sort = sortOptional.get();
+      Sort.Order organizationOrder = sort.getOrderFor(ORGANIZATION_NAME);
+      Sort.Order authorOrder = sort.getOrderFor(AUTHOR_NAME);
+      Sort.Order aqlCategoryOrder = sort.getOrderFor("category");
+      if (organizationOrder != null) {
+        Comparator<Aql> byOrgName = Comparator.comparing(aql -> aql.getOwner().getOrganization().getName());
+        Sort.Direction sortOrder = organizationOrder.getDirection();
+        if (sortOrder.isAscending()) {
+          Collections.sort(aqlQueries, Comparator.nullsLast(byOrgName));
+        } else {
+          Collections.sort(aqlQueries, Comparator.nullsLast(byOrgName.reversed()));
+        }
+      } else if (authorOrder != null) {
+        Comparator<Aql> byAuthorName = Comparator.comparing(aql -> {
+          User owner = userService.getOwner(aql.getOwner().getUserId());
+          return owner.getFullName();
+        });
+        Sort.Direction sortOrder = authorOrder.getDirection();
+        if (sortOrder.isAscending()) {
+          Collections.sort(aqlQueries, Comparator.nullsLast(byAuthorName));
+        } else {
+          Collections.sort(aqlQueries, Comparator.nullsLast(byAuthorName.reversed()));
+        }
+      } else if (aqlCategoryOrder != null) {
+        Comparator<Aql> byAqlCategory = Comparator.comparing(aql -> aql.getCategory() != null ? aql.getCategory().getName().get(lang) : StringUtils.EMPTY);
+        Sort.Direction sortOrder = aqlCategoryOrder.getDirection();
+        if (sortOrder.isAscending()) {
+          Collections.sort(aqlQueries, Comparator.nullsLast(byAqlCategory));
+        } else {
+          Collections.sort(aqlQueries, Comparator.nullsLast(byAqlCategory.reversed()));
+        }
+      }
+    }
+  }
+
+  private boolean isSortByAqlQueryColumns(SearchCriteria searchCriteria) {
+    return "name".equals(searchCriteria.getSortBy()) || "createDate".equals(searchCriteria.getSortBy());
+  }
+
   public Aql createAql(Aql aql, String loggedInUserId) {
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (userDetails.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
+      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
     }
 
     aql.setOwner(userDetails);
@@ -93,13 +181,11 @@ public class AqlService {
     var aqlToEdit =
         aqlRepository
             .findById(aqlId)
-            .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + aqlId));
+            .orElseThrow(() -> new ResourceNotFound(AqlService.class, CANNOT_FIND_AQL, String.format(CANNOT_FIND_AQL, aqlId)));
 
     if (aqlToEdit.hasEmptyOrDifferentOwner(loggedInUserId)) {
-      throw new ForbiddenException(
-          String.format(
-              "%s: %s %s.",
-              "Aql edit for aql with id", aqlId, "not allowed. Aql has different owner"));
+      throw new ForbiddenException( AqlService.class, AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER,
+          String.format(AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER, aqlId));
     }
 
     aqlToEdit.setName(aql.getName());
@@ -122,13 +208,13 @@ public class AqlService {
     var aql =
         aqlRepository
             .findById(id)
-            .orElseThrow(() -> new ResourceNotFound("Cannot find aql: " + id));
+            .orElseThrow(() -> new ResourceNotFound(AqlService.class, CANNOT_FIND_AQL, String.format(CANNOT_FIND_AQL, id)));
 
     if ((aql.isPublicAql() && (roles.contains(Roles.CRITERIA_EDITOR) || roles.contains(Roles.SUPER_ADMIN)))
         || (!aql.hasEmptyOrDifferentOwner(loggedInUserId) && roles.contains(Roles.CRITERIA_EDITOR))) {
       deleteAql(id);
     } else {
-      throw new ForbiddenException("Cannot delete aql: " + id);
+      throw new ForbiddenException(AqlService.class, CANNOT_DELETE_AQL, String.format(CANNOT_DELETE_AQL, id));
     }
   }
 
@@ -141,22 +227,24 @@ public class AqlService {
    * @param loggedInUserId the user ID of the user sending the search request
    * @return the list of AQLs that match the search filters
    */
-  public List<Aql> searchAqls(String name, AqlSearchFilter filter, String loggedInUserId) {
+  public List<Aql> searchAqls(String name, SearchFilter filter, String loggedInUserId) {
 
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (userDetails.isNotApproved()) {
-      throw new ForbiddenException("Cannot access this resource. Logged in user not approved.");
+      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
     }
+
+    String searchInput = StringUtils.isNotEmpty(name) ? name.toUpperCase() : name;
 
     switch (filter) {
       case ALL:
-        return aqlRepository.findAllOwnedOrPublicByName(userDetails.getUserId(), name);
+        return aqlRepository.findAllOwnedOrPublicByName(userDetails.getUserId(), searchInput);
       case OWNED:
-        return aqlRepository.findAllOwnedByName(userDetails.getUserId(), name);
+        return aqlRepository.findAllOwnedByName(userDetails.getUserId(), searchInput);
       case ORGANIZATION:
         return aqlRepository.findAllOrganizationOwnedByName(
-            userDetails.getOrganization().getId(), userDetails.getUserId(), name);
+            userDetails.getOrganization().getId(), userDetails.getUserId(), searchInput);
       default:
         return List.of();
     }
@@ -172,11 +260,11 @@ public class AqlService {
       ehrIds =
           ehrBaseService.retrieveEligiblePatientIds(Aql.builder().query(aql.getQuery()).build());
     } catch (AqlParseException e) {
-      throw new BadRequestException(e.getMessage());
+      throw new BadRequestException(AqlParseException.class, e.getLocalizedMessage(), e.getMessage());
     }
 
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException("Too few matches, results withheld for privacy reasons.");
+      throw new PrivacyException(AqlService.class, TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds.size();
   }
@@ -185,16 +273,23 @@ public class AqlService {
     return aqlCategoryRepository.findAllCategories();
   }
 
+  public Page<AqlCategory> getAqlCategories(Pageable pageable, SearchCriteria searchCriteria) {
+    Optional<Sort> sortBy = validateAndGetSort(searchCriteria);
+    PageRequest pageRequest = sortBy.isPresent() ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortBy.get()) :
+                                                   PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
+    return aqlCategoryRepository.findAllCategories(pageRequest);
+  }
+
   public AqlCategory createAqlCategory(AqlCategory aqlCategory) {
     return aqlCategoryRepository.save(aqlCategory);
   }
 
   public AqlCategory updateAqlCategory(AqlCategory aqlCategory, Long categoryId) {
     if (categoryId == null) {
-      throw new BadRequestException("Category id can't be null");
+      throw new BadRequestException(AqlCategory.class, CATEGORY_ID_CANT_BE_NULL);
     }
     if (!aqlCategoryRepository.existsById(categoryId)) {
-      throw new ResourceNotFound("Category by id " + categoryId + "Not found");
+      throw new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND, String.format(CATEGORY_BY_ID_NOT_FOUND, categoryId));
     }
     aqlCategory.setId(categoryId);
     return aqlCategoryRepository.save(aqlCategory);
@@ -206,13 +301,12 @@ public class AqlService {
       if (aqlCategoryRepository.existsById(id)) {
         aqlCategoryRepository.deleteById(id);
       } else {
-        throw new ResourceNotFound("Category with id " + id + " does not exist.");
+        throw new ResourceNotFound(AqlService.class, CATEGORY_WITH_ID_DOES_NOT_EXIST, String.format(CATEGORY_WITH_ID_DOES_NOT_EXIST, id));
       }
     } else {
-      throw new BadRequestException("The category is not empty, can't delete it.");
+      throw new BadRequestException(AqlService.class, THE_CATEGORY_IS_NOT_EMPTY_CANT_DELETE_IT);
     }
   }
-
   public boolean existsById(Long aqlId) {
     return aqlRepository.existsById(aqlId);
   }
@@ -222,9 +316,10 @@ public class AqlService {
         aqlEditorAqlService.validateAql(Result.builder().q(query).build());
     if (!response.isValid()) {
       try {
-        throw new BadRequestException(mapper.writeValueAsString(response));
+        throw new BadRequestException(QueryValidationResponse.class, COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE,
+                String.format(COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE, mapper.writeValueAsString(response)));
       } catch (JsonProcessingException e) {
-        log.error("Could not serialize aql validation response", e);
+        log.error(COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE, e);
       }
     }
   }
@@ -233,7 +328,31 @@ public class AqlService {
     try {
       aqlRepository.deleteById(id);
     } catch (EmptyResultDataAccessException e) {
-      throw new BadRequestException(String.format("%s: %s", "Invalid aql id", id));
+      throw new BadRequestException(AqlService.class, INVALID_AQL_ID, String.format("%s: %s", INVALID_AQL_ID, id));
     }
+  }
+
+  private Optional<Sort> validateAndGetSort(SearchCriteria searchCriteria) {
+    if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
+      if (!AQL_CATEGORY_SORT_FIELDS.contains(searchCriteria.getSortBy())) {
+        throw new BadRequestException(AqlService.class, String.format("Invalid %s sortBy field for aql", searchCriteria.getSortBy()));
+      }
+      if ("name-de".equals(searchCriteria.getSortBy())) {
+        return Optional.of(JpaSort.unsafe(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()), "name->>'de'"));
+      } else if ("name-en".equals(searchCriteria.getSortBy())) {
+        return Optional.of(JpaSort.unsafe(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()), "name->>'en'"));
+      }
+    }
+    return Optional.empty();
+  }
+  private Optional<Sort> validateAndGetSortForAQLQuery(SearchCriteria searchCriteria) {
+    if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
+      if (!AQL_QUERY_SORT_FIELDS.contains(searchCriteria.getSortBy())) {
+        throw new BadRequestException(AqlService.class, String.format("Invalid %s sortBy field for aql queries", searchCriteria.getSortBy()));
+      }
+      return Optional.of(Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
+              searchCriteria.getSortBy()));
+    }
+    return Optional.empty();
   }
 }

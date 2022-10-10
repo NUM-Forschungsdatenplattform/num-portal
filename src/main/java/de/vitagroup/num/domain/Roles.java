@@ -61,4 +61,10 @@ public class Roles {
   public static boolean isOrganizationAdmin(List<String> roles) {
     return roles.contains(Roles.ORGANIZATION_ADMIN);
   }
+
+  public static boolean isProjectLead(List<String> roles) {
+    return roles.contains(Roles.STUDY_COORDINATOR);
+  }
+
+
 }

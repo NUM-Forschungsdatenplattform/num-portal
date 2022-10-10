@@ -7,6 +7,7 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.mockito.Mockito.when;
 
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
@@ -15,7 +16,7 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.service.UserService;
-import de.vitagroup.num.web.exception.ResourceNotFound;
+
 import java.time.OffsetDateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -151,6 +152,8 @@ public class AqlMapperTest {
         .publicAql(false)
         .createDate(OffsetDateTime.now())
         .modifiedDate(OffsetDateTime.now())
+        .category(AqlCategory.builder()
+                .id(3L).build())
         .build();
   }
 }

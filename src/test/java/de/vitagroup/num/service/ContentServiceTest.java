@@ -1,5 +1,9 @@
 package de.vitagroup.num.service;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULDN_T_PARSE_CARD;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULDN_T_PARSE_NAVIGATION_CONTENT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULDN_T_SAVE_CARD;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULDN_T_SAVE_NAVIGATION_CONTENT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,11 +21,16 @@ import de.vitagroup.num.domain.dto.CardDto;
 import de.vitagroup.num.domain.dto.CardDto.LocalizedPart;
 import de.vitagroup.num.domain.dto.NavigationItemDto;
 import de.vitagroup.num.domain.repository.ContentItemRepository;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import de.vitagroup.num.service.exception.SystemException;
+import joptsimple.internal.Strings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -148,5 +157,36 @@ public class ContentServiceTest {
     Content capturedArgument = argumentCaptor.getValue();
     assertThat(capturedArgument.getType(), is(ContentType.CARD));
     assertEquals(cardJson, capturedArgument.getContent());
+  }
+
+  @Test(expected = SystemException.class)
+  public void getNavigationItemsParsingErrors() {
+    when(repository.findByType(ContentType.NAVIGATION))
+            .thenThrow(new SystemException(ContentService.class, COULDN_T_PARSE_NAVIGATION_CONTENT,
+                    String.format(COULDN_T_PARSE_NAVIGATION_CONTENT, Strings.EMPTY)));
+    contentService.getNavigationItems();
+  }
+
+  @Test(expected = SystemException.class)
+  public void setNavigationItemsParsingErrors() {
+    when(repository.findByType(ContentType.NAVIGATION))
+            .thenThrow(new SystemException(ContentService.class, COULDN_T_SAVE_NAVIGATION_CONTENT, String.format(COULDN_T_SAVE_NAVIGATION_CONTENT, Strings.EMPTY)));
+    contentService.setNavigationItems(Collections.singletonList(new NavigationItemDto()));
+  }
+
+  @Test(expected = SystemException.class)
+  public void getCardsItemsParsingErrors() {
+    when(repository.findByType(ContentType.CARD))
+            .thenThrow(new SystemException(ContentService.class, COULDN_T_PARSE_CARD,
+                    String.format(COULDN_T_PARSE_CARD, Strings.EMPTY)));
+    contentService.getCards();
+  }
+
+  @Test(expected = SystemException.class)
+  public void setCardsItemsParsingErrors() {
+    when(repository.findByType(ContentType.CARD))
+            .thenThrow(new SystemException(ContentService.class, COULDN_T_SAVE_CARD,
+                    String.format(COULDN_T_SAVE_CARD, Strings.EMPTY)));
+    contentService.setCards(new ArrayList<>());
   }
 }

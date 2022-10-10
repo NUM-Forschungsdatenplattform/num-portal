@@ -1,23 +1,10 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.Comment;
-import de.vitagroup.num.domain.ExportType;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.dto.CommentDto;
-import de.vitagroup.num.domain.dto.ManagerProjectDto;
-import de.vitagroup.num.domain.dto.ProjectDto;
-import de.vitagroup.num.domain.dto.RawQueryDto;
-import de.vitagroup.num.mapper.CommentMapper;
-import de.vitagroup.num.mapper.ProjectMapper;
-import de.vitagroup.num.service.CommentService;
-import de.vitagroup.num.service.ProjectService;
-import de.vitagroup.num.service.ehrbase.Pseudonymity;
-import de.vitagroup.num.service.logger.AuditLog;
-import de.vitagroup.num.web.config.Role;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.dto.*;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
+
+import de.vitagroup.num.mapper.ProjectViewMapper;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -25,7 +12,12 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -46,10 +38,30 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import de.vitagroup.num.domain.Comment;
+import de.vitagroup.num.domain.ExportType;
+import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.dto.CommentDto;
+import de.vitagroup.num.domain.dto.ManagerProjectDto;
+import de.vitagroup.num.domain.dto.ProjectDto;
+import de.vitagroup.num.domain.dto.RawQueryDto;
+import de.vitagroup.num.mapper.CommentMapper;
+import de.vitagroup.num.mapper.ProjectMapper;
+import de.vitagroup.num.service.CommentService;
+import de.vitagroup.num.service.ProjectService;
+import de.vitagroup.num.service.ehrbase.Pseudonymity;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.logger.AuditLog;
+import de.vitagroup.num.web.config.Role;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import lombok.AllArgsConstructor;
+
 @RestController
 @AllArgsConstructor
 @RequestMapping(value = "/project", produces = "application/json")
-public class ProjectController {
+public class ProjectController extends CustomizedExceptionHandler {
 
   private final ProjectService projectService;
   private final CommentService commentService;
@@ -57,6 +69,7 @@ public class ProjectController {
   private final CommentMapper commentMapper;
   private final Pseudonymity pseudonymity;
 
+  private final ProjectViewMapper projectViewMapper;
   @AuditLog
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
@@ -70,6 +83,19 @@ public class ProjectController {
   }
 
   @AuditLog
+  @GetMapping("/all")
+  @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
+  public ResponseEntity<Page<ProjectViewTO>> getProjectsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable, SearchCriteria criteria) {
+    Page<Project> projectPage = projectService.getProjectsWithPagination(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable);
+    List<ProjectViewTO> content = projectPage.getContent()
+            .stream()
+            .map(projectViewMapper::convertToDto)
+            .collect(Collectors.toList());
+    return ResponseEntity.ok(new PageImpl<>(content, pageable, projectPage.getTotalElements()));
+  }
+
+  @AuditLog
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves a project by id")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -77,7 +103,7 @@ public class ProjectController {
     Optional<Project> project = projectService.getProjectById(id);
 
     if (project.isEmpty()) {
-      throw new ResourceNotFound("Project not found");
+      throw new ResourceNotFound(ProjectController.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, id));
     }
 
     return ResponseEntity.ok(projectMapper.convertToDto(project.get()));

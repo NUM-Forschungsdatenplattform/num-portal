@@ -1,5 +1,7 @@
 package de.vitagroup.num.service;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -27,10 +29,10 @@ import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.executors.CohortExecutor;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -342,10 +344,10 @@ public class CohortServiceTest {
         UserDetails.builder().userId("notApprovedUserId").approved(false).build();
 
     when(userDetailsService.checkIsUserApproved("notApprovedUserId"))
-        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
+        .thenThrow(new ForbiddenException(CohortServiceTest.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED));
 
     when(userDetailsService.checkIsUserApproved("missingUserID"))
-        .thenThrow(new SystemException("User not found"));
+        .thenThrow(new SystemException(CohortServiceTest.class, USER_NOT_FOUND));
 
     when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
 

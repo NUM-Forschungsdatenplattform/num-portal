@@ -3,8 +3,8 @@ package de.vitagroup.num.service;
 import de.vitagroup.num.domain.dto.TemplateMetadataDto;
 import de.vitagroup.num.mapper.TemplateMapper;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.SystemException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,6 +20,9 @@ import org.ehrbase.aqleditor.dto.containment.ContainmentDto;
 import org.ehrbase.aqleditor.service.AqlEditorContainmentService;
 import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
 import org.springframework.stereotype.Service;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_FIND_TEMPLATE;
 
 @Service
 @AllArgsConstructor
@@ -40,7 +43,7 @@ public class TemplateService {
   /**
    * Retrieves a list of all available templates metadata information
    *
-   * @return
+   * @return getAllTemplatesMetadata(String userId)
    */
   public List<TemplateMetadataDto> getAllTemplatesMetadata(String userId) {
     userDetailsService.checkIsUserApproved(userId);
@@ -58,10 +61,11 @@ public class TemplateService {
       if (containmentDto != null && StringUtils.isNotEmpty(containmentDto.getArchetypeId())) {
         return createQuery(containmentDto.getArchetypeId());
       } else {
-        throw new BadRequestException("Cannot find template: " + templateId);
+        throw new BadRequestException(TemplateService.class, CANNOT_FIND_TEMPLATE, String.format(CANNOT_FIND_TEMPLATE, templateId));
       }
-    } catch (Exception e) {
-      throw new SystemException("Cannot create query for template " + templateId);
+    } catch (SystemException e) {
+      throw new SystemException(TemplateService.class, CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID,
+              String.format(CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID, templateId));
     }
   }
 

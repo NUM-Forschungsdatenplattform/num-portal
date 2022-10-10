@@ -1,33 +1,48 @@
 package de.vitagroup.num.service;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.Mockito.*;
-
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
+import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.SearchFilter;
+import de.vitagroup.num.domain.dto.SearchCriteria;
+import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
 import de.vitagroup.num.domain.repository.AqlRepository;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
-import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import de.vitagroup.num.domain.specification.AqlSpecification;
+import de.vitagroup.num.properties.PrivacyProperties;
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
+import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
+import org.ehrbase.aqleditor.dto.aql.Result;
+import org.ehrbase.aqleditor.service.AqlEditorAqlService;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.JpaSort;
+
+import java.time.OffsetDateTime;
+import java.util.*;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AqlServiceTest {
@@ -38,6 +53,16 @@ public class AqlServiceTest {
 
   @Mock private UserDetailsService userDetailsService;
 
+  @Mock
+  private UserService userService;
+  @Mock
+  private AqlEditorAqlService aqlEditorAqlService;
+  @Mock
+  private EhrBaseService ehrBaseService;
+
+  @Mock
+  private PrivacyProperties privacyProperties;
+
   @InjectMocks private AqlService aqlService;
 
   @Before
@@ -46,12 +71,23 @@ public class AqlServiceTest {
         UserDetails.builder().userId("approvedUserId").approved(true).build();
 
     when(userDetailsService.checkIsUserApproved("notApprovedId"))
-        .thenThrow(new ForbiddenException("Cannot access this resource. User is not approved."));
+        .thenThrow(new ForbiddenException(AqlServiceTest.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED));
 
     when(userDetailsService.checkIsUserApproved("nonExistingUser"))
-        .thenThrow(new SystemException("User not found"));
+        .thenThrow(new SystemException(AqlServiceTest.class, USER_NOT_FOUND));
 
     when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
+
+    Organization orgA = Organization.builder()
+            .id(1L)
+            .name("aa some organization name")
+            .build();
+    UserDetails criteriaEditor = UserDetails.builder()
+            .userId("approvedCriteriaEditorId")
+            .approved(true)
+            .organization(orgA)
+            .build();
+    Mockito.when(userDetailsService.checkIsUserApproved("approvedCriteriaEditorId")).thenReturn(criteriaEditor);
 
     when(aqlRepository.findById(1L))
         .thenReturn(
@@ -75,6 +111,49 @@ public class AqlServiceTest {
     when(aqlRepository.save(any())).thenReturn(createAql(OffsetDateTime.now()));
 
     doThrow(EmptyResultDataAccessException.class).when(aqlRepository).deleteById(3L);
+  }
+
+  @Test
+  public void getAqlByIdTest() {
+    aqlService.getAqlById(1L, "approvedUserId");
+    Mockito.verify(aqlRepository, Mockito.times(1)).findById(Mockito.eq(1L));
+  }
+
+  @Test
+  public void searchOwnedAqlsTest() {
+    String searchInput = "dummy search";
+    aqlService.searchAqls(searchInput, SearchFilter.OWNED, "approvedUserId");
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedByName(Mockito.eq("approvedUserId"), Mockito.eq(searchInput.toUpperCase()));
+  }
+
+  @Test
+  public void searchAllAqlsTest() {
+    String searchInput = "text to search";
+    aqlService.searchAqls(searchInput, SearchFilter.ALL, "approvedUserId");
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedOrPublicByName(Mockito.eq("approvedUserId"), Mockito.eq(searchInput.toUpperCase()));
+  }
+
+  @Test
+  public void searchOrganizationAqlsTest() {
+    aqlService.searchAqls(null, SearchFilter.ORGANIZATION, "approvedCriteriaEditorId");
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOrganizationOwnedByName(1L, "approvedCriteriaEditorId", null);
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldHandleNotApprovedUserWhenSearchAql() {
+    aqlService.searchAqls(null, SearchFilter.OWNED, "notApprovedId");
+  }
+
+  @Test
+  public void getAqlSizeTest() {
+    SlimAqlDto aqlDto = new SlimAqlDto();
+    aqlDto.setQuery("select * from dummy_table");
+    Mockito.when(aqlEditorAqlService.validateAql(Mockito.any(Result.class))).thenReturn(QueryValidationResponse.builder()
+            .valid(true)
+            .build());
+    when(privacyProperties.getMinHits()).thenReturn(2);
+    Mockito.when(ehrBaseService.retrieveEligiblePatientIds(Mockito.any(Aql.class))).thenReturn(new HashSet<>(Arrays.asList("id1", "id2", "id3", "id4")));
+    aqlService.getAqlSize(aqlDto, "4");
   }
 
   @Test
@@ -130,6 +209,57 @@ public class AqlServiceTest {
   public void shouldCallRepoWhenSearchingAql() {
     aqlService.getAqlById(1L, "approvedUserId");
     verify(aqlRepository, times(1)).findById(any());
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void getAqlById() {
+    aqlService.getAqlById(1000L, "approvedUserId");
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void getAqlByIdForbiddenException() {
+    aqlService.getAqlById(2L, "approvedUserId");
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void updateAql() {
+    aqlService.updateAql(new Aql(), 1000L, "approvedUserId");
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void updateAqlForbiddenException() {
+    aqlService.updateAql(new Aql(), 2L, "approvedUserId");
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void deleteById() {
+    aqlService.deleteById(1000L, "approvedUserId", List.of(Roles.STUDY_COORDINATOR));
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void deleteByIdForbiddenException() {
+    aqlService.deleteById(1L, "approvedUserId", List.of());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void updateAqlCategory() {
+    aqlService.updateAqlCategory(new AqlCategory(),null);
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void updateAqlCategoryResourceNotFound() {
+    aqlService.updateAqlCategory(new AqlCategory(),1L);
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void deleteCategoryById() {
+    aqlService.deleteCategoryById(null);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void deleteCategoryByIdBadRequestException() {
+    when(aqlRepository.findByCategoryId(null)).thenReturn(Arrays.asList(new Aql()));
+    aqlService.deleteCategoryById(null);
   }
 
   @Test(expected = ForbiddenException.class)
@@ -244,6 +374,183 @@ public class AqlServiceTest {
   public void shouldGetAllCategories() {
     aqlService.getAqlCategories();
     verify(aqlCategoryRepository, times(1)).findAllCategories();
+  }
+
+  @Test
+  public void getAqlCategoriesWithPaginationTest() {
+    Pageable pageable = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));;
+    aqlService.getAqlCategories(pageable, new SearchCriteria());
+    verify(aqlCategoryRepository, times(1)).findAllCategories(Mockito.eq(pageable));
+  }
+
+  @Test
+  public void getAqlCategoriesWithPaginationAndSortByGermanNameTest() {
+    Pageable pageableWithoutSort = PageRequest.of(0,30);
+    aqlService.getAqlCategories(pageableWithoutSort, SearchCriteria.builder()
+            .sortBy("name-de")
+            .sort("ASC").build());
+    Pageable pageableWithSort = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
+    ArgumentCaptor<Pageable> pageableWithSortCapture = ArgumentCaptor.forClass(Pageable.class);
+    verify(aqlCategoryRepository, times(1)).findAllCategories(pageableWithSortCapture.capture());
+    Pageable capturedInput = pageableWithSortCapture.getValue();
+    Assert.assertEquals(pageableWithSort, capturedInput);
+  }
+
+  @Test
+  public void getAqlCategoriesWithPaginationAndSortByEnglishNameTest() {
+    Pageable pageableWithourSort = PageRequest.of(0,30);
+    aqlService.getAqlCategories(pageableWithourSort, SearchCriteria.builder()
+            .sortBy("name-en")
+            .sort("desc").build());
+    Pageable pageableWithSort = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.DESC, "name->>'en'"));
+    ArgumentCaptor<Pageable> pageableWithSortCapture = ArgumentCaptor.forClass(Pageable.class);
+    verify(aqlCategoryRepository, times(1)).findAllCategories(pageableWithSortCapture.capture());
+    Pageable capturedInput = pageableWithSortCapture.getValue();
+    Assert.assertEquals(pageableWithSort, capturedInput);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleMissingSortFieldWhenGetAqlCategories() {
+    Pageable pageable = PageRequest.of(0,50);
+    SearchCriteria searchCriteria = SearchCriteria.builder()
+            .sortBy("ASC")
+            .build();
+    aqlService.getAqlCategories(pageable, searchCriteria);
+    verify(aqlCategoryRepository, never());
+  }
+
+  @Test
+  public void countAqlsTest() {
+    aqlService.countAqls();
+    Mockito.verify(aqlRepository, Mockito.times(1)).count();
+  }
+
+  @Test
+  public void getVisibleAqlsTest() {
+    aqlService.getVisibleAqls("approvedUserId");
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedOrPublic("approvedUserId");
+  }
+
+  @Test
+  public void getVisibleAqlsWithPaginationAndSortByName() {
+    Pageable pageRequest = PageRequest.of(0, 100, Sort.by(Sort.Direction.ASC, "name"));
+    Aql aqlOne = Aql.builder()
+            .id(1L)
+            .name("aql test one")
+            .publicAql(true)
+            .query("select * from dummy_table")
+            .build();
+    Aql aqlTwo = Aql.builder()
+            .id(2L)
+            .name("aql test two")
+            .publicAql(true)
+            .query("select * from dummy_table where dummy column = ")
+            .build();
+    Mockito.when(aqlRepository.findAll(Mockito.any(AqlSpecification.class), Mockito.any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Arrays.asList(aqlOne, aqlTwo)));
+    ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
+    ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
+    aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
+            .sortBy("name")
+            .sort("asc")
+            .build());
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAll(specArgumentCaptor.capture(), pageableCapture.capture());
+    Pageable capturedInput = pageableCapture.getValue();
+    Assert.assertEquals(pageRequest, capturedInput);
+    AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
+    Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
+    Assert.assertEquals("de", aqlSpecification.getLanguage());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleInvalidSortTest() {
+    Pageable pageable = PageRequest.of(0,50);
+    SearchCriteria searchCriteria = SearchCriteria.builder()
+            .sort("dummyName")
+            .sortBy("ASC")
+            .build();
+    aqlService.getVisibleAqls("approvedCriteriaEditorId", pageable, searchCriteria);
+    verify(aqlRepository, never());
+  }
+
+  @Test
+  public void getVisibleAqlsWithPaginationAndSortByCategoryName() {
+    Pageable pageRequest = PageRequest.of(0, 100);
+    Map<String, String> tr1 = new HashMap<>();
+    tr1.put("en", "category one in english");
+    tr1.put("de", "category one in german");
+    Aql aqlOne = Aql.builder()
+            .id(1L)
+            .name("aql test one")
+            .publicAql(true)
+            .query("select * from dummy_table")
+            .category(AqlCategory.builder().id(1L).name(tr1).build())
+            .build();
+    Map<String, String> tr2 = new HashMap<>();
+    tr2.put("en", "category two in english");
+    tr2.put("de", "category two in german");
+    Aql aqlTwo = Aql.builder()
+            .id(2L)
+            .name("aql test two")
+            .publicAql(true)
+            .query("select * from dummy_table where dummy column = ")
+            .category(AqlCategory.builder().id(2L).name(tr2).build())
+            .build();
+    Mockito.when(aqlRepository.findAll(Mockito.any(AqlSpecification.class), Mockito.any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Arrays.asList(aqlOne, aqlTwo)));
+    ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
+    ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
+    Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
+            .sortBy("category")
+            .sort("DESC")
+            .build());
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAll(specArgumentCaptor.capture(), pageableCapture.capture());
+    Pageable capturedInput = pageableCapture.getValue();
+    Assert.assertEquals(pageRequest, capturedInput);
+    AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
+    Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
+    Assert.assertEquals("de", aqlSpecification.getLanguage());
+    List<Aql> filteredAql = aqlPage.getContent();
+    Assert.assertEquals(Long.valueOf(2L), filteredAql.get(0).getId());
+  }
+
+  @Test
+  public void getVisibleAqlsWithPaginationAndSortByAuthorName() {
+    Pageable pageRequest = PageRequest.of(0, 100);
+    when(userService.getOwner("approvedUserId")).thenReturn(User.builder().id("approvedUserId").firstName("Approver first name").lastName("Doe").build());
+    when(userService.getOwner("2ndApprovedUserId")).thenReturn(User.builder().id("2ndApprovedUserId").firstName("Second approver first name").lastName("Doe").build());
+    Aql aqlOne = Aql.builder()
+            .id(1L)
+            .name("aql test one")
+            .publicAql(true)
+            .query("select * from dummy_table")
+            .owner(UserDetails.builder().userId("approvedUserId").build())
+            .build();
+    Aql aqlTwo = Aql.builder()
+            .id(2L)
+            .name("aql test two")
+            .publicAql(true)
+            .query("select * from dummy_table where dummy column = ")
+            .owner(UserDetails.builder().userId("2ndApprovedUserId").build())
+            .build();
+    Mockito.when(aqlRepository.findAll(Mockito.any(AqlSpecification.class), Mockito.any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Arrays.asList(aqlOne, aqlTwo)));
+    ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
+    ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
+    Map<String, String> filter = new HashMap<>();
+    filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "search dummy");
+    Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
+            .sortBy("author")
+            .sort("ASC")
+            .filter(filter)
+            .build());
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAll(specArgumentCaptor.capture(), pageableCapture.capture());
+    Pageable capturedInput = pageableCapture.getValue();
+    Assert.assertEquals(pageRequest, capturedInput);
+    AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
+    Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
+    List<Aql> filteredAql = aqlPage.getContent();
+    Assert.assertEquals(Long.valueOf(1L), filteredAql.get(0).getId());
   }
 
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {

@@ -1,12 +1,5 @@
 package de.vitagroup.num.service;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
@@ -14,24 +7,31 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
+import de.vitagroup.num.domain.specification.UserDetailsSpecification;
+import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
 import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
-import de.vitagroup.num.web.exception.ResourceNotFound;
 import de.vitagroup.num.web.feign.KeycloakFeign;
-
-import java.util.*;
-
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserDetailsServiceTest {
@@ -174,6 +174,15 @@ public class UserDetailsServiceTest {
 
     assertThat(notificationSent.size(), is(1));
     assertThat(notificationSent.get(0).getClass(), is(NewUserNotification.class));
+  }
 
+  @Test
+  public void getUsersTest() {
+    Pageable pageable = PageRequest.of(0, 20);
+    UserDetailsSpecification userDetailsSpecification = UserDetailsSpecification.builder().approved(true).build();
+    ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+    userDetailsService.getUsers(pageable, userDetailsSpecification);
+    Mockito.verify(userDetailsRepository, Mockito.times(1)).findAll(argumentCaptor.capture(), Mockito.eq(pageable));
+    Assert.assertEquals(true, argumentCaptor.getValue().getApproved());
   }
 }
