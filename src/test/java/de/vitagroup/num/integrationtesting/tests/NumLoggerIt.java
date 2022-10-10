@@ -47,9 +47,9 @@ public class NumLoggerIt /*extends IntegrationTest*/ {
 //        context.setAuthentication(null);
 //        SecurityContextHolder.setContext(context);
 //        SecurityContextHolder.getContext().setAuthentication(null);
-//        when(numLogger.logMethodCall(joinPoint))
-//                .thenReturn(false);
-        doReturn(false).when(numLogger).logMethodCall(null);
+        when(numLogger.logMethodCall(joinPoint))
+                .thenReturn(false);
+//        doReturn(false).when(numLogger).logMethodCall(null);
         assertFalse(numLogger.logMethodCall(joinPoint));
     }
 
