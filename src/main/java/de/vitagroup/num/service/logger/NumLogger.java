@@ -70,7 +70,7 @@ public class NumLogger {
             getPayload(joinPoint)));
   }
 
-  private String getRequestUrl(JoinPoint joinPoint, RequestMethod requestMethod, Class<?> clazz) {
+  private String getRequestUrl(JoinPoint joinPoint, RequestMethod requestMethod, Class clazz) {
     MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
     Method method = methodSignature.getMethod();
     RequestMapping requestMapping = (RequestMapping) clazz.getAnnotation(RequestMapping.class);
