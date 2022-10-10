@@ -35,19 +35,18 @@ public class NumLogger {
   private static final String GET = "GET";
 
   @Before("@annotation(AuditLog)")
-  public boolean logMethodCall(JoinPoint joinPoint) {
+  public void logMethodCall(JoinPoint joinPoint) {
 
     try {
       if (SecurityContextHolder.getContext().getAuthentication() == null) {
-        return false;
+        return;
       }
 
       logApiOperations(
           joinPoint, (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     } catch (Exception e) {
-      log.error("Cannot log audit log {}", e.getMessage());
+      log.error("Cannot log audit log {}", e);
     }
-    return true;
   }
 
   private void logApiOperations(JoinPoint joinPoint, Jwt principal) {
@@ -56,7 +55,7 @@ public class NumLogger {
       return;
     }
 
-    Class clazz = joinPoint.getTarget().getClass();
+    Class<?> clazz = joinPoint.getTarget().getClass();
     String url = getRequestUrl(joinPoint, requestMethod, clazz);
 
     Logger logger = LoggerFactory.getLogger(clazz);
@@ -71,10 +70,10 @@ public class NumLogger {
             getPayload(joinPoint)));
   }
 
-   private String getRequestUrl(JoinPoint joinPoint, RequestMethod requestMethod, Class clazz) {
+  private String getRequestUrl(JoinPoint joinPoint, RequestMethod requestMethod, Class<?> clazz) {
     MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
     Method method = methodSignature.getMethod();
-    RequestMapping requestMapping = (RequestMapping) clazz.getAnnotation(RequestMapping.class);
+    RequestMapping requestMapping = clazz.getAnnotation(RequestMapping.class);
 
     switch (requestMethod.name()) {
       case POST:
