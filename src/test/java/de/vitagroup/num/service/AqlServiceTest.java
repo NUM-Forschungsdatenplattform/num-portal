@@ -159,7 +159,7 @@ public class AqlServiceTest {
   @Test
   public void shouldSuccessfullyCreateAql() {
     Aql toSave = createAql(OffsetDateTime.now());
-    Aql createdAql = aqlService.createAql(toSave, "approvedUserId");
+    Aql createdAql = aqlService.createAql(toSave, "approvedUserId", null);
 
     assertThat(createdAql, notNullValue());
     assertThat(createdAql.getName(), is(toSave.getName()));
@@ -197,12 +197,12 @@ public class AqlServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleMissingOwner() {
-    aqlService.createAql(Aql.builder().build(), "nonExistingUser");
+    aqlService.createAql(Aql.builder().build(), "nonExistingUser", null);
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedOwner() {
-    aqlService.createAql(Aql.builder().build(), "notApprovedId");
+    aqlService.createAql(Aql.builder().build(), "notApprovedId", null);
   }
 
   @Test

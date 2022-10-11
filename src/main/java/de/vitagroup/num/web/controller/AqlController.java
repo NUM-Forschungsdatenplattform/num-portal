@@ -64,7 +64,7 @@ public class AqlController extends CustomizedExceptionHandler {
   public ResponseEntity<AqlDto> createAql(
       @AuthenticationPrincipal @NotNull Jwt principal, @Valid @NotNull @RequestBody AqlDto aqlDto) {
 
-    var aql = aqlService.createAql(mapper.convertToEntity(aqlDto), principal.getSubject());
+    var aql = aqlService.createAql(mapper.convertToEntity(aqlDto), principal.getSubject(), aqlDto.getCategoryId());
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 

@@ -161,11 +161,17 @@ public class AqlService {
     return "name".equals(searchCriteria.getSortBy()) || "createDate".equals(searchCriteria.getSortBy());
   }
 
-  public Aql createAql(Aql aql, String loggedInUserId) {
+  public Aql createAql(Aql aql, String loggedInUserId, Long aqlCategoryId) {
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (userDetails.isNotApproved()) {
       throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
+    }
+    if (Objects.nonNull(aqlCategoryId)) {
+      AqlCategory aqlCategory = aqlCategoryRepository.findById(aqlCategoryId).orElseThrow(() ->
+              new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND,
+                      String.format(CATEGORY_BY_ID_NOT_FOUND, aqlCategoryId)));
+      aql.setCategory(aqlCategory);
     }
 
     aql.setOwner(userDetails);
