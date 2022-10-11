@@ -174,7 +174,7 @@ public class AqlServiceTest {
   @Test
   public void shouldSuccessfullyEditAql() {
     Aql toEdit = createAql(OffsetDateTime.now());
-    Aql updatedAql = aqlService.updateAql(toEdit, 1L, "approvedUserId");
+    Aql updatedAql = aqlService.updateAql(toEdit, 1L, "approvedUserId", null);
 
     assertThat(updatedAql, notNullValue());
     assertThat(updatedAql.getName(), is(toEdit.getName()));
@@ -186,7 +186,7 @@ public class AqlServiceTest {
   @Test(expected = ForbiddenException.class)
   public void shouldHandleMissingAqlOwnerWhenEditing() {
     Aql toEdit = createAql(OffsetDateTime.now());
-    aqlService.updateAql(toEdit, 2L, "approvedUserId");
+    aqlService.updateAql(toEdit, 2L, "approvedUserId", null);
   }
 
   @Test(expected = ForbiddenException.class)
@@ -223,12 +223,12 @@ public class AqlServiceTest {
 
   @Test(expected = ResourceNotFound.class)
   public void updateAql() {
-    aqlService.updateAql(new Aql(), 1000L, "approvedUserId");
+    aqlService.updateAql(new Aql(), 1000L, "approvedUserId", null);
   }
 
   @Test(expected = ForbiddenException.class)
   public void updateAqlForbiddenException() {
-    aqlService.updateAql(new Aql(), 2L, "approvedUserId");
+    aqlService.updateAql(new Aql(), 2L, "approvedUserId", null);
   }
 
   @Test(expected = ResourceNotFound.class)

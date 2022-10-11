@@ -15,9 +15,6 @@ import com.nedap.archie.rm.datavalues.quantity.datetime.DvDateTime;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvTime;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.service.UserDetailsService;
-import java.time.temporal.TemporalAccessor;
-import java.util.LinkedList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +33,10 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.time.temporal.TemporalAccessor;
+import java.util.LinkedList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -127,10 +128,10 @@ public class ParameterService {
               try {
                 if (row.get(0) != null) {
                   var rowString = buildAqlObjectMapper().writeValueAsString(row.get(0));
+                  log.debug("[AQL parameter] query response data row {} ", rowString);
                   var element =
                       (SingleValuedDataValue<?>)
                           buildAqlObjectMapper().readValue(rowString, RMObject.class);
-
                   if (element.getValue().getClass().isAssignableFrom(DvCodedText.class)) {
                     convertDvCodedText((DvCodedText) element.getValue(), parameterOptions, postfix);
                   } else if (element.getValue().getClass().isAssignableFrom(DvQuantity.class)) {
@@ -145,10 +146,14 @@ public class ParameterService {
                     convertDvDateTime(parameterOptions);
                   } else if (element.getValue().getClass().isAssignableFrom(DvTime.class)) {
                     convertTime(parameterOptions);
+                  } else if(element.getClass().isAssignableFrom(DvDateTime.class)) {
+                    // workaround for openEHR-EHR-OBSERVATION.blood_pressure.v2 and aqlPath:
+                    ///data[at0001]/events[at0006]/time/value
+                    convertDvDateTime(parameterOptions);
                   }
                 }
               } catch (JsonProcessingException e) {
-                log.error("Could not retrieve parameters", e);
+                log.error("Could not retrieve parameters for aqlPath {} and archetypeId {} ", aqlPath, archetypeId, e);
               }
             });
 
