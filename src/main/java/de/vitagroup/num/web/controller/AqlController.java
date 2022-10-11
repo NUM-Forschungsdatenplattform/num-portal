@@ -78,7 +78,7 @@ public class AqlController extends CustomizedExceptionHandler {
       @PathVariable("id") Long aqlId,
       @Valid @NotNull @RequestBody AqlDto aqlDto) {
 
-    var aql = aqlService.updateAql(mapper.convertToEntity(aqlDto), aqlId, principal.getSubject());
+    var aql = aqlService.updateAql(mapper.convertToEntity(aqlDto), aqlId, principal.getSubject(), aqlDto.getCategoryId());
 
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
