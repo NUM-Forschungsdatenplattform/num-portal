@@ -13,7 +13,7 @@ import org.springframework.security.oauth2.server.resource.BearerTokenAuthentica
 
 import de.vitagroup.num.service.logger.NumLogger;
 
-public class NumLoggerIt extends IntegrationTest {
+public class NumLoggerIt {
 
     @InjectMocks
     private NumLogger numLogger;
@@ -35,6 +35,7 @@ public class NumLoggerIt extends IntegrationTest {
 
     @Test
     public void logMethodCallAuthentication() {
+        NumLogger numLogger = org.mockito.Mockito.mock(NumLogger.class);
         SecurityContextHolder.getContext().setAuthentication(null);
         when(numLogger.logMethodCall(joinPoint))
                 .thenReturn(Boolean.FALSE);

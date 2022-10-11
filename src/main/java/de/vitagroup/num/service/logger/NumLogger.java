@@ -37,10 +37,10 @@ public class NumLogger {
   @Before("@annotation(AuditLog)")
   public boolean logMethodCall(JoinPoint joinPoint) {
 
+    if (SecurityContextHolder.getContext().getAuthentication() == null) {
+      return false;
+    }
     try {
-      if (SecurityContextHolder.getContext().getAuthentication() == null) {
-        return false;
-      }
 
       logApiOperations(
           joinPoint, (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
