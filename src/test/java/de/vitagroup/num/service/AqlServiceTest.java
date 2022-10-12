@@ -111,6 +111,14 @@ public class AqlServiceTest {
     when(aqlRepository.save(any())).thenReturn(createAql(OffsetDateTime.now()));
 
     doThrow(EmptyResultDataAccessException.class).when(aqlRepository).deleteById(3L);
+
+    Map<String, String> translations = new HashMap<>();
+    translations.put("en", "aql category name en");
+    translations.put("de", "aql category name test de");
+    when(aqlCategoryRepository.findById(3L)).thenReturn(Optional.of(AqlCategory.builder()
+            .id(3l)
+            .name(translations)
+            .build()));
   }
 
   @Test
@@ -159,7 +167,7 @@ public class AqlServiceTest {
   @Test
   public void shouldSuccessfullyCreateAql() {
     Aql toSave = createAql(OffsetDateTime.now());
-    Aql createdAql = aqlService.createAql(toSave, "approvedUserId", null);
+    Aql createdAql = aqlService.createAql(toSave, "approvedUserId", 3L);
 
     assertThat(createdAql, notNullValue());
     assertThat(createdAql.getName(), is(toSave.getName()));
@@ -169,6 +177,11 @@ public class AqlServiceTest {
     assertThat(createdAql.getUseTranslated(), is(toSave.getUseTranslated()));
     assertThat(createdAql.getPurposeTranslated(), is(toSave.getPurposeTranslated()));
     assertThat(createdAql.isPublicAql(), is(toSave.isPublicAql()));
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void shouldHandleMissingAqlCategory() {
+    aqlService.createAql(Aql.builder().build(), "approvedUserId", 99L);
   }
 
   @Test
