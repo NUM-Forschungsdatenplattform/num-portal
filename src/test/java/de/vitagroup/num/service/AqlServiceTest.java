@@ -119,6 +119,39 @@ public class AqlServiceTest {
             .id(3l)
             .name(translations)
             .build()));
+
+    Map<String, String> tr1 = new HashMap<>();
+    tr1.put("en", "category one in english");
+    tr1.put("de", "category one in german");
+    Aql aqlOne = Aql.builder()
+            .id(1L)
+            .name("aql test one")
+            .publicAql(true)
+            .query("select * from dummy_table")
+            .category(AqlCategory.builder().id(1L).name(tr1).build())
+            .owner(UserDetails.builder()
+                    .userId("approvedUserId")
+                    .organization(Organization.builder().name("organization aa").id(1L).build())
+                    .build())
+            .build();
+    Map<String, String> tr2 = new HashMap<>();
+    tr2.put("en", "category two in english");
+    tr2.put("de", "category two in german");
+    Aql aqlTwo = Aql.builder()
+            .id(2L)
+            .name("aql test two")
+            .publicAql(true)
+            .query("select * from dummy_table where dummy column = ")
+            .category(AqlCategory.builder().id(2L).name(tr2).build())
+            .owner(UserDetails.builder()
+                    .userId("2ndApprovedUserId")
+                    .organization(Organization.builder().name("organization bb").id(2L).build())
+                    .build())
+            .build();
+    Mockito.when(aqlRepository.findAll(Mockito.any(AqlSpecification.class), Mockito.any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Arrays.asList(aqlOne, aqlTwo)));
+    when(userService.getOwner("approvedUserId")).thenReturn(User.builder().id("approvedUserId").firstName("Approver first name").lastName("Doe").build());
+    when(userService.getOwner("2ndApprovedUserId")).thenReturn(User.builder().id("2ndApprovedUserId").firstName("Second approver first name").lastName("Doe").build());
   }
 
   @Test
@@ -447,20 +480,6 @@ public class AqlServiceTest {
   @Test
   public void getVisibleAqlsWithPaginationAndSortByName() {
     Pageable pageRequest = PageRequest.of(0, 100, Sort.by(Sort.Direction.ASC, "name"));
-    Aql aqlOne = Aql.builder()
-            .id(1L)
-            .name("aql test one")
-            .publicAql(true)
-            .query("select * from dummy_table")
-            .build();
-    Aql aqlTwo = Aql.builder()
-            .id(2L)
-            .name("aql test two")
-            .publicAql(true)
-            .query("select * from dummy_table where dummy column = ")
-            .build();
-    Mockito.when(aqlRepository.findAll(Mockito.any(AqlSpecification.class), Mockito.any(Pageable.class)))
-            .thenReturn(new PageImpl<>(Arrays.asList(aqlOne, aqlTwo)));
     ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
@@ -489,28 +508,6 @@ public class AqlServiceTest {
   @Test
   public void getVisibleAqlsWithPaginationAndSortByCategoryName() {
     Pageable pageRequest = PageRequest.of(0, 100);
-    Map<String, String> tr1 = new HashMap<>();
-    tr1.put("en", "category one in english");
-    tr1.put("de", "category one in german");
-    Aql aqlOne = Aql.builder()
-            .id(1L)
-            .name("aql test one")
-            .publicAql(true)
-            .query("select * from dummy_table")
-            .category(AqlCategory.builder().id(1L).name(tr1).build())
-            .build();
-    Map<String, String> tr2 = new HashMap<>();
-    tr2.put("en", "category two in english");
-    tr2.put("de", "category two in german");
-    Aql aqlTwo = Aql.builder()
-            .id(2L)
-            .name("aql test two")
-            .publicAql(true)
-            .query("select * from dummy_table where dummy column = ")
-            .category(AqlCategory.builder().id(2L).name(tr2).build())
-            .build();
-    Mockito.when(aqlRepository.findAll(Mockito.any(AqlSpecification.class), Mockito.any(Pageable.class)))
-            .thenReturn(new PageImpl<>(Arrays.asList(aqlOne, aqlTwo)));
     ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
@@ -530,24 +527,6 @@ public class AqlServiceTest {
   @Test
   public void getVisibleAqlsWithPaginationAndSortByAuthorName() {
     Pageable pageRequest = PageRequest.of(0, 100);
-    when(userService.getOwner("approvedUserId")).thenReturn(User.builder().id("approvedUserId").firstName("Approver first name").lastName("Doe").build());
-    when(userService.getOwner("2ndApprovedUserId")).thenReturn(User.builder().id("2ndApprovedUserId").firstName("Second approver first name").lastName("Doe").build());
-    Aql aqlOne = Aql.builder()
-            .id(1L)
-            .name("aql test one")
-            .publicAql(true)
-            .query("select * from dummy_table")
-            .owner(UserDetails.builder().userId("approvedUserId").build())
-            .build();
-    Aql aqlTwo = Aql.builder()
-            .id(2L)
-            .name("aql test two")
-            .publicAql(true)
-            .query("select * from dummy_table where dummy column = ")
-            .owner(UserDetails.builder().userId("2ndApprovedUserId").build())
-            .build();
-    Mockito.when(aqlRepository.findAll(Mockito.any(AqlSpecification.class), Mockito.any(Pageable.class)))
-            .thenReturn(new PageImpl<>(Arrays.asList(aqlOne, aqlTwo)));
     ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     Map<String, String> filter = new HashMap<>();
@@ -564,6 +543,24 @@ public class AqlServiceTest {
     Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
     List<Aql> filteredAql = aqlPage.getContent();
     Assert.assertEquals(Long.valueOf(1L), filteredAql.get(0).getId());
+  }
+
+  @Test
+  public void getVisibleAqlsWithPaginationAndSortByOrganizationName() {
+    Pageable pageRequest = PageRequest.of(0, 100);
+    ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
+    ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
+    Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
+            .sortBy("organization")
+            .sort("DESC")
+            .build());
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAll(specArgumentCaptor.capture(), pageableCapture.capture());
+    Pageable capturedInput = pageableCapture.getValue();
+    Assert.assertEquals(pageRequest, capturedInput);
+    AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
+    Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
+    List<Aql> filteredAql = aqlPage.getContent();
+    Assert.assertEquals(Long.valueOf(2L), filteredAql.get(0).getId());
   }
 
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {
