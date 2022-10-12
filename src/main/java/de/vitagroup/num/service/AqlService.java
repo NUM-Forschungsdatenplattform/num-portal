@@ -239,10 +239,6 @@ public class AqlService {
 
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    if (userDetails.isNotApproved()) {
-      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
-    }
-
     String searchInput = StringUtils.isNotEmpty(name) ? name.toUpperCase() : name;
 
     switch (filter) {
