@@ -465,6 +465,16 @@ public class AqlServiceTest {
     verify(aqlCategoryRepository, never());
   }
 
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleInvalidSortFieldWhenGetAqlCategories() {
+    SearchCriteria searchCriteria = SearchCriteria.builder()
+            .sortBy("DESC")
+            .sort("invalid field")
+            .build();
+    aqlService.getAqlCategories(PageRequest.of(0,50), searchCriteria);
+    verify(aqlCategoryRepository, never());
+  }
+
   @Test
   public void countAqlsTest() {
     aqlService.countAqls();
@@ -561,6 +571,15 @@ public class AqlServiceTest {
     Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
     List<Aql> filteredAql = aqlPage.getContent();
     Assert.assertEquals(Long.valueOf(2L), filteredAql.get(0).getId());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleMissingSortField() {
+    SearchCriteria searchCriteria = SearchCriteria.builder()
+            .sortBy("ASC")
+            .build();
+    aqlService.getVisibleAqls("approvedUserId", PageRequest.of(0,50), searchCriteria);
+    verify(aqlRepository, never());
   }
 
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {
