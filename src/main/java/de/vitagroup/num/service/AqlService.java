@@ -164,9 +164,6 @@ public class AqlService {
   public Aql createAql(Aql aql, String loggedInUserId, Long aqlCategoryId) {
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    if (userDetails.isNotApproved()) {
-      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
-    }
     if (Objects.nonNull(aqlCategoryId)) {
       AqlCategory aqlCategory = aqlCategoryRepository.findById(aqlCategoryId).orElseThrow(() ->
               new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND,
