@@ -574,21 +574,31 @@ public class AqlServiceTest {
   }
 
   @Test
-  public void getVisibleAqlsWithPaginationAndSortByOrganizationName() {
+  public void getVisibleAqlsWithPaginationAndSortByOrganizationDesc() {
+    List<Aql> filteredAql = getVisibleAqlsWithPaginationAndSortByOrganizationName("DESC");
+    Assert.assertEquals(Long.valueOf(2L), filteredAql.get(0).getId());
+  }
+
+  @Test
+  public void getVisibleAqlsWithPaginationAndSortByOrganizationAsc() {
+    List<Aql> filteredAql = getVisibleAqlsWithPaginationAndSortByOrganizationName("ASC");
+    Assert.assertEquals(Long.valueOf(1L), filteredAql.get(0).getId());
+  }
+
+  private List<Aql> getVisibleAqlsWithPaginationAndSortByOrganizationName(String sortDir) {
     Pageable pageRequest = PageRequest.of(0, 100);
     ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
             .sortBy("organization")
-            .sort("DESC")
+            .sort(sortDir)
             .build());
     Mockito.verify(aqlRepository, Mockito.times(1)).findAll(specArgumentCaptor.capture(), pageableCapture.capture());
     Pageable capturedInput = pageableCapture.getValue();
     Assert.assertEquals(pageRequest, capturedInput);
     AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
     Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
-    List<Aql> filteredAql = aqlPage.getContent();
-    Assert.assertEquals(Long.valueOf(2L), filteredAql.get(0).getId());
+    return aqlPage.getContent();
   }
 
   @Test(expected = BadRequestException.class)
