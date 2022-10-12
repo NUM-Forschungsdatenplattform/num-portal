@@ -198,10 +198,21 @@ public class AqlServiceTest {
   }
 
   @Test
-  public void shouldSuccessfullyCreateAql() {
+  public void shouldSuccessfullyCreateAqlWithCategory() {
     Aql toSave = createAql(OffsetDateTime.now());
     Aql createdAql = aqlService.createAql(toSave, "approvedUserId", 3L);
+    createAqlChecks(toSave, createdAql);
+  }
 
+  @Test
+  public void shouldSuccessfullyCreateAql() {
+    Aql toSave = createAql(OffsetDateTime.now());
+    Aql createdAql = aqlService.createAql(toSave, "approvedUserId", null);
+    createAqlChecks(toSave, createdAql);
+    Mockito.verifyNoInteractions(aqlCategoryRepository);
+  }
+
+  private void createAqlChecks(Aql toSave, Aql createdAql) {
     assertThat(createdAql, notNullValue());
     assertThat(createdAql.getName(), is(toSave.getName()));
     assertThat(createdAql.getUse(), is(toSave.getUse()));
@@ -221,6 +232,19 @@ public class AqlServiceTest {
   public void shouldSuccessfullyEditAql() {
     Aql toEdit = createAql(OffsetDateTime.now());
     Aql updatedAql = aqlService.updateAql(toEdit, 1L, "approvedUserId", null);
+
+    assertThat(updatedAql, notNullValue());
+    assertThat(updatedAql.getName(), is(toEdit.getName()));
+    assertThat(updatedAql.getUse(), is(toEdit.getUse()));
+    assertThat(updatedAql.getPurpose(), is(toEdit.getPurpose()));
+    assertThat(updatedAql.isPublicAql(), is(toEdit.isPublicAql()));
+    Mockito.verifyNoInteractions(aqlCategoryRepository);
+  }
+
+  @Test
+  public void shouldSuccessfullyEditAqlWithCategory() {
+    Aql toEdit = createAql(OffsetDateTime.now());
+    Aql updatedAql = aqlService.updateAql(toEdit, 1L, "approvedUserId", 3L);
 
     assertThat(updatedAql, notNullValue());
     assertThat(updatedAql.getName(), is(toEdit.getName()));
@@ -504,6 +528,21 @@ public class AqlServiceTest {
     Assert.assertEquals("de", aqlSpecification.getLanguage());
   }
 
+  @Test
+  public void getVisibleAqls() {
+    Pageable pageRequest = PageRequest.of(0, 100);
+    ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
+    ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
+    aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder().build());
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAll(specArgumentCaptor.capture(), pageableCapture.capture());
+    Pageable capturedInput = pageableCapture.getValue();
+    Assert.assertEquals(pageRequest, capturedInput);
+    AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
+    Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
+    Assert.assertEquals("de", aqlSpecification.getLanguage());
+    Assert.assertNull(aqlSpecification.getFilter());
+  }
+
   @Test(expected = BadRequestException.class)
   public void shouldHandleInvalidSortTest() {
     Pageable pageable = PageRequest.of(0,50);
@@ -519,6 +558,7 @@ public class AqlServiceTest {
   public void getVisibleAqlsWithPaginationAndSortByCategoryNameDesc() {
     List<Aql> filteredAql = getAqlsSortByCategoryName("DESC");
     Assert.assertEquals(Long.valueOf(2L), filteredAql.get(0).getId());
+    Mockito.verify(userService, Mockito.times(0)).findUsersUUID(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
   }
   @Test
   public void getVisibleAqlsWithPaginationAndSortByCategoryNameAsc() {
@@ -545,16 +585,16 @@ public class AqlServiceTest {
 
   @Test
   public void getVisibleAqlsWithPaginationAndSortByAuthorAsc() {
-    List<Aql> filteredAql = getVisibleAqlsWithSortByAuthorAsc("ASC");
+    List<Aql> filteredAql = getVisibleAqlsWithSortByAuthor("ASC");
     Assert.assertEquals(Long.valueOf(1L), filteredAql.get(0).getId());
   }
   @Test
   public void getVisibleAqlsWithPaginationAndSortByAuthorDesc() {
-    List<Aql> filteredAql = getVisibleAqlsWithSortByAuthorAsc("DESC");
+    List<Aql> filteredAql = getVisibleAqlsWithSortByAuthor("DESC");
     Assert.assertEquals(Long.valueOf(2L), filteredAql.get(0).getId());
   }
 
-  private List<Aql> getVisibleAqlsWithSortByAuthorAsc(String sortDir) {
+  private List<Aql> getVisibleAqlsWithSortByAuthor(String sortDir) {
     Pageable pageRequest = PageRequest.of(0, 100);
     ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
