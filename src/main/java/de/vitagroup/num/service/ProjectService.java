@@ -671,6 +671,7 @@ public class ProjectService {
                     .recipientFirstName(approver.getFirstName())
                     .recipientLastName(approver.getLastName())
                     .projectId(project.getId())
+                    .coordinatorEmail(coordinator.getEmail())
                     .build();
             notifications.add(notification);
           });
@@ -683,7 +684,7 @@ public class ProjectService {
       if (isTransitionToChangeRequest(oldStatus, newStatus)) {
         ProjectStatusChangeRequestNotification notification = new ProjectStatusChangeRequestNotification(coordinator.getEmail(), coordinator.getFirstName(),
                                                                   coordinator.getLastName(), approver.getFirstName(), approver.getLastName(),
-                                                                  project.getName(), newStatus, oldStatus, project.getId());
+                                                                  project.getName(), newStatus, oldStatus, project.getId(), approver.getEmail());
         notifications.add(notification);
       } else {
         ProjectStatusChangeNotification notification =
@@ -697,6 +698,7 @@ public class ProjectService {
                         .approverLastName(approver.getLastName())
                         .projectId(project.getId())
                         .oldProjectStatus(oldStatus)
+                        .approverEmail(approver.getEmail())
                         .build();
         notifications.add(notification);
       }

@@ -12,8 +12,9 @@ public class ProjectStatusChangeRequestNotification extends ProjectStatusChangeN
     public ProjectStatusChangeRequestNotification(String recipientEmail, String recipientFirstName,
                                                   String recipientLastName, String approverFirstName,
                                                   String approverLastName, String projectTitle,
-                                                  ProjectStatus projectStatus, ProjectStatus oldProjectStatus, long projectId) {
-        super(recipientEmail, recipientFirstName, recipientLastName, approverFirstName, approverLastName, projectTitle, projectStatus, oldProjectStatus, projectId);
+                                                  ProjectStatus projectStatus, ProjectStatus oldProjectStatus,
+                                                  long projectId, String approverEmail) {
+        super(recipientEmail, recipientFirstName, recipientLastName, approverFirstName, approverLastName, projectTitle, projectStatus, oldProjectStatus, projectId, approverEmail);
     }
 
     @Override
@@ -30,6 +31,7 @@ public class ProjectStatusChangeRequestNotification extends ProjectStatusChangeN
                 copyright,
                 url,
                 getProjectEditUrl(url, projectId),
-                oldProjectStatus);
+                oldProjectStatus,
+                approverEmail);
     }
 }
