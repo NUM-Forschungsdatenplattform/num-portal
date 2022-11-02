@@ -82,4 +82,42 @@ public class ProjectSpecificationTest {
         Mockito.verify(reasearcher, Mockito.times(1)).get("userId");
     }
 
+    @Test
+    public void getOwnedSpecificationTest() {
+        Join coordinator = Mockito.mock(Join.class);
+        Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(coordinator);
+        Path statusPath = Mockito.mock(Path.class);
+        Mockito.when(root.get("status")).thenReturn(statusPath);
+        Mockito.when(coordinator.get("userId")).thenReturn(Mockito.mock(Path.class));
+        Map<String, String> filter = new HashMap<>();
+        filter.put("type", SearchFilter.OWNED.name());
+        ProjectSpecification ps = ProjectSpecification
+                .builder()
+                .roles(Arrays.asList(Roles.STUDY_COORDINATOR))
+                .loggedInUserId("userId")
+                .loggedInUserOrganizationId(3L)
+                .filter(filter)
+                .build();
+        ps.toPredicate(root, criteriaBuilder);
+        Mockito.verify(root, Mockito.times(2)).get("status");
+    }
+
+    @Test
+    public void getArchivedSpecificationTest() {
+        Join coordinator = Mockito.mock(Join.class);
+        Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(coordinator);
+        Path statusPath = Mockito.mock(Path.class);
+        Mockito.when(root.get("status")).thenReturn(statusPath);
+        Map<String, String> filter = new HashMap<>();
+        filter.put("type", SearchFilter.ARCHIVED.name());
+        ProjectSpecification ps = ProjectSpecification
+                .builder()
+                .roles(Arrays.asList(Roles.STUDY_APPROVER))
+                .loggedInUserId("userId")
+                .loggedInUserOrganizationId(3L)
+                .filter(filter)
+                .build();
+        ps.toPredicate(root, criteriaBuilder);
+        Mockito.verify(root, Mockito.times(2)).get("status");
+    }
 }
