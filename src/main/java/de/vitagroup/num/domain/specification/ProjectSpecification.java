@@ -12,7 +12,6 @@ import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.*;
 import java.util.*;
@@ -36,7 +35,6 @@ public class ProjectSpecification {
 
     private Set<String> ownersUUID;
 
-    //@Override
     public Predicate toPredicate(Root<Project> root, CriteriaBuilder criteriaBuilder) {
         List<Predicate> roleBasedPredicates = new ArrayList<>();
         Join<Project, UserDetails> coordinator = root.join("coordinator", JoinType.INNER);
@@ -82,6 +80,7 @@ public class ProjectSpecification {
                         case ALL: {
                             // IN FE default ALL tag shows all projects based on roles except archived ones
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
+                            break;
                         }
                     }
                 }

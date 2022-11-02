@@ -41,7 +41,7 @@ public class ProjectRepositoryImpl implements CustomProjectRepository {
         selectProjectQuery.select(root)
                 .where(selectProjectPredicate)
                 .groupBy(root.get("id"));
-        if (pageable.getSort() != null) {
+        if (pageable.getSort().isSorted()) {
             selectProjectQuery.orderBy(QueryUtils.toOrders(pageable.getSort(), root, cb));
         }
         List<Project> result = entityManager.createQuery(selectProjectQuery)
