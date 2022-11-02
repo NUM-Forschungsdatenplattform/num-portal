@@ -19,9 +19,6 @@ public class ProjectSpecificationTest {
     private Root<Project> root;
 
     @Mock
-    private CriteriaQuery<?> query;
-
-    @Mock
     private CriteriaBuilder criteriaBuilder;
 
 
@@ -36,7 +33,7 @@ public class ProjectSpecificationTest {
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(3L)
                 .build();
-        ps.toPredicate(root, query, criteriaBuilder);
+        ps.toPredicate(root, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");
     }
 
@@ -55,7 +52,7 @@ public class ProjectSpecificationTest {
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(3L)
                 .build();
-        ps.toPredicate(root, query, criteriaBuilder);
+        ps.toPredicate(root, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");
     }
 
@@ -63,7 +60,6 @@ public class ProjectSpecificationTest {
     public void roleResearcherWithFilterSpecificationTest() {
         Join coordinator = Mockito.mock(Join.class);
         Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(coordinator);
-        Mockito.when(coordinator.join("organization", JoinType.INNER)).thenReturn(Mockito.mock(Join.class));
         Join reasearcher = Mockito.mock(Join.class);
         Mockito.when(root.join("researchers", JoinType.LEFT)).thenReturn(reasearcher);
         Path statusPath = Mockito.mock(Path.class);
@@ -81,7 +77,7 @@ public class ProjectSpecificationTest {
                 .loggedInUserOrganizationId(3L)
                 .ownersUUID(usersUUID)
                 .build();
-        ps.toPredicate(root, query, criteriaBuilder);
+        ps.toPredicate(root, criteriaBuilder);
         Mockito.verify(root, Mockito.times(1)).get("status");
         Mockito.verify(reasearcher, Mockito.times(1)).get("userId");
     }

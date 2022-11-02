@@ -889,7 +889,7 @@ public class ProjectService {
             .loggedInUserOrganizationId(loggedInUser.get().getOrganization().getId())
             .ownersUUID(usersUUID)
             .build();
-    projectPage = projectRepository.findAll(projectSpecification, pageRequest);
+    projectPage = projectRepository.findProjects(projectSpecification, pageRequest);
     projects = new ArrayList<>(projectPage.getContent());
     if (optSortBy.isPresent() && !sortByProjectColumns) {
       sortProjects(projects, optSortBy);
