@@ -47,7 +47,6 @@ public class ProjectRepositoryImpl implements CustomProjectRepository {
         List<Project> result = entityManager.createQuery(selectProjectQuery)
                 .setFirstResult((int) pageable.getOffset())
                 .setMaxResults(pageable.getPageSize()).getResultList();
-
         return new PageImpl<>(result, pageable, count);
     }
 }
