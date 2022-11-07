@@ -3,14 +3,13 @@ package de.vitagroup.num.domain.repository;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpecificationExecutor<Project> {
+public interface ProjectRepository extends JpaRepository<Project, Long>, CustomProjectRepository {
 
   List<Project> findByStatusIn(List<ProjectStatus> statuses);
 
@@ -24,5 +23,4 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
       nativeQuery = true)
   List<Project> findLatestProjects(
       int count, String status1, String status2, String status3);
-
 }
