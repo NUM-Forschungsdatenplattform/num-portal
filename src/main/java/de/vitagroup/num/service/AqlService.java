@@ -161,11 +161,14 @@ public class AqlService {
     return "name".equals(searchCriteria.getSortBy()) || "createDate".equals(searchCriteria.getSortBy());
   }
 
-  public Aql createAql(Aql aql, String loggedInUserId) {
+  public Aql createAql(Aql aql, String loggedInUserId, Long aqlCategoryId) {
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    if (userDetails.isNotApproved()) {
-      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
+    if (Objects.nonNull(aqlCategoryId)) {
+      AqlCategory aqlCategory = aqlCategoryRepository.findById(aqlCategoryId).orElseThrow(() ->
+              new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND,
+                      String.format(CATEGORY_BY_ID_NOT_FOUND, aqlCategoryId)));
+      aql.setCategory(aqlCategory);
     }
 
     aql.setOwner(userDetails);
@@ -175,13 +178,19 @@ public class AqlService {
     return aqlRepository.save(aql);
   }
 
-  public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
+  public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId, Long aqlCategoryId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
     var aqlToEdit =
         aqlRepository
             .findById(aqlId)
             .orElseThrow(() -> new ResourceNotFound(AqlService.class, CANNOT_FIND_AQL, String.format(CANNOT_FIND_AQL, aqlId)));
+    if (Objects.nonNull(aqlCategoryId)) {
+      AqlCategory aqlCategory = aqlCategoryRepository.findById(aqlCategoryId).orElseThrow(() ->
+              new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND,
+                      String.format(CATEGORY_BY_ID_NOT_FOUND, aqlCategoryId)));
+      aqlToEdit.setCategory(aqlCategory);
+    }
 
     if (aqlToEdit.hasEmptyOrDifferentOwner(loggedInUserId)) {
       throw new ForbiddenException( AqlService.class, AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER,
@@ -197,7 +206,6 @@ public class AqlService {
     aqlToEdit.setModifiedDate(OffsetDateTime.now());
     aqlToEdit.setQuery(aql.getQuery());
     aqlToEdit.setPublicAql(aql.isPublicAql());
-    aqlToEdit.setCategory(aql.getCategory());
 
     return aqlRepository.save(aqlToEdit);
   }
@@ -230,10 +238,6 @@ public class AqlService {
   public List<Aql> searchAqls(String name, SearchFilter filter, String loggedInUserId) {
 
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
-
-    if (userDetails.isNotApproved()) {
-      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
-    }
 
     String searchInput = StringUtils.isNotEmpty(name) ? name.toUpperCase() : name;
 
