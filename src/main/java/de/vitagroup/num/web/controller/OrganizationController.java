@@ -9,8 +9,7 @@ import de.vitagroup.num.service.OrganizationService;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
-import io.swagger.annotations.ApiOperation;
-
+import io.swagger.v3.oas.annotations.Operation;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -25,7 +24,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/organization", produces = "application/json")
@@ -37,14 +42,14 @@ public class OrganizationController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/domains")
-  @ApiOperation(value = "Retrieves a list of all existing organization email domains")
+  @Operation(description = "Retrieves a list of all existing organization email domains")
   public ResponseEntity<List<String>> getAllMailDomains() {
     return ResponseEntity.ok(organizationService.getAllMailDomains());
   }
 
   @AuditLog
   @GetMapping("/{id}")
-  @ApiOperation(value = "Retrieves an organization by external id")
+  @Operation(description = "Retrieves an organization by external id")
   public ResponseEntity<OrganizationDto> getOrganizationById(
       @NotNull @NotEmpty @PathVariable Long id) {
     return ResponseEntity.ok(mapper.convertToDto(organizationService.getOrganizationById(id)));
@@ -53,7 +58,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
   // TODO remove this when FE is ready
   @AuditLog
   @GetMapping()
-  @ApiOperation(value = "Retrieves a list of available organizations")
+  @Operation(description = "Retrieves a list of available organizations")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<List<OrganizationDto>> getAllOrganizations(
           @AuthenticationPrincipal @NotNull Jwt principal) {
@@ -67,7 +72,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/all")
-  @ApiOperation(value = "Retrieves a list of available organizations")
+  @Operation(description = "Retrieves a list of available organizations")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<Page<OrganizationDto>> getAllOrganizationsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal,
                                                                                  @PageableDefault(size = 20) Pageable pageable,
@@ -84,7 +89,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping()
-  @ApiOperation(value = "Creates an organization")
+  @Operation(description = "Creates an organization")
   @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<OrganizationDto> createOrganization(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -95,7 +100,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PutMapping(value = "/{id}")
-  @ApiOperation(value = "Updates an organization")
+  @Operation(description = "Updates an organization")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<OrganizationDto> updateOrganization(
       @AuthenticationPrincipal @NotNull Jwt principal,

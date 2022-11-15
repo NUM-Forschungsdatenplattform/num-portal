@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.vitagroup.num.domain.ProjectCategories;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.admin.User;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -14,7 +12,6 @@ import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,64 +19,64 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@ApiModel
+@Schema
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectDto {
 
-  @ApiModelProperty private Long id;
+  @Schema private Long id;
 
-  @ApiModelProperty
+  @Schema
   @NotNull(message = "Project name cannot be null")
   @NotEmpty(message = "Project name cannot be empty")
   private String name;
 
-  @ApiModelProperty private String description;
+  @Schema private String description;
 
-  @ApiModelProperty private String simpleDescription;
+  @Schema private String simpleDescription;
 
-  @ApiModelProperty private boolean usedOutsideEu;
+  @Schema private boolean usedOutsideEu;
 
-  @ApiModelProperty @Valid private List<TemplateInfoDto> templates;
+  @Schema @Valid private List<TemplateInfoDto> templates;
 
-  @ApiModelProperty private Long cohortId;
+  @Schema private Long cohortId;
 
-  @ApiModelProperty private User coordinator;
+  @Schema private User coordinator;
 
-  @ApiModelProperty private List<UserDetailsDto> researchers;
+  @Schema private List<UserDetailsDto> researchers;
 
-  @ApiModelProperty private Set<String> keywords;
+  @Schema private Set<String> keywords;
 
-  @ApiModelProperty private Set<ProjectCategories> categories;
+  @Schema private Set<ProjectCategories> categories;
 
-  @ApiModelProperty
+  @Schema
   @NotNull(message = "Project first hypothesis cannot be null")
   @NotEmpty(message = "Project first hypothesis cannot be empty")
   private String firstHypotheses;
 
-  @ApiModelProperty private String secondHypotheses;
+  @Schema private String secondHypotheses;
 
-  @ApiModelProperty
+  @Schema
   @NotNull(message = "Project goal cannot be null")
   @NotEmpty(message = "Project goal cannot be empty")
   private String goal;
 
   @NotNull(message = "Project status is mandatory")
-  @ApiModelProperty
+  @Schema
   private ProjectStatus status;
 
-  @ApiModelProperty private OffsetDateTime createDate;
+  @Schema private OffsetDateTime createDate;
 
-  @ApiModelProperty private OffsetDateTime modifiedDate;
+  @Schema private OffsetDateTime modifiedDate;
 
-  @ApiModelProperty
+  @Schema
   @NotNull(message = "Project startDate cannot be null")
   private LocalDate startDate;
 
-  @ApiModelProperty
+  @Schema
   @NotNull(message = "Project endDate cannot be null")
   private LocalDate endDate;
 
-  @ApiModelProperty @Builder.Default private boolean financed = false;
+  @Schema @Builder.Default private boolean financed = false;
 }

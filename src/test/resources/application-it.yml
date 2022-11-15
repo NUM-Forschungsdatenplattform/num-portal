@@ -1,0 +1,102 @@
+server:
+  port: 8090
+spring:
+  application:
+    name: num-portal
+
+  datasource:
+    hikari:
+      data-source-properties:
+        stringtype: unspecified
+
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/certs
+      client:
+        registration:
+          userStoreClient:
+            authorization-grant-type: client_credentials
+            client-id: numPortal
+            client-secret: bc1843c0-3c57-4c2c-9b40-ac38e6dd545e
+        provider:
+          userStoreClient:
+            token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: numportalwebapp@gmail.com
+    password: notPassword
+    from: numportalwebapp@gmail.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+            required: true
+
+swagger:
+  oauth2:
+    token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/auth
+    client-name: numPortalWebapp
+    client-secret: numPortalWebapp
+
+userstore:
+  url: ${keycloak.url}/auth/admin/realms/Num
+
+keycloak:
+  url: http://localhost:9093
+
+hapi:
+  fhir:
+    version: r4
+    rest:
+      server-name: num-portal
+      default-response-encoding: json
+      default-pretty-print: true
+    validation:
+      enabled: false
+      request-only: true
+
+feign:
+  client:
+    config:
+      numPortal:
+        connectTimeout: 10000
+        readTimeout: 10000
+        loggerLevel: FULL
+
+logging:
+  level:
+    root: INFO
+    de.vitagroup.num.service.ProjectService: DEBUG
+
+ehrbase:
+  rest-api-url: ${keycloak.url}/ehrbase/rest/openehr/v1/
+  username: ehrbase-user
+  password: SuperSecretPassword
+
+cors:
+  allowedOrigins:
+    - "*"
+
+privacy:
+  minHits: 0
+  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
+
+zars:
+  enabled: false
+  email: foo@foo.bar

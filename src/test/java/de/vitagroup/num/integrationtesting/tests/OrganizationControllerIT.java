@@ -1,16 +1,20 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
-import lombok.SneakyThrows;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.web.servlet.MockMvc;
-
 import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
+import lombok.SneakyThrows;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.MockMvc;
+
+@Ignore("Implemented by OrganizationControllerTest")
+@Disabled("Implemented by OrganizationControllerTest")
 public class OrganizationControllerIT extends IntegrationTest {
 
   @Autowired public MockMvc mockMvc;

@@ -7,11 +7,10 @@ import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.CohortSizeDto;
 import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
 import de.vitagroup.num.mapper.CohortMapper;
-import de.vitagroup.num.service.CohortService;
-import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
+import de.vitagroup.num.service.cohort.CohortService;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -34,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(value = "/cohort", produces = "application/json")
-public class CohortController extends CustomizedExceptionHandler {
+public class CohortController { //extends CustomizedExceptionHandler {
 
   private final CohortService cohortService;
 
@@ -42,7 +41,7 @@ public class CohortController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("{cohortId}")
-  @ApiOperation(value = "Retrieves a single cohort.")
+  @Operation(description = "Retrieves a single cohort.")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<CohortDto> getCohort(
       @AuthenticationPrincipal @NotNull Jwt principal, @PathVariable String cohortId) {
@@ -52,7 +51,7 @@ public class CohortController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping
-  @ApiOperation(value = "Stores a cohort")
+  @Operation(description = "Stores a cohort")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
   public ResponseEntity<CohortDto> createCohort(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -63,7 +62,7 @@ public class CohortController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PutMapping(value = "/{id}")
-  @ApiOperation(value = "Updates a cohort")
+  @Operation(description = "Updates a cohort")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
   public ResponseEntity<CohortDto> updateCohort(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -75,7 +74,7 @@ public class CohortController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("size")
-  @ApiOperation(value = "Retrieves the cohort group size without saving")
+  @Operation(description = "Retrieves the cohort group size without saving")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Long> getCohortGroupSize(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -94,7 +93,7 @@ public class CohortController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("size/template")
-  @ApiOperation(value = "Retrieves the size of the templates")
+  @Operation(description = "Retrieves the size of the templates")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
   public ResponseEntity<Map<String, Integer>> getSizePerTemplates(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -116,8 +115,8 @@ public class CohortController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("size/distribution")
-  @ApiOperation(
-      value =
+  @Operation(
+      description =
           "Retrieves the cohort group size without saving, provides also age distribution and patient numbers per hospital")
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<CohortSizeDto> getCohortGroupSizeWithDistribution(

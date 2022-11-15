@@ -7,8 +7,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 
 @Configuration
@@ -22,22 +20,21 @@ public class ApplicationSecurity extends WebSecurityConfigurerAdapter {
   @Override
   public void configure(HttpSecurity httpSecurity) throws Exception {
     httpSecurity
-        .httpBasic()
-        .disable()
-        .formLogin(AbstractHttpConfigurer::disable)
+        .httpBasic().disable()
+        .formLogin().disable()
+        .cors()
+        .and()
         .authorizeRequests()
         .anyRequest()
         .authenticated()
         .and()
-        .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
-        .sessionManagement(
-            sessionManagement ->
-                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .cors()
-        .and()
         .oauth2ResourceServer()
         .jwt()
-        .jwtAuthenticationConverter(new AuthorizationConverter());
+        .jwtAuthenticationConverter(new AuthorizationConverter())
+        .and()
+        .and()
+        .sessionManagement(sessionManagement ->
+            sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
   }
 
   @Override

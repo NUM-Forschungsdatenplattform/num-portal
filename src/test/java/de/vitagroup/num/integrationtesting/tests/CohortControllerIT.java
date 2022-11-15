@@ -25,10 +25,13 @@ import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+@Disabled
+@Ignore("Implemented by CohortControllerTest")
 public class CohortControllerIT extends IntegrationTest {
 
   private static final String COHORT_PATH = "/cohort";

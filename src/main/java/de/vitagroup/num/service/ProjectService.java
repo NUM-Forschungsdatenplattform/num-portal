@@ -1,11 +1,48 @@
 package de.vitagroup.num.service;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ISSUE_HAS_OCCURRED_CANNOT_EXECUTE_AQL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_OWNER;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ARCHIVE_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_PROJECT_INVALID_STATUS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_UPDATE_PROJECT_INVALID_PROJECT_STATUS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_CREATING_THE_PROJECT_PDF;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_WHILE_CREATING_THE_CSV_FILE;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_WHILE_RETRIEVING_DATA;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_PROJECT_STATUS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_PROJECT_STATUS_PARAM;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.MORE_THAN_ONE_TRANSITION_FROM_PUBLISHED_TO_CLOSED_FOR_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_PERMISSIONS_TO_EDIT_THIS_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_COHORT_CANNOT_BE_NULL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_TEMPLATES_CANNOT_BE_NULL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESEARCHER_NOT_APPROVED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESEARCHER_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.Cohort;
+import de.vitagroup.num.domain.ExportType;
+import de.vitagroup.num.domain.Organization;
+import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.ProjectStatus;
+import de.vitagroup.num.domain.ProjectTransition;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.*;
+import de.vitagroup.num.domain.dto.CohortDto;
+import de.vitagroup.num.domain.dto.ProjectDto;
+import de.vitagroup.num.domain.dto.ProjectInfoDto;
+import de.vitagroup.num.domain.dto.SearchCriteria;
+import de.vitagroup.num.domain.dto.TemplateInfoDto;
+import de.vitagroup.num.domain.dto.UserDetailsDto;
+import de.vitagroup.num.domain.dto.ZarsInfoDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
@@ -13,6 +50,7 @@ import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
+import de.vitagroup.num.service.cohort.CohortService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.email.ZarsService;
@@ -23,8 +61,42 @@ import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.exception.SystemException;
 import de.vitagroup.num.service.executors.CohortQueryLister;
 import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.service.notification.dto.*;
-import de.vitagroup.num.service.policy.*;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.ProjectApprovalRequestNotification;
+import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStatusChangeNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStatusChangeRequestNotification;
+import de.vitagroup.num.service.policy.EhrPolicy;
+import de.vitagroup.num.service.policy.EuropeanConsentPolicy;
+import de.vitagroup.num.service.policy.Policy;
+import de.vitagroup.num.service.policy.ProjectPolicyService;
+import de.vitagroup.num.service.policy.TemplatesPolicy;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -36,7 +108,11 @@ import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
@@ -44,24 +120,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-
-import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Service
 @Slf4j
@@ -503,8 +561,10 @@ public class ProjectService {
 
   @Transactional
   public Project updateProject(ProjectDto projectDto, Long id, String userId, List<String> roles) {
+    log.debug("Id: {}, UserId: {}, roles: {}", id, userId, roles);
     var user = userDetailsService.checkIsUserApproved(userId);
 
+    log.debug("User approved, proceed ...");
     var projectToEdit =
         projectRepository
             .findById(id)
@@ -519,8 +579,10 @@ public class ProjectService {
     if (CollectionUtils.isNotEmpty(roles)
         && roles.contains(Roles.STUDY_COORDINATOR)
         && projectToEdit.isCoordinator(userId)) {
+      log.debug("Study-Coordinator is updating project ...");
       return updateProjectAllFields(projectDto, roles, user, projectToEdit);
     } else if (CollectionUtils.isNotEmpty(roles) && roles.contains(Roles.STUDY_APPROVER)) {
+      log.debug("Study-Approver is updating project status ...");
       return updateProjectStatus(projectDto, roles, user, projectToEdit);
     } else {
       throw new ForbiddenException(ProjectService.class, NO_PERMISSIONS_TO_EDIT_THIS_PROJECT);
@@ -538,12 +600,14 @@ public class ProjectService {
 
     var savedProject = projectRepository.save(projectToEdit);
 
+    log.debug("Register to Zars if necessary");
     registerToZarsIfNecessary(
         savedProject,
         oldProjectStatus,
         savedProject.getResearchers(),
         savedProject.getResearchers());
 
+    log.debug("collect notifications ...");
     List<Notification> notifications =
         collectNotifications(
             savedProject,
@@ -554,6 +618,7 @@ public class ProjectService {
             savedProject.getResearchers(),
             user.getUserId());
 
+    log.debug("Send notifications ...");
     notificationService.send(notifications);
 
     return savedProject;

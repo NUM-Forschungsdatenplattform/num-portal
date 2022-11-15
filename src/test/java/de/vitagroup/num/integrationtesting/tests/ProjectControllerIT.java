@@ -8,6 +8,7 @@ import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -23,30 +24,36 @@ import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
+import de.vitagroup.num.service.email.ZarsService;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import lombok.SneakyThrows;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MvcResult;
 
 public class ProjectControllerIT extends IntegrationTest {
 
   private static final String PROJECT_PATH = "/project";
-  @Autowired public MockMvc mockMvc;
   UserDetails user1;
   UserDetails user2;
-  UserDetails user3;
   @Autowired private ObjectMapper mapper;
   @Autowired private ProjectRepository projectRepository;
   @Autowired private UserDetailsRepository userDetailsRepository;
 
-  @Before
+  @MockBean
+  private ZarsService zarsService;
+
+  @BeforeEach
   public void setupProjects() {
     projectRepository.deleteAll();
     user1 = UserDetails.builder().userId("user1").approved(true).build();
@@ -143,13 +150,15 @@ public class ProjectControllerIT extends IntegrationTest {
     projectRepository.save(closedProject);
   }
 
-  @After
+  @AfterEach
   public void clearProjects() {
     projectRepository.deleteAll();
     userDetailsRepository.deleteById("user1");
     userDetailsRepository.deleteById("user2");
   }
 
+  @Ignore("Implemented in ProjectControllerTest")
+  @Disabled("Implemented in ProjectControllerTest")
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
@@ -166,6 +175,8 @@ public class ProjectControllerIT extends IntegrationTest {
         .andExpect(status().isBadRequest());
   }
 
+  @Ignore("Implemented in ProjectControllerTest")
+  @Disabled("Implemented in ProjectControllerTest")
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
@@ -189,7 +200,7 @@ public class ProjectControllerIT extends IntegrationTest {
                 .content(studyJson))
         .andExpect(status().isForbidden());
   }
-
+  @Disabled
   @Ignore(
       "Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
@@ -211,6 +222,7 @@ public class ProjectControllerIT extends IntegrationTest {
         .andExpect(jsonPath("$.firstHypotheses").value(validProject.getFirstHypotheses()));
   }
 
+  @Disabled
   @Ignore(
       "Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
@@ -253,6 +265,8 @@ public class ProjectControllerIT extends IntegrationTest {
             .orElse(null));
   }
 
+  @Ignore("Implemented in ProjectControllerTest")
+  @Disabled("Implemented in ProjectControllerTest")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -318,6 +332,8 @@ public class ProjectControllerIT extends IntegrationTest {
             .orElse(null));
   }
 
+  @Ignore("Implemented in ProjectControllerTest")
+  @Disabled("Implemented in ProjectControllerTest")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -328,6 +344,8 @@ public class ProjectControllerIT extends IntegrationTest {
     mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().is4xxClientError());
   }
 
+  @Ignore("Implemented in ProjectControllerTest")
+  @Disabled("Implemented in ProjectControllerTest")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -354,9 +372,9 @@ public class ProjectControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
-  @WithMockNumUser(
-      roles = {STUDY_APPROVER},
-      userId = "user2")
+  //@WithMockNumUser(
+  //    roles = {STUDY_APPROVER},
+  //    userId = "user2")
   public void shouldOnlyAllowUpdatingStatusForApproverRole() {
     String name = "unchanged";
 
@@ -388,6 +406,9 @@ public class ProjectControllerIT extends IntegrationTest {
         .perform(
             put(String.format("%s/%s", PROJECT_PATH, project.getId()))
                 .with(csrf())
+                .with(jwt()
+                    .jwt(builder -> builder.claim("sub", "user2").claim("realm_access", Map.of("roles",
+                        List.of(STUDY_APPROVER)))).authorities(new SimpleGrantedAuthority("ROLE_" + STUDY_APPROVER)))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(studyJson))
         .andExpect(status().isOk())

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.nedap.archie.rm.archetyped.Archetyped;
 import com.nedap.archie.rm.composition.Composition;
+import de.vitagroup.num.serialisation.NumCanonicalJson;
 import de.vitagroup.num.service.exception.SystemException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,7 +18,6 @@ import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.xmlbeans.XmlException;
 import org.ehrbase.client.templateprovider.ClientTemplateProvider;
-import org.ehrbase.serialisation.jsonencoding.CanonicalJson;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,7 +60,7 @@ public class CompositionFlattenerTest {
   public void shouldFlattenComposition() {
 
     Composition composition =
-        new CanonicalJson()
+        new NumCanonicalJson()
             .unmarshal(
                 IOUtils.toString(
                     getClass().getResourceAsStream(CORONA_PATH), StandardCharsets.UTF_8),
@@ -94,7 +94,7 @@ public class CompositionFlattenerTest {
   @SneakyThrows
   public void shouldHandleMissingTemplateId() {
     Composition composition =
-        new CanonicalJson()
+        new NumCanonicalJson()
             .unmarshal(
                 IOUtils.toString(
                     getClass().getResourceAsStream(CORONA_PATH), StandardCharsets.UTF_8),

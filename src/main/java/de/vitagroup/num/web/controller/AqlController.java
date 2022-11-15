@@ -3,21 +3,26 @@ package de.vitagroup.num.web.controller;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.dto.*;
+import de.vitagroup.num.domain.dto.AqlCategoryDto;
+import de.vitagroup.num.domain.dto.AqlDto;
+import de.vitagroup.num.domain.dto.ParameterOptionsDto;
+import de.vitagroup.num.domain.dto.SearchCriteria;
+import de.vitagroup.num.domain.dto.SearchFilter;
+import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;
 import de.vitagroup.num.service.ehrbase.ParameterService;
-import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -37,10 +42,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @AllArgsConstructor
 @RequestMapping(value = "/aql", produces = "application/json")
-public class AqlController extends CustomizedExceptionHandler {
+public class AqlController {
 
   private final AqlService aqlService;
   private final ParameterService parameterService;
@@ -49,17 +55,17 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/{id}")
-  @ApiOperation(value = "Retrieves public or owned aql query by id.")
+  @Operation(description = "Retrieves public or owned aql query by id.")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<AqlDto> getAqlById(
-      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @NotEmpty @PathVariable Long id) {
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable Long id) {
     return ResponseEntity.ok(
         mapper.convertToDto(aqlService.getAqlById(id, principal.getSubject())));
   }
 
   @AuditLog
   @PostMapping()
-  @ApiOperation(value = "Creates an aql; the logged in user is assigned as owner of the aql.")
+  @Operation(description = "Creates an aql; the logged in user is assigned as owner of the aql.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlDto> createAql(
       @AuthenticationPrincipal @NotNull Jwt principal, @Valid @NotNull @RequestBody AqlDto aqlDto) {
@@ -70,8 +76,8 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PutMapping(value = "/{id}")
-  @ApiOperation(
-      value = "Updates an aql; the logged in user is assigned as owner of the aql at creation time")
+  @Operation(
+      description = "Updates an aql; the logged in user is assigned as owner of the aql at creation time")
   @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlDto> updateAql(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -92,14 +98,14 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/search")
-  @ApiOperation(value = "Retrieves a list of aqls based on a search string and search type")
+  @Operation(description = "Retrieves a list of aqls based on a search string and search type")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<List<AqlDto>> searchAqls(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @ApiParam(value = "A string contained in the name of the aqls")
+      @Parameter(description = "A string contained in the name of the aqls")
           @RequestParam(required = false)
           String name,
-      @ApiParam(value = "Type of the search", required = true) @RequestParam @Valid @NotNull
+      @Parameter(description = "Type of the search", required = true) @RequestParam @Valid @NotNull
       SearchFilter filter) {
     return ResponseEntity.ok(
         aqlService.searchAqls(name, filter, principal.getSubject()).stream()
@@ -109,8 +115,8 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping()
-  @ApiOperation(
-      value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
+  @Operation(
+      description = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<List<AqlDto>> getAqls(@AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(
@@ -121,8 +127,8 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/all")
-  @ApiOperation(
-          value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
+  @Operation(
+          description = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<Page<AqlDto>> getAqlsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal,
                                                             @PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
@@ -135,7 +141,7 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("/size")
-  @ApiOperation(value = "Executes an aql and returns the count of matching ehr ids")
+  @Operation(description = "Executes an aql and returns the count of matching ehr ids")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<Long> getAqlSize(
       @AuthenticationPrincipal @NotNull Jwt principal, @Valid @RequestBody SlimAqlDto aql) {
@@ -144,7 +150,7 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping(value = "/category")
-  @ApiOperation(value = "Creates a category. If there is an id in the DTO, it is ignored.")
+  @Operation(description = "Creates a category. If there is an id in the DTO, it is ignored.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlCategoryDto> createCategory(
       @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
@@ -156,7 +162,7 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PutMapping(value = "/category/{id}")
-  @ApiOperation(value = "Updates a category. If present, the id in the DTO is ignored.")
+  @Operation(description = "Updates a category. If present, the id in the DTO is ignored.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlCategoryDto> updateCategory(
       @PathVariable("id") Long categoryId,
@@ -178,7 +184,7 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping(value = "/category")
-  @ApiOperation(value = "Retrieves the list of categories.")
+  @Operation(description = "Retrieves the list of categories.")
   public ResponseEntity<List<AqlCategoryDto>> getAqlCategories() {
     return ResponseEntity.ok(
         aqlService.getAqlCategories().stream()
@@ -188,7 +194,7 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping(value = "/category/all")
-  @ApiOperation(value = "Retrieves the list of categories.")
+  @Operation(description = "Retrieves the list of categories.")
   public ResponseEntity<Page<AqlCategoryDto>> getAqlCategoriesWithPagination(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
     Page<AqlCategory> searchResult = aqlService.getAqlCategories(pageable, searchCriteria);
     List<AqlCategoryDto> content = searchResult.getContent().stream()
@@ -199,7 +205,7 @@ public class AqlController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/parameter/values")
-  @ApiOperation(value = "Retrieves a list of possible values for an aql path")
+  @Operation(description = "Retrieves a list of possible values for an aql path")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<ParameterOptionsDto> getParameterValues(
       @AuthenticationPrincipal @NotNull Jwt principal,

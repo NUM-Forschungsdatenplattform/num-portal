@@ -41,6 +41,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
@@ -434,7 +435,8 @@ public class UserServiceTest {
 
     @Test
     public void shouldHandleMissingOwner() {
-        when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null), null));
+        Request request = Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null);
+        when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", request, null, emptyMap()));
         de.vitagroup.num.domain.admin.User userReturn = userService.getOwner("missingUserId");
 
         assertNull(userReturn);

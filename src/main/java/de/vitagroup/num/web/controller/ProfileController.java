@@ -4,7 +4,7 @@ import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.service.UserService;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +23,7 @@ public class ProfileController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping()
-  @ApiOperation(value = "Retrieves the user profile information")
+  @Operation(description = "Retrieves the user profile information")
   public ResponseEntity<User> getUserProfile(@AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(userService.getUserProfile(principal.getSubject()));
   }

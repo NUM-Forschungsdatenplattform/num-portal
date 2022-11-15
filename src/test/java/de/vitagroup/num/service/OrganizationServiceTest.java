@@ -18,6 +18,7 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
+import de.vitagroup.num.service.cohort.StandardCohortService;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.domain.specification.OrganizationSpecification;
 import de.vitagroup.num.service.exception.ForbiddenException;
@@ -42,7 +43,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OrganizationServiceTest {
@@ -336,7 +336,7 @@ public class OrganizationServiceTest {
         .thenReturn(
             Optional.of(Organization.builder().id(5L).name("Existing organization").build()));
 
-    when(organizationRepository.findById(1L)).thenThrow(new ResourceNotFound(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, 1L)));
+    when(organizationRepository.findById(1L)).thenThrow(new ResourceNotFound(StandardCohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, 1L)));
 
     when(organizationRepository.findById(3L))
         .thenReturn(Optional.of(Organization.builder().id(3L).name("Existing").build()));

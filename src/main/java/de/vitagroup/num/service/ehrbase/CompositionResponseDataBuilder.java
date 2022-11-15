@@ -3,6 +3,7 @@ package de.vitagroup.num.service.ehrbase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nedap.archie.rm.composition.Composition;
+import de.vitagroup.num.serialisation.NumCanonicalJson;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,7 +13,6 @@ import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.response.openehr.QueryResponseData;
-import org.ehrbase.serialisation.jsonencoding.CanonicalJson;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -85,7 +85,7 @@ public class CompositionResponseDataBuilder {
           try {
             compositionString = mapper.writeValueAsString(compositionMap);
             Composition composition =
-                new CanonicalJson().unmarshal(compositionString, Composition.class);
+                new NumCanonicalJson().unmarshal(compositionString, Composition.class);
             compositionsMap.add(compositionFlattener.flatten(composition));
           } catch (JsonProcessingException e) {
             log.warn("Composition mapping failed", e);

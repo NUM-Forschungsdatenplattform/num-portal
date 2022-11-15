@@ -1,6 +1,6 @@
 package de.vitagroup.num.domain.dto;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.Data;
@@ -9,15 +9,15 @@ import lombok.Data;
 @Builder
 public class ProjectInfoDto {
 
-  @ApiModelProperty(value = "Project create date")
+  @Schema(description = "Project create date")
   private OffsetDateTime createDate;
 
-  @ApiModelProperty(value = "Project title")
+  @Schema(description = "Project title")
   private String title;
 
-  @ApiModelProperty(value = "Organization name")
+  @Schema(description = "Organization name")
   private String organization;
 
-  @ApiModelProperty(value = "Coordinator name")
+  @Schema(description = "Coordinator name")
   private String coordinator;
 }

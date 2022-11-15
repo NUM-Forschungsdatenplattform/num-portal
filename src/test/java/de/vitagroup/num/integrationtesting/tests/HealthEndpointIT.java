@@ -6,13 +6,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import lombok.SneakyThrows;
 
+@Ignore("Implemented by AdminControllerTest")
+@Disabled("Implemented by AdminControllerTest")
 public class HealthEndpointIT extends IntegrationTest {
 
   @Autowired public MockMvc mockMvc;

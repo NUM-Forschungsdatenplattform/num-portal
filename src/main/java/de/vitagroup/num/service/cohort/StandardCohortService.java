@@ -1,4 +1,13 @@
-package de.vitagroup.num.service;
+package de.vitagroup.num.service.cohort;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CHANGING_COHORT_ONLY_ALLOWED_BY_THE_OWNER_OF_THE_PROJECT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_CHANGE_ONLY_ALLOWED_ON_PROJECT_STATUS_DRAFT_OR_PENDING;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_GROUP_CANNOT_BE_EMPTY;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL_ID;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_COHORT_GROUP_AQL_MISSING;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
 
 import de.vitagroup.num.domain.Cohort;
 import de.vitagroup.num.domain.CohortGroup;
@@ -11,16 +20,20 @@ import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
+import de.vitagroup.num.service.AqlService;
+import de.vitagroup.num.service.ContentService;
+import de.vitagroup.num.service.ProjectService;
+import de.vitagroup.num.service.TemplateService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.PrivacyException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.service.policy.EhrPolicy;
 import de.vitagroup.num.service.policy.Policy;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.service.policy.TemplatesPolicy;
-import de.vitagroup.num.service.exception.BadRequestException;
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.PrivacyException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -38,23 +51,13 @@ import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CHANGING_COHORT_ONLY_ALLOWED_BY_THE_OWNER_OF_THE_PROJECT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_CHANGE_ONLY_ALLOWED_ON_PROJECT_STATUS_DRAFT_OR_PENDING;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_GROUP_CANNOT_BE_EMPTY;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL_ID;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_COHORT_GROUP_AQL_MISSING;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
-
 @Slf4j
 @Service
 @AllArgsConstructor
-public class CohortService {
+public class StandardCohortService implements CohortService {
 
   private final CohortRepository cohortRepository;
   private final CohortExecutor cohortExecutor;
-  private final UserDetailsService userDetailsService;
   private final ModelMapper modelMapper;
   private final AqlService aqlService;
   private final ProjectRepository projectRepository;
@@ -79,14 +82,14 @@ public class CohortService {
   private static final int MAX_AGE = 122;
   private static final int AGE_INTERVAL = 10;
 
+  @Override
   public Cohort getCohort(Long cohortId, String userId) {
-    userDetailsService.checkIsUserApproved(userId);
     return cohortRepository.findById(cohortId).orElseThrow(
-            () -> new ResourceNotFound(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId)));
+            () -> new ResourceNotFound(StandardCohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId)));
   }
 
+  @Override
   public Cohort createCohort(CohortDto cohortDto, String userId) {
-    userDetailsService.checkIsUserApproved(userId);
 
     Project project =
         projectRepository
@@ -108,6 +111,7 @@ public class CohortService {
     return cohortRepository.save(cohort);
   }
 
+  @Override
   public Cohort toCohort(CohortDto cohortDto) {
     return Cohort.builder()
         .name(cohortDto.getName())
@@ -116,36 +120,39 @@ public class CohortService {
         .build();
   }
 
+  @Override
   public Set<String> executeCohort(long cohortId, Boolean allowUsageOutsideEu) {
     Optional<Cohort> cohort = cohortRepository.findById(cohortId);
     return cohortExecutor.execute(
-        cohort.orElseThrow(() -> new BadRequestException(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId))),
+        cohort.orElseThrow(() -> new BadRequestException(StandardCohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId))),
         allowUsageOutsideEu);
   }
 
+  @Override
   public Set<String> executeCohort(Cohort cohort, Boolean allowUsageOutsideEu) {
     return cohortExecutor.execute(cohort, allowUsageOutsideEu);
   }
 
+  @Override
   public long getCohortGroupSize(
       CohortGroupDto cohortGroupDto, String userId, Boolean allowUsageOutsideEu) {
-    userDetailsService.checkIsUserApproved(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(StandardCohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds.size();
   }
 
+  @Override
   public int getRoundedSize(long size) {
     return Math.round((float) size / 10) * 10;
   }
 
+  @Override
   public Map<String, Integer> getSizePerTemplates(
       String userId, TemplateSizeRequestDto requestDto) {
-    userDetailsService.checkIsUserApproved(userId);
 
     Cohort cohort =
         Cohort.builder()
@@ -154,7 +161,7 @@ public class CohortService {
 
     Set<String> ehrIds = cohortExecutor.execute(cohort, false);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(StandardCohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
 
     return determineTemplatesHits(ehrIds, requestDto.getTemplateIds());
@@ -189,13 +196,13 @@ public class CohortService {
     }
   }
 
+  @Override
   public Cohort updateCohort(CohortDto cohortDto, Long cohortId, String userId) {
-    userDetailsService.checkIsUserApproved(userId);
 
     Cohort cohortToEdit =
         cohortRepository
             .findById(cohortId)
-            .orElseThrow(() -> new ResourceNotFound(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId)));
+            .orElseThrow(() -> new ResourceNotFound(StandardCohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId)));
 
     Project project = cohortToEdit.getProject();
 
@@ -255,14 +262,14 @@ public class CohortService {
     return cohortGroup;
   }
 
+  @Override
   public CohortSizeDto getCohortGroupSizeWithDistribution(
       CohortGroupDto cohortGroupDto, String userId, Boolean allowUsageOutsideEu) {
-    userDetailsService.checkIsUserApproved(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(StandardCohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     int count = ehrIds.size();
 

@@ -1,18 +1,17 @@
 package de.vitagroup.num.domain.dto;
 
 import de.vitagroup.num.service.exception.BadRequestException;
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Map;
-
 @Data
 @Builder
-@ApiModel
+@Schema
 @NoArgsConstructor
 @AllArgsConstructor
 public class SearchCriteria {

@@ -28,11 +28,14 @@ import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
-import de.vitagroup.num.service.executors.CohortExecutor;
+import de.vitagroup.num.service.cohort.CohortService;
+import de.vitagroup.num.service.cohort.CohortServiceSecurityWrapper;
+import de.vitagroup.num.service.cohort.StandardCohortService;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.executors.CohortExecutor;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,7 +56,7 @@ import org.modelmapper.ModelMapper;
 public class CohortServiceTest {
 
   @InjectMocks
-  private CohortService cohortService;
+  private StandardCohortService cohortService;
 
   @Mock
   private CohortRepository cohortRepository;
@@ -112,25 +115,29 @@ public class CohortServiceTest {
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedUserId() {
     CohortDto cohortDto = CohortDto.builder().build();
-    cohortService.createCohort(cohortDto, "notApprovedUserId");
+    CohortService service = new CohortServiceSecurityWrapper(cohortService, userDetailsService);
+    service.createCohort(cohortDto, "notApprovedUserId");
   }
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleNotApprovedUserIdWhenUpdating() {
     CohortDto cohortDto = CohortDto.builder().build();
-    cohortService.updateCohort(cohortDto, 1L, "notApprovedUserId");
+    CohortService service = new CohortServiceSecurityWrapper(cohortService, userDetailsService);
+    service.updateCohort(cohortDto, 1L, "notApprovedUserId");
   }
 
   @Test(expected = SystemException.class)
   public void shouldHandleMissingUserId() {
     CohortDto cohortDto = CohortDto.builder().build();
-    cohortService.createCohort(cohortDto, "missingUserID");
+    CohortService service = new CohortServiceSecurityWrapper(cohortService, userDetailsService);
+    service.createCohort(cohortDto, "missingUserID");
   }
 
   @Test(expected = SystemException.class)
   public void shouldHandleMissingUserIdWhenUpdating() {
     CohortDto cohortDto = CohortDto.builder().build();
-    cohortService.updateCohort(cohortDto, 1L, "missingUserID");
+    CohortService service = new CohortServiceSecurityWrapper(cohortService, userDetailsService);
+    service.updateCohort(cohortDto, 1L, "missingUserID");
   }
 
   @Test(expected = ResourceNotFound.class)
@@ -348,8 +355,6 @@ public class CohortServiceTest {
 
     when(userDetailsService.checkIsUserApproved("missingUserID"))
         .thenThrow(new SystemException(CohortServiceTest.class, USER_NOT_FOUND));
-
-    when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
 
     when(projectRepository.findById(2L))
         .thenReturn(

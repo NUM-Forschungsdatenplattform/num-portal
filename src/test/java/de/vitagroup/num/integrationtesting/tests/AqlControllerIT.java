@@ -1,6 +1,9 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static de.vitagroup.num.domain.Roles.*;
+import static de.vitagroup.num.domain.Roles.CRITERIA_EDITOR;
+import static de.vitagroup.num.domain.Roles.MANAGER;
+import static de.vitagroup.num.domain.Roles.RESEARCHER;
+import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -17,11 +20,15 @@ import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import lombok.SneakyThrows;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+
+@Ignore("Replaced by AqlControllerTest")
+@Disabled("Replaced by AqlControllerTest")
 public class AqlControllerIT extends IntegrationTest {
 
   private static final String AQL_PATH = "/aql";

@@ -1,7 +1,6 @@
 package de.vitagroup.num.domain.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
@@ -13,13 +12,13 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@ApiModel
+@Schema
 @NoArgsConstructor
 @AllArgsConstructor
 public class TemplateSizeRequestDto {
 
-  @ApiModelProperty @NotNull @Valid public CohortDto cohortDto;
+  @Schema @NotNull @Valid public CohortDto cohortDto;
 
-  @ApiModelProperty @NotNull @NotEmpty
+  @Schema @NotNull @NotEmpty
   public List<String> templateIds;
 }
