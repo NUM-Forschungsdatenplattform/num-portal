@@ -434,7 +434,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldHandleMissingOwner() {
-        when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null), null));
+        when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null), null, null));
         de.vitagroup.num.domain.admin.User userReturn = userService.getOwner("missingUserId");
 
         assertNull(userReturn);

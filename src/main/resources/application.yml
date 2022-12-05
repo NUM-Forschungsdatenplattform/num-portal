@@ -66,6 +66,11 @@ management:
   server:
     port: 8091
 
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: num-portal-webapp
+      client-secret: num-portal-webapp
 swagger:
   oauth2:
     token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
