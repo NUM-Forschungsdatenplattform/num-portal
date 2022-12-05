@@ -2,10 +2,22 @@ package de.vitagroup.num.service.ehrbase;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.nedap.archie.json.DurationDeserializer;
 import com.nedap.archie.rm.composition.Composition;
 import de.vitagroup.num.service.exception.SystemException;
-import java.util.Map;
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.ehrbase.client.templateprovider.ClientTemplateProvider;
+import org.ehrbase.serialisation.flatencoding.FlatFormat;
+import org.ehrbase.serialisation.flatencoding.FlatJasonProvider;
+import org.ehrbase.serialisation.flatencoding.FlatJson;
+import org.ehrbase.serialisation.jsonencoding.JacksonUtil;
+import org.ehrbase.util.exception.SdkException;
+import org.ehrbase.webtemplate.model.WebTemplate;
+import org.ehrbase.webtemplate.templateprovider.CachedTemplateProvider;
+import org.openehr.schemas.v1.OPERATIONALTEMPLATE;
+import org.springframework.stereotype.Component;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.cache.Cache;
@@ -15,16 +27,9 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.spi.CachingProvider;
-import lombok.RequiredArgsConstructor;
-import org.ehrbase.client.templateprovider.ClientTemplateProvider;
-import org.ehrbase.serialisation.flatencoding.FlatFormat;
-import org.ehrbase.serialisation.flatencoding.FlatJasonProvider;
-import org.ehrbase.serialisation.flatencoding.FlatJson;
-import org.ehrbase.util.exception.SdkException;
-import org.ehrbase.webtemplate.model.WebTemplate;
-import org.ehrbase.webtemplate.templateprovider.CachedTemplateProvider;
-import org.openehr.schemas.v1.OPERATIONALTEMPLATE;
-import org.springframework.stereotype.Component;
+import java.time.temporal.TemporalAmount;
+import java.util.Map;
+import java.util.Optional;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID;
@@ -33,7 +38,8 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_
 @RequiredArgsConstructor
 public class CompositionFlattener {
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = JacksonUtil.getObjectMapper()
+          .registerModule(new SimpleModule().addDeserializer(TemporalAmount.class, new DurationDeserializer()));
 
   private CachedTemplateProvider cachedTemplateProvider;
   private final ClientTemplateProvider clientTemplateProvider;
@@ -50,7 +56,7 @@ public class CompositionFlattener {
 
     try {
       String templateId = composition.getArchetypeDetails().getTemplateId().getValue();
-      return mapper.readValue(getFlatJson(templateId).marshal(composition), Map.class);
+      return objectMapper.readValue(getFlatJson(templateId).marshal(composition), Map.class);
     } catch (JsonProcessingException e) {
       throw new SystemException(CompositionFlattener.class, CANNOT_PARSE_RESULTS,
               String.format(CANNOT_PARSE_RESULTS, e.getMessage()));
