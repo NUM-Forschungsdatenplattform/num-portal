@@ -22,12 +22,10 @@ public class ApplicationSecurity extends WebSecurityConfigurerAdapter {
   @Override
   public void configure(HttpSecurity httpSecurity) throws Exception {
     httpSecurity
-        .httpBasic()
-        .disable()
-        .formLogin(AbstractHttpConfigurer::disable)
+        .httpBasic().disable()
+        .formLogin().disable()
         .authorizeRequests()
-        .anyRequest()
-        .authenticated()
+        .anyRequest().authenticated()
         .and()
         .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
         .sessionManagement(
