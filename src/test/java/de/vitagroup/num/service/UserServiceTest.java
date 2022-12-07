@@ -675,7 +675,7 @@ public class UserServiceTest {
         filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
-                .sortBy("lastname")
+                .sortBy("lastName")
                 .sort("asc")
                 .build();
         UserDetails userOne = UserDetails.builder()
@@ -714,7 +714,7 @@ public class UserServiceTest {
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
                 .sort("DESC")
-                .sortBy("firstname")
+                .sortBy("firstName")
                 .build();
         UserDetails userOne = UserDetails.builder()
                 .userId("userId-one")

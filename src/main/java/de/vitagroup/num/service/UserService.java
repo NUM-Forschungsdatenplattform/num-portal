@@ -65,7 +65,7 @@ public class UserService {
 
   private static final String KEYCLOACK_DEFAULT_ROLES_PREFIX = "default-roles-";
 
-  private final List<String> availableSortFields = Arrays.asList("firstname", "lastname", "organization", "registrationDate");
+  private final List<String> availableSortFields = Arrays.asList("firstName", "lastName", "organization", "registrationDate", "email");
 
   @Transactional
   public void deleteUser(String userId, String loggedInUserId) {
@@ -350,10 +350,14 @@ public class UserService {
             Boolean.valueOf((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_USER_WITH_ROLES_KEY)) : null;
     boolean loadUserRoles = (withRoles != null && withRoles) || Roles.isProjectLead(callerRoles);
     for (String uuid : filteredUsersUUID) {
-      User user;
+      User user = null;
       Optional<User> keycloackUser = users.stream().filter(u -> uuid.equals(u.getId())).findFirst();
       if (keycloackUser.isEmpty()) {
-        user = getUserById(uuid, loadUserRoles);
+        try {
+          user = getUserById(uuid, loadUserRoles);
+        } catch (ResourceNotFound rnf) {
+          log.warn("For unknown reasons, user with uuid {} was not found in keycloack ", uuid);
+        }
       } else {
         user = keycloackUser.get();
         addUserDetails(user);
@@ -361,7 +365,9 @@ public class UserService {
           addRoles(user);
         }
       }
-      filteredUsers.add(user);
+      if(Objects.nonNull(user)) {
+        filteredUsers.add(user);
+      }
     }
     sortUsers(filteredUsers, searchCriteria);
     return new PageImpl<>(new ArrayList<>(filteredUsers), pageable, userDetailsPage.getTotalElements());
@@ -410,12 +416,16 @@ public class UserService {
 
   private Comparator<User> getComparator(String field) {
     switch (field) {
-      case "firstname":
+      case "firstName":
         return Comparator.comparing(User::getFirstName);
-      case "lastname":
+      case "lastName":
         return Comparator.comparing(User::getLastName);
       case "organization":
         return Comparator.comparing(user -> user.getOrganization() != null ? user.getOrganization().getName() : StringUtils.EMPTY);
+      case "registrationDate":
+        return Comparator.comparing(User::getCreatedTimestamp);
+      case "email":
+        return Comparator.comparing(User::getEmail);
       default:
         return Comparator.comparing(User::getCreatedTimestamp);
     }
