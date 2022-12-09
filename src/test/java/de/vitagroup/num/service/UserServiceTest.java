@@ -648,16 +648,28 @@ public class UserServiceTest {
                 .sort("asc")
                 .sortBy("email")
                 .build();
+        mockDataSearchUsers();
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput = argumentCaptor.getValue();
+        Assert.assertEquals(Boolean.FALSE, capturedInput.getApproved());
+        User firstUser = users.getContent().get(0);
+        Assert.assertEquals("ana-maria.doe@vitagroup.ag", firstUser.getEmail());
+    }
+
+    private void mockDataSearchUsers() {
         UserDetails userOne = UserDetails.builder()
                 .userId("userId-one")
                 .organization(
-                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
                 .approved(false)
                 .build();
         UserDetails userTwo = UserDetails.builder()
                 .userId("userId-two")
                 .organization(
-                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
                 .approved(false)
                 .build();
         Mockito.when(keycloakFeign.getUser("userId-one")).thenReturn(User.builder()
@@ -676,14 +688,6 @@ public class UserServiceTest {
                 .build());
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
                 .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo)));
-        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
-        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
-        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
-        UserDetailsSpecification capturedInput = argumentCaptor.getValue();
-        Assert.assertEquals(Boolean.FALSE, capturedInput.getApproved());
-        User firstUser = users.getContent().get(0);
-        Assert.assertEquals("ana-maria.doe@vitagroup.ag", firstUser.getEmail());
     }
 
     @Test
@@ -735,41 +739,48 @@ public class UserServiceTest {
                 .sort("DESC")
                 .sortBy("firstName")
                 .build();
-        UserDetails userOne = UserDetails.builder()
-                .userId("userId-one")
-                .organization(
-                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
-                .approved(true)
-                .build();
-        UserDetails userTwo = UserDetails.builder()
-                .userId("userId-two")
-                .organization(
-                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
-                .approved(true)
-                .build();
+        mockDataSearchUsers();
         Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
                 .userId("user-55")
                 .organization(Organization.builder().id(99L).build())
-                .build());
-        Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo)));
-        Mockito.when(keycloakFeign.getUser("userId-one")).thenReturn(User.builder()
-                .id("userId-one")
-                .firstName("Ana")
-                .lastName("Popescu")
-                .createdTimestamp(System.currentTimeMillis())
-                .build());
-        Mockito.when(keycloakFeign.getUser("userId-two")).thenReturn(User.builder()
-                .id("userId-two")
-                .firstName("Maria")
-                .lastName("Doe")
-                .createdTimestamp(System.currentTimeMillis())
                 .build());
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
         userService.searchUsersWithPagination("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
+    }
+
+    @Test
+    public void searchUsersWithPaginationAndSortByOrganizationTest() {
+        Pageable pageable = PageRequest.of(0, 50);
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .sort("asc")
+                .sortBy("organization")
+                .build();
+        mockDataSearchUsers();
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
+        User firstUser = users.getContent().get(0);
+        Assert.assertEquals("userId-two", firstUser.getId());
+    }
+
+    @Test
+    public void searchUsersWithPaginationAndSortByRegistrationDateTest() {
+        Pageable pageable = PageRequest.of(0, 20);
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .sort("desc")
+                .sortBy("registrationDate")
+                .build();
+        mockDataSearchUsers();
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
+        User firstUser = users.getContent().get(0);
+        Assert.assertEquals("userId-two", firstUser.getId());
     }
 
     private boolean testAddRole(Role role, String userRole) {

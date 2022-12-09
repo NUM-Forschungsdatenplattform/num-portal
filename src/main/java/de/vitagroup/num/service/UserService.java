@@ -622,8 +622,8 @@ public class UserService {
     if (userRaw == null) {
       throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
     }
-    userRaw.put("firstName", userNameDto.getFirstName());
-    userRaw.put("lastName", userNameDto.getLastName());
+    userRaw.put(FIRST_NAME, userNameDto.getFirstName());
+    userRaw.put(LAST_NAME, userNameDto.getLastName());
     keycloakFeign.updateUser(userId, userRaw);
   }
 
