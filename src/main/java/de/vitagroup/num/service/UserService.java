@@ -65,7 +65,17 @@ public class UserService {
 
   private static final String KEYCLOACK_DEFAULT_ROLES_PREFIX = "default-roles-";
 
-  private final List<String> availableSortFields = Arrays.asList("firstname", "lastname", "organization", "registrationDate");
+  private final List<String> availableSortFields = Arrays.asList(FIRST_NAME, LAST_NAME, ORGANIZATION_NAME, REGISTRATION_DATE, MAIL);
+
+  private static final String FIRST_NAME = "firstName";
+
+  private static final String LAST_NAME = "lastName";
+
+  private static final String ORGANIZATION_NAME = "organization";
+
+  private static final String REGISTRATION_DATE = "registrationDate";
+
+  private static final String MAIL = "email";
 
   @Transactional
   public void deleteUser(String userId, String loggedInUserId) {
@@ -350,10 +360,14 @@ public class UserService {
             Boolean.valueOf((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_USER_WITH_ROLES_KEY)) : null;
     boolean loadUserRoles = (withRoles != null && withRoles) || Roles.isProjectLead(callerRoles);
     for (String uuid : filteredUsersUUID) {
-      User user;
+      User user = null;
       Optional<User> keycloackUser = users.stream().filter(u -> uuid.equals(u.getId())).findFirst();
       if (keycloackUser.isEmpty()) {
-        user = getUserById(uuid, loadUserRoles);
+        try {
+          user = getUserById(uuid, loadUserRoles);
+        } catch (ResourceNotFound rnf) {
+          log.warn("For unknown reasons, user with uuid {} was not found in keycloack ", uuid);
+        }
       } else {
         user = keycloackUser.get();
         addUserDetails(user);
@@ -361,7 +375,9 @@ public class UserService {
           addRoles(user);
         }
       }
-      filteredUsers.add(user);
+      if(Objects.nonNull(user)) {
+        filteredUsers.add(user);
+      }
     }
     sortUsers(filteredUsers, searchCriteria);
     return new PageImpl<>(new ArrayList<>(filteredUsers), pageable, userDetailsPage.getTotalElements());
@@ -397,7 +413,7 @@ public class UserService {
   }
 
   private void sortUsers(List<User> users, SearchCriteria searchCriteria) {
-    String field = searchCriteria.getSortBy() != null ? searchCriteria.getSortBy() : "registrationDate";
+    String field = searchCriteria.getSortBy() != null ? searchCriteria.getSortBy() : REGISTRATION_DATE;
     Sort.Direction sortOrder = searchCriteria.getSort() != null ?
             Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()) : Sort.Direction.DESC;
     Comparator<User> userComparator = getComparator(field);
@@ -410,12 +426,16 @@ public class UserService {
 
   private Comparator<User> getComparator(String field) {
     switch (field) {
-      case "firstname":
+      case FIRST_NAME:
         return Comparator.comparing(User::getFirstName);
-      case "lastname":
+      case LAST_NAME:
         return Comparator.comparing(User::getLastName);
-      case "organization":
+      case ORGANIZATION_NAME:
         return Comparator.comparing(user -> user.getOrganization() != null ? user.getOrganization().getName() : StringUtils.EMPTY);
+      case REGISTRATION_DATE:
+        return Comparator.comparing(User::getCreatedTimestamp);
+      case MAIL:
+        return Comparator.comparing(User::getEmail);
       default:
         return Comparator.comparing(User::getCreatedTimestamp);
     }
@@ -602,8 +622,8 @@ public class UserService {
     if (userRaw == null) {
       throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
     }
-    userRaw.put("firstName", userNameDto.getFirstName());
-    userRaw.put("lastName", userNameDto.getLastName());
+    userRaw.put(FIRST_NAME, userNameDto.getFirstName());
+    userRaw.put(LAST_NAME, userNameDto.getLastName());
     keycloakFeign.updateUser(userId, userRaw);
   }
 
