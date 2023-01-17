@@ -21,16 +21,12 @@ import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.PrivacyException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
@@ -296,15 +292,18 @@ public class CohortService {
 
     Map<String, Integer> sizes = new LinkedHashMap<>();
     List<String> clinics = contentService.getClinics();
-    for (String clinic : clinics) {
-      QueryResponseData queryResponseData =
-          ehrBaseService.executePlainQuery(
-              String.format(GET_PATIENTS_PER_CLINIC, clinic, idsString));
-      List<List<Object>> rows = queryResponseData.getRows();
-      if (rows == null) {
-        sizes.put(clinic, 0);
-      } else {
-        sizes.put(clinic, rows.size());
+    if (CollectionUtils.isNotEmpty(clinics)) {
+      for (String clinic : clinics) {
+        if (Objects.nonNull(clinic)) {
+          QueryResponseData queryResponseData =
+                  ehrBaseService.executePlainQuery(String.format(GET_PATIENTS_PER_CLINIC, clinic, idsString));
+          List<List<Object>> rows = queryResponseData.getRows();
+          if (rows == null) {
+            sizes.put(clinic, 0);
+          } else {
+            sizes.put(clinic, rows.size());
+          }
+        }
       }
     }
     return sizes;
