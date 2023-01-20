@@ -47,10 +47,10 @@ public class AqlService {
   private static final String ORGANIZATION_NAME = "organization";
 
   private static final String AQL_NAME_GERMAN = "name";
-
   private static final String AQL_NAME_ENGLISH = "nameTranslated";
+  private static final String AQL_CREATE_DATE = "createDate";
   private static final List<String> AQL_CATEGORY_SORT_FIELDS = Arrays.asList("name-de", "name-en");
-  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList(AQL_NAME_GERMAN, AQL_NAME_ENGLISH, AUTHOR_NAME, ORGANIZATION_NAME, "createDate", "category");
+  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList(AQL_NAME_GERMAN, AQL_NAME_ENGLISH, AUTHOR_NAME, ORGANIZATION_NAME, AQL_CREATE_DATE, "category");
   private final AqlRepository aqlRepository;
   private final AqlCategoryRepository aqlCategoryRepository;
   private final EhrBaseService ehrBaseService;
@@ -120,15 +120,15 @@ public class AqlService {
     aqlQueries = new ArrayList<>(aqlPage.getContent());
 
     if (!sortByAqlColumns) {
-      sortAqlQueries(aqlQueries, sort, language.name());
+      sortAqlQueries(aqlQueries, sort);
     }
     return new PageImpl<>(aqlQueries, pageable, aqlPage.getTotalElements());
   }
 
-  private void sortAqlQueries(List<Aql> aqlQueries, Sort sort, String lang) {
+  private void sortAqlQueries(List<Aql> aqlQueries, Sort sort) {
     if (sort != null) {
       Sort.Order authorOrder = sort.getOrderFor(AUTHOR_NAME);
-      // TODO fix by author name
+      // TO_DO fix by author name
       if (authorOrder != null) {
         Comparator<Aql> byAuthorName = Comparator.comparing(aql -> {
           User owner = userService.getOwner(aql.getOwner().getUserId());
@@ -145,7 +145,7 @@ public class AqlService {
   }
 
   private boolean isSortByAqlDBColumns(SearchCriteria searchCriteria) {
-    List<String> aqlSortColumns = Arrays.asList(AQL_NAME_GERMAN, AQL_NAME_ENGLISH, "createDate", ORGANIZATION_NAME);
+    List<String> aqlSortColumns = Arrays.asList(AQL_NAME_GERMAN, AQL_NAME_ENGLISH, AQL_CREATE_DATE, ORGANIZATION_NAME);
     return aqlSortColumns.contains(searchCriteria.getSortBy());
   }
 
@@ -348,6 +348,6 @@ public class AqlService {
       }
       return Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()), searchCriteria.getSortBy());
     }
-    return Sort.by(Sort.Direction.DESC, "createDate");
+    return Sort.by(Sort.Direction.DESC, AQL_CREATE_DATE);
   }
 }

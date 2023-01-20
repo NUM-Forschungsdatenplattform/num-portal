@@ -24,6 +24,8 @@ import java.util.*;
 @AllArgsConstructor
 public class AqlSpecification implements Specification<Aql> {
 
+    private static final String AQL_CATEGORY = "category";
+
     private Map<String, ?> filter;
 
     @Nonnull
@@ -46,17 +48,15 @@ public class AqlSpecification implements Specification<Aql> {
         Predicate ownedPred = criteriaBuilder.equal(owner.get("userId"), loggedInUserId);
         Predicate publicAql = criteriaBuilder.equal(root.get("publicAql"), Boolean.TRUE);
         Predicate ownedOrPublic = criteriaBuilder.or(ownedPred, publicAql);
-        if (sortOrder != null) {
-            // TODO find a way to force nulls last in generated query because when order is desc nulls are first
-            if (sortOrder.getProperty().equals("category")) {
-                Join<Aql, AqlCategory> aqlCategory = root.join("category", JoinType.LEFT);
-                Expression aqlCategoryName = criteriaBuilder.function("json_extract_path_text", String.class, aqlCategory.get("name"),
-                        criteriaBuilder.literal(language.name()));
-                if (sortOrder.getDirection().isAscending()) {
-                    query.orderBy(criteriaBuilder.asc(aqlCategoryName));
-                } else {
-                    query.orderBy(criteriaBuilder.desc(aqlCategoryName));
-                }
+        if (sortOrder != null && sortOrder.getProperty().equals(AQL_CATEGORY)) {
+            // TO_DO find a way to force nulls last in generated query because when order is desc nulls are first
+            Join<Aql, AqlCategory> aqlCategory = root.join(AQL_CATEGORY, JoinType.LEFT);
+            Expression aqlCategoryName = criteriaBuilder.function("json_extract_path_text", String.class, aqlCategory.get("name"),
+                    criteriaBuilder.literal(language.name()));
+            if (sortOrder.getDirection().isAscending()) {
+                query.orderBy(criteriaBuilder.asc(aqlCategoryName));
+            } else {
+                query.orderBy(criteriaBuilder.desc(aqlCategoryName));
             }
         }
 
@@ -69,7 +69,7 @@ public class AqlSpecification implements Specification<Aql> {
                         criteriaBuilder.like(criteriaBuilder.upper(root.get("nameTranslated")), searchInput);
                 nameLikePredicates.add(alqNameLike);
 
-                Join<Aql, AqlCategory> aqlCategory = root.join("category", JoinType.LEFT);
+                Join<Aql, AqlCategory> aqlCategory = root.join(AQL_CATEGORY, JoinType.LEFT);
                 Predicate aqlCategoryNameLike = criteriaBuilder.like(criteriaBuilder.upper(
                         criteriaBuilder.function("json_extract_path_text", String.class, aqlCategory.get("name"),
                                 criteriaBuilder.literal(language.name()))

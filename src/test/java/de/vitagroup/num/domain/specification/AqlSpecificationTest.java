@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.Sort;
 
 import javax.persistence.criteria.*;
 import java.util.HashMap;
@@ -86,5 +87,25 @@ public class AqlSpecificationTest {
         Mockito.verify(owner, Mockito.times(1)).get("userId");
         Mockito.verify(root, Mockito.times(0)).get("name");
         Mockito.verify(organization, Mockito.times(1)).get("id");
+    }
+
+    @Test
+    public void ownedOrPublicAqlOrderByCategorySpecificationTest() {
+        Join owner = Mockito.mock(Join.class);
+        Mockito.when(root.join("owner", JoinType.INNER)).thenReturn(owner);
+        Path publicAql = Mockito.mock(Path.class);
+        Mockito.when(root.get("publicAql")).thenReturn(publicAql);
+        Join aqlCategory = Mockito.mock(Join.class);
+        Mockito.when(root.join("category", JoinType.LEFT)).thenReturn(aqlCategory);
+        AqlSpecification ps = AqlSpecification.builder()
+                .loggedInUserId("userId")
+                .loggedInUserOrganizationId(2L)
+                .language(Language.en)
+                .sortOrder(Sort.Order.asc("category"))
+                .build();
+        ps.toPredicate(root, query, criteriaBuilder);
+        Mockito.verify(root, Mockito.times(1)).get("publicAql");
+        Mockito.verify(owner, Mockito.times(1)).get("userId");
+        Mockito.verify(aqlCategory, Mockito.times(1)).get("name");
     }
 }
