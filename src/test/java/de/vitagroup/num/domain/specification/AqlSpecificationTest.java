@@ -1,6 +1,7 @@
 package de.vitagroup.num.domain.specification;
 
 import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +34,7 @@ public class AqlSpecificationTest {
         AqlSpecification ps = AqlSpecification.builder()
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(2L)
-                .language("en")
+                .language(Language.en)
                 .build();
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(1)).get("publicAql");
@@ -53,13 +54,13 @@ public class AqlSpecificationTest {
         AqlSpecification ps = AqlSpecification.builder()
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(2L)
-                .language("en")
+                .language(Language.en)
                 .filter(filter)
                 .build();
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(1)).get("publicAql");
         Mockito.verify(owner, Mockito.times(1)).get("userId");
-        Mockito.verify(root, Mockito.times(1)).get("name");
+        Mockito.verify(root, Mockito.times(1)).get("nameTranslated");
         Mockito.verify(aqlCategory, Mockito.times(1)).get("name");
     }
 
@@ -77,7 +78,7 @@ public class AqlSpecificationTest {
         AqlSpecification ps = AqlSpecification.builder()
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(2L)
-                .language("en")
+                .language(Language.en)
                 .filter(filter)
                 .build();
         ps.toPredicate(root, query, criteriaBuilder);
