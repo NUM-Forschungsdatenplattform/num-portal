@@ -19,8 +19,10 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: none
-      order_by:
-        default_null_ordering: last
+    properties:
+      hibernate:
+        order_by:
+          default_null_ordering: last
   security:
     oauth2:
       resourceserver:

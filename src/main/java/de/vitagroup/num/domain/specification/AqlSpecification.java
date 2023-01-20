@@ -49,7 +49,6 @@ public class AqlSpecification implements Specification<Aql> {
         Predicate publicAql = criteriaBuilder.equal(root.get("publicAql"), Boolean.TRUE);
         Predicate ownedOrPublic = criteriaBuilder.or(ownedPred, publicAql);
         if (sortOrder != null && sortOrder.getProperty().equals(AQL_CATEGORY)) {
-            // TO_DO find a way to force nulls last in generated query because when order is desc nulls are first
             Join<Aql, AqlCategory> aqlCategory = root.join(AQL_CATEGORY, JoinType.LEFT);
             Expression aqlCategoryName = criteriaBuilder.function("json_extract_path_text", String.class, aqlCategory.get("name"),
                     criteriaBuilder.literal(language.name()));
