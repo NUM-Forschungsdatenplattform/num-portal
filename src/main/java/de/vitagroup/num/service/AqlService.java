@@ -46,7 +46,7 @@ public class AqlService {
 
   private static final String ORGANIZATION_NAME = "organization";
   private static final List<String> AQL_CATEGORY_SORT_FIELDS = Arrays.asList("name-de", "name-en");
-  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList("name", AUTHOR_NAME, ORGANIZATION_NAME, "createDate", "category");
+  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList("name", "nameTranslated", AUTHOR_NAME, ORGANIZATION_NAME, "createDate", "category");
   private final AqlRepository aqlRepository;
   private final AqlCategoryRepository aqlCategoryRepository;
   private final EhrBaseService ehrBaseService;
@@ -158,7 +158,8 @@ public class AqlService {
   }
 
   private boolean isSortByAqlQueryColumns(SearchCriteria searchCriteria) {
-    return "name".equals(searchCriteria.getSortBy()) || "createDate".equals(searchCriteria.getSortBy());
+    List<String> aqlSortColumns = Arrays.asList("name", "nameTranslated", "createDate");
+    return aqlSortColumns.contains(searchCriteria.getSortBy());
   }
 
   public Aql createAql(Aql aql, String loggedInUserId, Long aqlCategoryId) {
