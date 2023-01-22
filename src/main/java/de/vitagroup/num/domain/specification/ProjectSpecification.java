@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Sort;
 
 import javax.persistence.criteria.*;
 import java.util.*;
@@ -34,6 +35,8 @@ public class ProjectSpecification {
     private Long loggedInUserOrganizationId;
 
     private Set<String> ownersUUID;
+
+    private Sort.Order sortOrder;
 
     public Predicate toPredicate(Root<Project> root, CriteriaBuilder criteriaBuilder) {
         List<Predicate> roleBasedPredicates = new ArrayList<>();
