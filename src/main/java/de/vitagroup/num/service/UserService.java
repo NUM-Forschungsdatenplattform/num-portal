@@ -26,6 +26,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.data.domain.Page;
@@ -76,6 +77,26 @@ public class UserService {
   private static final String REGISTRATION_DATE = "registrationDate";
 
   private static final String MAIL = "email";
+
+  @Transactional
+  public void initializeUsersCache() {
+    List<String> usersUUID = userDetailsService.getAllUsersUUID();
+    ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
+    for(String uuid : usersUUID) {
+      try {
+        User user = getUserById(uuid, true);
+        usersCache.put(uuid, user);
+      } catch (ResourceNotFound fe) {
+        log.warn("skip cache user {} because not found in keycloak", uuid);
+      }
+    }
+  }
+
+  @Transactional
+  @CachePut(value = USERS_CACHE, key="#uuid")
+  public User addUserToCache(String uuid) {
+    return getUserById(uuid, true);
+  }
 
   @Transactional
   public void deleteUser(String userId, String loggedInUserId) {
@@ -607,14 +628,7 @@ public class UserService {
       }
       return userUUIDs;
     }
-
-    Set<User> users = keycloakFeign.searchUsers(search, offset, maxUsersCount);
-    if (users == null) {
-      return Collections.emptySet();
-    }
-    users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
-
-    return users.stream().map(User::getId).collect(Collectors.toSet());
+    return Collections.emptySet();
   }
 
   private void updateName(String userId, UserNameDto userNameDto) {

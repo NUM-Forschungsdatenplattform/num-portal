@@ -654,13 +654,15 @@ public class ProjectServiceTest {
   public void getAllProjectsWithPaginationAndSortByAuthor() {
     setupDataForProjectsWithPagination();
     when(userService.getOwner("approvedCoordinatorId")).thenReturn(User.builder().id("approvedCoordinatorId").firstName("AA Coordinator first name").build());
+    Mockito.when(projectRepository.count()).thenReturn(50L);
     Pageable pageable = PageRequest.of(0,100);
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
             SearchCriteria.builder()
                     .sort("DESC")
                     .sortBy("author")
                     .build(), pageable);
-    Mockito.verify(projectRepository, times(1)).findProjects(Mockito.any(ProjectSpecification.class), Mockito.eq(pageable));
+    Pageable authorPageable = PageRequest.of(0,50);
+    Mockito.verify(projectRepository, times(1)).findProjects(Mockito.any(ProjectSpecification.class), Mockito.eq(authorPageable));
     List<Project> projects = filteredProjects.getContent();
     Assert.assertEquals(Long.valueOf(2L), projects.get(0).getId());
   }

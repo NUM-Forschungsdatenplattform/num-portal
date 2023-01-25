@@ -607,20 +607,6 @@ public class UserServiceTest {
             }
         }
     }
-
-    @Test
-    public void findUsersUUIDTest() {
-        Set<User> users = new HashSet<>();
-        users.add(User.builder().firstName("John").lastName("Doe").id("4").build());
-        users.add(User.builder().firstName("Ana").lastName("John").id("99").build());
-
-        when(keycloakFeign.searchUsers(Mockito.eq("john"), Mockito.anyInt(), Mockito.anyInt())).thenReturn(users);
-        Set<String> userUUIDs =
-                userService.findUsersUUID("john", 0, 200);
-
-        Assert.assertEquals(1, userUUIDs.size());
-    }
-
     @Test
     public void findUsersUUIDFromCacheTest() {
         ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
