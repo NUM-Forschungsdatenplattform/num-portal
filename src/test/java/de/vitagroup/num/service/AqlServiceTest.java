@@ -531,7 +531,7 @@ public class AqlServiceTest {
 
   @Test
   public void getVisibleAqls() {
-    Pageable pageRequest = PageRequest.of(0, 100);
+    Pageable pageRequest = PageRequest.of(0, 100, Sort.by(Sort.Direction.DESC, "createDate"));
     ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder().build());
@@ -562,7 +562,7 @@ public class AqlServiceTest {
   }
 
   private List<Aql> getAqlsSortByCategoryName(String sortDir) {
-    Pageable pageRequest = PageRequest.of(0, 100);
+    Pageable pageRequest = PageRequest.of(0, 100).withSort(Sort.by(Sort.Direction.valueOf(sortDir), "category"));
     ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
@@ -595,6 +595,7 @@ public class AqlServiceTest {
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     Map<String, String> filter = new HashMap<>();
     filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "search dummy");
+    Mockito.when(aqlRepository.count()).thenReturn(100L);
     Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
             .sortBy("author")
             .sort(sortDir)

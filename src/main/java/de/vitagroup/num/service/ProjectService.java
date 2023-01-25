@@ -876,7 +876,7 @@ public class ProjectService {
       String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
       usersUUID = userService.findUsersUUID(searchValue, (int) pageRequest.getOffset(), pageRequest.getPageSize());
     }
-    boolean sortByAuthor = isSortByAuthor(searchCriteria);
+    boolean sortByAuthor = searchCriteria.isSortByAuthor();
     if (sortByAuthor) {
       long count = projectRepository.count();
       // load all projects because sort by author should be done in memory
@@ -912,10 +912,6 @@ public class ProjectService {
               searchCriteria.getSortBy());
     }
     return Sort.by(Sort.Direction.DESC, "modifiedDate");
-  }
-
-  private boolean isSortByAuthor(SearchCriteria searchCriteria) {
-    return AUTHOR_NAME.equals(searchCriteria.getSortBy());
   }
 
   private void sortProjects(List<Project> projects, Sort sortBy) {
