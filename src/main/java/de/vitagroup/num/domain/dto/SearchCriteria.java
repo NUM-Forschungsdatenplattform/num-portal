@@ -33,7 +33,7 @@ public class SearchCriteria {
 
     private String sortBy;
 
-    private String language;
+    private Language language;
 
     public boolean isValid() {
         if (StringUtils.isEmpty(this.sort) && StringUtils.isNotEmpty(this.sortBy)) {

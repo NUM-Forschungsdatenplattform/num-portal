@@ -4,6 +4,7 @@ import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import lombok.AllArgsConstructor;
@@ -11,6 +12,7 @@ import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.annotation.Nonnull;
@@ -21,6 +23,8 @@ import java.util.*;
 @Getter
 @AllArgsConstructor
 public class AqlSpecification implements Specification<Aql> {
+
+    private static final String AQL_CATEGORY = "category";
 
     private Map<String, ?> filter;
 
@@ -33,28 +37,41 @@ public class AqlSpecification implements Specification<Aql> {
     private Set<String> ownersUUID;
 
     @Nonnull
-    private String language;
+    private Language language;
+
+    private Sort.Order sortOrder;
 
     @Override
     public Predicate toPredicate(Root<Aql> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-        query.groupBy(root.get("id"));
 
         Join<Aql, UserDetails> owner = root.join("owner", JoinType.INNER);
         Predicate ownedPred = criteriaBuilder.equal(owner.get("userId"), loggedInUserId);
         Predicate publicAql = criteriaBuilder.equal(root.get("publicAql"), Boolean.TRUE);
         Predicate ownedOrPublic = criteriaBuilder.or(ownedPred, publicAql);
+        if (sortOrder != null && sortOrder.getProperty().equals(AQL_CATEGORY)) {
+            Join<Aql, AqlCategory> aqlCategory = root.join(AQL_CATEGORY, JoinType.LEFT);
+            Expression aqlCategoryName = criteriaBuilder.function("json_extract_path_text", String.class, aqlCategory.get("name"),
+                    criteriaBuilder.literal(language.name()));
+            if (sortOrder.getDirection().isAscending()) {
+                query.orderBy(criteriaBuilder.asc(aqlCategoryName));
+            } else {
+                query.orderBy(criteriaBuilder.desc(aqlCategoryName));
+            }
+        }
+
         if (Objects.nonNull(filter)) {
             List<Predicate> predicates = new ArrayList<>();
             List<Predicate> nameLikePredicates = new ArrayList<>();
             if (StringUtils.isNotEmpty((String) filter.get(SearchCriteria.FILTER_SEARCH_BY_KEY))) {
                 String searchInput = "%" + ((String) filter.get(SearchCriteria.FILTER_SEARCH_BY_KEY)).toUpperCase() + "%";
-                Predicate alqNameLike = criteriaBuilder.like(criteriaBuilder.upper(root.get("name")), searchInput);
+                Predicate alqNameLike = Language.de.equals(language) ? criteriaBuilder.like(criteriaBuilder.upper(root.get("name")), searchInput) :
+                        criteriaBuilder.like(criteriaBuilder.upper(root.get("nameTranslated")), searchInput);
                 nameLikePredicates.add(alqNameLike);
 
-                Join<Aql, AqlCategory> aqlCategory = root.join("category", JoinType.LEFT);
+                Join<Aql, AqlCategory> aqlCategory = root.join(AQL_CATEGORY, JoinType.LEFT);
                 Predicate aqlCategoryNameLike = criteriaBuilder.like(criteriaBuilder.upper(
                         criteriaBuilder.function("json_extract_path_text", String.class, aqlCategory.get("name"),
-                                criteriaBuilder.literal(language))
+                                criteriaBuilder.literal(language.name()))
                 ), searchInput);
 
                 nameLikePredicates.add(aqlCategoryNameLike);

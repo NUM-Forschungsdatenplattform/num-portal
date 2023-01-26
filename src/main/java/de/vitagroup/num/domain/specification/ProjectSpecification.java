@@ -12,7 +12,7 @@ import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Sort;
 
 import javax.persistence.criteria.*;
 import java.util.*;
@@ -20,7 +20,7 @@ import java.util.*;
 @Builder
 @AllArgsConstructor
 @Getter
-public class ProjectSpecification implements Specification<Project> {
+public class ProjectSpecification {
 
     private static final String COLUMN_PROJECT_STATUS = "status";
 
@@ -36,13 +36,11 @@ public class ProjectSpecification implements Specification<Project> {
 
     private Set<String> ownersUUID;
 
-    @Override
-    public Predicate toPredicate(Root<Project> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-        List<Predicate> roleBasedPredicates = new ArrayList<>();
-        query.groupBy(root.get("id"));
+    private Sort.Order sortOrder;
 
+    public Predicate toPredicate(Root<Project> root, CriteriaBuilder criteriaBuilder) {
+        List<Predicate> roleBasedPredicates = new ArrayList<>();
         Join<Project, UserDetails> coordinator = root.join("coordinator", JoinType.INNER);
-        Join<UserDetails, Organization> coordinatorOrganization = coordinator.join("organization", JoinType.INNER);
 
         if (roles.contains(Roles.STUDY_COORDINATOR)) {
             Predicate coordinatorPredicate = criteriaBuilder.equal(coordinator.get("userId"), loggedInUserId);
@@ -73,12 +71,18 @@ public class ProjectSpecification implements Specification<Project> {
                             break;
                         }
                         case ORGANIZATION: {
+                            Join<UserDetails, Organization> coordinatorOrganization = coordinator.join("organization", JoinType.INNER);
                             predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;
                         }
                         case ARCHIVED: {
                             predicates.add(searchByStatus(root, Arrays.asList(ProjectStatus.ARCHIVED)));
+                            break;
+                        }
+                        case ALL: {
+                            // IN FE default ALL tag shows all projects based on roles except archived ones
+                            predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;
                         }
                     }
