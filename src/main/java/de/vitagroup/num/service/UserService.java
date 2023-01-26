@@ -82,12 +82,14 @@ public class UserService {
   public void initializeUsersCache() {
     List<String> usersUUID = userDetailsService.getAllUsersUUID();
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
-    for(String uuid : usersUUID) {
-      try {
-        User user = getUserById(uuid, true);
-        usersCache.put(uuid, user);
-      } catch (ResourceNotFound fe) {
-        log.warn("skip cache user {} because not found in keycloak", uuid);
+    if (usersCache != null) {
+      for (String uuid : usersUUID) {
+        try {
+          User user = getUserById(uuid, true);
+          usersCache.put(uuid, user);
+        } catch (ResourceNotFound fe) {
+          log.warn("skip cache user {} because not found in keycloak", uuid);
+        }
       }
     }
   }

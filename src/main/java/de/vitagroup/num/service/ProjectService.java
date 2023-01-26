@@ -896,7 +896,7 @@ public class ProjectService {
     if (sortByAuthor) {
       sortProjects(projects, sortBy);
       projects = projects.stream()
-              .skip(pageable.getPageNumber() * pageable.getPageSize())
+              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
               .limit(pageable.getPageSize())
               .collect(Collectors.toList());
     }

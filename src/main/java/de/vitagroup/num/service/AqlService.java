@@ -124,7 +124,7 @@ public class AqlService {
     if (searchCriteria.isSortByAuthor()) {
       sortAqlQueries(aqlQueries, sort);
       aqlQueries = aqlQueries.stream()
-              .skip(pageable.getPageNumber() * pageable.getPageSize())
+              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
               .limit(pageable.getPageSize())
               .collect(Collectors.toList());
     }
