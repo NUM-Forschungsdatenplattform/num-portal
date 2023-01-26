@@ -16,6 +16,7 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProjectRepositoryImplTest {
@@ -57,7 +58,6 @@ public class ProjectRepositoryImplTest {
         Mockito.when(selectProjectQuery.select(Mockito.any())).thenReturn(select);
         CriteriaQuery where = Mockito.mock(CriteriaQuery.class);
         Mockito.when(select.where(Mockito.any(Expression.class))).thenReturn(where);
-        Mockito.when(where.groupBy(Mockito.any(Expression.class))).thenReturn(Mockito.mock(CriteriaQuery.class));
         Mockito.when(resultQuery.setFirstResult(Mockito.anyInt())).thenReturn(resultQuery);
         Mockito.when(resultQuery.setMaxResults(Mockito.anyInt())).thenReturn(resultQuery);
         Mockito.when(resultQuery.getResultList()).thenReturn(Collections.emptyList());
