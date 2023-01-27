@@ -158,6 +158,10 @@ public class UserDetailsService {
     return userDetailsRepository.findAll(specification, pageable);
   }
 
+  public Long countUserDetails() {
+    return userDetailsRepository.count();
+  }
+
   public List<String> getAllUsersUUID() {
     return userDetailsRepository.getAllUsersId();
   }

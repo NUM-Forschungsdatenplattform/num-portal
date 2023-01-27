@@ -29,10 +29,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -358,22 +355,24 @@ public class UserService {
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
     validateSort(searchCriteria);
 
-    Set<User> users = new HashSet<>();
+    Set<String> usersUUID = new HashSet<>();
     boolean searchCriteriaProvided = searchCriteria.getFilter() != null &&
             searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY);
     if (searchCriteriaProvided) {
       String searchValue = searchCriteria.getFilter() != null &&
               searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY) ? (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY) : null;
-      users = keycloakFeign.searchUsers(searchValue, (int) pageable.getOffset(), pageable.getPageSize());
+      usersUUID = this.findUsersUUID(searchValue);
     }
-    if (CollectionUtils.isEmpty(users) && searchCriteriaProvided) {
+    if (CollectionUtils.isEmpty(usersUUID) && searchCriteriaProvided) {
       return Page.empty(pageable);
     }
-    Set<String> usersUUID = users.stream().map(User::getId).collect(Collectors.toSet());
-
+    Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     UserDetailsSpecification userDetailsSpecification = buildUserSpecification(loggedInUser, callerRoles, searchCriteria, usersUUID);
-
-    Page<UserDetails> userDetailsPage = userDetailsService.getUsers(pageable, userDetailsSpecification);
+    if (isSortActive(searchCriteria)) {
+      long count = userDetailsService.countUserDetails();
+      pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
+    }
+    Page<UserDetails> userDetailsPage = userDetailsService.getUsers(pageRequest, userDetailsSpecification);
     List<UserDetails> userDetailsList = userDetailsPage.getContent();
     Set<String> filteredUsersUUID = userDetailsList.stream().map(UserDetails::getUserId).collect(Collectors.toSet());
     List<User> filteredUsers = new ArrayList<>();
@@ -383,26 +382,20 @@ public class UserService {
             Boolean.valueOf((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_USER_WITH_ROLES_KEY)) : null;
     boolean loadUserRoles = (withRoles != null && withRoles) || Roles.isProjectLead(callerRoles);
     for (String uuid : filteredUsersUUID) {
-      User user = null;
-      Optional<User> keycloackUser = users.stream().filter(u -> uuid.equals(u.getId())).findFirst();
-      if (keycloackUser.isEmpty()) {
-        try {
-          user = getUserById(uuid, loadUserRoles);
-        } catch (ResourceNotFound rnf) {
-          log.warn("For unknown reasons, user with uuid {} was not found in keycloack ", uuid);
-        }
-      } else {
-        user = keycloackUser.get();
-        addUserDetails(user);
-        if (loadUserRoles) {
-          addRoles(user);
-        }
-      }
-      if(Objects.nonNull(user)) {
+      try {
+        User user = getUser(uuid, loadUserRoles);
         filteredUsers.add(user);
+      } catch (ResourceNotFound rnf) {
+        log.warn("For unknown reasons, user with uuid {} was not found in cache, neither in keycloack ", uuid);
       }
     }
-    sortUsers(filteredUsers, searchCriteria);
+    if (isSortActive(searchCriteria)) {
+      sortUsers(filteredUsers, searchCriteria);
+      filteredUsers = filteredUsers.stream()
+              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
+              .limit(pageable.getPageSize())
+              .collect(Collectors.toList());
+    }
     return new PageImpl<>(new ArrayList<>(filteredUsers), pageable, userDetailsPage.getTotalElements());
   }
 
@@ -659,6 +652,19 @@ public class UserService {
       if (!availableSortFields.contains(searchCriteria.getSortBy())) {
         throw new BadRequestException(ProjectService.class, String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
       }
+    }
+  }
+
+  private boolean isSortActive(SearchCriteria searchCriteria) {
+    return StringUtils.isNotEmpty(searchCriteria.getSort()) && StringUtils.isNotEmpty(searchCriteria.getSortBy());
+  }
+
+  private User getUser(String uuid, Boolean withRole) {
+    ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
+    if (usersCache != null && usersCache.getNativeCache().size() != 0) {
+      return (User) usersCache.getNativeCache().get(uuid);
+    } else {
+      return getUserById(uuid, withRole);
     }
   }
 }
