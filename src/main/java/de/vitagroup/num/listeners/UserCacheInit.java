@@ -1,18 +1,18 @@
 package de.vitagroup.num.listeners;
 
 import de.vitagroup.num.service.UserService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
+@RequiredArgsConstructor
 @Component
 public class UserCacheInit implements ApplicationListener<ApplicationReadyEvent> {
 
-    @Autowired
-    UserService userService;
+    private final UserService userService;
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
