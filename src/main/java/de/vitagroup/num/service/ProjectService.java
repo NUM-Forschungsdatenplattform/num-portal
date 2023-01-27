@@ -869,13 +869,19 @@ public class ProjectService {
     Sort sortBy = validateAndGetSort(searchCriteria);
     List<Project> projects;
     Page<Project> projectPage;
-    Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());;
+    Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     Set<String> usersUUID = null;
-    boolean sortByProjectColumns = isSortByProjectColumns(searchCriteria);
     if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
       String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
-      usersUUID = userService.findUsersUUID(searchValue, (int) pageRequest.getOffset(), pageRequest.getPageSize());
+      usersUUID = userService.findUsersUUID(searchValue);
     }
+    boolean sortByAuthor = searchCriteria.isSortByAuthor();
+    if (sortByAuthor) {
+      long count = projectRepository.count();
+      // load all projects because sort by author should be done in memory
+      pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
+    }
+
     ProjectSpecification projectSpecification = ProjectSpecification.builder()
             .filter(searchCriteria.getFilter())
             .roles(roles)
@@ -886,8 +892,12 @@ public class ProjectService {
             .build();
     projectPage = projectRepository.findProjects(projectSpecification, pageRequest);
     projects = new ArrayList<>(projectPage.getContent());
-    if (!sortByProjectColumns) {
+    if (sortByAuthor) {
       sortProjects(projects, sortBy);
+      projects = projects.stream()
+              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
+              .limit(pageable.getPageSize())
+              .collect(Collectors.toList());
     }
     return new PageImpl<>(projects, pageable, projectPage.getTotalElements());
   }
@@ -901,10 +911,6 @@ public class ProjectService {
               searchCriteria.getSortBy());
     }
     return Sort.by(Sort.Direction.DESC, "modifiedDate");
-  }
-
-  private boolean isSortByProjectColumns(SearchCriteria searchCriteria) {
-    return Arrays.asList(PROJECT_NAME, PROJECT_STATUS, ORGANIZATION_NAME).contains(searchCriteria.getSortBy());
   }
 
   private void sortProjects(List<Project> projects, Sort sortBy) {

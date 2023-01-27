@@ -607,20 +607,6 @@ public class UserServiceTest {
             }
         }
     }
-
-    @Test
-    public void findUsersUUIDTest() {
-        Set<User> users = new HashSet<>();
-        users.add(User.builder().firstName("John").lastName("Doe").id("4").build());
-        users.add(User.builder().firstName("Ana").lastName("John").id("99").build());
-
-        when(keycloakFeign.searchUsers(Mockito.eq("john"), Mockito.anyInt(), Mockito.anyInt())).thenReturn(users);
-        Set<String> userUUIDs =
-                userService.findUsersUUID("john", 0, 200);
-
-        Assert.assertEquals(1, userUUIDs.size());
-    }
-
     @Test
     public void findUsersUUIDFromCacheTest() {
         ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
@@ -633,7 +619,7 @@ public class UserServiceTest {
                 .firstName("John")
                 .lastName("Foe").build());
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
-        Set<String> result = userService.findUsersUUID("doe", 0, 100);
+        Set<String> result = userService.findUsersUUID("doe");
         Mockito.verify(keycloakFeign, Mockito.never()).searchUsers("doe", 0, 100);
         Assert.assertEquals(1, result.size());
     }
@@ -781,6 +767,16 @@ public class UserServiceTest {
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
         User firstUser = users.getContent().get(0);
         Assert.assertEquals("userId-two", firstUser.getId());
+    }
+
+    @Test
+    public void initializeUsersCacheTest() {
+        List<String> usersUUID = Arrays.asList("4", "5");
+        ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+        Mockito.when(userDetailsService.getAllUsersUUID()).thenReturn(usersUUID);
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        userService.initializeUsersCache();
+        Assert.assertEquals(2, usersCache.getNativeCache().size());
     }
 
     private boolean testAddRole(Role role, String userRole) {

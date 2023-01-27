@@ -16,7 +16,6 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProjectRepositoryImplTest {

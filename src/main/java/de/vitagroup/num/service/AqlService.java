@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
@@ -96,16 +97,17 @@ public class AqlService {
     Pageable pageRequest;
     Page<Aql> aqlPage;
     List<Aql> aqlQueries;
-    final boolean sortByAqlColumns = isSortByAqlDBColumns(searchCriteria);
-    if (sortByAqlColumns) {
+    if (!searchCriteria.isSortByAuthor()) {
       pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
     } else {
-      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+      long count = aqlRepository.count();
+      // load all aql criterias because sort by author is done in memory
+      pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
     }
     Set<String> usersUUID = null;
     if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
       String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
-      usersUUID = userService.findUsersUUID(searchValue, (int) pageRequest.getOffset(), pageRequest.getPageSize());
+      usersUUID = userService.findUsersUUID(searchValue);
     }
     Language language = Objects.nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
     AqlSpecification aqlSpecification = AqlSpecification.builder()
@@ -119,8 +121,12 @@ public class AqlService {
     aqlPage = aqlRepository.findAll(aqlSpecification, pageRequest);
     aqlQueries = new ArrayList<>(aqlPage.getContent());
 
-    if (!sortByAqlColumns) {
+    if (searchCriteria.isSortByAuthor()) {
       sortAqlQueries(aqlQueries, sort);
+      aqlQueries = aqlQueries.stream()
+              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
+              .limit(pageable.getPageSize())
+              .collect(Collectors.toList());
     }
     return new PageImpl<>(aqlQueries, pageable, aqlPage.getTotalElements());
   }
@@ -128,7 +134,6 @@ public class AqlService {
   private void sortAqlQueries(List<Aql> aqlQueries, Sort sort) {
     if (sort != null) {
       Sort.Order authorOrder = sort.getOrderFor(AUTHOR_NAME);
-      // TO_DO fix by author name
       if (authorOrder != null) {
         Comparator<Aql> byAuthorName = Comparator.comparing(aql -> {
           User owner = userService.getOwner(aql.getOwner().getUserId());
@@ -143,12 +148,6 @@ public class AqlService {
       }
     }
   }
-
-  private boolean isSortByAqlDBColumns(SearchCriteria searchCriteria) {
-    List<String> aqlSortColumns = Arrays.asList(AQL_NAME_GERMAN, AQL_NAME_ENGLISH, AQL_CREATE_DATE, ORGANIZATION_NAME);
-    return aqlSortColumns.contains(searchCriteria.getSortBy());
-  }
-
   public Aql createAql(Aql aql, String loggedInUserId, Long aqlCategoryId) {
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
