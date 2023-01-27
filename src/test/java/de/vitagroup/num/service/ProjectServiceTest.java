@@ -631,7 +631,7 @@ public class ProjectServiceTest {
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     Set<String> owners = new HashSet<>();
     owners.add("approvedCoordinator");
-    Mockito.when(userService.findUsersUUID(Mockito.eq("OnE"), Mockito.anyInt(), Mockito.eq(100))).thenReturn(owners);
+    Mockito.when(userService.findUsersUUID(Mockito.eq("OnE"))).thenReturn(owners);
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
             SearchCriteria.builder()
                     .sort("ASC")

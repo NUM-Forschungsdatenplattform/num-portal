@@ -870,11 +870,10 @@ public class ProjectService {
     List<Project> projects;
     Page<Project> projectPage;
     Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-    ;
     Set<String> usersUUID = null;
     if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
       String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
-      usersUUID = userService.findUsersUUID(searchValue, (int) pageRequest.getOffset(), pageRequest.getPageSize());
+      usersUUID = userService.findUsersUUID(searchValue);
     }
     boolean sortByAuthor = searchCriteria.isSortByAuthor();
     if (sortByAuthor) {

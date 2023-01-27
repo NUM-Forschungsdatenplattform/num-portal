@@ -612,10 +612,9 @@ public class UserService {
   /**
    * Retrieved a list of users UUID that match the search criteria
    * @param search A string contained in username, first or last name, or email
-   * @param maxUsersCount
    * @return
    */
-  public Set<String> findUsersUUID(String search, int offset, int maxUsersCount) {
+  public Set<String> findUsersUUID(String search) {
     Set<String> userUUIDs = new HashSet<>();
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
     if (usersCache != null && usersCache.getNativeCache().size() != 0) {
