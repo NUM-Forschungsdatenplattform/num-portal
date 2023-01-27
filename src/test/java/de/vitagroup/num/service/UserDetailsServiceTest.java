@@ -197,4 +197,10 @@ public class UserDetailsServiceTest {
     userDetailsService.getAllUsersUUID();
     Mockito.verify(userDetailsRepository, Mockito.times(1)).getAllUsersId();
   }
+
+  @Test
+  public void countUserDetailsTest() {
+    userDetailsService.countUserDetails();
+    Mockito.verify(userDetailsRepository, Mockito.times(1)).count();
+  }
 }
