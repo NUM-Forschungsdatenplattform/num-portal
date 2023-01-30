@@ -29,6 +29,8 @@ public class SearchCriteria {
 
     private static final String AUTHOR_NAME = "author";
 
+    public static final String FILTER_BY_STATUS = "status";
+
     private Map<String, ?> filter;
 
     private String sort;
