@@ -127,7 +127,7 @@ public class ProjectSpecification {
 
     private List<ProjectStatus> getStatusFilter(String status) {
         return Arrays.stream(status.split(","))
-                .map(s -> ProjectStatus.valueOf(s))
+                .map(ProjectStatus::valueOf)
                 .collect(Collectors.toList());
     }
 }
