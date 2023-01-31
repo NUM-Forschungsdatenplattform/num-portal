@@ -671,6 +671,7 @@ public class ProjectService {
                     .recipientFirstName(approver.getFirstName())
                     .recipientLastName(approver.getLastName())
                     .projectId(project.getId())
+                    .coordinatorEmail(coordinator.getEmail())
                     .build();
             notifications.add(notification);
           });
@@ -683,7 +684,7 @@ public class ProjectService {
       if (isTransitionToChangeRequest(oldStatus, newStatus)) {
         ProjectStatusChangeRequestNotification notification = new ProjectStatusChangeRequestNotification(coordinator.getEmail(), coordinator.getFirstName(),
                                                                   coordinator.getLastName(), approver.getFirstName(), approver.getLastName(),
-                                                                  project.getName(), newStatus, oldStatus, project.getId());
+                                                                  project.getName(), newStatus, oldStatus, project.getId(), approver.getEmail());
         notifications.add(notification);
       } else {
         ProjectStatusChangeNotification notification =
@@ -697,6 +698,7 @@ public class ProjectService {
                         .approverLastName(approver.getLastName())
                         .projectId(project.getId())
                         .oldProjectStatus(oldStatus)
+                        .approverEmail(approver.getEmail())
                         .build();
         notifications.add(notification);
       }
@@ -842,66 +844,57 @@ public class ProjectService {
     if (loggedInUser.isEmpty()) {
       throw new ResourceNotFound(ProjectService.class, String.format(USER_NOT_FOUND, userId));
     }
-    Optional<Sort> optSortBy = validateAndGetSort(searchCriteria);
+    Sort sortBy = validateAndGetSort(searchCriteria);
     List<Project> projects;
     Page<Project> projectPage;
-    Pageable pageRequest;
+    Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     Set<String> usersUUID = null;
-    boolean sortByProjectColumns = isSortByProjectColumns(searchCriteria);
-    if (optSortBy.isPresent() && sortByProjectColumns) {
-      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), optSortBy.get());
-    } else {
-      // if sort by author or organization name -> sort it via code
-      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-    }
     if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
       String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
-      usersUUID = userService.findUsersUUID(searchValue, (int) pageRequest.getOffset(), pageRequest.getPageSize());
+      usersUUID = userService.findUsersUUID(searchValue);
     }
+    boolean sortByAuthor = searchCriteria.isSortByAuthor();
+    if (sortByAuthor) {
+      long count = projectRepository.count();
+      // load all projects because sort by author should be done in memory
+      pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
+    }
+
     ProjectSpecification projectSpecification = ProjectSpecification.builder()
             .filter(searchCriteria.getFilter())
             .roles(roles)
             .loggedInUserId(userId)
             .loggedInUserOrganizationId(loggedInUser.get().getOrganization() != null ? loggedInUser.get().getOrganization().getId() : null)
             .ownersUUID(usersUUID)
+            .sortOrder(sortBy.getOrderFor(searchCriteria.getSortBy()))
             .build();
-    projectPage = projectRepository.findAll(projectSpecification, pageRequest);
+    projectPage = projectRepository.findProjects(projectSpecification, pageRequest);
     projects = new ArrayList<>(projectPage.getContent());
-    if (optSortBy.isPresent() && !sortByProjectColumns) {
-      sortProjects(projects, optSortBy);
+    if (sortByAuthor) {
+      sortProjects(projects, sortBy);
+      projects = projects.stream()
+              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
+              .limit(pageable.getPageSize())
+              .collect(Collectors.toList());
     }
     return new PageImpl<>(projects, pageable, projectPage.getTotalElements());
   }
 
-  private Optional<Sort> validateAndGetSort(SearchCriteria searchCriteria) {
+  private Sort validateAndGetSort(SearchCriteria searchCriteria) {
     if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
       if (!availableSortFields.contains(searchCriteria.getSortBy())) {
         throw new BadRequestException(ProjectService.class, String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
       }
-      return Optional.of(Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
-              searchCriteria.getSortBy()));
+      return Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
+              searchCriteria.getSortBy());
     }
-    return Optional.empty();
+    return Sort.by(Sort.Direction.DESC, "modifiedDate");
   }
 
-  private boolean isSortByProjectColumns(SearchCriteria searchCriteria) {
-    return PROJECT_NAME.equals(searchCriteria.getSortBy()) || PROJECT_STATUS.equals(searchCriteria.getSortBy());
-  }
-
-  private void sortProjects(List<Project> projects, Optional<Sort> sortByOptional) {
-    if (sortByOptional.isPresent()) {
-      Sort sortBy = sortByOptional.get();
-      Sort.Order orgOrder = sortBy.getOrderFor(ORGANIZATION_NAME);
+  private void sortProjects(List<Project> projects, Sort sortBy) {
+    if (sortBy != null) {
       Sort.Order authorOrder = sortBy.getOrderFor(AUTHOR_NAME);
-      if (orgOrder != null) {
-        Comparator<Project> byOrgName = Comparator.comparing(project -> project.getCoordinator().getOrganization().getName());
-        Sort.Direction sortOrder = orgOrder.getDirection();
-        if (sortOrder.isAscending()) {
-          Collections.sort(projects, Comparator.nullsLast(byOrgName));
-        } else {
-          Collections.sort(projects, Comparator.nullsLast(byOrgName.reversed()));
-        }
-      } else if (authorOrder != null) {
+      if (authorOrder != null) {
         Comparator<Project> byAuthorName = Comparator.comparing(project -> {
           User coordinator = userService.getOwner(project.getCoordinator().getUserId());
           return coordinator.getFullName();

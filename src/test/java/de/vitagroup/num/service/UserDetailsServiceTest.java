@@ -185,4 +185,22 @@ public class UserDetailsServiceTest {
     Mockito.verify(userDetailsRepository, Mockito.times(1)).findAll(argumentCaptor.capture(), Mockito.eq(pageable));
     Assert.assertEquals(true, argumentCaptor.getValue().getApproved());
   }
+
+  @Test
+  public void deleteUserDetailsTest() {
+    userDetailsService.deleteUserDetails("user-to-be-removed");
+    Mockito.verify(userDetailsRepository, Mockito.times(1)).deleteById(Mockito.eq("user-to-be-removed"));
+  }
+
+  @Test
+  public void getAllUsersUUIDTest() {
+    userDetailsService.getAllUsersUUID();
+    Mockito.verify(userDetailsRepository, Mockito.times(1)).getAllUsersId();
+  }
+
+  @Test
+  public void countUserDetailsTest() {
+    userDetailsService.countUserDetails();
+    Mockito.verify(userDetailsRepository, Mockito.times(1)).count();
+  }
 }

@@ -7,17 +7,18 @@ import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
-import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
-import de.vitagroup.num.service.email.ZarsService;
 import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.service.notification.dto.*;
+import de.vitagroup.num.service.notification.dto.Notification;
+import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
+import de.vitagroup.num.service.notification.dto.ProjectStatusChangeRequestNotification;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
@@ -38,22 +39,22 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static de.vitagroup.num.domain.ProjectStatus.*;
 import static de.vitagroup.num.domain.Roles.*;
@@ -129,15 +130,6 @@ public class ProjectServiceTest {
 
   @Mock
   private TemplateService templateService;
-
-  @Mock
-  private ZarsService zarsService;
-
-  @Mock
-  private ProjectTransitionRepository projectTransitionRepository;
-
-  @Spy
-  private ModelMapper modelMapper;
 
   @Spy private ResponseFilter responseFilter;
 
@@ -554,36 +546,76 @@ public class ProjectServiceTest {
   }
 
   @Test
+  public void shouldFilterWhenSearchingStudiesWithCoordinator() {
+    List<String> roles = new ArrayList<>();
+    roles.add(Roles.STUDY_COORDINATOR);
+    projectService.getProjects("coordinatorId", roles);
+
+    verify(projectRepository, times(1))
+        .findByCoordinatorUserIdOrStatusIn(
+            "coordinatorId",
+            ProjectStatus.getAllProjectStatusToViewAsCoordinator());
+    verify(projectRepository, times(0)).findAll();
+  }
+
+  @Test
+  public void shouldFilterWhenSearchingProjectsWithResearcher() {
+    List<String> roles = new ArrayList<>();
+    roles.add(RESEARCHER);
+    projectService.getProjects("researcherId", roles);
+
+    verify(projectRepository, times(1))
+            .findByResearchers_UserIdAndStatusIn(
+                    "researcherId",
+                    ProjectStatus.getAllProjectStatusToViewAsResearcher());
+  }
+
+  @Test
+  public void shouldFilterWhenSearchingProjectsWithApprover() {
+    List<String> roles = new ArrayList<>();
+    roles.add(STUDY_APPROVER);
+    projectService.getProjects("approverId", roles);
+
+    verify(projectRepository, times(1))
+            .findByStatusIn(ProjectStatus.getAllProjectStatusToViewAsApprover());
+  }
+
+  @Test
   public void getAllProjectsWithPagination() {
     setupDataForProjectsWithPagination();
     List<String> roles = new ArrayList<>();
     roles.add(STUDY_COORDINATOR);
-    Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.DESC, "name"));
+    Pageable pageable = PageRequest.of(0,100);
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     List<Project> projects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
                     SearchCriteria.builder()
                                   .sort("DESC")
                                   .sortBy("name")
                                   .build(), pageable).getContent();
-    Mockito.verify(projectRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
+    Sort.Order sortOrder = Sort.Order.desc("name");
+    Mockito.verify(projectRepository, times(1)).findProjects(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     Assert.assertEquals(Long.valueOf(1L), projects.get(0).getId());
     Assert.assertEquals("approvedCoordinatorId", specificationArgumentCaptor.getValue().getLoggedInUserId());
     Assert.assertEquals(roles, specificationArgumentCaptor.getValue().getRoles());
     Assert.assertNull(specificationArgumentCaptor.getValue().getFilter());
+    Assert.assertEquals(sortOrder, specificationArgumentCaptor.getValue().getSortOrder());
   }
 
   @Test
   public void getAllProjectsWithPaginationAndSortByOrganization() {
     setupDataForProjectsWithPagination();
     Pageable pageable = PageRequest.of(0,100);
+    ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
             SearchCriteria.builder()
                     .sort("ASC")
                     .sortBy("organization")
                     .build(), pageable);
-    Mockito.verify(projectRepository, times(1)).findAll(Mockito.any(ProjectSpecification.class), Mockito.eq(pageable));
+    Sort.Order sortOrder = Sort.Order.asc("organization");
+    Mockito.verify(projectRepository, times(1)).findProjects(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     List<Project> projects = filteredProjects.getContent();
-    Assert.assertEquals(Long.valueOf(2L), projects.get(0).getId());
+    ProjectSpecification capturedInput = specificationArgumentCaptor.getValue();
+    Assert.assertEquals(sortOrder, capturedInput.getSortOrder());
   }
 
   @Test
@@ -592,21 +624,22 @@ public class ProjectServiceTest {
     List<String> roles = new ArrayList<>();
     roles.add(STUDY_COORDINATOR);
     roles.add(RESEARCHER);
-    Pageable pageable = PageRequest.of(0,100).withSort(Sort.by(Sort.Direction.ASC, "name"));
+    Pageable pageable = PageRequest.of(0,100);
     Map<String, String> filter = new HashMap<>();
     filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "OnE");
     filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.OWNED.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
     Set<String> owners = new HashSet<>();
     owners.add("approvedCoordinator");
-    Mockito.when(userService.findUsersUUID(Mockito.eq("OnE"), Mockito.anyInt(), Mockito.eq(100))).thenReturn(owners);
+    Mockito.when(userService.findUsersUUID(Mockito.eq("OnE"))).thenReturn(owners);
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
             SearchCriteria.builder()
                     .sort("ASC")
                     .sortBy("name")
                     .filter(filter)
                     .build(), pageable);
-    Mockito.verify(projectRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
+    Sort.Order sortOrder = Sort.Order.asc("name");
+    Mockito.verify(projectRepository, times(1)).findProjects(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     List<Project> projects = filteredProjects.getContent();
     Assert.assertEquals(Long.valueOf(1L), projects.get(0).getId());
     ProjectSpecification capturedInput = specificationArgumentCaptor.getValue();
@@ -614,19 +647,22 @@ public class ProjectServiceTest {
     Assert.assertEquals("approvedCoordinatorId", capturedInput.getLoggedInUserId());
     Assert.assertEquals(roles, capturedInput.getRoles());
     Assert.assertEquals(owners, capturedInput.getOwnersUUID());
+    Assert.assertEquals(sortOrder, capturedInput.getSortOrder());
   }
 
   @Test
   public void getAllProjectsWithPaginationAndSortByAuthor() {
     setupDataForProjectsWithPagination();
     when(userService.getOwner("approvedCoordinatorId")).thenReturn(User.builder().id("approvedCoordinatorId").firstName("AA Coordinator first name").build());
+    Mockito.when(projectRepository.count()).thenReturn(50L);
     Pageable pageable = PageRequest.of(0,100);
     Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
             SearchCriteria.builder()
                     .sort("DESC")
                     .sortBy("author")
                     .build(), pageable);
-    Mockito.verify(projectRepository, times(1)).findAll(Mockito.any(ProjectSpecification.class), Mockito.eq(pageable));
+    Pageable authorPageable = PageRequest.of(0,50);
+    Mockito.verify(projectRepository, times(1)).findProjects(Mockito.any(ProjectSpecification.class), Mockito.eq(authorPageable));
     List<Project> projects = filteredProjects.getContent();
     Assert.assertEquals(Long.valueOf(2L), projects.get(0).getId());
   }
@@ -667,7 +703,7 @@ public class ProjectServiceTest {
                     .approved(true)
                     .organization(Organization.builder().id(1L).build())
                     .build()));
-    Pageable pageable = PageRequest.of(0,50).withSort(Sort.by(Sort.Direction.DESC, "status"));
+    Pageable pageable = PageRequest.of(0,50);
     Map<String, String> filter = new HashMap<>();
     filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
@@ -677,11 +713,13 @@ public class ProjectServiceTest {
                     .sortBy("status")
                     .filter(filter)
                     .build(), pageable);
-    Mockito.verify(projectRepository, times(1)).findAll(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
+    Sort.Order sortOrder = Sort.Order.desc("status");
+    Mockito.verify(projectRepository, times(1)).findProjects(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     ProjectSpecification capturedInput = specificationArgumentCaptor.getValue();
     Assert.assertEquals(filter, capturedInput.getFilter());
     Assert.assertEquals("approverId", capturedInput.getLoggedInUserId());
     Assert.assertEquals(roles, capturedInput.getRoles());
+    Assert.assertEquals(sortOrder, capturedInput.getSortOrder());
     assertThat(1L, is(capturedInput.getLoggedInUserOrganizationId()));
   }
 
@@ -722,7 +760,7 @@ public class ProjectServiceTest {
             .coordinator(anotherCoordinator)
             .build();
     when(userService.getOwner("anotherCoordinatorId")).thenReturn(User.builder().id("anotherCoordinatorId").firstName("Coordinator first name").build());
-    Mockito.when(projectRepository.findAll(Mockito.any(ProjectSpecification.class), Mockito.any(Pageable.class))).thenReturn(new PageImpl<>(Arrays.asList(pr1, pr2, pr3)));
+    Mockito.when(projectRepository.findProjects(Mockito.any(ProjectSpecification.class), Mockito.any(Pageable.class))).thenReturn(new PageImpl<>(Arrays.asList(pr1, pr2, pr3)));
   }
 
   @Test
@@ -929,15 +967,8 @@ public class ProjectServiceTest {
     Project projectToEdit =
         Project.builder()
             .name("Project")
-            .status(REVIEWING)
+            .status(ProjectStatus.REVIEWING)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
-            .researchers(Arrays.asList(UserDetails.builder()
-                    .userId("approvedResearcherId")
-                    .organization(Organization.builder()
-                            .id(23L)
-                            .name("organization 23")
-                            .build())
-                    .build()))
             .build();
 
     when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
@@ -1354,50 +1385,6 @@ public class ProjectServiceTest {
   }
 
   @Test
-  public void shouldSendNotificationWhenTransitionToPendingProject() {
-    Project projectToEdit =
-            Project.builder()
-                    .name("Project")
-                    .id(77L)
-                    .status(CHANGE_REQUEST)
-                    .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
-                    .researchers(
-                            List.of(
-                                    UserDetails.builder().userId("researcher1").build(),
-                                    UserDetails.builder().userId("researcher2").build()))
-                    .build();
-
-    when(projectRepository.findById(77L)).thenReturn(Optional.of(projectToEdit));
-
-    ProjectDto projectDto =
-            ProjectDto.builder()
-                    .name("Project is edited")
-                    .id(77L)
-                    .status(PENDING)
-                    .coordinator(User.builder().id("approvedCoordinatorId").build())
-                    .researchers(List.of(UserDetailsDto.builder().userId("researcher1").build()))
-                    .build();
-    User user = User.builder()
-            .id("user-id")
-            .firstName("approver-firstname")
-            .emailVerified(true)
-            .email("approver@vitagroup.de").build();
-    Mockito.when(userService.getByRole(Roles.STUDY_APPROVER)).thenReturn(Set.of(user));
-    projectService.updateProject(
-            projectDto,
-            77L,
-            "approvedCoordinatorId",
-            List.of(STUDY_APPROVER, STUDY_COORDINATOR));
-
-    verify(projectRepository, times(1)).save(any());
-    verify(notificationService, times(1)).send(notificationCaptor.capture());
-    List<Notification> notificationSent = notificationCaptor.getValue();
-
-    assertThat(notificationSent.size(), is(1));
-    assertThat(notificationSent.get(0).getClass(), is(ProjectApprovalRequestNotification.class));
-  }
-
-  @Test
   public void shouldSendNotificationWhenChangeRequestProject() {
       Project projectEntity = Project.builder().id(99L)
               .name("Project T001")
@@ -1459,10 +1446,10 @@ public class ProjectServiceTest {
   }
 
   @Test
-  public void shouldNotGetAnyProject() {
-    List<ProjectInfoDto> result = projectService.getLatestProjectsInfo(0, Arrays.asList(STUDY_COORDINATOR));
-    Assert.assertTrue(result.isEmpty());
-    verify(projectRepository, times(0)).findLatestProjects(Mockito.anyInt(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+  public void shouldReturnNoProjectsWhenCounterLessOneTest() {
+    List<ProjectInfoDto> projects = projectService.getLatestProjectsInfo(0, Arrays.asList(STUDY_COORDINATOR));
+    Mockito.verifyNoInteractions(projectRepository);
+    Assert.assertTrue(projects.isEmpty());
   }
 
   @Test
@@ -1523,25 +1510,6 @@ public class ProjectServiceTest {
     projectService.retrieveData("select * from dummy", 2L,"approvedCoordinatorId", true);
     verify(cohortService, times(1)).executeCohort(Mockito.any(Cohort.class), Mockito.eq(false));
   }
-  @Test
-  public void retrieveDataCustomConfigurationTest() {
-    when(projectRepository.findById(99L))
-            .thenReturn(
-                    Optional.of(
-                            Project.builder()
-                                    .id(99L)
-                                    .status(PUBLISHED)
-                                    .cohort(Cohort.builder().id(99L).build())
-                                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
-                                    .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
-                                    .usedOutsideEu(false)
-                                    .build()));
-    when(cohortService.executeCohort(99L, false)).thenReturn(Set.of("some-ehr-id"));
-    QueryResponseData queryResponseData = new QueryResponseData();
-    Mockito.when(ehrBaseService.executeRawQuery(Mockito.any(AqlDto.class), Mockito.eq(99L))).thenReturn(Arrays.asList(queryResponseData));
-    projectService.retrieveData(QUERY_1, 99L,"approvedCoordinatorId", false);
-    verify(cohortService, times(1)).executeCohort(Mockito.eq(99L), Mockito.eq(false));
-  }
 
   @Test
   public void getExportFilenameBodyTest() {
@@ -1579,42 +1547,19 @@ public class ProjectServiceTest {
   }
 
   @Test
-  public void getExportResponseBodyAsCSVTest() {
-    projectService.getExportResponseBody(QUERY_5, 2L, "approvedCoordinatorId", ExportType.csv, false);
-    Mockito.verify(cohortService, times(1)).executeCohort(Mockito.anyLong(), Mockito.eq(false));
-  }
+  public void streamResponseBody() throws IOException {
+    QueryResponseData response = new QueryResponseData();
+    response.setName("response-one");
+    response.setColumns(new ArrayList<>(List.of(Map.of("path", "/ehr_id/value"), Map.of("uuid", "c/uuid"))));
+    response.setRows(  List.of(
+            new ArrayList<>(List.of("ehr-id-1", Map.of("_type", "OBSERVATION", "uuid", "12345"))),
+            new ArrayList<>(List.of("ehr-id-2", Map.of("_type", "SECTION", "uuid", "bla")))));
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    projectService.streamResponseAsZip(Arrays.asList(response), "testFile", out);
 
-  @Test
-  public void getManagerExportResponseBodyTest() {
-    CohortDto cohortDto =
-            CohortDto.builder().name("Cohort name").projectId(1L).build();
-    Mockito.when(userDetailsService.checkIsUserApproved("approvedManagerId")).thenReturn(UserDetails.builder()
-                    .approved(true)
-                    .userId("approvedManagerId")
-            .build());
-    projectService.getManagerExportResponseBody(cohortDto, Arrays.asList("template-1"), "approvedManagerId", ExportType.json);
-
-  }
-
-  @Test
-  public void streamResponseAsZipTest() {
-    QueryResponseData responseData = new QueryResponseData();
-    responseData.setQuery("Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]");
-    List<Map<String, String>> columns = new ArrayList<>(List.of(Map.of("path", "/ehr_id/value"), Map.of("uuid", "c/uuid")));
-    List<List<Object>> rows =
-            List.of(
-                    new ArrayList<>(List.of("test-ehrId", Map.of("_type", "COMPOSITION", "uuid", "test1"))),
-                    new ArrayList<>(List.of("test-ehrId2", Map.of("_type", "COMPOSITION", "uuid", "test2"))));
-    responseData.setColumns(columns);
-    responseData.setRows(rows);
-    boolean result = projectService.streamResponseAsZip(Arrays.asList(responseData), "filestart", new ByteArrayOutputStream());
-    Assert.assertTrue(result);
-  }
-
-  @Test
-  public void existsByIdTest() {
-    projectService.exists(9L);
-    Mockito.verify(projectRepository, Mockito.times(1)).existsById(Mockito.eq(9L));
+    ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
+    ZipEntry expectedFile = zipInputStream.getNextEntry();
+    Assert.assertEquals("testFile_response-one.csv", expectedFile.getName());
   }
 
   @Before
@@ -1750,9 +1695,5 @@ public class ProjectServiceTest {
     when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
     when(cohortService.executeCohort(any(), any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     when(privacyProperties.getMinHits()).thenReturn(0);
-    Mockito.when(projectTransitionRepository.findAllByProjectIdAndFromStatusAndToStatus(Mockito.anyLong(), Mockito.any(ProjectStatus.class), Mockito.any(ProjectStatus.class)))
-            .thenReturn(Optional.of(Arrays.asList(ProjectTransition.builder()
-                    .createDate(Instant.now().atOffset(ZoneOffset.UTC))
-                    .build())));
   }
 }

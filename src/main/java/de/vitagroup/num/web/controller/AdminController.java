@@ -1,5 +1,6 @@
 package de.vitagroup.num.web.controller;
 
+import ch.qos.logback.classic.Level;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
@@ -12,6 +13,7 @@ import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.data.domain.Page;
@@ -49,6 +51,19 @@ public class AdminController extends CustomizedExceptionHandler {
     } else {
       return ResponseEntity.badRequest().body(healthEndpoint.health().getStatus());
     }
+  }
+
+  @GetMapping("/log-level")
+  public ResponseEntity<Level> getLogLevel() {
+    ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+    return ResponseEntity.ok(rootLogger.getLevel());
+  }
+
+  @PostMapping("/log-level/{logLevel}")
+  public ResponseEntity<Level> setLogLevel(@NotNull @PathVariable String logLevel) {
+    ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+    rootLogger.setLevel(Level.valueOf(logLevel));//Default log level is DEBUG. If {logLevel} == Wrong Status
+    return ResponseEntity.ok(rootLogger.getLevel());
   }
 
   @AuditLog

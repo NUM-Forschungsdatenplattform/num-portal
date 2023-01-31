@@ -12,15 +12,16 @@ import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Sort;
 
 import javax.persistence.criteria.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Builder
 @AllArgsConstructor
 @Getter
-public class ProjectSpecification implements Specification<Project> {
+public class ProjectSpecification {
 
     private static final String COLUMN_PROJECT_STATUS = "status";
 
@@ -36,11 +37,10 @@ public class ProjectSpecification implements Specification<Project> {
 
     private Set<String> ownersUUID;
 
-    @Override
-    public Predicate toPredicate(Root<Project> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-        List<Predicate> roleBasedPredicates = new ArrayList<>();
-        query.groupBy(root.get("id"));
+    private Sort.Order sortOrder;
 
+    public Predicate toPredicate(Root<Project> root, CriteriaBuilder criteriaBuilder) {
+        List<Predicate> roleBasedPredicates = new ArrayList<>();
         Join<Project, UserDetails> coordinator = root.join("coordinator", JoinType.INNER);
 
         if (roles.contains(Roles.STUDY_COORDINATOR)) {
@@ -72,10 +72,8 @@ public class ProjectSpecification implements Specification<Project> {
                             break;
                         }
                         case ORGANIZATION: {
-                            if (Objects.nonNull(loggedInUserOrganizationId)) {
-                                Join<UserDetails, Organization> coordinatorOrganization = coordinator.join("organization", JoinType.INNER);
-                                predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
-                            }
+                            Join<UserDetails, Organization> coordinatorOrganization = coordinator.join("organization", JoinType.INNER);
+                            predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;
                         }
@@ -83,8 +81,11 @@ public class ProjectSpecification implements Specification<Project> {
                             predicates.add(searchByStatus(root, Arrays.asList(ProjectStatus.ARCHIVED)));
                             break;
                         }
-                        case ALL:
-                            throw new IllegalArgumentException("Invalid filter type received");
+                        case ALL: {
+                            // IN FE default ALL tag shows all projects based on roles except archived ones
+                            predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
+                            break;
+                        }
                     }
                 }
                 if (SearchCriteria.FILTER_SEARCH_BY_KEY.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
@@ -99,6 +100,9 @@ public class ProjectSpecification implements Specification<Project> {
                     } else {
                         predicates.add(projectNameLike);
                     }
+                }
+                if (SearchCriteria.FILTER_BY_STATUS.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
+                    predicates.add(searchByStatus(root, getStatusFilter((String) entry.getValue())));
                 }
             }
             filterPredicate = criteriaBuilder.and(predicates.toArray(Predicate[]::new));
@@ -119,5 +123,11 @@ public class ProjectSpecification implements Specification<Project> {
             throw new IllegalArgumentException("status cannot be null");
         }
         return root.get(COLUMN_PROJECT_STATUS).in(statuses);
+    }
+
+    private List<ProjectStatus> getStatusFilter(String status) {
+        return Arrays.stream(status.split(","))
+                .map(ProjectStatus::valueOf)
+                .collect(Collectors.toList());
     }
 }

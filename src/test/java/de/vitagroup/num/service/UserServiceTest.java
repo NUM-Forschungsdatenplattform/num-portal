@@ -113,10 +113,14 @@ public class UserServiceTest {
         when(keycloakFeign.getRolesOfUser("4")).thenReturn(Stream.of(new Role("R2", "RESEARCHER")).collect(Collectors.toSet()));
         when(keycloakFeign.getRolesOfUser("5")).thenReturn(Collections.emptySet());
         when(keycloakFeign.getRolesOfUser("6")).thenReturn(roles);
-        when(keycloakFeign.getRolesOfUser("userId-one")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
-        when(keycloakFeign.getRolesOfUser("userId-two")).thenReturn(Set.of(new Role("R4", "STUDY_COORDINATOR")));
+        when(keycloakFeign.getRolesOfUser("7")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
+        when(keycloakFeign.getRolesOfUser("8")).thenReturn(Set.of(new Role("R4", "STUDY_COORDINATOR")));
+        when(keycloakFeign.getRolesOfUser("9"))
+                .thenReturn(Set.of(new Role("R3", "ORGANIZATION_ADMIN")));
 
         when(keycloakFeign.getRoles()).thenReturn(roles);
+
+        when(keycloakFeign.searchUsers(any(), eq(100000))).thenReturn(allValidUsers);
 
         when(userDetailsService.getUserDetailsById("4"))
                 .thenReturn(
@@ -205,7 +209,21 @@ public class UserServiceTest {
                                 .organization(Organization.builder().id(2L).name("org 2").domains(Set.of()).build())
                                 .approved(true)
                                 .build());
+        when(userDetailsService.getUserDetailsById("8"))
+                .thenReturn(
+                        Optional.of(
+                                UserDetails.builder()
+                                        .userId("8")
+                                        .organization(
+                                                Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                                        .approved(true)
+                                        .build()));
         when(userDetailsService.checkIsUserApproved("8")).thenThrow(new ForbiddenException());
+        when(userDetailsService.getUserDetailsById("9"))
+                .thenReturn(Optional.of(UserDetails.builder().userId("9")
+                        .approved(true).build()));
+        when(userDetailsService.checkIsUserApproved("9"))
+                .thenReturn(UserDetails.builder().userId("9").approved(true).build());
     }
 
     @Test
@@ -384,26 +402,35 @@ public class UserServiceTest {
 
     @Test
     public void shouldReturnUserWithRoles() {
-        Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(UserDetails.builder()
-                        .userId("userId-one")
-                        .organization(
-                                Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
-                        .approved(true)
-                        .build())));
-        when(keycloakFeign.getUser("userId-one")).thenReturn(User.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .id("userId-one")
-                .createdTimestamp(System.currentTimeMillis())
-                .build());
-        Map<String, String> filter = new HashMap<>();
-        filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
-        Page<User> userReturn =
-                userService.searchUsersWithPagination("user", List.of(Roles.SUPER_ADMIN), SearchCriteria.builder().filter(filter).build(), PageRequest.of(0,100));
+        Set<User> users = new HashSet<>();
+        users.add(User.builder().firstName("John").id("4").build());
 
-        assertThat(userReturn.getContent().get(0).getRoles().iterator().next(), is("RESEARCHER"));
-        verify(keycloakFeign, times(1)).getRolesOfUser("userId-one");
+        when(keycloakFeign.searchUsers(null, 100000)).thenReturn(users);
+        Set<de.vitagroup.num.domain.admin.User> userReturn =
+                userService.searchUsers("user", null, null, true, List.of(Roles.SUPER_ADMIN));
+
+        assertThat(userReturn.iterator().next().getRoles().iterator().next(), is("RESEARCHER"));
+        verify(keycloakFeign, times(1)).getRolesOfUser("4");
+    }
+
+    @Test
+    public void shouldReturnEnoughUsers() {
+        Set<de.vitagroup.num.domain.admin.User> userReturn =
+                userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
+        assertEquals(6, userReturn.size());
+    }
+
+    @Test
+    public void shouldReturnUserWithoutRoles() {
+        Set<User> users = new HashSet<>();
+        users.add(User.builder().firstName("John").id("4").build());
+
+        when(keycloakFeign.searchUsers(null, 100000)).thenReturn(users);
+        Set<de.vitagroup.num.domain.admin.User> userReturn =
+                userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
+
+        assertNull(userReturn.iterator().next().getRoles());
+        verify(keycloakFeign, times(0)).getRolesOfUser("4");
     }
 
     @Test
@@ -413,6 +440,42 @@ public class UserServiceTest {
 
         assertNull(userReturn);
         verify(keycloakFeign, times(1)).getUser("missingUserId");
+    }
+
+    @Test
+    public void shouldReturnUserWithRolesWithinOrg() {
+        Set<de.vitagroup.num.domain.admin.User> userReturn =
+                userService.searchUsers("5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN));
+
+        assertEquals(4, userReturn.size());
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
+    }
+
+    @Test
+    public void shouldReturnUserWithRolesWithinOrgAndResearchers() {
+        Set<de.vitagroup.num.domain.admin.User> userReturn =
+                userService.searchUsers(
+                        "5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
+        assertEquals(5, userReturn.size());
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
+    }
+
+    @Test
+    public void shouldNotReturnUsersWithinOrgWhenCallerDoesntHaveOrg() {
+        Set<de.vitagroup.num.domain.admin.User> userReturn =
+                userService.searchUsers(
+                        "9", null, null, false, List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
+        assertEquals(3, userReturn.size());
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
+        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
     }
 
     @Test(expected = ForbiddenException.class)
@@ -544,20 +607,6 @@ public class UserServiceTest {
             }
         }
     }
-
-    @Test
-    public void findUsersUUIDTest() {
-        Set<User> users = new HashSet<>();
-        users.add(User.builder().firstName("John").lastName("Doe").id("4").build());
-        users.add(User.builder().firstName("Ana").lastName("John").id("99").build());
-
-        when(keycloakFeign.searchUsers(Mockito.eq("john"), Mockito.anyInt(), Mockito.anyInt())).thenReturn(users);
-        Set<String> userUUIDs =
-                userService.findUsersUUID("john", 0, 200);
-
-        Assert.assertEquals(1, userUUIDs.size());
-    }
-
     @Test
     public void findUsersUUIDFromCacheTest() {
         ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
@@ -570,7 +619,7 @@ public class UserServiceTest {
                 .firstName("John")
                 .lastName("Foe").build());
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
-        Set<String> result = userService.findUsersUUID("doe", 0, 100);
+        Set<String> result = userService.findUsersUUID("doe");
         Mockito.verify(keycloakFeign, Mockito.never()).searchUsers("doe", 0, 100);
         Assert.assertEquals(1, result.size());
     }
@@ -582,62 +631,80 @@ public class UserServiceTest {
         filter.put(SearchCriteria.FILTER_APPROVED_KEY, "false");
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
+                .sort("asc")
+                .sortBy("email")
                 .build();
+        mockDataSearchUsers();
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput = argumentCaptor.getValue();
+        Assert.assertEquals(Boolean.FALSE, capturedInput.getApproved());
+        User firstUser = users.getContent().get(0);
+        Assert.assertEquals("ana-maria.doe@vitagroup.ag", firstUser.getEmail());
+    }
+
+    private void mockDataSearchUsers() {
         UserDetails userOne = UserDetails.builder()
                 .userId("userId-one")
                 .organization(
-                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
-                .approved(true)
+                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
+                .approved(false)
                 .build();
         UserDetails userTwo = UserDetails.builder()
                 .userId("userId-two")
                 .organization(
-                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
-                .approved(true)
+                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
+                .approved(false)
                 .build();
+        ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+        usersCache.put("userId-one", User.builder()
+                                            .id("userId-one")
+                                            .firstName("John")
+                                            .lastName("doe")
+                                            .email("john.doe@vitagroup.ag")
+                                            .createdTimestamp(System.currentTimeMillis())
+                                            .build());
+        usersCache.put("userId-two", User.builder()
+                .firstName("Ana")
+                .lastName("Doe")
+                .id("userId-two")
+                .email("ana-maria.doe@vitagroup.ag")
+                .createdTimestamp(System.currentTimeMillis()).build());
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
                 .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo)));
-        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
-        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
-        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
-        UserDetailsSpecification capturedInput = argumentCaptor.getValue();
-        Assert.assertEquals(Boolean.FALSE, capturedInput.getApproved());
     }
 
     @Test
     public void searchUsersWithPaginationAsProjectLeadTest() {
         Pageable pageable = PageRequest.of(0, 50);
         Map<String, String> filter = new HashMap<>();
-        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "some dummy search input");
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "ana");
         filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
-                .sortBy("lastname")
+                .sortBy("lastName")
                 .sort("asc")
                 .build();
-        UserDetails userOne = UserDetails.builder()
-                .userId("userId-one")
-                .organization(
-                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
-                .approved(true)
-                .build();
-        UserDetails userTwo = UserDetails.builder()
+        UserDetails userDetails = UserDetails.builder()
                 .userId("userId-two")
                 .organization(
                         Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                 .approved(true)
                 .build();
-        Set<User> users = new HashSet<>();
-        users.add(User.builder().firstName("John").lastName("Doe").id("userId-one").build());
-        users.add(User.builder().firstName("Ana").lastName("John").id("userId-two").build());
-        when(keycloakFeign.searchUsers(Mockito.eq("some dummy search input"), Mockito.anyInt(), Mockito.anyInt())).thenReturn(users);
+        ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+        usersCache.put("userId-one", User.builder().firstName("John").lastName("Doe").id("userId-one").build());
+        usersCache.put("userId-two", User.builder().firstName("Ana").lastName("John").id("userId-two").build());
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo)));
+                .thenReturn(new PageImpl<>(Arrays.asList(userDetails)));
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
         userService.searchUsersWithPagination("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable);
-        Mockito.verify(keycloakFeign, Mockito.times(1)).searchUsers(Mockito.eq("some dummy search input"), Mockito.eq(0), Mockito.eq(50));
-        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertNull(capturedInput.getApproved());
         assertThat(1L, is(capturedInput.getLoggedInUserOrganizationId()));
@@ -651,43 +718,60 @@ public class UserServiceTest {
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
                 .sort("DESC")
-                .sortBy("firstname")
+                .sortBy("firstName")
                 .build();
-        UserDetails userOne = UserDetails.builder()
-                .userId("userId-one")
-                .organization(
-                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
-                .approved(true)
-                .build();
-        UserDetails userTwo = UserDetails.builder()
-                .userId("userId-two")
-                .organization(
-                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
-                .approved(true)
-                .build();
+        mockDataSearchUsers();
         Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
                 .userId("user-55")
                 .organization(Organization.builder().id(99L).build())
                 .build());
-        Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo)));
-        Mockito.when(keycloakFeign.getUser("userId-one")).thenReturn(User.builder()
-                .id("userId-one")
-                .firstName("Ana")
-                .lastName("Popescu")
-                .createdTimestamp(System.currentTimeMillis())
-                .build());
-        Mockito.when(keycloakFeign.getUser("userId-two")).thenReturn(User.builder()
-                .id("userId-two")
-                .firstName("Maria")
-                .lastName("Doe")
-                .createdTimestamp(System.currentTimeMillis())
-                .build());
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        userService.searchUsersWithPagination("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
-        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
+        Page<User> userPage = userService.searchUsersWithPagination("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
+        User firstUser = userPage.getContent().get(0);
+        Assert.assertEquals("John", firstUser.getFirstName());
+    }
+
+    @Test
+    public void searchUsersWithPaginationAndSortByOrganizationTest() {
+        Pageable pageable = PageRequest.of(0, 50);
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .sort("asc")
+                .sortBy("organization")
+                .build();
+        mockDataSearchUsers();
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        User firstUser = users.getContent().get(0);
+        Assert.assertEquals("userId-two", firstUser.getId());
+    }
+
+    @Test
+    public void searchUsersWithPaginationAndSortByRegistrationDateTest() {
+        Pageable pageable = PageRequest.of(0, 20);
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .sort("desc")
+                .sortBy("registrationDate")
+                .build();
+        mockDataSearchUsers();
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0, 2)), argumentCaptor.capture());
+        User firstUser = users.getContent().get(0);
+        Assert.assertEquals("userId-two", firstUser.getId());
+    }
+
+    @Test
+    public void initializeUsersCacheTest() {
+        List<String> usersUUID = Arrays.asList("4", "5");
+        ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+        Mockito.when(userDetailsService.getAllUsersUUID()).thenReturn(usersUUID);
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        userService.initializeUsersCache();
+        Assert.assertEquals(2, usersCache.getNativeCache().size());
     }
 
     private boolean testAddRole(Role role, String userRole) {

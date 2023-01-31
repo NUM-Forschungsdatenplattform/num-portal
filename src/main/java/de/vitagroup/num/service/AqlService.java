@@ -7,6 +7,7 @@ import de.vitagroup.num.domain.AqlCategory;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
@@ -43,10 +45,13 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 public class AqlService {
 
   private static final String AUTHOR_NAME = "author";
-
   private static final String ORGANIZATION_NAME = "organization";
+
+  private static final String AQL_NAME_GERMAN = "name";
+  private static final String AQL_NAME_ENGLISH = "nameTranslated";
+  private static final String AQL_CREATE_DATE = "createDate";
   private static final List<String> AQL_CATEGORY_SORT_FIELDS = Arrays.asList("name-de", "name-en");
-  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList("name", AUTHOR_NAME, ORGANIZATION_NAME, "createDate", "category");
+  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList(AQL_NAME_GERMAN, AQL_NAME_ENGLISH, AUTHOR_NAME, ORGANIZATION_NAME, AQL_CREATE_DATE, "category");
   private final AqlRepository aqlRepository;
   private final AqlCategoryRepository aqlCategoryRepository;
   private final EhrBaseService ehrBaseService;
@@ -82,53 +87,48 @@ public class AqlService {
   public Page<Aql> getVisibleAqls(String loggedInUserId, Pageable pageable, SearchCriteria searchCriteria) {
     UserDetails userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    Optional<Sort> optSortBy = validateAndGetSortForAQLQuery(searchCriteria);
+    Sort sort = validateAndGetSortForAQLQuery(searchCriteria);
     Pageable pageRequest;
     Page<Aql> aqlPage;
     List<Aql> aqlQueries;
-    final boolean sortByAqlColumns = isSortByAqlQueryColumns(searchCriteria);
-    if (optSortBy.isPresent() && sortByAqlColumns) {
-      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), optSortBy.get());
+    if (!searchCriteria.isSortByAuthor()) {
+      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
     } else {
-      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+      long count = aqlRepository.count();
+      // load all aql criterias because sort by author is done in memory
+      pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
     }
     Set<String> usersUUID = null;
     if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
       String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
-      usersUUID = userService.findUsersUUID(searchValue, (int) pageRequest.getOffset(), pageRequest.getPageSize());
+      usersUUID = userService.findUsersUUID(searchValue);
     }
-    String language = StringUtils.isNotEmpty(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : "de";
+    Language language = Objects.nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
     AqlSpecification aqlSpecification = AqlSpecification.builder()
             .filter(searchCriteria.getFilter())
             .loggedInUserId(loggedInUserId)
             .loggedInUserOrganizationId(userDetails.getOrganization().getId())
             .ownersUUID(usersUUID)
             .language(language)
+            .sortOrder(sort.getOrderFor(searchCriteria.getSortBy()))
             .build();
     aqlPage = aqlRepository.findAll(aqlSpecification, pageRequest);
     aqlQueries = new ArrayList<>(aqlPage.getContent());
 
-    if (optSortBy.isPresent() && !sortByAqlColumns) {
-      sortAqlQueries(aqlQueries, optSortBy, language);
+    if (searchCriteria.isSortByAuthor()) {
+      sortAqlQueries(aqlQueries, sort);
+      aqlQueries = aqlQueries.stream()
+              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
+              .limit(pageable.getPageSize())
+              .collect(Collectors.toList());
     }
     return new PageImpl<>(aqlQueries, pageable, aqlPage.getTotalElements());
   }
 
-  private void sortAqlQueries(List<Aql> aqlQueries, Optional<Sort> sortOptional, String lang) {
-    if (sortOptional.isPresent()) {
-      Sort sort = sortOptional.get();
-      Sort.Order organizationOrder = sort.getOrderFor(ORGANIZATION_NAME);
+  private void sortAqlQueries(List<Aql> aqlQueries, Sort sort) {
+    if (sort != null) {
       Sort.Order authorOrder = sort.getOrderFor(AUTHOR_NAME);
-      Sort.Order aqlCategoryOrder = sort.getOrderFor("category");
-      if (organizationOrder != null) {
-        Comparator<Aql> byOrgName = Comparator.comparing(aql -> aql.getOwner().getOrganization().getName());
-        Sort.Direction sortOrder = organizationOrder.getDirection();
-        if (sortOrder.isAscending()) {
-          Collections.sort(aqlQueries, Comparator.nullsLast(byOrgName));
-        } else {
-          Collections.sort(aqlQueries, Comparator.nullsLast(byOrgName.reversed()));
-        }
-      } else if (authorOrder != null) {
+      if (authorOrder != null) {
         Comparator<Aql> byAuthorName = Comparator.comparing(aql -> {
           User owner = userService.getOwner(aql.getOwner().getUserId());
           return owner.getFullName();
@@ -139,27 +139,17 @@ public class AqlService {
         } else {
           Collections.sort(aqlQueries, Comparator.nullsLast(byAuthorName.reversed()));
         }
-      } else if (aqlCategoryOrder != null) {
-        Comparator<Aql> byAqlCategory = Comparator.comparing(aql -> aql.getCategory() != null ? aql.getCategory().getName().get(lang) : StringUtils.EMPTY);
-        Sort.Direction sortOrder = aqlCategoryOrder.getDirection();
-        if (sortOrder.isAscending()) {
-          Collections.sort(aqlQueries, Comparator.nullsLast(byAqlCategory));
-        } else {
-          Collections.sort(aqlQueries, Comparator.nullsLast(byAqlCategory.reversed()));
-        }
       }
     }
   }
-
-  private boolean isSortByAqlQueryColumns(SearchCriteria searchCriteria) {
-    return "name".equals(searchCriteria.getSortBy()) || "createDate".equals(searchCriteria.getSortBy());
-  }
-
-  public Aql createAql(Aql aql, String loggedInUserId) {
+  public Aql createAql(Aql aql, String loggedInUserId, Long aqlCategoryId) {
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    if (userDetails.isNotApproved()) {
-      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
+    if (Objects.nonNull(aqlCategoryId)) {
+      AqlCategory aqlCategory = aqlCategoryRepository.findById(aqlCategoryId).orElseThrow(() ->
+              new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND,
+                      String.format(CATEGORY_BY_ID_NOT_FOUND, aqlCategoryId)));
+      aql.setCategory(aqlCategory);
     }
 
     aql.setOwner(userDetails);
@@ -169,13 +159,19 @@ public class AqlService {
     return aqlRepository.save(aql);
   }
 
-  public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId) {
+  public Aql updateAql(Aql aql, Long aqlId, String loggedInUserId, Long aqlCategoryId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
     var aqlToEdit =
         aqlRepository
             .findById(aqlId)
             .orElseThrow(() -> new ResourceNotFound(AqlService.class, CANNOT_FIND_AQL, String.format(CANNOT_FIND_AQL, aqlId)));
+    if (Objects.nonNull(aqlCategoryId)) {
+      AqlCategory aqlCategory = aqlCategoryRepository.findById(aqlCategoryId).orElseThrow(() ->
+              new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND,
+                      String.format(CATEGORY_BY_ID_NOT_FOUND, aqlCategoryId)));
+      aqlToEdit.setCategory(aqlCategory);
+    }
 
     if (aqlToEdit.hasEmptyOrDifferentOwner(loggedInUserId)) {
       throw new ForbiddenException( AqlService.class, AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER,
@@ -191,7 +187,6 @@ public class AqlService {
     aqlToEdit.setModifiedDate(OffsetDateTime.now());
     aqlToEdit.setQuery(aql.getQuery());
     aqlToEdit.setPublicAql(aql.isPublicAql());
-    aqlToEdit.setCategory(aql.getCategory());
 
     return aqlRepository.save(aqlToEdit);
   }
@@ -224,10 +219,6 @@ public class AqlService {
   public List<Aql> searchAqls(String name, SearchFilter filter, String loggedInUserId) {
 
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
-
-    if (userDetails.isNotApproved()) {
-      throw new ForbiddenException(AqlService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED);
-    }
 
     String searchInput = StringUtils.isNotEmpty(name) ? name.toUpperCase() : name;
 
@@ -334,14 +325,17 @@ public class AqlService {
     }
     return Optional.of(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
   }
-  private Optional<Sort> validateAndGetSortForAQLQuery(SearchCriteria searchCriteria) {
+
+  private Sort validateAndGetSortForAQLQuery(SearchCriteria searchCriteria) {
     if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
       if (!AQL_QUERY_SORT_FIELDS.contains(searchCriteria.getSortBy())) {
         throw new BadRequestException(AqlService.class, String.format("Invalid %s sortBy field for aql queries", searchCriteria.getSortBy()));
       }
-      return Optional.of(Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
-              searchCriteria.getSortBy()));
+      if (ORGANIZATION_NAME.equals(searchCriteria.getSortBy())) {
+        return Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()), "owner.organization.name");
+      }
+      return Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()), searchCriteria.getSortBy());
     }
-    return Optional.empty();
+    return Sort.by(Sort.Direction.DESC, AQL_CREATE_DATE);
   }
 }

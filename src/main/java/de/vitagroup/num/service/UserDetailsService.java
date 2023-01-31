@@ -89,6 +89,8 @@ public class UserDetailsService {
       } else {
         notificationService.send(collectAdminNotifications(userId));
       }
+      // trigger cache update
+      userService.addUserToCache(userId);
       return saved;
     }
   }
@@ -154,6 +156,14 @@ public class UserDetailsService {
 
   public Page<UserDetails> getUsers(Pageable pageable, UserDetailsSpecification specification) {
     return userDetailsRepository.findAll(specification, pageable);
+  }
+
+  public Long countUserDetails() {
+    return userDetailsRepository.count();
+  }
+
+  public List<String> getAllUsersUUID() {
+    return userDetailsRepository.getAllUsersId();
   }
 
   private List<Notification> collectAccountApprovalNotification(
