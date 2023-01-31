@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 
 import javax.persistence.criteria.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Builder
 @AllArgsConstructor
@@ -100,6 +101,9 @@ public class ProjectSpecification {
                         predicates.add(projectNameLike);
                     }
                 }
+                if (SearchCriteria.FILTER_BY_STATUS.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
+                    predicates.add(searchByStatus(root, getStatusFilter((String) entry.getValue())));
+                }
             }
             filterPredicate = criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         } else {
@@ -119,5 +123,11 @@ public class ProjectSpecification {
             throw new IllegalArgumentException("status cannot be null");
         }
         return root.get(COLUMN_PROJECT_STATUS).in(statuses);
+    }
+
+    private List<ProjectStatus> getStatusFilter(String status) {
+        return Arrays.stream(status.split(","))
+                .map(ProjectStatus::valueOf)
+                .collect(Collectors.toList());
     }
 }

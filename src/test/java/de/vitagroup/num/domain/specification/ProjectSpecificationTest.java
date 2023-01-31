@@ -68,6 +68,7 @@ public class ProjectSpecificationTest {
         Mockito.when(coordinator.get("userId")).thenReturn(Mockito.mock(Path.class));
         Map<String, String> filter = new HashMap<>();
         filter.put("search", "search me");
+        filter.put("status", "PUBLISHED");
         Set<String> usersUUID = new HashSet<>();
         usersUUID.add("user-id-1");
         usersUUID.add("user-id-2");
@@ -80,7 +81,7 @@ public class ProjectSpecificationTest {
                 .ownersUUID(usersUUID)
                 .build();
         ps.toPredicate(root, criteriaBuilder);
-        Mockito.verify(root, Mockito.times(1)).get("status");
+        Mockito.verify(root, Mockito.times(2)).get("status");
         Mockito.verify(reasearcher, Mockito.times(1)).get("userId");
     }
 
