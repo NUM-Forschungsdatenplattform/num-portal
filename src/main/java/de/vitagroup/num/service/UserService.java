@@ -581,6 +581,7 @@ public class UserService {
   }
 
   @CachePut(cacheNames = USERS_CACHE, key = "#userIdToChange")
+  @Transactional
   public User changeUserName(
       @NotNull String userIdToChange,
       @NotNull UserNameDto userName,
