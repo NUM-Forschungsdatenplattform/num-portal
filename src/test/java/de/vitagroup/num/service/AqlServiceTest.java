@@ -571,10 +571,11 @@ public class AqlServiceTest {
             .build());
     Mockito.verify(aqlRepository, Mockito.times(1)).findAll(specArgumentCaptor.capture(), pageableCapture.capture());
     Pageable capturedInput = pageableCapture.getValue();
-    Assert.assertEquals(pageRequest, capturedInput);
+    Assert.assertEquals(PageRequest.of(0, 100), capturedInput);
     AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
     Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
     Assert.assertEquals(Language.de, aqlSpecification.getLanguage());
+    Assert.assertEquals(Sort.Order.asc("category"), aqlSpecification.getSortOrder());
     return aqlPage.getContent();
   }
 

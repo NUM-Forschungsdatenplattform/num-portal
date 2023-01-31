@@ -50,8 +50,10 @@ public class AqlService {
   private static final String AQL_NAME_GERMAN = "name";
   private static final String AQL_NAME_ENGLISH = "nameTranslated";
   private static final String AQL_CREATE_DATE = "createDate";
+
+  private static final String AQL_CATEGORY = "category";
   private static final List<String> AQL_CATEGORY_SORT_FIELDS = Arrays.asList("name-de", "name-en");
-  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList(AQL_NAME_GERMAN, AQL_NAME_ENGLISH, AUTHOR_NAME, ORGANIZATION_NAME, AQL_CREATE_DATE, "category");
+  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList(AQL_NAME_GERMAN, AQL_NAME_ENGLISH, AUTHOR_NAME, ORGANIZATION_NAME, AQL_CREATE_DATE, AQL_CATEGORY);
   private final AqlRepository aqlRepository;
   private final AqlCategoryRepository aqlCategoryRepository;
   private final EhrBaseService ehrBaseService;
@@ -98,7 +100,12 @@ public class AqlService {
     Page<Aql> aqlPage;
     List<Aql> aqlQueries;
     if (!searchCriteria.isSortByAuthor()) {
-      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+      if(AQL_CATEGORY.equals(searchCriteria.getSortBy())) {
+        // sort send on page request messes up the generated query for order by and ignores what is inside aql specification
+        pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+      } else {
+        pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+      }
     } else {
       long count = aqlRepository.count();
       // load all aql criterias because sort by author is done in memory

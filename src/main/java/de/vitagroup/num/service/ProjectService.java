@@ -919,7 +919,7 @@ public class ProjectService {
       if (authorOrder != null) {
         Comparator<Project> byAuthorName = Comparator.comparing(project -> {
           User coordinator = userService.getOwner(project.getCoordinator().getUserId());
-          return coordinator.getFullName();
+          return coordinator.getFullName().toUpperCase();
         });
         Sort.Direction sortOrder = authorOrder.getDirection();
         if (sortOrder.isAscending()) {
