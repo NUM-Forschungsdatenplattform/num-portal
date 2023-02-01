@@ -98,6 +98,7 @@ public class UserService {
   }
 
   @Transactional
+  @CacheEvict(cacheNames = USERS_CACHE, key = "#userId")
   public void deleteUser(String userId, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
     Optional<UserDetails> userDetails = userDetailsService.getUserDetailsById(userId);
@@ -579,8 +580,9 @@ public class UserService {
     }
   }
 
-  @CacheEvict(cacheNames = USERS_CACHE, key = "#userIdToChange")
-  public void changeUserName(
+  @CachePut(cacheNames = USERS_CACHE, key = "#userIdToChange")
+  @Transactional
+  public User changeUserName(
       @NotNull String userIdToChange,
       @NotNull UserNameDto userName,
       @NotNull String loggedInUserId,
@@ -600,6 +602,7 @@ public class UserService {
     }
 
     notificationService.send(collectUserNameUpdateNotification(userIdToChange, loggedInUserId));
+    return getUserById(userIdToChange, true);
   }
 
   /**
@@ -662,9 +665,11 @@ public class UserService {
   private User getUser(String uuid, Boolean withRole) {
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
     if (usersCache != null && usersCache.getNativeCache().size() != 0) {
-      return (User) usersCache.getNativeCache().get(uuid);
-    } else {
-      return getUserById(uuid, withRole);
+      User user = (User) usersCache.getNativeCache().get(uuid);
+      if (user != null) {
+        return user;
+      }
     }
+      return getUserById(uuid, withRole);
   }
 }
