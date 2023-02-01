@@ -24,7 +24,6 @@ public class BaseSpecification {
 
     protected Long loggedInUserOrganizationId;
 
-    @Nonnull
     protected Language language;
 
     protected Sort.Order sortOrder;
