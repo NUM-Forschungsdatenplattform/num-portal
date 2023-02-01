@@ -11,6 +11,8 @@ import de.vitagroup.num.domain.dto.SearchFilter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Sort;
@@ -20,29 +22,19 @@ import javax.persistence.criteria.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Builder
-@AllArgsConstructor
+@SuperBuilder
 @Getter
-public class ProjectSpecification {
+@AllArgsConstructor
+@NoArgsConstructor
+public class ProjectSpecification extends BaseSpecification {
 
-    private static final String COLUMN_PROJECT_STATUS = "status";
+    public static final String COLUMN_PROJECT_STATUS = "status";
+
+    public static final String COORDINATOR_ORGANIZATION = "organization";
 
     private static final String WILDCARD_PERCENTAGE_SIGN = "%";
 
-    private Map<String, ?> filter;
-
     private List<String> roles;
-
-    @Nonnull
-    private String loggedInUserId;
-
-    private Long loggedInUserOrganizationId;
-
-    private Set<String> ownersUUID;
-
-    private Sort.Order sortOrder;
-
-    private Language language;
 
     public Predicate toPredicate(Root<Project> root, CriteriaBuilder criteriaBuilder) {
         List<Predicate> roleBasedPredicates = new ArrayList<>();

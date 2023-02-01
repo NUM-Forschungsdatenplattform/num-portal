@@ -10,6 +10,8 @@ import de.vitagroup.num.domain.dto.SearchCriteria;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Sort;
@@ -19,27 +21,15 @@ import javax.annotation.Nonnull;
 import javax.persistence.criteria.*;
 import java.util.*;
 
-@Builder
+@SuperBuilder
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
-public class AqlSpecification implements Specification<Aql> {
+public class AqlSpecification extends BaseSpecification implements Specification<Aql> {
 
     private static final String AQL_CATEGORY = "category";
 
-    private Map<String, ?> filter;
-
-    @Nonnull
-    private String loggedInUserId;
-
-    @Nonnull
-    private Long loggedInUserOrganizationId;
-
     private Set<String> ownersUUID;
-
-    @Nonnull
-    private Language language;
-
-    private Sort.Order sortOrder;
 
     @Override
     public Predicate toPredicate(Root<Aql> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {

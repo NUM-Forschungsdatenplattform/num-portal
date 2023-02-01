@@ -1,7 +1,9 @@
 package de.vitagroup.num.domain.repository;
 
+import de.vitagroup.num.domain.EntityGroup;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.Translation;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import org.springframework.data.domain.Page;
@@ -44,7 +46,7 @@ public class ProjectRepositoryImpl implements CustomProjectRepository {
         if (projectSpecification.getSortOrder() != null) {
             Sort.Order sortOrder = projectSpecification.getSortOrder();
             Expression<?> orderByExpression = null;
-            if (projectSpecification.getSortOrder().getProperty().equals("organization")) {
+            if (ProjectSpecification.COORDINATOR_ORGANIZATION.equals(projectSpecification.getSortOrder().getProperty())) {
                 Fetch<Project, UserDetails> coordinator = root.fetch("coordinator");
                 Fetch<UserDetails, Organization> organization = coordinator.fetch("organization", JoinType.LEFT);
                 Join<Project, UserDetails> coordinatorJoin = (Join<Project, UserDetails>) coordinator;
@@ -53,7 +55,16 @@ public class ProjectRepositoryImpl implements CustomProjectRepository {
                 groupByExpressions.add(organizationJoin.get("id"));
                 orderByExpression = organizationJoin.get("name");
             } else {
-                if (!"author".equals(sortOrder.getProperty())) {
+                if (ProjectSpecification.COLUMN_PROJECT_STATUS.equals(projectSpecification.getSortOrder().getProperty())) {
+                    Join<Object, Object> translationJoin = root.join("translations", JoinType.LEFT);
+                    translationJoin.on(cb.and(
+                            cb.equal(translationJoin.get("entityGroup"), EntityGroup.PROJECT_STATUS),
+                            cb.equal(translationJoin.get("language"), projectSpecification.getLanguage()),
+                            cb.equal(translationJoin.get("property"), root.get("status"))
+                    ));
+                    groupByExpressions.add(translationJoin.get("value"));
+                    orderByExpression = translationJoin.get("value");
+                } else if (!"author".equals(sortOrder.getProperty())) {
                     orderByExpression = root.get(sortOrder.getProperty());
                 }
             }
