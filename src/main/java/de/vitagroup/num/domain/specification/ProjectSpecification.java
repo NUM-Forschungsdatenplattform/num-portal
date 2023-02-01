@@ -5,6 +5,7 @@ import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import lombok.AllArgsConstructor;
@@ -14,6 +15,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Sort;
 
+import javax.annotation.Nonnull;
 import javax.persistence.criteria.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,6 +33,7 @@ public class ProjectSpecification {
 
     private List<String> roles;
 
+    @Nonnull
     private String loggedInUserId;
 
     private Long loggedInUserOrganizationId;
@@ -38,6 +41,8 @@ public class ProjectSpecification {
     private Set<String> ownersUUID;
 
     private Sort.Order sortOrder;
+
+    private Language language;
 
     public Predicate toPredicate(Root<Project> root, CriteriaBuilder criteriaBuilder) {
         List<Predicate> roleBasedPredicates = new ArrayList<>();

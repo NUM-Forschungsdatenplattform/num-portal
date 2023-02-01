@@ -881,7 +881,7 @@ public class ProjectService {
       // load all projects because sort by author should be done in memory
       pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
     }
-
+    Language language = Objects.nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
     ProjectSpecification projectSpecification = ProjectSpecification.builder()
             .filter(searchCriteria.getFilter())
             .roles(roles)
@@ -889,6 +889,7 @@ public class ProjectService {
             .loggedInUserOrganizationId(loggedInUser.get().getOrganization().getId())
             .ownersUUID(usersUUID)
             .sortOrder(sortBy.getOrderFor(searchCriteria.getSortBy()))
+            .language(language)
             .build();
     projectPage = projectRepository.findProjects(projectSpecification, pageRequest);
     projects = new ArrayList<>(projectPage.getContent());
