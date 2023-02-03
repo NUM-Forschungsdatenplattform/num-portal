@@ -20,8 +20,6 @@ import java.util.stream.Collectors;
 
 @SuperBuilder
 @Getter
-@AllArgsConstructor
-@NoArgsConstructor
 public class ProjectSpecification extends BaseSpecification {
 
     public static final String COLUMN_PROJECT_STATUS = "status";

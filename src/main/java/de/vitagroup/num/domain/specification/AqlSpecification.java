@@ -7,9 +7,7 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,8 +20,6 @@ import java.util.Objects;
 
 @SuperBuilder
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
 public class AqlSpecification extends BaseSpecification implements Specification<Aql> {
 
     private static final String AQL_CATEGORY = "category";
