@@ -874,7 +874,7 @@ public class ProjectService {
       // load all projects because sort by author should be done in memory
       pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
     }
-    Sort.Order order = sortBy.getOrderFor(searchCriteria.getSortBy()) != null ?
+    Sort.Order order = (searchCriteria.getSortBy() != null && sortBy.getOrderFor(searchCriteria.getSortBy()) != null) ?
                        sortBy.getOrderFor(searchCriteria.getSortBy()).ignoreCase() : Sort.Order.desc("modifiedDate");
     Language language = Objects.nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
     ProjectSpecification projectSpecification = ProjectSpecification.builder()
