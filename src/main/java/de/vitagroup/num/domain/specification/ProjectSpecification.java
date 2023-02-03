@@ -5,19 +5,15 @@ import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.domain.Sort;
 
-import javax.annotation.Nonnull;
 import javax.persistence.criteria.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -69,7 +65,7 @@ public class ProjectSpecification extends BaseSpecification {
                             break;
                         }
                         case ORGANIZATION: {
-                            Join<UserDetails, Organization> coordinatorOrganization = coordinator.join("organization", JoinType.INNER);
+                            Join<UserDetails, Organization> coordinatorOrganization = coordinator.join(COORDINATOR_ORGANIZATION, JoinType.INNER);
                             predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;

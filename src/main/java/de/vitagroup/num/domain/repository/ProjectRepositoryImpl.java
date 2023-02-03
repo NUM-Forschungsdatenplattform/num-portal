@@ -3,7 +3,6 @@ package de.vitagroup.num.domain.repository;
 import de.vitagroup.num.domain.EntityGroup;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.Translation;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import org.springframework.data.domain.Page;
