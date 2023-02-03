@@ -11,6 +11,8 @@ import lombok.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.hibernate.annotations.JoinColumnOrFormula;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -26,7 +28,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(exclude = {"cohort", "transitions"})
+@EqualsAndHashCode(exclude = {"cohort", "transitions","translations"})
 public class Project implements Serializable {
 
   @Id
@@ -89,12 +91,20 @@ public class Project implements Serializable {
   @ToString.Exclude
   @OneToMany(fetch = FetchType.LAZY)
   @JoinColumnOrFormula(column = @JoinColumn(name = "property", referencedColumnName = "status", insertable = false, updatable = false))
-  private List<Translation> translations;
+  @NotFound(action = NotFoundAction.IGNORE)
+  private Set<Translation> translations = new HashSet<>();
 
   @ToString.Exclude
   @JsonManagedReference
   @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<ProjectTransition> transitions = new HashSet<>();
+
+  public Project(Long id, String name, OffsetDateTime createDate, UserDetails coordinator) {
+    this.id = id;
+    this.name = name;
+    this.createDate = createDate;
+    this.coordinator = coordinator;
+  }
 
   public boolean hasEmptyOrDifferentOwner(String userId) {
     return ObjectUtils.isEmpty(coordinator) || !coordinator.getUserId().equals(userId);

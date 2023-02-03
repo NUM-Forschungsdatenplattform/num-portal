@@ -118,6 +118,7 @@ public class ProjectService {
   private final ProjectMapper projectMapper;
 
 
+  @Transactional
   public boolean deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
@@ -181,15 +182,11 @@ public class ProjectService {
       return List.of();
     }
 
-    List<Project> projects =
-        projectRepository.findLatestProjects(
-            count,
-            ProjectStatus.APPROVED.name(),
-            ProjectStatus.PUBLISHED.name(),
-            ProjectStatus.CLOSED.name());
+    List<Project> projects = projectRepository.findByStatusInOrderByCreateDateDesc(Arrays.asList(ProjectStatus.APPROVED,
+            ProjectStatus.PUBLISHED, ProjectStatus.CLOSED), PageRequest.of(0, count));
     return projects.stream()
-        .map(project -> toProjectInfo(project, roles))
-        .collect(Collectors.toList());
+            .map(project -> toProjectInfo(project, roles))
+            .collect(Collectors.toList());
   }
 
   public String retrieveData(
@@ -884,7 +881,7 @@ public class ProjectService {
             .loggedInUserId(userId)
             .loggedInUserOrganizationId(loggedInUser.get().getOrganization().getId())
             .ownersUUID(usersUUID)
-            .sortOrder(sortBy.getOrderFor(searchCriteria.getSortBy()))
+            .sortOrder(sortBy.getOrderFor(searchCriteria.getSortBy()).ignoreCase())
             .language(language)
             .build();
     projectPage = projectRepository.findProjects(projectSpecification, pageRequest);

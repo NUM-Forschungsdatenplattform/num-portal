@@ -592,7 +592,7 @@ public class ProjectServiceTest {
                                   .sort("DESC")
                                   .sortBy("name")
                                   .build(), pageable).getContent();
-    Sort.Order sortOrder = Sort.Order.desc("name");
+    Sort.Order sortOrder = Sort.Order.desc("name").ignoreCase();
     Mockito.verify(projectRepository, times(1)).findProjects(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     Assert.assertEquals(Long.valueOf(1L), projects.get(0).getId());
     Assert.assertEquals("approvedCoordinatorId", specificationArgumentCaptor.getValue().getLoggedInUserId());
@@ -611,7 +611,7 @@ public class ProjectServiceTest {
                     .sort("ASC")
                     .sortBy("organization")
                     .build(), pageable);
-    Sort.Order sortOrder = Sort.Order.asc("organization");
+    Sort.Order sortOrder = Sort.Order.asc("organization").ignoreCase();
     Mockito.verify(projectRepository, times(1)).findProjects(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     List<Project> projects = filteredProjects.getContent();
     ProjectSpecification capturedInput = specificationArgumentCaptor.getValue();
@@ -638,7 +638,7 @@ public class ProjectServiceTest {
                     .sortBy("name")
                     .filter(filter)
                     .build(), pageable);
-    Sort.Order sortOrder = Sort.Order.asc("name");
+    Sort.Order sortOrder = Sort.Order.asc("name").ignoreCase();
     Mockito.verify(projectRepository, times(1)).findProjects(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     List<Project> projects = filteredProjects.getContent();
     Assert.assertEquals(Long.valueOf(1L), projects.get(0).getId());
@@ -713,7 +713,7 @@ public class ProjectServiceTest {
                     .sortBy("status")
                     .filter(filter)
                     .build(), pageable);
-    Sort.Order sortOrder = Sort.Order.desc("status");
+    Sort.Order sortOrder = Sort.Order.desc("status").ignoreCase();
     Mockito.verify(projectRepository, times(1)).findProjects(specificationArgumentCaptor.capture(), Mockito.eq(pageable));
     ProjectSpecification capturedInput = specificationArgumentCaptor.getValue();
     Assert.assertEquals(filter, capturedInput.getFilter());
@@ -1437,12 +1437,12 @@ public class ProjectServiceTest {
             .status(ProjectStatus.PUBLISHED)
             .coordinator(UserDetails.builder().userId("approvedCoordinatorId").approved(true).build())
             .build();
-    Mockito.when(projectRepository.findLatestProjects(10, ProjectStatus.APPROVED.name(),
-                 ProjectStatus.PUBLISHED.name(), ProjectStatus.CLOSED.name()))
+    Mockito.when(projectRepository.findByStatusInOrderByCreateDateDesc(Arrays.asList(ProjectStatus.APPROVED,
+                 ProjectStatus.PUBLISHED, ProjectStatus.CLOSED), PageRequest.of(0, 10)))
                 .thenReturn(Arrays.asList(pr1,pr2));
     projectService.getLatestProjectsInfo(10, roles);
-    verify(projectRepository, times(1)).findLatestProjects(10, ProjectStatus.APPROVED.name(),
-            ProjectStatus.PUBLISHED.name(), ProjectStatus.CLOSED.name());
+    verify(projectRepository, times(1)).findByStatusInOrderByCreateDateDesc(Arrays.asList(ProjectStatus.APPROVED,
+            ProjectStatus.PUBLISHED, ProjectStatus.CLOSED), PageRequest.of(0, 10));
   }
 
   @Test
