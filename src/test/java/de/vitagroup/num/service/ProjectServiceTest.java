@@ -48,6 +48,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -1421,22 +1422,23 @@ public class ProjectServiceTest {
     List<String> roles = new ArrayList<>();
     roles.add(STUDY_COORDINATOR);
 
-    Project pr1 = Project.builder().id(1L)
-            .name("project one")
-            .status(ProjectStatus.APPROVED)
-            .coordinator(UserDetails.builder()
-                    .userId("approvedCoordinatorId")
-                    .approved(true)
-                    .organization(Organization.builder()
-                            .name("some organization")
-                            .id(3L).build())
-                    .build())
-            .build();
-    Project pr2 = Project.builder().id(2l)
-            .name("project two")
-            .status(ProjectStatus.PUBLISHED)
-            .coordinator(UserDetails.builder().userId("approvedCoordinatorId").approved(true).build())
-            .build();
+    Project pr1 = new Project(1L, "project one", OffsetDateTime.now(),
+            UserDetails.builder()
+            .userId("approvedCoordinatorId")
+            .approved(true)
+            .organization(Organization.builder()
+                    .name("some organization")
+                    .id(3L).build())
+            .build());
+
+    Project pr2 = new Project(1L, "project two", OffsetDateTime.now(),
+            UserDetails.builder()
+            .userId("approvedCoordinatorId")
+            .approved(true)
+            .organization(Organization.builder()
+                    .name("some organization")
+                    .id(3L).build())
+            .build());
     Mockito.when(projectRepository.findByStatusInOrderByCreateDateDesc(Arrays.asList(ProjectStatus.APPROVED,
                  ProjectStatus.PUBLISHED, ProjectStatus.CLOSED), PageRequest.of(0, 10)))
                 .thenReturn(Arrays.asList(pr1,pr2));
