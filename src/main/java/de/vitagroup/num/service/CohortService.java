@@ -12,18 +12,15 @@ import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.PrivacyException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.service.policy.EhrPolicy;
 import de.vitagroup.num.service.policy.Policy;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.service.policy.TemplatesPolicy;
-import de.vitagroup.num.service.exception.BadRequestException;
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.PrivacyException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
-
-import java.util.*;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -31,14 +28,14 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.condition.ConditionComparisonOperatorDto;
-import org.ehrbase.aql.dto.condition.ConditionDto;
-import org.ehrbase.aql.dto.condition.ParameterValue;
-import org.ehrbase.aql.dto.condition.Value;
+import org.ehrbase.aql.dto.condition.*;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
@@ -225,17 +222,36 @@ public class CohortService {
       if (Objects.isNull(cohortGroupDto.getQuery())) {
         throw new BadRequestException(CohortGroup.class, INVALID_COHORT_GROUP_AQL_MISSING);
       }
-      if (MapUtils.isEmpty(cohortGroupDto.getParameters())) {
-        // check if query contains parameters
-        AqlDto aqlDto = new AqlToDtoParser().parse(cohortGroupDto.getQuery().getQuery());
-        ConditionDto conditionDto = aqlDto.getWhere();
-        if (conditionDto instanceof ConditionComparisonOperatorDto) {
-          Value value = ((ConditionComparisonOperatorDto) conditionDto).getValue();
-          if (value instanceof org.ehrbase.aql.dto.condition.ParameterValue) {
-            ParameterValue parameterValue = (ParameterValue) value;
-            log.error("The query is invalid. The value of parameter {} is missing", parameterValue.getName());
-            throw new BadRequestException(CohortService.class, INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS);
+      Set<String> parameterNames = new HashSet<>();
+      AqlDto aqlDto = new AqlToDtoParser().parse(cohortGroupDto.getQuery().getQuery());
+      ConditionDto conditionDto = aqlDto.getWhere();
+      if (conditionDto instanceof ConditionComparisonOperatorDto) {
+        Value value = ((ConditionComparisonOperatorDto) conditionDto).getValue();
+        if (value instanceof org.ehrbase.aql.dto.condition.ParameterValue) {
+          ParameterValue parameterValue = (ParameterValue) value;
+          parameterNames.add(parameterValue.getName());
+        }
+      } else if (conditionDto instanceof ConditionLogicalOperatorDto) {
+        List<ConditionDto> values = ((ConditionLogicalOperatorDto) conditionDto).getValues();
+        for (ConditionDto v : values) {
+          if (v instanceof ConditionComparisonOperatorDto) {
+            Value value = ((ConditionComparisonOperatorDto) v).getValue();
+            if (value instanceof org.ehrbase.aql.dto.condition.ParameterValue) {
+              ParameterValue parameterValue = (ParameterValue) value;
+              parameterNames.add(parameterValue.getName());
+            }
           }
+        }
+      }
+      if (CollectionUtils.isNotEmpty(parameterNames) && MapUtils.isEmpty(cohortGroupDto.getParameters())) {
+        log.error("The query is invalid. The value of parameter(s) {} is missing", parameterNames);
+        throw new BadRequestException(CohortService.class, INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS);
+      } else if (CollectionUtils.isNotEmpty(parameterNames) && MapUtils.isNotEmpty(cohortGroupDto.getParameters())) {
+        Set<String> receivedParams = cohortGroupDto.getParameters().keySet();
+        if (!receivedParams.containsAll(parameterNames)) {
+          parameterNames.removeAll(receivedParams);
+          log.error("The query is invalid. The value of parameter {} is missing", parameterNames);
+          throw new BadRequestException(CohortService.class, INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS);
         }
       }
     }
@@ -287,6 +303,7 @@ public class CohortService {
     userDetailsService.checkIsUserApproved(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
+    validateCohortParameters(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
       throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
