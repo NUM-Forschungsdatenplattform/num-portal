@@ -310,16 +310,4 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
                 .build();
         return ResponseEntity.status( HttpStatus.BAD_REQUEST ).body( errorDetails );
     }
-
-    @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        log.warn("Request for {} failed with error message {} ", request.getDescription(false), ex.getMessage());
-        Map<String,String> errors = Map.of("Error", "error.missing_request_body");
-        ErrorDetails errorDetails = ErrorDetails
-                .builder()
-                .message( "Request body is required" )
-                .details( errors )
-                .build();
-        return ResponseEntity.status( HttpStatus.BAD_REQUEST ).body( errorDetails );
-    }
 }
