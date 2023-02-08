@@ -121,6 +121,8 @@ public class UserDetailsService {
             userId, loggedInUserId, organization.getName(), formerOrganizationName));
 
     notificationService.send(notifications);
+    //trigger cache update
+    userService.addUserToCache(userId);
 
     return saved;
   }

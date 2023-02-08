@@ -3,12 +3,14 @@ package de.vitagroup.num.domain.specification;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.Sort;
 
 import javax.persistence.criteria.*;
 import java.util.*;
@@ -100,6 +102,8 @@ public class ProjectSpecificationTest {
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(3L)
                 .filter(filter)
+                .language(Language.en)
+                .sortOrder(Sort.Order.asc("status"))
                 .build();
         ps.toPredicate(root, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");
