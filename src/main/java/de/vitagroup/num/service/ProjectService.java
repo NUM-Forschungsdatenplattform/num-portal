@@ -882,7 +882,7 @@ public class ProjectService {
             .loggedInUserId(userId)
             .loggedInUserOrganizationId(loggedInUser.get().getOrganization().getId())
             .ownersUUID(usersUUID)
-            .sortOrder(sortBy.getOrderFor(sortByField).ignoreCase())
+            .sortOrder(Objects.requireNonNull(sortBy.getOrderFor(sortByField)).ignoreCase())
             .language(language)
             .build();
     projectPage = projectRepository.findProjects(projectSpecification, pageRequest);
@@ -914,7 +914,7 @@ public class ProjectService {
       if (authorOrder != null) {
         Comparator<Project> byAuthorName = Comparator.comparing(project -> {
           User coordinator = userService.getOwner(project.getCoordinator().getUserId());
-          return coordinator.getFullName().toUpperCase();
+          return Objects.requireNonNull(coordinator).getFullName().toUpperCase();
         });
         Sort.Direction sortOrder = authorOrder.getDirection();
         if (sortOrder.isAscending()) {
