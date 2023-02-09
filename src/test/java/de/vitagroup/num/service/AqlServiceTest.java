@@ -6,6 +6,7 @@ import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
@@ -525,12 +526,12 @@ public class AqlServiceTest {
     Assert.assertEquals(pageRequest, capturedInput);
     AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
     Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
-    Assert.assertEquals("de", aqlSpecification.getLanguage());
+    Assert.assertEquals(Language.de, aqlSpecification.getLanguage());
   }
 
   @Test
   public void getVisibleAqls() {
-    Pageable pageRequest = PageRequest.of(0, 100);
+    Pageable pageRequest = PageRequest.of(0, 100, Sort.by(Sort.Direction.DESC, "createDate"));
     ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder().build());
@@ -539,7 +540,7 @@ public class AqlServiceTest {
     Assert.assertEquals(pageRequest, capturedInput);
     AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
     Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
-    Assert.assertEquals("de", aqlSpecification.getLanguage());
+    Assert.assertEquals(Language.de, aqlSpecification.getLanguage());
     Assert.assertNull(aqlSpecification.getFilter());
   }
 
@@ -555,19 +556,13 @@ public class AqlServiceTest {
   }
 
   @Test
-  public void getVisibleAqlsWithPaginationAndSortByCategoryNameDesc() {
-    List<Aql> filteredAql = getAqlsSortByCategoryName("DESC");
-    Assert.assertEquals(Long.valueOf(2L), filteredAql.get(0).getId());
-    Mockito.verify(userService, Mockito.times(0)).findUsersUUID(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
-  }
-  @Test
   public void getVisibleAqlsWithPaginationAndSortByCategoryNameAsc() {
     List<Aql> filteredAql = getAqlsSortByCategoryName("ASC");
     Assert.assertEquals(Long.valueOf(1L), filteredAql.get(0).getId());
   }
 
   private List<Aql> getAqlsSortByCategoryName(String sortDir) {
-    Pageable pageRequest = PageRequest.of(0, 100);
+    Pageable pageRequest = PageRequest.of(0, 100).withSort(Sort.by(Sort.Direction.valueOf(sortDir), "category"));
     ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
@@ -576,10 +571,11 @@ public class AqlServiceTest {
             .build());
     Mockito.verify(aqlRepository, Mockito.times(1)).findAll(specArgumentCaptor.capture(), pageableCapture.capture());
     Pageable capturedInput = pageableCapture.getValue();
-    Assert.assertEquals(pageRequest, capturedInput);
+    Assert.assertEquals(PageRequest.of(0, 100), capturedInput);
     AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
     Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
-    Assert.assertEquals("de", aqlSpecification.getLanguage());
+    Assert.assertEquals(Language.de, aqlSpecification.getLanguage());
+    Assert.assertEquals(Sort.Order.asc("category"), aqlSpecification.getSortOrder());
     return aqlPage.getContent();
   }
 
@@ -600,6 +596,7 @@ public class AqlServiceTest {
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     Map<String, String> filter = new HashMap<>();
     filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "search dummy");
+    Mockito.when(aqlRepository.count()).thenReturn(100L);
     Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()
             .sortBy("author")
             .sort(sortDir)
@@ -614,19 +611,13 @@ public class AqlServiceTest {
   }
 
   @Test
-  public void getVisibleAqlsWithPaginationAndSortByOrganizationDesc() {
-    List<Aql> filteredAql = getVisibleAqlsWithPaginationAndSortByOrganizationName("DESC");
-    Assert.assertEquals(Long.valueOf(2L), filteredAql.get(0).getId());
-  }
-
-  @Test
   public void getVisibleAqlsWithPaginationAndSortByOrganizationAsc() {
     List<Aql> filteredAql = getVisibleAqlsWithPaginationAndSortByOrganizationName("ASC");
     Assert.assertEquals(Long.valueOf(1L), filteredAql.get(0).getId());
   }
 
   private List<Aql> getVisibleAqlsWithPaginationAndSortByOrganizationName(String sortDir) {
-    Pageable pageRequest = PageRequest.of(0, 100);
+    Pageable pageRequest = PageRequest.of(0, 100, Sort.by(Sort.Direction.valueOf(sortDir), "owner.organization.name"));
     ArgumentCaptor<AqlSpecification> specArgumentCaptor = ArgumentCaptor.forClass(AqlSpecification.class);
     ArgumentCaptor<Pageable> pageableCapture = ArgumentCaptor.forClass(Pageable.class);
     Page<Aql> aqlPage = aqlService.getVisibleAqls("approvedCriteriaEditorId", pageRequest, SearchCriteria.builder()

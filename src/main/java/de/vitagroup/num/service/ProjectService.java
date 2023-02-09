@@ -16,11 +16,7 @@ import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.email.ZarsService;
-import de.vitagroup.num.service.exception.BadRequestException;
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.PrivacyException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
-import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.executors.CohortQueryLister;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.*;
@@ -122,6 +118,7 @@ public class ProjectService {
   private final ProjectMapper projectMapper;
 
 
+  @Transactional
   public boolean deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
@@ -185,15 +182,11 @@ public class ProjectService {
       return List.of();
     }
 
-    List<Project> projects =
-        projectRepository.findLatestProjects(
-            count,
-            ProjectStatus.APPROVED.name(),
-            ProjectStatus.PUBLISHED.name(),
-            ProjectStatus.CLOSED.name());
+    List<Project> projects = projectRepository.findByStatusInOrderByCreateDateDesc(Arrays.asList(ProjectStatus.APPROVED,
+            ProjectStatus.PUBLISHED, ProjectStatus.CLOSED), PageRequest.of(0, count));
     return projects.stream()
-        .map(project -> toProjectInfo(project, roles))
-        .collect(Collectors.toList());
+            .map(project -> toProjectInfo(project, roles))
+            .collect(Collectors.toList());
   }
 
   public String retrieveData(
@@ -866,69 +859,62 @@ public class ProjectService {
     if (loggedInUser.isEmpty()) {
       throw new ResourceNotFound(ProjectService.class, String.format(USER_NOT_FOUND, userId));
     }
-    Optional<Sort> optSortBy = validateAndGetSort(searchCriteria);
+    Sort sortBy = validateAndGetSort(searchCriteria);
     List<Project> projects;
     Page<Project> projectPage;
-    Pageable pageRequest;
+    Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     Set<String> usersUUID = null;
-    boolean sortByProjectColumns = isSortByProjectColumns(searchCriteria);
-    if (optSortBy.isPresent() && sortByProjectColumns) {
-      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), optSortBy.get());
-    } else {
-      // if sort by author or organization name -> sort it via code
-      pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-    }
     if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
       String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
-      usersUUID = userService.findUsersUUID(searchValue, (int) pageRequest.getOffset(), pageRequest.getPageSize());
+      usersUUID = userService.findUsersUUID(searchValue);
     }
+    boolean sortByAuthor = searchCriteria.isSortByAuthor();
+    if (sortByAuthor) {
+      long count = projectRepository.count();
+      // load all projects because sort by author should be done in memory
+      pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
+    }
+    String sortByField = searchCriteria.isValid() ? searchCriteria.getSortBy() : "modifiedDate";
+    Language language = Objects.nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
     ProjectSpecification projectSpecification = ProjectSpecification.builder()
             .filter(searchCriteria.getFilter())
             .roles(roles)
             .loggedInUserId(userId)
             .loggedInUserOrganizationId(loggedInUser.get().getOrganization().getId())
             .ownersUUID(usersUUID)
+            .sortOrder(Objects.requireNonNull(sortBy.getOrderFor(sortByField)).ignoreCase())
+            .language(language)
             .build();
     projectPage = projectRepository.findProjects(projectSpecification, pageRequest);
     projects = new ArrayList<>(projectPage.getContent());
-    if (optSortBy.isPresent() && !sortByProjectColumns) {
-      sortProjects(projects, optSortBy);
+    if (sortByAuthor) {
+      sortProjects(projects, sortBy);
+      projects = projects.stream()
+              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
+              .limit(pageable.getPageSize())
+              .collect(Collectors.toList());
     }
     return new PageImpl<>(projects, pageable, projectPage.getTotalElements());
   }
 
-  private Optional<Sort> validateAndGetSort(SearchCriteria searchCriteria) {
+  private Sort validateAndGetSort(SearchCriteria searchCriteria) {
     if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
       if (!availableSortFields.contains(searchCriteria.getSortBy())) {
         throw new BadRequestException(ProjectService.class, String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
       }
-      return Optional.of(Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
-              searchCriteria.getSortBy()));
+      return Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
+              searchCriteria.getSortBy());
     }
-    return Optional.empty();
+    return Sort.by(Sort.Direction.DESC, "modifiedDate");
   }
 
-  private boolean isSortByProjectColumns(SearchCriteria searchCriteria) {
-    return PROJECT_NAME.equals(searchCriteria.getSortBy()) || PROJECT_STATUS.equals(searchCriteria.getSortBy());
-  }
-
-  private void sortProjects(List<Project> projects, Optional<Sort> sortByOptional) {
-    if (sortByOptional.isPresent()) {
-      Sort sortBy = sortByOptional.get();
-      Sort.Order orgOrder = sortBy.getOrderFor(ORGANIZATION_NAME);
+  private void sortProjects(List<Project> projects, Sort sortBy) {
+    if (sortBy != null) {
       Sort.Order authorOrder = sortBy.getOrderFor(AUTHOR_NAME);
-      if (orgOrder != null) {
-        Comparator<Project> byOrgName = Comparator.comparing(project -> project.getCoordinator().getOrganization().getName());
-        Sort.Direction sortOrder = orgOrder.getDirection();
-        if (sortOrder.isAscending()) {
-          Collections.sort(projects, Comparator.nullsLast(byOrgName));
-        } else {
-          Collections.sort(projects, Comparator.nullsLast(byOrgName.reversed()));
-        }
-      } else if (authorOrder != null) {
+      if (authorOrder != null) {
         Comparator<Project> byAuthorName = Comparator.comparing(project -> {
           User coordinator = userService.getOwner(project.getCoordinator().getUserId());
-          return coordinator.getFullName();
+          return Objects.requireNonNull(coordinator).getFullName().toUpperCase();
         });
         Sort.Direction sortOrder = authorOrder.getDirection();
         if (sortOrder.isAscending()) {

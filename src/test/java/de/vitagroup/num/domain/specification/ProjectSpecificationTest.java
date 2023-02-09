@@ -3,12 +3,14 @@ package de.vitagroup.num.domain.specification;
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.Sort;
 
 import javax.persistence.criteria.*;
 import java.util.*;
@@ -68,6 +70,7 @@ public class ProjectSpecificationTest {
         Mockito.when(coordinator.get("userId")).thenReturn(Mockito.mock(Path.class));
         Map<String, String> filter = new HashMap<>();
         filter.put("search", "search me");
+        filter.put("status", "PUBLISHED");
         Set<String> usersUUID = new HashSet<>();
         usersUUID.add("user-id-1");
         usersUUID.add("user-id-2");
@@ -80,7 +83,7 @@ public class ProjectSpecificationTest {
                 .ownersUUID(usersUUID)
                 .build();
         ps.toPredicate(root, criteriaBuilder);
-        Mockito.verify(root, Mockito.times(1)).get("status");
+        Mockito.verify(root, Mockito.times(2)).get("status");
         Mockito.verify(reasearcher, Mockito.times(1)).get("userId");
     }
 
@@ -99,6 +102,8 @@ public class ProjectSpecificationTest {
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(3L)
                 .filter(filter)
+                .language(Language.en)
+                .sortOrder(Sort.Order.asc("status"))
                 .build();
         ps.toPredicate(root, criteriaBuilder);
         Mockito.verify(root, Mockito.times(2)).get("status");

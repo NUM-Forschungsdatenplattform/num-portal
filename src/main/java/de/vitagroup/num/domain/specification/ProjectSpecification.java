@@ -7,33 +7,26 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.criteria.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
-@Builder
-@AllArgsConstructor
+@SuperBuilder
 @Getter
-public class ProjectSpecification {
+public class ProjectSpecification extends BaseSpecification {
 
-    private static final String COLUMN_PROJECT_STATUS = "status";
+    public static final String COLUMN_PROJECT_STATUS = "status";
+
+    public static final String COORDINATOR_ORGANIZATION = "organization";
 
     private static final String WILDCARD_PERCENTAGE_SIGN = "%";
 
-    private Map<String, ?> filter;
-
     private List<String> roles;
-
-    private String loggedInUserId;
-
-    private Long loggedInUserOrganizationId;
-
-    private Set<String> ownersUUID;
 
     public Predicate toPredicate(Root<Project> root, CriteriaBuilder criteriaBuilder) {
         List<Predicate> roleBasedPredicates = new ArrayList<>();
@@ -68,7 +61,7 @@ public class ProjectSpecification {
                             break;
                         }
                         case ORGANIZATION: {
-                            Join<UserDetails, Organization> coordinatorOrganization = coordinator.join("organization", JoinType.INNER);
+                            Join<UserDetails, Organization> coordinatorOrganization = coordinator.join(COORDINATOR_ORGANIZATION, JoinType.INNER);
                             predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                             break;
@@ -97,6 +90,9 @@ public class ProjectSpecification {
                         predicates.add(projectNameLike);
                     }
                 }
+                if (SearchCriteria.FILTER_BY_STATUS.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
+                    predicates.add(searchByStatus(root, getStatusFilter((String) entry.getValue())));
+                }
             }
             filterPredicate = criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         } else {
@@ -116,5 +112,11 @@ public class ProjectSpecification {
             throw new IllegalArgumentException("status cannot be null");
         }
         return root.get(COLUMN_PROJECT_STATUS).in(statuses);
+    }
+
+    private List<ProjectStatus> getStatusFilter(String status) {
+        return Arrays.stream(status.split(","))
+                .map(ProjectStatus::valueOf)
+                .collect(Collectors.toList());
     }
 }
