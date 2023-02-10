@@ -569,14 +569,17 @@ public class UserService {
   }
 
   /**
-   * Evicts users cache every 8 hours
+   * Refresh users cache every 8 hours
+   *
    */
   @Scheduled(fixedRate = 28800000)
-  public void evictParametersCache() {
+  @Transactional
+  public void refreshUsersCache() {
     var cache = cacheManager.getCache(USERS_CACHE);
     if (cache != null) {
-      log.trace("Evicting users cache");
+      log.trace("---- Refreshing users cache ----");
       cache.clear();
+      initializeUsersCache();
     }
   }
 
