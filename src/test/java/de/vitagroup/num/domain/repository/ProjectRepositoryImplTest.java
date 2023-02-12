@@ -2,6 +2,8 @@ package de.vitagroup.num.domain.repository;
 
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.Translation;
+import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -44,6 +47,9 @@ public class ProjectRepositoryImplTest {
         Mockito.when(countQuery.from(selectProjectQuery.getResultType())).thenReturn(countRoot);
         Mockito.when(root.join("coordinator", JoinType.INNER)).thenReturn(Mockito.mock(Join.class));
         Mockito.when(root.get("status")).thenReturn(Mockito.mock(Path.class));
+        Join<Object, Object> translationJoin = Mockito.mock(Join.class);
+        Mockito.when(root.join("translations", JoinType.LEFT)).thenReturn(translationJoin);
+        Mockito.when(translationJoin.get("value")).thenReturn(Mockito.mock(Path.class));
         Mockito.when(countRoot.join("coordinator", JoinType.INNER)).thenReturn(Mockito.mock(Join.class));
         Mockito.when(countRoot.get("status")).thenReturn(Mockito.mock(Path.class));
         Mockito.when(countRoot.get("id")).thenReturn(Mockito.mock(Path.class));
@@ -65,6 +71,8 @@ public class ProjectRepositoryImplTest {
                 .roles(Arrays.asList(Roles.STUDY_APPROVER))
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(9L)
+                .language(Language.en)
+                .sortOrder(Sort.Order.asc("status"))
                 .build();
         projectRepositoryImpl.findProjects(ps, PageRequest.of(0, 100));
     }

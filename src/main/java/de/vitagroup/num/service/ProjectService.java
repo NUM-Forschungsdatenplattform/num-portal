@@ -16,11 +16,7 @@ import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.email.ZarsService;
-import de.vitagroup.num.service.exception.BadRequestException;
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.PrivacyException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
-import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.executors.CohortQueryLister;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.*;
@@ -122,6 +118,7 @@ public class ProjectService {
   private final ProjectMapper projectMapper;
 
 
+  @Transactional
   public boolean deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
@@ -185,15 +182,11 @@ public class ProjectService {
       return List.of();
     }
 
-    List<Project> projects =
-        projectRepository.findLatestProjects(
-            count,
-            ProjectStatus.APPROVED.name(),
-            ProjectStatus.PUBLISHED.name(),
-            ProjectStatus.CLOSED.name());
+    List<Project> projects = projectRepository.findByStatusInOrderByCreateDateDesc(Arrays.asList(ProjectStatus.APPROVED,
+            ProjectStatus.PUBLISHED, ProjectStatus.CLOSED), PageRequest.of(0, count));
     return projects.stream()
-        .map(project -> toProjectInfo(project, roles))
-        .collect(Collectors.toList());
+            .map(project -> toProjectInfo(project, roles))
+            .collect(Collectors.toList());
   }
 
   public String retrieveData(
@@ -881,14 +874,16 @@ public class ProjectService {
       // load all projects because sort by author should be done in memory
       pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
     }
-
+    String sortByField = searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy()) ? searchCriteria.getSortBy() : "modifiedDate";
+    Language language = Objects.nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
     ProjectSpecification projectSpecification = ProjectSpecification.builder()
             .filter(searchCriteria.getFilter())
             .roles(roles)
             .loggedInUserId(userId)
             .loggedInUserOrganizationId(loggedInUser.get().getOrganization().getId())
             .ownersUUID(usersUUID)
-            .sortOrder(sortBy.getOrderFor(searchCriteria.getSortBy()))
+            .sortOrder(Objects.requireNonNull(sortBy.getOrderFor(sortByField)).ignoreCase())
+            .language(language)
             .build();
     projectPage = projectRepository.findProjects(projectSpecification, pageRequest);
     projects = new ArrayList<>(projectPage.getContent());
@@ -919,7 +914,7 @@ public class ProjectService {
       if (authorOrder != null) {
         Comparator<Project> byAuthorName = Comparator.comparing(project -> {
           User coordinator = userService.getOwner(project.getCoordinator().getUserId());
-          return coordinator.getFullName().toUpperCase();
+          return Objects.requireNonNull(coordinator).getFullName().toUpperCase();
         });
         Sort.Direction sortOrder = authorOrder.getDirection();
         if (sortOrder.isAscending()) {
