@@ -874,7 +874,7 @@ public class ProjectService {
       // load all projects because sort by author should be done in memory
       pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
     }
-    String sortByField = searchCriteria.isValid() ? searchCriteria.getSortBy() : "modifiedDate";
+    String sortByField = searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy()) ? searchCriteria.getSortBy() : "modifiedDate";
     Language language = Objects.nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
     ProjectSpecification projectSpecification = ProjectSpecification.builder()
             .filter(searchCriteria.getFilter())
