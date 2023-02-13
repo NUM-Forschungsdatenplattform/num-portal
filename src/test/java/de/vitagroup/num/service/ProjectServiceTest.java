@@ -675,8 +675,8 @@ public class ProjectServiceTest {
             .sort("dummyName")
             .sortBy("ASC")
             .build();
-    when(userDetailsService.getUserDetailsById("approvedCoordinatorId"))
-            .thenReturn(Optional.of(UserDetails.builder().build()));
+    when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
+            .thenReturn(UserDetails.builder().build());
     projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR), searchCriteria, pageable);
     verify(projectRepository, never());
   }
@@ -687,8 +687,8 @@ public class ProjectServiceTest {
     SearchCriteria searchCriteria = SearchCriteria.builder()
             .sortBy("ASC")
             .build();
-    when(userDetailsService.getUserDetailsById("approvedCoordinatorId"))
-            .thenReturn(Optional.of(UserDetails.builder().build()));
+    when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
+            .thenReturn(UserDetails.builder().build());
     projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR), searchCriteria, pageable);
     verify(projectRepository, never());
   }
@@ -698,12 +698,12 @@ public class ProjectServiceTest {
     List<String> roles = new ArrayList<>();
     roles.add(STUDY_APPROVER);
     setupDataForProjectsWithPagination();
-    when(userDetailsService.getUserDetailsById("approverId"))
-            .thenReturn(Optional.of(UserDetails.builder()
+    when(userDetailsService.checkIsUserApproved("approverId"))
+            .thenReturn(UserDetails.builder()
                     .userId("approverId")
                     .approved(true)
                     .organization(Organization.builder().id(1L).build())
-                    .build()));
+                    .build());
     Pageable pageable = PageRequest.of(0,50);
     Map<String, String> filter = new HashMap<>();
     filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
@@ -743,8 +743,8 @@ public class ProjectServiceTest {
             .approved(true)
             .organization(orgOne)
             .build();
-    when(userDetailsService.getUserDetailsById("approvedCoordinatorId"))
-            .thenReturn(Optional.of(coordinator));
+    when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
+            .thenReturn(coordinator);
     Project pr1 = Project.builder().id(1L)
             .name("project name one")
             .status(ProjectStatus.APPROVED)

@@ -191,6 +191,7 @@ public class ProjectService {
 
   public String retrieveData(
       String query, Long projectId, String userId, Boolean defaultConfiguration) {
+    userDetailsService.checkIsUserApproved(userId);
     Project project = validateAndRetrieveProject(projectId, userId);
 
     List<QueryResponseData> responseData;
@@ -365,6 +366,7 @@ public class ProjectService {
       ExportType format,
       Boolean defaultConfiguration) {
 
+    userDetailsService.checkIsUserApproved(userId);
     Project project = validateAndRetrieveProject(projectId, userId);
     List<QueryResponseData> response;
 
@@ -832,6 +834,7 @@ public class ProjectService {
   }
 
   public List<Project> getProjects(String userId, List<String> roles) {
+    userDetailsService.checkIsUserApproved(userId);
 
     List<Project> projects = new ArrayList<>();
 
@@ -855,10 +858,8 @@ public class ProjectService {
 
   public Page<Project> getProjectsWithPagination(String userId, List<String> roles, SearchCriteria searchCriteria, Pageable pageable) {
 
-    Optional<UserDetails> loggedInUser = userDetailsService.getUserDetailsById(userId);
-    if (loggedInUser.isEmpty()) {
-      throw new ResourceNotFound(ProjectService.class, String.format(USER_NOT_FOUND, userId));
-    }
+    UserDetails loggedInUser = userDetailsService.checkIsUserApproved(userId);
+
     Sort sortBy = validateAndGetSort(searchCriteria);
     List<Project> projects;
     Page<Project> projectPage;
@@ -880,7 +881,7 @@ public class ProjectService {
             .filter(searchCriteria.getFilter())
             .roles(roles)
             .loggedInUserId(userId)
-            .loggedInUserOrganizationId(loggedInUser.get().getOrganization().getId())
+            .loggedInUserOrganizationId(loggedInUser.getOrganization().getId())
             .ownersUUID(usersUUID)
             .sortOrder(Objects.requireNonNull(sortBy.getOrderFor(sortByField)).ignoreCase())
             .language(language)
