@@ -766,7 +766,7 @@ public class ProjectServiceTest {
 
   @Test
   public void shouldHandleMissingProject() {
-    Optional<Project> project = projectService.getProjectById(19L);
+    Optional<Project> project = projectService.getProjectById("approvedCoordinatorId", 19L);
 
     assertThat(project, notNullValue());
     assertThat(project.isEmpty(), is(true));

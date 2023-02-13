@@ -85,8 +85,9 @@ public class ProjectController extends CustomizedExceptionHandler {
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves a project by id")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<ProjectDto> getProjectById(@NotNull @NotEmpty @PathVariable Long id) {
-    Optional<Project> project = projectService.getProjectById(id);
+  public ResponseEntity<ProjectDto> getProjectById(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                   @NotNull @NotEmpty @PathVariable Long id) {
+    Optional<Project> project = projectService.getProjectById(principal.getSubject(), id);
 
     if (project.isEmpty()) {
       throw new ResourceNotFound(ProjectController.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, id));
@@ -281,7 +282,7 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/{id}/resolve/{pseudonym}")
-  @ApiOperation(value = "Archive a project")
+  @ApiOperation(value = "Resolve pseudonym")
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<String> resolvePseudonym(
       @AuthenticationPrincipal @NotNull Jwt principal,

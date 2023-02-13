@@ -268,7 +268,7 @@ public class CohortService {
 
     String idsString = "'" + String.join("','", ehrIds) + "'";
 
-    var hospitals = getSizesPerHospital(idsString);
+    var hospitals = getSizesPerHospital(userId, idsString);
 
     var ageGroups = getSizesPerAgeGroup(idsString);
 
@@ -292,10 +292,10 @@ public class CohortService {
     return sizes;
   }
 
-  private Map<String, Integer> getSizesPerHospital(String idsString) {
+  private Map<String, Integer> getSizesPerHospital(String loggedInUserId, String idsString) {
 
     Map<String, Integer> sizes = new LinkedHashMap<>();
-    List<String> clinics = contentService.getClinics();
+    List<String> clinics = contentService.getClinics(loggedInUserId);
     for (String clinic : clinics) {
       QueryResponseData queryResponseData =
           ehrBaseService.executePlainQuery(

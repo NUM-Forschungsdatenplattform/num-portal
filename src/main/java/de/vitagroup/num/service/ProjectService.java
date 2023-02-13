@@ -437,7 +437,8 @@ public class ProjectService {
     return headers;
   }
 
-  public Optional<Project> getProjectById(Long projectId) {
+  public Optional<Project> getProjectById(String loggedInUserId, Long projectId) {
+    userDetailsService.checkIsUserApproved(loggedInUserId);
     return projectRepository.findById(projectId);
   }
 
