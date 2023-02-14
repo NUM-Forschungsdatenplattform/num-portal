@@ -278,11 +278,13 @@ public class AqlService {
     return aqlCategoryRepository.findAllCategories(pageRequest);
   }
 
-  public AqlCategory createAqlCategory(AqlCategory aqlCategory) {
+  public AqlCategory createAqlCategory(String loggedInUserId, AqlCategory aqlCategory) {
+    userDetailsService.checkIsUserApproved(loggedInUserId);
     return aqlCategoryRepository.save(aqlCategory);
   }
 
-  public AqlCategory updateAqlCategory(AqlCategory aqlCategory, Long categoryId) {
+  public AqlCategory updateAqlCategory(String loggedInUserId, AqlCategory aqlCategory, Long categoryId) {
+    userDetailsService.checkIsUserApproved(loggedInUserId);
     if (categoryId == null) {
       throw new BadRequestException(AqlCategory.class, CATEGORY_ID_CANT_BE_NULL);
     }
@@ -294,7 +296,8 @@ public class AqlService {
   }
 
   @Transactional
-  public void deleteCategoryById(Long id) {
+  public void deleteCategoryById(String loggedInUserId, Long id) {
+    userDetailsService.checkIsUserApproved(loggedInUserId);
     if (aqlRepository.findByCategoryId(id).isEmpty()) {
       if (aqlCategoryRepository.existsById(id)) {
         aqlCategoryRepository.deleteById(id);

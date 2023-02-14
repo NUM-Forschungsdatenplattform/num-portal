@@ -1,20 +1,24 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.Comment;
+import de.vitagroup.num.domain.ExportType;
+import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.dto.*;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
-
+import de.vitagroup.num.mapper.CommentMapper;
+import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.mapper.ProjectViewMapper;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-
-import org.springframework.data.domain.Page;
+import de.vitagroup.num.service.CommentService;
+import de.vitagroup.num.service.ProjectService;
+import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.logger.AuditLog;
+import de.vitagroup.num.web.config.Role;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -27,36 +31,18 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import de.vitagroup.num.domain.Comment;
-import de.vitagroup.num.domain.ExportType;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.dto.CommentDto;
-import de.vitagroup.num.domain.dto.ManagerProjectDto;
-import de.vitagroup.num.domain.dto.ProjectDto;
-import de.vitagroup.num.domain.dto.RawQueryDto;
-import de.vitagroup.num.mapper.CommentMapper;
-import de.vitagroup.num.mapper.ProjectMapper;
-import de.vitagroup.num.service.CommentService;
-import de.vitagroup.num.service.ProjectService;
-import de.vitagroup.num.service.ehrbase.Pseudonymity;
-import de.vitagroup.num.service.exception.ResourceNotFound;
-import de.vitagroup.num.service.logger.AuditLog;
-import de.vitagroup.num.web.config.Role;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import lombok.AllArgsConstructor;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
 
 @RestController
 @AllArgsConstructor
@@ -99,8 +85,9 @@ public class ProjectController extends CustomizedExceptionHandler {
   @GetMapping("/{id}")
   @ApiOperation(value = "Retrieves a project by id")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<ProjectDto> getProjectById(@NotNull @NotEmpty @PathVariable Long id) {
-    Optional<Project> project = projectService.getProjectById(id);
+  public ResponseEntity<ProjectDto> getProjectById(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                   @NotNull @NotEmpty @PathVariable Long id) {
+    Optional<Project> project = projectService.getProjectById(principal.getSubject(), id);
 
     if (project.isEmpty()) {
       throw new ResourceNotFound(ProjectController.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, id));
@@ -295,7 +282,7 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/{id}/resolve/{pseudonym}")
-  @ApiOperation(value = "Archive a project")
+  @ApiOperation(value = "Resolve pseudonym")
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<String> resolvePseudonym(
       @AuthenticationPrincipal @NotNull Jwt principal,

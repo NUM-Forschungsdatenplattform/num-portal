@@ -42,6 +42,8 @@ public class ContentService {
 
   private final EhrBaseService ehrBaseService;
 
+  private final UserDetailsService userDetailsService;
+
   private static final int PROJECT_COUNT = 5;
 
   private static final int SOFA_MIN = 0;
@@ -70,13 +72,15 @@ public class ContentService {
       @Lazy ProjectService projectService,
       AqlService aqlService,
       OrganizationService organizationService,
-      EhrBaseService ehrBaseService) {
+      EhrBaseService ehrBaseService,
+      UserDetailsService userDetailsService) {
     this.contentItemRepository = contentItemRepository;
     this.mapper = mapper;
     this.projectService = projectService;
     this.aqlService = aqlService;
     this.organizationService = organizationService;
     this.ehrBaseService = ehrBaseService;
+    this.userDetailsService = userDetailsService;
   }
 
   /**
@@ -173,12 +177,13 @@ public class ContentService {
     }
   }
 
-  public List<String> getClinics() {
-    QueryResponseData responseData = ehrBaseService.executePlainQuery(LIST_CLINICS);
-    return responseData.getRows().stream()
-        .map(row -> (String) row.get(0))
-        .collect(Collectors.toList());
-  }
+    public List<String> getClinics(String loggedInUserId) {
+        userDetailsService.checkIsUserApproved(loggedInUserId);
+        QueryResponseData responseData = ehrBaseService.executePlainQuery(LIST_CLINICS);
+        return responseData.getRows().stream()
+                .map(row -> (String) row.get(0))
+                .collect(Collectors.toList());
+    }
 
   public Map<String, Integer> getClinicDistributions(String name) {
     Map<String, Integer> distributions = new LinkedHashMap<>();
@@ -198,9 +203,10 @@ public class ContentService {
     return distributions;
   }
 
-  public Map<String, Double> getClinicAverages() {
+  public Map<String, Double> getClinicAverages(String loggedInUserId) {
+      userDetailsService.checkIsUserApproved(loggedInUserId);
     Map<String, Double> averages = new LinkedHashMap<>();
-    List<String> clinics = getClinics();
+    List<String> clinics = getClinics(loggedInUserId);
     for (String clinic : clinics) {
       QueryResponseData queryResponseData =
           ehrBaseService.executePlainQuery(String.format(GET_CLINIC_SOFA_AVG, clinic));
