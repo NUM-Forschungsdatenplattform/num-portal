@@ -40,8 +40,8 @@ public class ExceptionsTemplate {
     public final static String COHORT_NOT_FOUND = "Cohort not found: %s";
     public final static String COHORT_GROUP_CANNOT_BE_EMPTY = "Cohort group cannot be empty";
     public final static String INVALID_COHORT_GROUP_AQL_MISSING = "Invalid cohort group. Aql missing.";
-    public static String INVALID_COHORT_GROUP_CHILDREN_MISSING = "The query is invalid. Please select at least one criterion.";
-    public static String INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS = "The query is invalid. The value of at least one criterion is missing.";
+    public final static String INVALID_COHORT_GROUP_CHILDREN_MISSING = "The query is invalid. Please select at least one criterion.";
+    public final static String INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS = "The query is invalid. The value of at least one criterion is missing.";
     public final static String INVALID_COMMENTID_ID = "Invalid commentId id";
     public final static String ORGANIZATION_NAME_MUST_BE_UNIQUE = "Organization name must be unique: %s";
     public final static String ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS = "Organization mail domain already exists: %s";

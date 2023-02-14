@@ -398,6 +398,27 @@ public class CohortServiceTest {
         assertTrue(cohortAql2.getQuery().startsWith(Q2));
     }
 
+    @Test
+    public void toCohortTest() {
+        CohortAqlDto cohortAqlDto = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+        CohortGroupDto groupDto = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto).build();
+        CohortDto cohortDto = CohortDto.builder()
+                .name("cohort name")
+                .description("test to cohort method")
+                .cohortGroup(groupDto)
+                .build();
+        Cohort result = cohortService.toCohort(cohortDto);
+        Assert.assertNotNull(result);
+        Assert.assertEquals("cohort name", result.getName());
+        Assert.assertEquals("test to cohort method", result.getDescription());
+        CohortGroup group = result.getCohortGroup();
+        Assert.assertNotNull(group);
+        Assert.assertEquals(Type.AQL, group.getType());
+        Assert.assertNotNull(group.getQuery());
+        Assert.assertEquals(NAME1, group.getQuery().getName());
+        Assert.assertEquals(Q1, group.getQuery().getQuery());
+    }
+
     @Before
     public void setup() {
         UserDetails notApprovedUser =

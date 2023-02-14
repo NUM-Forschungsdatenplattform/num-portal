@@ -213,10 +213,8 @@ public class CohortService {
   }
 
   private void validateCohortParameters(CohortGroupDto cohortGroupDto) {
-    if (cohortGroupDto.isGroup()) {
-      if (CollectionUtils.isEmpty(cohortGroupDto.getChildren())) {
-        throw new BadRequestException(CohortService.class, INVALID_COHORT_GROUP_CHILDREN_MISSING);
-      }
+    if (cohortGroupDto.isGroup() && CollectionUtils.isEmpty(cohortGroupDto.getChildren())) {
+      throw new BadRequestException(CohortService.class, INVALID_COHORT_GROUP_CHILDREN_MISSING);
     }
     if (cohortGroupDto.isAql()) {
       if (Objects.isNull(cohortGroupDto.getQuery())) {
@@ -257,7 +255,7 @@ public class CohortService {
     }
     if (CollectionUtils.isNotEmpty(cohortGroupDto.getChildren())) {
       cohortGroupDto.getChildren().stream()
-              .forEach(child -> validateCohortParameters(child));
+              .forEach(this::validateCohortParameters);
     }
   }
 
