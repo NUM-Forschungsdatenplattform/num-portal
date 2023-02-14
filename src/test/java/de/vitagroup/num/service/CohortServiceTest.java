@@ -10,10 +10,7 @@ import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.templates.ExceptionsTemplate;
 import de.vitagroup.num.properties.PrivacyProperties;
-import de.vitagroup.num.service.exception.BadRequestException;
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
-import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import org.junit.Assert;
 import org.junit.Before;
@@ -366,6 +363,23 @@ public class CohortServiceTest {
             Assert.assertEquals(ExceptionsTemplate.INVALID_COHORT_GROUP_AQL_MISSING, be.getMessage());
         }
         Mockito.verifyNoInteractions(cohortExecutor);
+    }
+
+    @Test(expected = PrivacyException.class)
+    public void shouldHandlePrivacyPolicyWhenGetCohortSize() {
+
+        CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+
+        CohortGroupDto childGroup = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
+
+        CohortGroupDto andGroupCohort =
+                CohortGroupDto.builder()
+                        .type(Type.GROUP)
+                        .operator(Operator.AND)
+                        .children(List.of(childGroup))
+                        .build();
+        when(privacyProperties.getMinHits()).thenReturn(5);
+        cohortService.getCohortGroupSize(andGroupCohort, approvedUser.getUserId(), false);
     }
 
     @Test
