@@ -519,6 +519,12 @@ public class CohortServiceTest {
         Assert.assertEquals(1, cohortSizeDto.getHospitals().size());
     }
 
+    @Test
+    public void executeCohortTest() {
+        cohortService.executeCohort(Cohort.builder().id(2L).build(), false);
+        verify(cohortExecutor, times(1)).execute(any(), anyBoolean());
+    }
+
     @Before
     public void setup() {
         UserDetails notApprovedUser =
