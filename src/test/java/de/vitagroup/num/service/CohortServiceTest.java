@@ -10,8 +10,11 @@ import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.templates.ExceptionsTemplate;
 import de.vitagroup.num.properties.PrivacyProperties;
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.executors.CohortExecutor;
+import de.vitagroup.num.service.policy.ProjectPolicyService;
+import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,6 +57,15 @@ public class CohortServiceTest {
 
     @Mock
     private AqlService aqlService;
+
+    @Mock
+    private TemplateService templateService;
+
+    @Mock
+    private ProjectPolicyService projectPolicyService;
+
+    @Mock
+    private EhrBaseService ehrBaseService;
 
     @Spy
     private ModelMapper modelMapper;
@@ -454,6 +466,10 @@ public class CohortServiceTest {
 
     @Test
     public void getSizePerTemplatesTest() {
+        String query = "SELECT c0 as GECCO_Personendaten " +
+                "FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] " +
+                "contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
+                "WHERE  (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value > $Geburtsdatum";
         when(aqlService.existsById(99L)).thenReturn(true);
         CohortDto cohortDto = CohortDto.builder()
                 .cohortGroup(CohortGroupDto.builder()
@@ -462,10 +478,7 @@ public class CohortServiceTest {
                         .query(CohortAqlDto.builder()
                                 .name("Geburtsdatum")
                                 .id(99L)
-                                .query("SELECT c0 as GECCO_Personendaten " +
-                                        "FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] " +
-                                        "contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
-                                        "WHERE  (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value > $Geburtsdatum")
+                                .query(query)
                                 .build())
                         .parameters(Map.of("Geburtsdatum", "1925-01-04"))
                         .build())
@@ -476,6 +489,9 @@ public class CohortServiceTest {
                 .build();
         when(cohortExecutor.execute(any(Cohort.class), Mockito.eq(false)))
                 .thenReturn(Set.of("1", "2", "3", "4", "5"));
+        org.ehrbase.aql.dto.AqlDto aqlDto  = new AqlToDtoParser().parse(query);
+        when(templateService.createSelectCompositionQuery(Mockito.eq("Alter"))).thenReturn(aqlDto);
+        when(ehrBaseService.retrieveEligiblePatientIds(Mockito.any(String.class))).thenReturn(Set.of("id1", "id2", "id3"));
         cohortService.getSizePerTemplates(approvedUser.getUserId(), requestDto);
         verify(cohortExecutor, times(1)).execute(any(), anyBoolean());
     }
