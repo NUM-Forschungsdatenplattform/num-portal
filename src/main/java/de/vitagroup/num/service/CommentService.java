@@ -44,7 +44,7 @@ public class CommentService {
 
     Project project =
         projectService
-            .getProjectById(projectId)
+            .getProjectById(loggedInUserId, projectId)
             .orElseThrow(() -> new ResourceNotFound(CommentService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId)));
 
     comment.setProject(project);
