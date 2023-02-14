@@ -5,8 +5,10 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortAqlDto;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
+import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
+import de.vitagroup.num.domain.templates.ExceptionsTemplate;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
@@ -21,10 +23,7 @@ import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
@@ -354,6 +353,20 @@ public class CohortServiceTest {
         }
         Mockito.verifyNoInteractions(cohortExecutor);
     }
+    @Test
+    public void shouldCorrectlyValidateMissingCohortQuery() {
+        CohortGroupDto mainGroup =
+                CohortGroupDto.builder()
+                        .type(Type.AQL)
+                        .operator(Operator.OR)
+                        .build();
+        try {
+            cohortService.getCohortGroupSize(mainGroup, approvedUser.getUserId(), false);
+        } catch (BadRequestException be) {
+            Assert.assertEquals(ExceptionsTemplate.INVALID_COHORT_GROUP_AQL_MISSING, be.getMessage());
+        }
+        Mockito.verifyNoInteractions(cohortExecutor);
+    }
 
     @Test
     public void shouldCorrectlyExecuteCohort() {
@@ -417,6 +430,40 @@ public class CohortServiceTest {
         Assert.assertNotNull(group.getQuery());
         Assert.assertEquals(NAME1, group.getQuery().getName());
         Assert.assertEquals(Q1, group.getQuery().getQuery());
+    }
+
+    @Test
+    public void getRoundedSizeTest() {
+        Assert.assertEquals(40, cohortService.getRoundedSize(38));
+        Assert.assertEquals(30, cohortService.getRoundedSize(33));
+    }
+
+    @Test
+    public void getSizePerTemplatesTest() {
+        when(aqlService.existsById(99L)).thenReturn(true);
+        CohortDto cohortDto = CohortDto.builder()
+                .cohortGroup(CohortGroupDto.builder()
+                        .operator(Operator.AND)
+                        .type(Type.AQL)
+                        .query(CohortAqlDto.builder()
+                                .name("Geburtsdatum")
+                                .id(99L)
+                                .query("SELECT c0 as GECCO_Personendaten " +
+                                        "FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] " +
+                                        "contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
+                                        "WHERE  (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value > $Geburtsdatum")
+                                .build())
+                        .parameters(Map.of("Geburtsdatum", "1925-01-04"))
+                        .build())
+                .build();
+        TemplateSizeRequestDto requestDto = TemplateSizeRequestDto.builder()
+                .templateIds(Arrays.asList("Alter"))
+                .cohortDto(cohortDto)
+                .build();
+        when(cohortExecutor.execute(any(Cohort.class), Mockito.eq(false)))
+                .thenReturn(Set.of("1", "2", "3", "4", "5"));
+        cohortService.getSizePerTemplates(approvedUser.getUserId(), requestDto);
+        verify(cohortExecutor, times(1)).execute(any(), anyBoolean());
     }
 
     @Before
