@@ -1,5 +1,31 @@
 package de.vitagroup.num.service;
 
+import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.CohortAqlDto;
+import de.vitagroup.num.domain.dto.CohortDto;
+import de.vitagroup.num.domain.dto.CohortGroupDto;
+import de.vitagroup.num.domain.repository.CohortRepository;
+import de.vitagroup.num.domain.repository.ProjectRepository;
+import de.vitagroup.num.properties.PrivacyProperties;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.executors.CohortExecutor;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.*;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.modelmapper.ModelMapper;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -10,419 +36,453 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.CohortAql;
-import de.vitagroup.num.domain.CohortGroup;
-import de.vitagroup.num.domain.Operator;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
-import de.vitagroup.num.domain.Type;
-import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.CohortAqlDto;
-import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.domain.dto.CohortGroupDto;
-import de.vitagroup.num.domain.repository.CohortRepository;
-import de.vitagroup.num.domain.repository.ProjectRepository;
-import de.vitagroup.num.properties.PrivacyProperties;
-import de.vitagroup.num.service.executors.CohortExecutor;
-import de.vitagroup.num.service.exception.BadRequestException;
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
-import de.vitagroup.num.service.exception.SystemException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.modelmapper.ModelMapper;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CohortServiceTest {
 
-  @InjectMocks
-  private CohortService cohortService;
+    @InjectMocks
+    private CohortService cohortService;
 
-  @Mock
-  private CohortRepository cohortRepository;
+    @Mock
+    private CohortRepository cohortRepository;
 
-  @Mock
-  private CohortExecutor cohortExecutor;
+    @Mock
+    private CohortExecutor cohortExecutor;
 
-  @Mock
-  private UserDetailsService userDetailsService;
+    @Mock
+    private UserDetailsService userDetailsService;
 
-  @Mock
-  private ProjectRepository projectRepository;
+    @Mock
+    private ProjectRepository projectRepository;
 
-  @Mock
-  private AqlService aqlService;
+    @Mock
+    private AqlService aqlService;
 
-  @Spy
-  private ModelMapper modelMapper;
+    @Spy
+    private ModelMapper modelMapper;
 
-  @Mock
-  private PrivacyProperties privacyProperties;
+    @Mock
+    private PrivacyProperties privacyProperties;
 
-  @Captor
-  ArgumentCaptor<Cohort> cohortCaptor;
+    @Captor
+    ArgumentCaptor<Cohort> cohortCaptor;
 
-  @Captor
-  ArgumentCaptor<CohortGroup> cohortGroupCaptor;
-  @Captor
-  ArgumentCaptor<Map<String, Object>> mapCaptor;
-  @Captor
-  ArgumentCaptor<Boolean> booleanCaptor;
+    @Captor
+    ArgumentCaptor<CohortGroup> cohortGroupCaptor;
+    @Captor
+    ArgumentCaptor<Map<String, Object>> mapCaptor;
+    @Captor
+    ArgumentCaptor<Boolean> booleanCaptor;
 
-  private final String Q1 = "SELECT A1 ... FROM E1... WHERE ...";
-  private final String Q2 = "SELECT A2 ... FROM E1... WHERE ...";
-  private final String NAME1 = "AQL query name 1";
-  private final String NAME2 = "AQL query name 2";
+    private final String Q1 = "Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
+    private final String Q2 = "SELECT c0 as GECCO_Personendaten " +
+            "FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
+            "WHERE (c0/archetype_details/template_id/value = 'GECCO_Personendaten'";
 
-  UserDetails approvedUser = UserDetails.builder().userId("approvedUserId").approved(true).build();
+    private final String Q3 = "SELECT  c0 as GECCO_Personendaten " +
+            "FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
+            "WHERE (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value = $Geburtsdatum)";
 
-  @Test(expected = ResourceNotFound.class)
-  public void shouldHandleMissingCohortWhenRetrieving() {
-    cohortService.getCohort(1L, "approvedUserId");
-  }
+    private final String Q4_SELECT_HEIGHT = "SELECT o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Gr__e_L_nge__magnitude " +
+            "FROM EHR e  contains COMPOSITION c1[openEHR-EHR-COMPOSITION.registereintrag.v1] n  contains OBSERVATION o0[openEHR-EHR-OBSERVATION.height.v2] " +
+            "WHERE  (c1/archetype_details/template_id/value = 'Körpergröße' and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude = $height)";
 
-  @Test(expected = BadRequestException.class)
-  public void shouldHandleMissingCohortWhenExecuting() {
-    cohortService.executeCohort(1L, false);
-  }
+    private final String NAME1 = "AQL query name 1";
+    private final String NAME2 = "AQL query name 2";
+    private final String NAME3 = "Geburtsdatum";
 
-  @Test
-  public void shouldExecuteCohortExactlyOnce() {
-    cohortService.executeCohort(2L, false);
-    verify(cohortExecutor, times(1)).execute(any(), anyBoolean());
-  }
+    private final String NAME4 = "Height";
 
-  @Test(expected = ForbiddenException.class)
-  public void shouldHandleNotApprovedUserId() {
-    CohortDto cohortDto = CohortDto.builder().build();
-    cohortService.createCohort(cohortDto, "notApprovedUserId");
-  }
+    UserDetails approvedUser = UserDetails.builder().userId("approvedUserId").approved(true).build();
 
-  @Test(expected = ForbiddenException.class)
-  public void shouldHandleNotApprovedUserIdWhenUpdating() {
-    CohortDto cohortDto = CohortDto.builder().build();
-    cohortService.updateCohort(cohortDto, 1L, "notApprovedUserId");
-  }
+    @Test(expected = ResourceNotFound.class)
+    public void shouldHandleMissingCohortWhenRetrieving() {
+        cohortService.getCohort(1L, "approvedUserId");
+    }
 
-  @Test(expected = SystemException.class)
-  public void shouldHandleMissingUserId() {
-    CohortDto cohortDto = CohortDto.builder().build();
-    cohortService.createCohort(cohortDto, "missingUserID");
-  }
+    @Test(expected = BadRequestException.class)
+    public void shouldHandleMissingCohortWhenExecuting() {
+        cohortService.executeCohort(1L, false);
+    }
 
-  @Test(expected = SystemException.class)
-  public void shouldHandleMissingUserIdWhenUpdating() {
-    CohortDto cohortDto = CohortDto.builder().build();
-    cohortService.updateCohort(cohortDto, 1L, "missingUserID");
-  }
+    @Test
+    public void shouldExecuteCohortExactlyOnce() {
+        cohortService.executeCohort(2L, false);
+        verify(cohortExecutor, times(1)).execute(any(), anyBoolean());
+    }
 
-  @Test(expected = ResourceNotFound.class)
-  public void shouldHandleMissingStudy() {
-    CohortDto cohortDto = CohortDto.builder().projectId(1L).build();
-    cohortService.createCohort(cohortDto, "approvedUserId");
-  }
+    @Test(expected = ForbiddenException.class)
+    public void shouldHandleNotApprovedUserId() {
+        CohortDto cohortDto = CohortDto.builder().build();
+        cohortService.createCohort(cohortDto, "notApprovedUserId");
+    }
 
-  @Test(expected = ForbiddenException.class)
-  public void shouldHandleStudyWithDifferentOwner() {
-    CohortDto cohortDto = CohortDto.builder().projectId(2L).build();
-    cohortService.createCohort(cohortDto, "approvedUserId");
-  }
+    @Test(expected = ForbiddenException.class)
+    public void shouldHandleNotApprovedUserIdWhenUpdating() {
+        CohortDto cohortDto = CohortDto.builder().build();
+        cohortService.updateCohort(cohortDto, 1L, "notApprovedUserId");
+    }
 
-  @Test(expected = BadRequestException.class)
-  public void shouldHandleNullCohortGroup() {
-    CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").projectId(3L).cohortGroup(null).build();
-    cohortService.createCohort(cohortDto, "approvedUserId");
-  }
+    @Test(expected = SystemException.class)
+    public void shouldHandleMissingUserId() {
+        CohortDto cohortDto = CohortDto.builder().build();
+        cohortService.createCohort(cohortDto, "missingUserID");
+    }
 
-  @Test(expected = ResourceNotFound.class)
-  public void shouldHandleMissingCohortWhenEditing() {
-    CohortDto cohortDto = CohortDto.builder().name("Cohort name").projectId(3L).build();
-    cohortService.updateCohort(cohortDto, 3L, "approvedUserId");
-  }
+    @Test(expected = SystemException.class)
+    public void shouldHandleMissingUserIdWhenUpdating() {
+        CohortDto cohortDto = CohortDto.builder().build();
+        cohortService.updateCohort(cohortDto, 1L, "missingUserID");
+    }
 
-  @Test
-  public void shouldCorrectlySaveCohort() {
-    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
-    CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME2).query(Q2).build();
+    @Test(expected = ResourceNotFound.class)
+    public void shouldHandleMissingStudy() {
+        CohortDto cohortDto = CohortDto.builder().projectId(1L).build();
+        cohortService.createCohort(cohortDto, "approvedUserId");
+    }
 
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto2).build();
+    @Test(expected = ForbiddenException.class)
+    public void shouldHandleStudyWithDifferentOwner() {
+        CohortDto cohortDto = CohortDto.builder().projectId(2L).build();
+        cohortService.createCohort(cohortDto, "approvedUserId");
+    }
 
-    CohortGroupDto andCohort =
-        CohortGroupDto.builder()
-            .type(Type.GROUP)
-            .operator(Operator.AND)
-            .children(List.of(first, second))
-            .build();
+    @Test(expected = BadRequestException.class)
+    public void shouldHandleNullCohortGroup() {
+        CohortDto cohortDto =
+                CohortDto.builder().name("Cohort name").projectId(3L).cohortGroup(null).build();
+        cohortService.createCohort(cohortDto, "approvedUserId");
+    }
 
-    CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").projectId(3L).cohortGroup(andCohort).build();
+    @Test(expected = ResourceNotFound.class)
+    public void shouldHandleMissingCohortWhenEditing() {
+        CohortDto cohortDto = CohortDto.builder().name("Cohort name").projectId(3L).build();
+        cohortService.updateCohort(cohortDto, 3L, "approvedUserId");
+    }
 
-    cohortService.createCohort(cohortDto, "approvedUserId");
-    Mockito.verify(cohortRepository).save(cohortCaptor.capture());
+    @Test
+    public void shouldCorrectlySaveCohort() {
+        CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+        CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME2).query(Q2).build();
 
-    Cohort savedCohort = cohortCaptor.getValue();
+        CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
+        CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto2).build();
 
-    assertThat(savedCohort, notNullValue());
-    assertThat(savedCohort.getProject(), notNullValue());
-    assertThat(savedCohort.getProject().getId(), is(3L));
-    assertThat(savedCohort.getProject().getName(), is("Study name"));
-    assertThat(savedCohort.getCohortGroup().getOperator(), is(Operator.AND));
-    assertThat(savedCohort.getCohortGroup().getType(), is(Type.GROUP));
-    assertThat(savedCohort.getCohortGroup().getChildren().size(), is(2));
+        CohortGroupDto andCohort =
+                CohortGroupDto.builder()
+                        .type(Type.GROUP)
+                        .operator(Operator.AND)
+                        .children(List.of(first, second))
+                        .build();
 
-    assertThat(
-        savedCohort.getCohortGroup().getChildren().stream()
-            .anyMatch(c -> c.getQuery().getId() == 1),
-        is(true));
-    assertThat(
-        savedCohort.getCohortGroup().getChildren().stream()
-            .anyMatch(c -> c.getQuery().getId() == 2),
-        is(true));
+        CohortDto cohortDto =
+                CohortDto.builder().name("Cohort name").projectId(3L).cohortGroup(andCohort).build();
 
-    assertThat(
-        savedCohort.getCohortGroup().getChildren().stream()
-            .allMatch(c -> c.getQuery() instanceof CohortAql),
-        is(true));
+        cohortService.createCohort(cohortDto, "approvedUserId");
+        Mockito.verify(cohortRepository).save(cohortCaptor.capture());
 
-    assertThat(
-        savedCohort.getCohortGroup().getChildren().stream()
-            .anyMatch(c -> c.getQuery().getQuery().equals(Q1)),
-        is(true));
+        Cohort savedCohort = cohortCaptor.getValue();
 
-    assertThat(
-        savedCohort.getCohortGroup().getChildren().stream()
-            .anyMatch(c -> c.getQuery().getQuery().equals(Q2)),
-        is(true));
+        assertThat(savedCohort, notNullValue());
+        assertThat(savedCohort.getProject(), notNullValue());
+        assertThat(savedCohort.getProject().getId(), is(3L));
+        assertThat(savedCohort.getProject().getName(), is("Study name"));
+        assertThat(savedCohort.getCohortGroup().getOperator(), is(Operator.AND));
+        assertThat(savedCohort.getCohortGroup().getType(), is(Type.GROUP));
+        assertThat(savedCohort.getCohortGroup().getChildren().size(), is(2));
 
-    assertThat(
-        savedCohort.getCohortGroup().getChildren().stream()
-            .anyMatch(c -> c.getQuery().getName().equals(NAME1)),
-        is(true));
+        assertThat(
+                savedCohort.getCohortGroup().getChildren().stream()
+                        .anyMatch(c -> c.getQuery().getId() == 1),
+                is(true));
+        assertThat(
+                savedCohort.getCohortGroup().getChildren().stream()
+                        .anyMatch(c -> c.getQuery().getId() == 2),
+                is(true));
 
-    assertThat(
-        savedCohort.getCohortGroup().getChildren().stream()
-            .anyMatch(c -> c.getQuery().getName().equals(NAME2)),
-        is(true));
-  }
+        assertThat(
+                savedCohort.getCohortGroup().getChildren().stream()
+                        .allMatch(c -> c.getQuery() instanceof CohortAql),
+                is(true));
 
-  @Test(expected = ForbiddenException.class)
-  public void shouldFailSavingCohortOnApprovedProject() {
-    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
-    CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME2).query(Q2).build();
+        assertThat(
+                savedCohort.getCohortGroup().getChildren().stream()
+                        .anyMatch(c -> c.getQuery().getQuery().equals(Q1)),
+                is(true));
 
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto2).build();
+        assertThat(
+                savedCohort.getCohortGroup().getChildren().stream()
+                        .anyMatch(c -> c.getQuery().getQuery().equals(Q2)),
+                is(true));
 
-    CohortGroupDto andCohort =
-        CohortGroupDto.builder()
-            .type(Type.GROUP)
-            .operator(Operator.AND)
-            .children(List.of(first, second))
-            .build();
+        assertThat(
+                savedCohort.getCohortGroup().getChildren().stream()
+                        .anyMatch(c -> c.getQuery().getName().equals(NAME1)),
+                is(true));
 
-    CohortDto cohortDto =
-        CohortDto.builder().name("Cohort name").projectId(4L).cohortGroup(andCohort).build();
+        assertThat(
+                savedCohort.getCohortGroup().getChildren().stream()
+                        .anyMatch(c -> c.getQuery().getName().equals(NAME2)),
+                is(true));
+    }
 
-    cohortService.createCohort(cohortDto, "approvedUserId");
-  }
+    @Test(expected = ForbiddenException.class)
+    public void shouldFailSavingCohortOnApprovedProject() {
+        CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+        CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME2).query(Q2).build();
 
-  @Test
-  public void shouldCorrectlyEditCohort() {
-    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+        CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
+        CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto2).build();
 
-    CohortGroupDto simpleCohort =
-        CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
+        CohortGroupDto andCohort =
+                CohortGroupDto.builder()
+                        .type(Type.GROUP)
+                        .operator(Operator.AND)
+                        .children(List.of(first, second))
+                        .build();
 
-    CohortDto cohortDto =
-        CohortDto.builder()
-            .name("New cohort name")
-            .description("New cohort description")
-            .projectId(4L)
-            .cohortGroup(simpleCohort)
-            .build();
+        CohortDto cohortDto =
+                CohortDto.builder().name("Cohort name").projectId(4L).cohortGroup(andCohort).build();
 
-    cohortService.updateCohort(cohortDto, 4L, "approvedUserId");
-    Mockito.verify(cohortRepository).save(cohortCaptor.capture());
+        cohortService.createCohort(cohortDto, "approvedUserId");
+    }
 
-    Cohort editedCohort = cohortCaptor.getValue();
+    @Test
+    public void shouldCorrectlyEditCohort() {
+        CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
 
-    assertThat(editedCohort, notNullValue());
-    assertThat(editedCohort.getId(), is(4L));
-    assertThat(editedCohort.getName(), is("New cohort name"));
-    assertThat(editedCohort.getDescription(), is("New cohort description"));
-    assertThat(editedCohort.getProject(), notNullValue());
-    assertThat(editedCohort.getProject().getId(), is(3L));
-    assertThat(editedCohort.getProject().getName(), is("Study name"));
-    assertThat(editedCohort.getCohortGroup().getOperator(), nullValue());
-    assertThat(editedCohort.getCohortGroup().getType(), is(Type.AQL));
-    assertThat(editedCohort.getCohortGroup().getChildren(), nullValue());
-  }
+        CohortGroupDto simpleCohort =
+                CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
 
-  @Test(expected = ForbiddenException.class)
-  public void shouldFailEditingCohortOnApprovedProject() {
-    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+        CohortDto cohortDto =
+                CohortDto.builder()
+                        .name("New cohort name")
+                        .description("New cohort description")
+                        .projectId(4L)
+                        .cohortGroup(simpleCohort)
+                        .build();
 
-    CohortGroupDto simpleCohort =
-        CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
+        cohortService.updateCohort(cohortDto, 4L, "approvedUserId");
+        Mockito.verify(cohortRepository).save(cohortCaptor.capture());
 
-    CohortDto cohortDto =
-        CohortDto.builder()
-            .name("New cohort name")
-            .description("New cohort description")
-            .projectId(4L)
-            .cohortGroup(simpleCohort)
-            .build();
+        Cohort editedCohort = cohortCaptor.getValue();
 
-    cohortService.updateCohort(cohortDto, 5L, "approvedUserId");
-  }
+        assertThat(editedCohort, notNullValue());
+        assertThat(editedCohort.getId(), is(4L));
+        assertThat(editedCohort.getName(), is("New cohort name"));
+        assertThat(editedCohort.getDescription(), is("New cohort description"));
+        assertThat(editedCohort.getProject(), notNullValue());
+        assertThat(editedCohort.getProject().getId(), is(3L));
+        assertThat(editedCohort.getProject().getName(), is("Study name"));
+        assertThat(editedCohort.getCohortGroup().getOperator(), nullValue());
+        assertThat(editedCohort.getCohortGroup().getType(), is(Type.AQL));
+        assertThat(editedCohort.getCohortGroup().getChildren(), nullValue());
+    }
 
-  @Test
-  public void shouldCorrectlyExecuteCohort() {
-    CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
-    CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME2).query(Q2).build();
+    @Test(expected = ForbiddenException.class)
+    public void shouldFailEditingCohortOnApprovedProject() {
+        CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
 
-    CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
-    CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto2).build();
+        CohortGroupDto simpleCohort =
+                CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
 
-    CohortGroupDto orCohort =
-        CohortGroupDto.builder()
-            .type(Type.GROUP)
-            .operator(Operator.OR)
-            .parameters(Map.of("p1", 1))
-            .children(List.of(first, second))
-            .build();
+        CohortDto cohortDto =
+                CohortDto.builder()
+                        .name("New cohort name")
+                        .description("New cohort description")
+                        .projectId(4L)
+                        .cohortGroup(simpleCohort)
+                        .build();
 
-    long size = cohortService.getCohortGroupSize(orCohort, approvedUser.getUserId(), false);
-    Mockito.verify(cohortExecutor, times(1))
-        .executeGroup(cohortGroupCaptor.capture(), booleanCaptor.capture());
+        cohortService.updateCohort(cohortDto, 5L, "approvedUserId");
+    }
 
-    assertEquals(2, size);
-    CohortGroup executedCohortGroup = cohortGroupCaptor.getValue();
-    assertEquals(executedCohortGroup.getOperator(), Operator.OR);
-    assertEquals(2, executedCohortGroup.getChildren().size());
+    @Test(expected = BadRequestException.class)
+    public void shouldCorrectlyValidateCohortEmptyParameters() {
+        CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME3).query(Q3).build();
 
-    CohortAql cohortAql1 =
-        executedCohortGroup.getChildren().stream()
-            .filter(cohortGroup -> cohortGroup.getQuery().getId() == 1L)
-            .findFirst()
-            .get()
-            .getQuery();
+        CohortGroupDto childGroup = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
 
-    CohortAql cohortAql2 =
-        executedCohortGroup.getChildren().stream()
-            .filter(cohortGroup -> cohortGroup.getQuery().getId() == 2L)
-            .findFirst()
-            .get()
-            .getQuery();
+        CohortGroupDto andGroupCohort =
+                CohortGroupDto.builder()
+                        .type(Type.GROUP)
+                        .operator(Operator.AND)
+                        .children(List.of(childGroup))
+                        .build();
+        cohortService.getCohortGroupSize(andGroupCohort, approvedUser.getUserId(), false);
+        Mockito.verifyNoInteractions(cohortExecutor);
+    }
 
-    assertTrue(cohortAql1.getQuery().startsWith(Q1));
-    assertTrue(cohortAql2.getQuery().startsWith(Q2));
-  }
+    @Test
+    public void shouldCorrectlyValidateCohortMissingParameters() {
+        CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME3).query(Q3).build();
+        CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME4).query(Q4_SELECT_HEIGHT).build();
 
-  @Before
-  public void setup() {
-    UserDetails notApprovedUser =
-        UserDetails.builder().userId("notApprovedUserId").approved(false).build();
+        CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
+        CohortGroupDto second = CohortGroupDto.builder()
+                .type(Type.AQL)
+                .query(cohortAqlDto2)
+                .parameters(Map.of("height", 160))
+                .build();
 
-    when(userDetailsService.checkIsUserApproved("notApprovedUserId"))
-        .thenThrow(new ForbiddenException(CohortServiceTest.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED));
+        CohortGroupDto mainGroup =
+                CohortGroupDto.builder()
+                        .type(Type.GROUP)
+                        .operator(Operator.AND)
+                        .children(List.of(first, second))
+                        .build();
+        try {
+            cohortService.getCohortGroupSize(mainGroup, approvedUser.getUserId(), false);
+        } catch (BadRequestException be) {
+            Assert.assertEquals("The query is invalid. The value of at least one criterion is missing.", be.getMessage());
+        }
+        Mockito.verifyNoInteractions(cohortExecutor);
+    }
 
-    when(userDetailsService.checkIsUserApproved("missingUserID"))
-        .thenThrow(new SystemException(CohortServiceTest.class, USER_NOT_FOUND));
+    @Test
+    public void shouldCorrectlyValidateMissingCohorts() {
+        CohortGroupDto mainGroup =
+                CohortGroupDto.builder()
+                        .type(Type.GROUP)
+                        .operator(Operator.AND)
+                        .build();
+        try {
+            cohortService.getCohortGroupSize(mainGroup, approvedUser.getUserId(), false);
+        } catch (BadRequestException be) {
+            Assert.assertEquals("The query is invalid. Please select at least one criterion.", be.getMessage());
+        }
+        Mockito.verifyNoInteractions(cohortExecutor);
+    }
 
-    when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
+    @Test
+    public void shouldCorrectlyExecuteCohort() {
+        CohortAqlDto cohortAqlDto1 = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+        CohortAqlDto cohortAqlDto2 = CohortAqlDto.builder().id(2L).name(NAME2).query(Q2).build();
 
-    when(projectRepository.findById(2L))
-        .thenReturn(
-            Optional.of(
+        CohortGroupDto first = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto1).build();
+        CohortGroupDto second = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto2).build();
+
+        CohortGroupDto orCohort =
+                CohortGroupDto.builder()
+                        .type(Type.GROUP)
+                        .operator(Operator.OR)
+                        .parameters(Map.of("p1", 1))
+                        .children(List.of(first, second))
+                        .build();
+
+        long size = cohortService.getCohortGroupSize(orCohort, approvedUser.getUserId(), false);
+        Mockito.verify(cohortExecutor, times(1))
+                .executeGroup(cohortGroupCaptor.capture(), booleanCaptor.capture());
+
+        assertEquals(2, size);
+        CohortGroup executedCohortGroup = cohortGroupCaptor.getValue();
+        assertEquals(executedCohortGroup.getOperator(), Operator.OR);
+        assertEquals(2, executedCohortGroup.getChildren().size());
+
+        CohortAql cohortAql1 =
+                executedCohortGroup.getChildren().stream()
+                        .filter(cohortGroup -> cohortGroup.getQuery().getId() == 1L)
+                        .findFirst()
+                        .get()
+                        .getQuery();
+
+        CohortAql cohortAql2 =
+                executedCohortGroup.getChildren().stream()
+                        .filter(cohortGroup -> cohortGroup.getQuery().getId() == 2L)
+                        .findFirst()
+                        .get()
+                        .getQuery();
+
+        assertTrue(cohortAql1.getQuery().startsWith(Q1));
+        assertTrue(cohortAql2.getQuery().startsWith(Q2));
+    }
+
+    @Before
+    public void setup() {
+        UserDetails notApprovedUser =
+                UserDetails.builder().userId("notApprovedUserId").approved(false).build();
+
+        when(userDetailsService.checkIsUserApproved("notApprovedUserId"))
+                .thenThrow(new ForbiddenException(CohortServiceTest.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED));
+
+        when(userDetailsService.checkIsUserApproved("missingUserID"))
+                .thenThrow(new SystemException(CohortServiceTest.class, USER_NOT_FOUND));
+
+        when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
+
+        when(projectRepository.findById(2L))
+                .thenReturn(
+                        Optional.of(
+                                Project.builder()
+                                        .name("Study")
+                                        .id(2L)
+                                        .name("Study name")
+                                        .coordinator(
+                                                UserDetails.builder().userId("someOtherUser").approved(true).build())
+                                        .build()));
+
+        Project ownedProject =
                 Project.builder()
-                    .name("Study")
-                    .id(2L)
-                    .name("Study name")
-                    .coordinator(
-                        UserDetails.builder().userId("someOtherUser").approved(true).build())
-                    .build()));
+                        .name("Study")
+                        .id(3L)
+                        .name("Study name")
+                        .coordinator(approvedUser)
+                        .status(ProjectStatus.DRAFT)
+                        .build();
 
-    Project ownedProject =
-        Project.builder()
-            .name("Study")
-            .id(3L)
-            .name("Study name")
-            .coordinator(approvedUser)
-            .status(ProjectStatus.DRAFT)
-            .build();
+        Project ownedProjectApproved =
+                Project.builder()
+                        .name("Study approved")
+                        .id(4L)
+                        .name("Study name approved")
+                        .coordinator(approvedUser)
+                        .status(ProjectStatus.APPROVED)
+                        .build();
 
-    Project ownedProjectApproved =
-        Project.builder()
-            .name("Study approved")
-            .id(4L)
-            .name("Study name approved")
-            .coordinator(approvedUser)
-            .status(ProjectStatus.APPROVED)
-            .build();
+        when(projectRepository.findById(3L)).thenReturn(Optional.of(ownedProject));
+        when(projectRepository.findById(4L)).thenReturn(Optional.of(ownedProjectApproved));
 
-    when(projectRepository.findById(3L)).thenReturn(Optional.of(ownedProject));
-    when(projectRepository.findById(4L)).thenReturn(Optional.of(ownedProjectApproved));
+        when(aqlService.existsById(1L)).thenReturn(true);
+        when(aqlService.existsById(2L)).thenReturn(true);
 
-    when(aqlService.existsById(1L)).thenReturn(true);
-    when(aqlService.existsById(2L)).thenReturn(true);
+        CohortGroup first =
+                CohortGroup.builder().type(Type.AQL).query(CohortAql.builder().id(3L).build()).build();
+        CohortGroup second =
+                CohortGroup.builder().type(Type.AQL).query(CohortAql.builder().id(4L).build()).build();
 
-    CohortGroup first =
-        CohortGroup.builder().type(Type.AQL).query(CohortAql.builder().id(3L).build()).build();
-    CohortGroup second =
-        CohortGroup.builder().type(Type.AQL).query(CohortAql.builder().id(4L).build()).build();
+        CohortGroup andCohort =
+                CohortGroup.builder()
+                        .type(Type.GROUP)
+                        .operator(Operator.AND)
+                        .children(List.of(first, second))
+                        .build();
 
-    CohortGroup andCohort =
-        CohortGroup.builder()
-            .type(Type.GROUP)
-            .operator(Operator.AND)
-            .children(List.of(first, second))
-            .build();
+        Cohort cohortToEdit =
+                Cohort.builder()
+                        .name("Cohort to edit")
+                        .name("Cohort to edit description")
+                        .id(4L)
+                        .project(ownedProject)
+                        .cohortGroup(andCohort)
+                        .build();
 
-    Cohort cohortToEdit =
-        Cohort.builder()
-            .name("Cohort to edit")
-            .name("Cohort to edit description")
-            .id(4L)
-            .project(ownedProject)
-            .cohortGroup(andCohort)
-            .build();
+        Cohort cohortToEditOnApprovedProject =
+                Cohort.builder()
+                        .name("Cohort to edit")
+                        .name("Cohort to edit description")
+                        .id(5L)
+                        .project(ownedProjectApproved)
+                        .cohortGroup(andCohort)
+                        .build();
 
-    Cohort cohortToEditOnApprovedProject =
-        Cohort.builder()
-            .name("Cohort to edit")
-            .name("Cohort to edit description")
-            .id(5L)
-            .project(ownedProjectApproved)
-            .cohortGroup(andCohort)
-            .build();
+        when(cohortRepository.findById(1L)).thenReturn(Optional.empty());
+        when(cohortRepository.findById(2L)).thenReturn(Optional.of(Cohort.builder().id(2L).build()));
+        when(cohortRepository.findById(4L)).thenReturn(Optional.of(cohortToEdit));
+        when(cohortRepository.findById(5L)).thenReturn(Optional.of(cohortToEditOnApprovedProject));
 
-    when(cohortRepository.findById(1L)).thenReturn(Optional.empty());
-    when(cohortRepository.findById(2L)).thenReturn(Optional.of(Cohort.builder().id(2L).build()));
-    when(cohortRepository.findById(4L)).thenReturn(Optional.of(cohortToEdit));
-    when(cohortRepository.findById(5L)).thenReturn(Optional.of(cohortToEditOnApprovedProject));
+        when(cohortExecutor.executeGroup(any(), anyBoolean())).thenReturn(Set.of("test1", "test2"));
 
-    when(cohortExecutor.executeGroup(any(), anyBoolean())).thenReturn(Set.of("test1", "test2"));
-
-    when(privacyProperties.getMinHits()).thenReturn(2);
-  }
+        when(privacyProperties.getMinHits()).thenReturn(2);
+    }
 }
