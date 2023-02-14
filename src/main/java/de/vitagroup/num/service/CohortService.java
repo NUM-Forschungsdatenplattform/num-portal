@@ -56,12 +56,12 @@ public class CohortService {
   private final ContentService contentService;
   private final TemplateService templateService;
 
-  private static final String GET_PATIENTS_PER_CLINIC =
+  public static final String GET_PATIENTS_PER_CLINIC =
       "SELECT e/ehr_id/value as patient_id "
           + "FROM EHR e CONTAINS COMPOSITION c "
           + "WHERE c/context/health_care_facility/name = '%s'"
           + "AND e/ehr_id/value MATCHES {%s} ";
-  private static final String GET_PATIENTS_PER_AGE_INTERVAL =
+  public static final String GET_PATIENTS_PER_AGE_INTERVAL =
       "SELECT count(e/ehr_id/value) "
           + "FROM EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.age.v0] "
           + "WHERE o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/value >= 'P%dY' "

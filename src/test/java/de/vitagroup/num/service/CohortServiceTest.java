@@ -2,10 +2,7 @@ package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.CohortAqlDto;
-import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.domain.dto.CohortGroupDto;
-import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.templates.ExceptionsTemplate;
@@ -15,6 +12,7 @@ import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import org.ehrbase.aql.parser.AqlToDtoParser;
+import org.ehrbase.response.openehr.QueryResponseData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,6 +61,9 @@ public class CohortServiceTest {
 
     @Mock
     private ProjectPolicyService projectPolicyService;
+
+    @Mock
+    private ContentService contentService;
 
     @Mock
     private EhrBaseService ehrBaseService;
@@ -494,6 +495,28 @@ public class CohortServiceTest {
         when(ehrBaseService.retrieveEligiblePatientIds(Mockito.any(String.class))).thenReturn(Set.of("id1", "id2", "id3"));
         cohortService.getSizePerTemplates(approvedUser.getUserId(), requestDto);
         verify(cohortExecutor, times(1)).execute(any(), anyBoolean());
+    }
+
+    @Test
+    public void getCohortGroupSizeWithDistributionTest() {
+        CohortAqlDto cohortAqlDto = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
+        CohortGroupDto groupDto = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto).build();
+        Mockito.when(contentService.getClinics(approvedUser.getUserId())).thenReturn(Arrays.asList("clinic one"));
+        QueryResponseData responseData1 = new QueryResponseData();
+        responseData1.setRows(  List.of(
+                new ArrayList<>(List.of("ehr-id-1", Map.of("_type", "OBSERVATION", "uuid", "12"))),
+                new ArrayList<>(List.of("ehr-id-2", Map.of("_type", "OBSERVATION", "uuid", "123")))));
+        String sizePerHopitalQuery = String.format(CohortService.GET_PATIENTS_PER_CLINIC, "clinic one", "'test1','test2'");
+        when(ehrBaseService.executePlainQuery(Mockito.eq(sizePerHopitalQuery))).thenReturn(responseData1);
+        QueryResponseData responseData2 = new QueryResponseData();
+        responseData2.setRows( List.of(new ArrayList<>(List.of(10))));
+        for (int age = 0; age < 122; age += 10) {
+            String sizePerAgeQuery = String.format(CohortService.GET_PATIENTS_PER_AGE_INTERVAL, age, age+10, "'test1','test2'");
+            when(ehrBaseService.executePlainQuery(Mockito.eq(sizePerAgeQuery))).thenReturn(responseData2);
+        }
+        CohortSizeDto cohortSizeDto = cohortService.getCohortGroupSizeWithDistribution(groupDto, approvedUser.getUserId(), false);
+        Assert.assertNotNull(cohortSizeDto);
+        Assert.assertEquals(1, cohortSizeDto.getHospitals().size());
     }
 
     @Before
