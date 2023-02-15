@@ -833,8 +833,6 @@ public class ProjectService {
     return !(oldResearchers.containsAll(newResearchers)
         && newResearchers.containsAll(oldResearchers));
   }
-
-    userDetailsService.checkIsUserApproved(userId);
   public Page<Project> getProjectsWithPagination(String userId, List<String> roles, SearchCriteria searchCriteria, Pageable pageable) {
 
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(userId);
@@ -860,7 +858,7 @@ public class ProjectService {
             .filter(searchCriteria.getFilter())
             .roles(roles)
             .loggedInUserId(userId)
-            .loggedInUserOrganizationId(loggedInUser.get().getOrganization() != null ? loggedInUser.get().getOrganization().getId() : null)
+            .loggedInUserOrganizationId(loggedInUser.getOrganization() != null ? loggedInUser.getOrganization().getId() : null)
             .ownersUUID(usersUUID)
             .sortOrder(Objects.requireNonNull(sortBy.getOrderFor(sortByField)).ignoreCase())
             .language(language)
