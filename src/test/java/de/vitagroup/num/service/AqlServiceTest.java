@@ -314,23 +314,23 @@ public class AqlServiceTest {
 
   @Test(expected = BadRequestException.class)
   public void updateAqlCategory() {
-    aqlService.updateAqlCategory(new AqlCategory(),null);
+    aqlService.updateAqlCategory("approvedUserId", new AqlCategory(),null);
   }
 
   @Test(expected = ResourceNotFound.class)
   public void updateAqlCategoryResourceNotFound() {
-    aqlService.updateAqlCategory(new AqlCategory(),1L);
+    aqlService.updateAqlCategory("approvedUserId", new AqlCategory(),1L);
   }
 
   @Test(expected = ResourceNotFound.class)
   public void deleteCategoryById() {
-    aqlService.deleteCategoryById(null);
+    aqlService.deleteCategoryById("approvedUserId", null);
   }
 
   @Test(expected = BadRequestException.class)
   public void deleteCategoryByIdBadRequestException() {
     when(aqlRepository.findByCategoryId(null)).thenReturn(Arrays.asList(new Aql()));
-    aqlService.deleteCategoryById(null);
+    aqlService.deleteCategoryById("approvedUserId",null);
   }
 
   @Test(expected = ForbiddenException.class)
@@ -380,14 +380,14 @@ public class AqlServiceTest {
   public void shouldHandleNotExistingCategoryWhenDeleting() {
     when(aqlRepository.findByCategoryId(1L)).thenReturn(List.of());
     when(aqlCategoryRepository.existsById(1L)).thenReturn(false);
-    aqlService.deleteCategoryById(1L);
+    aqlService.deleteCategoryById("approvedUserId", 1L);
     verify(aqlCategoryRepository, times(0)).deleteById(1L);
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleCategoryInUseWhenDeleting() {
     when(aqlRepository.findByCategoryId(1L)).thenReturn(List.of(new Aql()));
-    aqlService.deleteCategoryById(1L);
+    aqlService.deleteCategoryById("approvedUserId",1L);
     verify(aqlCategoryRepository, times(0)).deleteById(1L);
   }
 
@@ -395,7 +395,7 @@ public class AqlServiceTest {
   public void shouldDeleteCategory() {
     when(aqlRepository.findByCategoryId(1L)).thenReturn(List.of());
     when(aqlCategoryRepository.existsById(1L)).thenReturn(true);
-    aqlService.deleteCategoryById(1L);
+    aqlService.deleteCategoryById("approvedUserId", 1L);
     verify(aqlCategoryRepository, times(1)).deleteById(1L);
   }
 
@@ -405,7 +405,7 @@ public class AqlServiceTest {
     translations.put("en", "test en");
     translations.put("de", "test de");
     AqlCategory category = AqlCategory.builder().name(translations).build();
-    aqlService.createAqlCategory(category);
+    aqlService.createAqlCategory("approvedUserId",category);
     verify(aqlCategoryRepository, times(1)).save(category);
   }
 
@@ -416,7 +416,7 @@ public class AqlServiceTest {
     translations.put("de", "test de");
     AqlCategory category = AqlCategory.builder().name(translations).id(1L).build();
     when(aqlCategoryRepository.existsById(1L)).thenReturn(true);
-    aqlService.updateAqlCategory(category, 1L);
+    aqlService.updateAqlCategory("approvedUserId", category, 1L);
     verify(aqlCategoryRepository, times(1)).save(category);
   }
 
@@ -427,7 +427,7 @@ public class AqlServiceTest {
     translations.put("de", "test de");
     AqlCategory category = AqlCategory.builder().name(translations).id(1L).build();
     when(aqlCategoryRepository.existsById(1L)).thenReturn(false);
-    aqlService.updateAqlCategory(category, 1L);
+    aqlService.updateAqlCategory("approvedUserId", category, 1L);
     verify(aqlCategoryRepository, times(0)).save(category);
   }
 
@@ -437,7 +437,7 @@ public class AqlServiceTest {
     translations.put("en", "test en");
     translations.put("de", "test de");
     AqlCategory category = AqlCategory.builder().name(translations).id(1L).build();
-    aqlService.updateAqlCategory(category, null);
+    aqlService.updateAqlCategory("approvedUserId", category, null);
     verify(aqlCategoryRepository, times(0)).save(category);
   }
 
@@ -558,10 +558,11 @@ public class AqlServiceTest {
             .build());
     Mockito.verify(aqlRepository, Mockito.times(1)).findAll(specArgumentCaptor.capture(), pageableCapture.capture());
     Pageable capturedInput = pageableCapture.getValue();
-    Assert.assertEquals(pageRequest, capturedInput);
+    Assert.assertEquals(PageRequest.of(0, 100), capturedInput);
     AqlSpecification aqlSpecification = specArgumentCaptor.getValue();
     Assert.assertEquals("approvedCriteriaEditorId", aqlSpecification.getLoggedInUserId());
     Assert.assertEquals(Language.de, aqlSpecification.getLanguage());
+    Assert.assertEquals(Sort.Order.asc("category"), aqlSpecification.getSortOrder());
     return aqlPage.getContent();
   }
 

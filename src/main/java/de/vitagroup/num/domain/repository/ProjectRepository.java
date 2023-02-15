@@ -1,6 +1,7 @@
 package de.vitagroup.num.domain.repository;
 
 import de.vitagroup.num.domain.Project;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -16,4 +17,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, CustomP
       nativeQuery = true)
   List<Project> findLatestProjects(
       int count, String status1, String status2, String status3);
+
+
+  @Query(value = "SELECT new Project(pr.id, pr.name, pr.createDate, pr.coordinator) FROM Project pr " +
+          "WHERE pr.status IN (:statuses) ORDER BY pr.createDate DESC ")
+  List<Project> findByStatusInOrderByCreateDateDesc(List<ProjectStatus> statuses, Pageable pageable);
 }

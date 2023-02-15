@@ -98,6 +98,7 @@ public class UserService {
   }
 
   @Transactional
+  @CacheEvict(cacheNames = USERS_CACHE, key = "#userId")
   public void deleteUser(String userId, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
     Optional<UserDetails> userDetails = userDetailsService.getUserDetailsById(userId);
@@ -416,15 +417,15 @@ public class UserService {
   private Comparator<User> getComparator(String field) {
     switch (field) {
       case FIRST_NAME:
-        return Comparator.comparing(User::getFirstName);
+        return Comparator.comparing(u -> u.getFirstName().toUpperCase());
       case LAST_NAME:
-        return Comparator.comparing(User::getLastName);
+        return Comparator.comparing(u -> u.getLastName().toUpperCase());
       case ORGANIZATION_NAME:
-        return Comparator.comparing(user -> user.getOrganization() != null ? user.getOrganization().getName() : StringUtils.EMPTY);
+        return Comparator.comparing(user -> user.getOrganization() != null ? user.getOrganization().getName().toUpperCase() : StringUtils.EMPTY);
       case REGISTRATION_DATE:
         return Comparator.comparing(User::getCreatedTimestamp);
       case MAIL:
-        return Comparator.comparing(User::getEmail);
+        return Comparator.comparing(u -> u.getEmail().toUpperCase());
       default:
         return Comparator.comparing(User::getCreatedTimestamp);
     }
@@ -508,19 +509,23 @@ public class UserService {
   }
 
   /**
-   * Evicts users cache every 8 hours
+   * Refresh users cache every 8 hours
+   *
    */
   @Scheduled(fixedRate = 28800000)
-  public void evictParametersCache() {
+  @Transactional
+  public void refreshUsersCache() {
     var cache = cacheManager.getCache(USERS_CACHE);
     if (cache != null) {
-      log.trace("Evicting users cache");
+      log.trace("---- Refreshing users cache ----");
       cache.clear();
+      initializeUsersCache();
     }
   }
 
-  @CacheEvict(cacheNames = USERS_CACHE, key = "#userIdToChange")
-  public void changeUserName(
+  @CachePut(cacheNames = USERS_CACHE, key = "#userIdToChange")
+  @Transactional
+  public User changeUserName(
       @NotNull String userIdToChange,
       @NotNull UserNameDto userName,
       @NotNull String loggedInUserId,
@@ -540,6 +545,7 @@ public class UserService {
     }
 
     notificationService.send(collectUserNameUpdateNotification(userIdToChange, loggedInUserId));
+    return getUserById(userIdToChange, true);
   }
 
   /**
@@ -602,9 +608,11 @@ public class UserService {
   private User getUser(String uuid, Boolean withRole) {
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
     if (usersCache != null && usersCache.getNativeCache().size() != 0) {
-      return (User) usersCache.getNativeCache().get(uuid);
-    } else {
-      return getUserById(uuid, withRole);
+      User user = (User) usersCache.getNativeCache().get(uuid);
+      if (user != null) {
+        return user;
+      }
     }
+      return getUserById(uuid, withRole);
   }
 }
