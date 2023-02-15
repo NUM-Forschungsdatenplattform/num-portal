@@ -112,8 +112,8 @@ public class AqlController extends CustomizedExceptionHandler {
   @ApiOperation(
           value = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
-  public ResponseEntity<Page<AqlDto>> getAqlsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal,
-                                                            @PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
+  public ResponseEntity<Page<AqlDto>> getAqls(@AuthenticationPrincipal @NotNull Jwt principal,
+                                              @PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
     Page<Aql> searchResult = aqlService.getVisibleAqls(principal.getSubject(), pageable, searchCriteria);
     List<AqlDto> content = searchResult.getContent().stream()
             .map(mapper::convertToDto)
@@ -165,7 +165,7 @@ public class AqlController extends CustomizedExceptionHandler {
   @AuditLog
   @GetMapping(value = "/category")
   @ApiOperation(value = "Retrieves the list of categories.")
-  public ResponseEntity<Page<AqlCategoryDto>> getAqlCategoriesWithPagination(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
+  public ResponseEntity<Page<AqlCategoryDto>> getAqlCategories(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
     Page<AqlCategory> searchResult = aqlService.getAqlCategories(pageable, searchCriteria);
     List<AqlCategoryDto> content = searchResult.getContent().stream()
             .map(category -> modelMapper.map(category, AqlCategoryDto.class))

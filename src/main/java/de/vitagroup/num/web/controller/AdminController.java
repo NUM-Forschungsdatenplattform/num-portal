@@ -152,12 +152,12 @@ public class AdminController extends CustomizedExceptionHandler {
   @GetMapping("user")
   @ApiOperation(value = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
-  public ResponseEntity<Page<User>> searchUsersWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable,
-                                                              SearchCriteria criteria) {
+  public ResponseEntity<Page<User>> searchUsers(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable,
+                                                SearchCriteria criteria) {
     // filter[approved] true, false (optional -> omitting it returns both)
     // filter[search] search input (optional)
     // filter[withRoles] true or false (optional)
     return ResponseEntity.ok(
-            userService.searchUsersWithPagination(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
+            userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
   }
 }

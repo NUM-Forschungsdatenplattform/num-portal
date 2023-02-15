@@ -552,7 +552,7 @@ public class ProjectServiceTest {
     roles.add(STUDY_COORDINATOR);
     Pageable pageable = PageRequest.of(0,100);
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
-    List<Project> projects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
+    List<Project> projects = projectService.getProjects("approvedCoordinatorId", roles,
                     SearchCriteria.builder()
                                   .sort("DESC")
                                   .sortBy("name")
@@ -571,7 +571,7 @@ public class ProjectServiceTest {
     setupDataForProjectsWithPagination();
     Pageable pageable = PageRequest.of(0,100);
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
-    Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
+    Page<Project> filteredProjects = projectService.getProjects("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
             SearchCriteria.builder()
                     .sort("ASC")
                     .sortBy("organization")
@@ -597,7 +597,7 @@ public class ProjectServiceTest {
     Set<String> owners = new HashSet<>();
     owners.add("approvedCoordinator");
     Mockito.when(userService.findUsersUUID(Mockito.eq("OnE"))).thenReturn(owners);
-    Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", roles,
+    Page<Project> filteredProjects = projectService.getProjects("approvedCoordinatorId", roles,
             SearchCriteria.builder()
                     .sort("ASC")
                     .sortBy("name")
@@ -621,7 +621,7 @@ public class ProjectServiceTest {
     when(userService.getOwner("approvedCoordinatorId")).thenReturn(User.builder().id("approvedCoordinatorId").firstName("AA Coordinator first name").build());
     Mockito.when(projectRepository.count()).thenReturn(50L);
     Pageable pageable = PageRequest.of(0,100);
-    Page<Project> filteredProjects = projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
+    Page<Project> filteredProjects = projectService.getProjects("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
             SearchCriteria.builder()
                     .sort("DESC")
                     .sortBy("author")
@@ -641,7 +641,7 @@ public class ProjectServiceTest {
             .build();
     when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
             .thenReturn(UserDetails.builder().build());
-    projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR), searchCriteria, pageable);
+    projectService.getProjects("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR), searchCriteria, pageable);
     verify(projectRepository, never());
   }
 
@@ -653,7 +653,7 @@ public class ProjectServiceTest {
             .build();
     when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
             .thenReturn(UserDetails.builder().build());
-    projectService.getProjectsWithPagination("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR), searchCriteria, pageable);
+    projectService.getProjects("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR), searchCriteria, pageable);
     verify(projectRepository, never());
   }
 
@@ -672,7 +672,7 @@ public class ProjectServiceTest {
     Map<String, String> filter = new HashMap<>();
     filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
-    projectService.getProjectsWithPagination("approverId", roles,
+    projectService.getProjects("approverId", roles,
             SearchCriteria.builder()
                     .sort("DESC")
                     .sortBy("status")

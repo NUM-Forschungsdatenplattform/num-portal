@@ -324,7 +324,7 @@ public class UserService {
    * @return the users that match the search parameters and with optional roles if indicated
    */
   @Transactional
-  public Page<User> searchUsersWithPagination(String loggedInUserId, List<String> callerRoles, SearchCriteria searchCriteria, Pageable pageable) {
+  public Page<User> searchUsers(String loggedInUserId, List<String> callerRoles, SearchCriteria searchCriteria, Pageable pageable) {
 
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
     validateSort(searchCriteria);

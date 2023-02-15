@@ -833,7 +833,7 @@ public class ProjectService {
     return !(oldResearchers.containsAll(newResearchers)
         && newResearchers.containsAll(oldResearchers));
   }
-  public Page<Project> getProjectsWithPagination(String userId, List<String> roles, SearchCriteria searchCriteria, Pageable pageable) {
+  public Page<Project> getProjects(String userId, List<String> roles, SearchCriteria searchCriteria, Pageable pageable) {
 
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(userId);
 

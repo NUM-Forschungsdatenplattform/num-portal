@@ -54,9 +54,9 @@ public class OrganizationController extends CustomizedExceptionHandler {
   @GetMapping()
   @ApiOperation(value = "Retrieves a list of available organizations")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
-  public ResponseEntity<Page<OrganizationDto>> getAllOrganizationsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal,
-                                                                                 @PageableDefault(size = 20) Pageable pageable,
-                                                                                 SearchCriteria criteria) {
+  public ResponseEntity<Page<OrganizationDto>> getOrganizations(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                                @PageableDefault(size = 20) Pageable pageable,
+                                                                SearchCriteria criteria) {
 
     Page<Organization> organizationPage = organizationService
             .getAllOrganizations(Roles.extractRoles(principal), principal.getSubject(), criteria, pageable);

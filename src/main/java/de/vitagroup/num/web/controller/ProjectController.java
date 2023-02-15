@@ -61,8 +61,8 @@ public class ProjectController extends CustomizedExceptionHandler {
   @GetMapping
   @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<Page<ProjectViewTO>> getProjectsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable, SearchCriteria criteria) {
-    Page<Project> projectPage = projectService.getProjectsWithPagination(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable);
+  public ResponseEntity<Page<ProjectViewTO>> getProjects(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable, SearchCriteria criteria) {
+    Page<Project> projectPage = projectService.getProjects(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable);
     List<ProjectViewTO> content = projectPage.getContent()
             .stream()
             .map(projectViewMapper::convertToDto)
