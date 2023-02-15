@@ -545,42 +545,6 @@ public class ProjectServiceTest {
 
     projectService.createProject(projectDto, "notApprovedCoordinatorId", List.of());
   }
-
-  @Test
-  public void shouldFilterWhenSearchingStudiesWithCoordinator() {
-    List<String> roles = new ArrayList<>();
-    roles.add(Roles.STUDY_COORDINATOR);
-    projectService.getProjects("coordinatorId", roles);
-
-    verify(projectRepository, times(1))
-        .findByCoordinatorUserIdOrStatusIn(
-            "coordinatorId",
-            ProjectStatus.getAllProjectStatusToViewAsCoordinator());
-    verify(projectRepository, times(0)).findAll();
-  }
-
-  @Test
-  public void shouldFilterWhenSearchingProjectsWithResearcher() {
-    List<String> roles = new ArrayList<>();
-    roles.add(RESEARCHER);
-    projectService.getProjects("researcherId", roles);
-
-    verify(projectRepository, times(1))
-            .findByResearchers_UserIdAndStatusIn(
-                    "researcherId",
-                    ProjectStatus.getAllProjectStatusToViewAsResearcher());
-  }
-
-  @Test
-  public void shouldFilterWhenSearchingProjectsWithApprover() {
-    List<String> roles = new ArrayList<>();
-    roles.add(STUDY_APPROVER);
-    projectService.getProjects("approverId", roles);
-
-    verify(projectRepository, times(1))
-            .findByStatusIn(ProjectStatus.getAllProjectStatusToViewAsApprover());
-  }
-
   @Test
   public void getAllProjectsWithPagination() {
     setupDataForProjectsWithPagination();

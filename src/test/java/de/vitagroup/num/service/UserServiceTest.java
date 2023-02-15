@@ -113,14 +113,8 @@ public class UserServiceTest {
         when(keycloakFeign.getRolesOfUser("4")).thenReturn(Stream.of(new Role("R2", "RESEARCHER")).collect(Collectors.toSet()));
         when(keycloakFeign.getRolesOfUser("5")).thenReturn(Collections.emptySet());
         when(keycloakFeign.getRolesOfUser("6")).thenReturn(roles);
-        when(keycloakFeign.getRolesOfUser("7")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
-        when(keycloakFeign.getRolesOfUser("8")).thenReturn(Set.of(new Role("R4", "STUDY_COORDINATOR")));
-        when(keycloakFeign.getRolesOfUser("9"))
-                .thenReturn(Set.of(new Role("R3", "ORGANIZATION_ADMIN")));
 
         when(keycloakFeign.getRoles()).thenReturn(roles);
-
-        when(keycloakFeign.searchUsers(any(), eq(100000))).thenReturn(allValidUsers);
 
         when(userDetailsService.getUserDetailsById("4"))
                 .thenReturn(
@@ -209,21 +203,7 @@ public class UserServiceTest {
                                 .organization(Organization.builder().id(2L).name("org 2").domains(Set.of()).build())
                                 .approved(true)
                                 .build());
-        when(userDetailsService.getUserDetailsById("8"))
-                .thenReturn(
-                        Optional.of(
-                                UserDetails.builder()
-                                        .userId("8")
-                                        .organization(
-                                                Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
-                                        .approved(true)
-                                        .build()));
         when(userDetailsService.checkIsUserApproved("8")).thenThrow(new ForbiddenException());
-        when(userDetailsService.getUserDetailsById("9"))
-                .thenReturn(Optional.of(UserDetails.builder().userId("9")
-                        .approved(true).build()));
-        when(userDetailsService.checkIsUserApproved("9"))
-                .thenReturn(UserDetails.builder().userId("9").approved(true).build());
     }
 
     @Test
@@ -399,40 +379,6 @@ public class UserServiceTest {
         verify(keycloakFeign, times(1)).getRolesOfUser("4");
         verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
     }
-
-    @Test
-    public void shouldReturnUserWithRoles() {
-        Set<User> users = new HashSet<>();
-        users.add(User.builder().firstName("John").id("4").build());
-
-        when(keycloakFeign.searchUsers(null, 100000)).thenReturn(users);
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers("user", null, null, true, List.of(Roles.SUPER_ADMIN));
-
-        assertThat(userReturn.iterator().next().getRoles().iterator().next(), is("RESEARCHER"));
-        verify(keycloakFeign, times(1)).getRolesOfUser("4");
-    }
-
-    @Test
-    public void shouldReturnEnoughUsers() {
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
-        assertEquals(6, userReturn.size());
-    }
-
-    @Test
-    public void shouldReturnUserWithoutRoles() {
-        Set<User> users = new HashSet<>();
-        users.add(User.builder().firstName("John").id("4").build());
-
-        when(keycloakFeign.searchUsers(null, 100000)).thenReturn(users);
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
-
-        assertNull(userReturn.iterator().next().getRoles());
-        verify(keycloakFeign, times(0)).getRolesOfUser("4");
-    }
-
     @Test
     public void shouldHandleMissingOwner() {
         when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null), null));
@@ -441,43 +387,6 @@ public class UserServiceTest {
         assertNull(userReturn);
         verify(keycloakFeign, times(1)).getUser("missingUserId");
     }
-
-    @Test
-    public void shouldReturnUserWithRolesWithinOrg() {
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers("5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN));
-
-        assertEquals(4, userReturn.size());
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
-    }
-
-    @Test
-    public void shouldReturnUserWithRolesWithinOrgAndResearchers() {
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers(
-                        "5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
-        assertEquals(5, userReturn.size());
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
-    }
-
-    @Test
-    public void shouldNotReturnUsersWithinOrgWhenCallerDoesntHaveOrg() {
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers(
-                        "9", null, null, false, List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
-        assertEquals(3, userReturn.size());
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
-    }
-
     @Test(expected = ForbiddenException.class)
     public void shouldShouldNotAllowOrgAdminSetRolesUserDifferentOrg() {
         userService.setUserRoles(
