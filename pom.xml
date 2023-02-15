@@ -28,7 +28,7 @@
     <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
     <java.version>11</java.version>
     <openfeign.version>3.0.3</openfeign.version>
-    <commons-csv.version>1.9.0</commons-csv.version>
+    <commons-csv.version>1.10.0</commons-csv.version>
     <jacoco.version>0.8.7</jacoco.version>
     <dependency-check.version>6.2.2</dependency-check.version>
     <failsafe.version>3.0.0-M5</failsafe.version>
@@ -190,7 +190,7 @@
     <dependency>
       <groupId>org.openehealth.ipf.commons</groupId>
       <artifactId>ipf-commons-audit</artifactId>
-      <version>4.4.0</version>
+      <version>4.5.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
