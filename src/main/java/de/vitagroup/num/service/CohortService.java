@@ -12,40 +12,32 @@ import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.PrivacyException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.service.policy.EhrPolicy;
 import de.vitagroup.num.service.policy.Policy;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
 import de.vitagroup.num.service.policy.TemplatesPolicy;
-import de.vitagroup.num.service.exception.BadRequestException;
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.PrivacyException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
+import org.ehrbase.aql.dto.condition.*;
+import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CHANGING_COHORT_ONLY_ALLOWED_BY_THE_OWNER_OF_THE_PROJECT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_CHANGE_ONLY_ALLOWED_ON_PROJECT_STATUS_DRAFT_OR_PENDING;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_GROUP_CANNOT_BE_EMPTY;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL_ID;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_COHORT_GROUP_AQL_MISSING;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 @Service
@@ -64,12 +56,12 @@ public class CohortService {
   private final ContentService contentService;
   private final TemplateService templateService;
 
-  private static final String GET_PATIENTS_PER_CLINIC =
+  public static final String GET_PATIENTS_PER_CLINIC =
       "SELECT e/ehr_id/value as patient_id "
           + "FROM EHR e CONTAINS COMPOSITION c "
           + "WHERE c/context/health_care_facility/name = '%s'"
           + "AND e/ehr_id/value MATCHES {%s} ";
-  private static final String GET_PATIENTS_PER_AGE_INTERVAL =
+  public static final String GET_PATIENTS_PER_AGE_INTERVAL =
       "SELECT count(e/ehr_id/value) "
           + "FROM EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.age.v0] "
           + "WHERE o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/value >= 'P%dY' "
@@ -132,6 +124,7 @@ public class CohortService {
     userDetailsService.checkIsUserApproved(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
+    validateCohortParameters(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
       throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
@@ -219,6 +212,53 @@ public class CohortService {
     }
   }
 
+  private void validateCohortParameters(CohortGroupDto cohortGroupDto) {
+    if (cohortGroupDto.isGroup() && CollectionUtils.isEmpty(cohortGroupDto.getChildren())) {
+      throw new BadRequestException(CohortService.class, INVALID_COHORT_GROUP_CHILDREN_MISSING);
+    }
+    if (cohortGroupDto.isAql()) {
+      if (Objects.isNull(cohortGroupDto.getQuery())) {
+        throw new BadRequestException(CohortGroup.class, INVALID_COHORT_GROUP_AQL_MISSING);
+      }
+      Set<String> parameterNames = new HashSet<>();
+      AqlDto aqlDto = new AqlToDtoParser().parse(cohortGroupDto.getQuery().getQuery());
+      ConditionDto conditionDto = aqlDto.getWhere();
+      if (conditionDto instanceof ConditionComparisonOperatorDto) {
+        Value value = ((ConditionComparisonOperatorDto) conditionDto).getValue();
+        if (value instanceof org.ehrbase.aql.dto.condition.ParameterValue) {
+          ParameterValue parameterValue = (ParameterValue) value;
+          parameterNames.add(parameterValue.getName());
+        }
+      } else if (conditionDto instanceof ConditionLogicalOperatorDto) {
+        List<ConditionDto> values = ((ConditionLogicalOperatorDto) conditionDto).getValues();
+        for (ConditionDto v : values) {
+          if (v instanceof ConditionComparisonOperatorDto) {
+            Value value = ((ConditionComparisonOperatorDto) v).getValue();
+            if (value instanceof org.ehrbase.aql.dto.condition.ParameterValue) {
+              ParameterValue parameterValue = (ParameterValue) value;
+              parameterNames.add(parameterValue.getName());
+            }
+          }
+        }
+      }
+      if (CollectionUtils.isNotEmpty(parameterNames) && MapUtils.isEmpty(cohortGroupDto.getParameters())) {
+        log.error("The query is invalid. The value of parameter(s) {} is missing", parameterNames);
+        throw new BadRequestException(CohortService.class, INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS);
+      } else if (CollectionUtils.isNotEmpty(parameterNames) && MapUtils.isNotEmpty(cohortGroupDto.getParameters())) {
+        Set<String> receivedParams = cohortGroupDto.getParameters().keySet();
+        if (!receivedParams.containsAll(parameterNames)) {
+          parameterNames.removeAll(receivedParams);
+          log.error("The query is invalid. The value of parameter {} is missing", parameterNames);
+          throw new BadRequestException(CohortService.class, INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS);
+        }
+      }
+    }
+    if (CollectionUtils.isNotEmpty(cohortGroupDto.getChildren())) {
+      cohortGroupDto.getChildren().stream()
+              .forEach(this::validateCohortParameters);
+    }
+  }
+
   private CohortGroup convertToCohortGroupEntity(CohortGroupDto cohortGroupDto) {
     if (cohortGroupDto == null) {
       throw new BadRequestException(CohortGroup.class, COHORT_GROUP_CANNOT_BE_EMPTY);
@@ -229,29 +269,30 @@ public class CohortService {
 
     if (cohortGroupDto.isAql()) {
       if (cohortGroupDto.getQuery() != null && cohortGroupDto.getQuery().getId() != null) {
-
         if (!aqlService.existsById(cohortGroupDto.getQuery().getId())) {
-          throw new BadRequestException(
-                CohortGroup.class, INVALID_AQL_ID, String.format("%s: %s", INVALID_AQL_ID, cohortGroupDto.getQuery().getId()));
+          throw new BadRequestException(CohortGroup.class, INVALID_AQL_ID,
+                  String.format("%s: %s", INVALID_AQL_ID, cohortGroupDto.getQuery().getId()));
         }
-
       } else {
         throw new BadRequestException(CohortGroup.class, INVALID_COHORT_GROUP_AQL_MISSING);
       }
     }
 
     if (cohortGroupDto.isGroup()) {
-      cohortGroup.setChildren(
-          cohortGroupDto.getChildren().stream()
-              .map(
-                  child -> {
-                    CohortGroup cohortGroupChild = convertToCohortGroupEntity(child);
-                    cohortGroupChild.setParent(cohortGroup);
-                    return cohortGroupChild;
-                  })
-              .collect(Collectors.toList()));
+      if (CollectionUtils.isNotEmpty(cohortGroup.getChildren())) {
+        cohortGroup.setChildren(
+                cohortGroupDto.getChildren().stream()
+                        .map(
+                                child -> {
+                                  CohortGroup cohortGroupChild = convertToCohortGroupEntity(child);
+                                  cohortGroupChild.setParent(cohortGroup);
+                                  return cohortGroupChild;
+                                })
+                        .collect(Collectors.toList()));
+      } else {
+        throw new BadRequestException(CohortService.class, INVALID_COHORT_GROUP_CHILDREN_MISSING);
+      }
     }
-
     return cohortGroup;
   }
 
@@ -260,6 +301,7 @@ public class CohortService {
     userDetailsService.checkIsUserApproved(userId);
 
     CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
+    validateCohortParameters(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
       throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
@@ -296,15 +338,18 @@ public class CohortService {
 
     Map<String, Integer> sizes = new LinkedHashMap<>();
     List<String> clinics = contentService.getClinics(loggedInUserId);
-    for (String clinic : clinics) {
-      QueryResponseData queryResponseData =
-          ehrBaseService.executePlainQuery(
-              String.format(GET_PATIENTS_PER_CLINIC, clinic, idsString));
-      List<List<Object>> rows = queryResponseData.getRows();
-      if (rows == null) {
-        sizes.put(clinic, 0);
-      } else {
-        sizes.put(clinic, rows.size());
+    if (CollectionUtils.isNotEmpty(clinics)) {
+      for (String clinic : clinics) {
+        if (Objects.nonNull(clinic)) {
+          QueryResponseData queryResponseData =
+                  ehrBaseService.executePlainQuery(String.format(GET_PATIENTS_PER_CLINIC, clinic, idsString));
+          List<List<Object>> rows = queryResponseData.getRows();
+          if (rows == null) {
+            sizes.put(clinic, 0);
+          } else {
+            sizes.put(clinic, rows.size());
+          }
+        }
       }
     }
     return sizes;
