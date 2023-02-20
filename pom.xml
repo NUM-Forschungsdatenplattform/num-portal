@@ -38,7 +38,7 @@
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
     <skip.dependency.check>false</skip.dependency.check>
-    <postgresql.version>42.5.0</postgresql.version>
+    <postgresql.version>42.5.3</postgresql.version>
   </properties>
 
   <repositories>

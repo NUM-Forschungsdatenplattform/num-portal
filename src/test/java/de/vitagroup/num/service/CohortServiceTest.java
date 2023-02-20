@@ -608,7 +608,10 @@ public class CohortServiceTest {
         when(cohortRepository.findById(4L)).thenReturn(Optional.of(cohortToEdit));
         when(cohortRepository.findById(5L)).thenReturn(Optional.of(cohortToEditOnApprovedProject));
 
-        when(cohortExecutor.executeGroup(any(), anyBoolean())).thenReturn(Set.of("test1", "test2"));
+        LinkedHashSet<String> ehrIds = new LinkedHashSet<>();
+        ehrIds.add("test1");
+        ehrIds.add("test2");
+        when(cohortExecutor.executeGroup(any(), anyBoolean())).thenReturn(ehrIds);
 
         when(privacyProperties.getMinHits()).thenReturn(2);
     }
