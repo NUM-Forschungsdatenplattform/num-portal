@@ -1,30 +1,43 @@
 package de.vitagroup.num.service.notification.dto;
 
 import de.vitagroup.num.service.email.MessageSourceWrapper;
-import java.time.Year;
 import lombok.Builder;
+
+import java.time.Year;
+import java.util.Iterator;
+import java.util.List;
 
 public class NewUserNotification extends Notification {
 
   private static final String NEW_USER_SUBJECT_KEY = "mail.new-user.subject";
   private static final String NEW_USER_BODY_KEY = "mail.new-user.body";
 
+  private static final String TRANSLATION_KEY_PREFIX = "role.";
+
   private final String newUserEmail;
   private final String newUserFirstName;
   private final String newUserLastName;
 
+  private final List<String> requestedRoles;
+  private final String department;
+  private final String notes;
+
   @Builder
   public NewUserNotification(
-      String newUserEmail,
-      String newUserFirstName,
-      String newUserLastName,
-      String recipientEmail,
-      String recipientFirstName,
-      String recipientLastName) {
+          String newUserEmail,
+          String newUserFirstName,
+          String newUserLastName,
+          List<String> requestedRoles, String department,
+          String notes, String recipientEmail,
+          String recipientFirstName,
+          String recipientLastName) {
 
     this.newUserEmail = newUserEmail;
     this.newUserFirstName = newUserFirstName;
     this.newUserLastName = newUserLastName;
+    this.requestedRoles = requestedRoles;
+    this.department = department;
+    this.notes = notes;
 
     this.recipientEmail = recipientEmail;
     this.recipientFirstName = recipientFirstName;
@@ -47,6 +60,19 @@ public class NewUserNotification extends Notification {
         newUserLastName,
         newUserEmail,
         copyright,
-        url);
+        url,
+        getTranslatedRequestedRoles(requestedRoles, messageSource), department, notes);
+  }
+
+  private String getTranslatedRequestedRoles(List<String> roles, MessageSourceWrapper messageSource) {
+    Iterator<String> iter = roles.iterator();
+    StringBuilder sb = new StringBuilder();
+
+    while (iter.hasNext()) {
+      final String msgKey = TRANSLATION_KEY_PREFIX + iter.next().toLowerCase();
+      String translatedRequestedRole = messageSource.getMessage(msgKey);
+      sb.append(translatedRequestedRole).append(iter.hasNext() ? ", " : "");
+    }
+    return sb.toString();
   }
 }

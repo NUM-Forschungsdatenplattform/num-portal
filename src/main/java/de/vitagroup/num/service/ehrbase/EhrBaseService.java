@@ -1,15 +1,21 @@
 package de.vitagroup.num.service.ehrbase;
 
-import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.SystemException;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_MESSAGE;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL_QUERY;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_DATA_COLUMNS_IN_THE_QUERY_RESULT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
+
+import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.SystemException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.ehrbase.aql.binder.AqlBinder;
@@ -37,6 +43,8 @@ import org.springframework.stereotype.Service;
 /**
  * Service using the EhrBaseSDK to talk to the EhrBaseAPI
  */
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Service
 public class EhrBaseService {
@@ -50,8 +58,6 @@ public class EhrBaseService {
   private static final String PATH = "path";
   private static final String PSEUDONYM = "pseudonym";
   private static final String EHR_STATUS_PATH = "/ehr_status/subject/external_ref/id/value";
-
-  private static final String ERROR_MESSAGE = "An error has occurred while calling ehrbase";
 
   private final DefaultRestClient restClient;
   private final CompositionResponseDataBuilder compositionResponseDataBuilder;
@@ -93,11 +99,12 @@ public class EhrBaseService {
       List<Record> results = restClient.aqlEndpoint().execute(pair.getLeft());
       return results.stream().map(result -> result.value(0).toString()).collect(Collectors.toSet());
     } catch (WrongStatusCodeException e) {
-      log.error("Malformed query exception", e);
-      throw e;
+      log.error(INVALID_AQL_QUERY, e);
+      throw new WrongStatusCodeException("EhrBaseService.class", 93, 1);
     } catch (ClientException e) {
       log.error(ERROR_MESSAGE, e);
-      throw new SystemException("An error has occurred, cannot execute aql");
+      throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
     }
   }
 
@@ -128,10 +135,11 @@ public class EhrBaseService {
 
     } catch (WrongStatusCodeException e) {
       log.error(ERROR_MESSAGE, e);
-      throw e;
+      throw new WrongStatusCodeException("EhrBaseService.class", 94, 1);
     } catch (ClientException e) {
       log.error(ERROR_MESSAGE, e);
-      throw new SystemException("An error has occurred, cannot execute aql");
+      throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
     }
   }
 
@@ -142,11 +150,12 @@ public class EhrBaseService {
     try {
       return restClient.aqlEndpoint().executeRaw(query);
     } catch (WrongStatusCodeException e) {
-      log.error("Malformed query exception", e);
-      throw e;
+      log.error(INVALID_AQL_QUERY, e);
+      throw new WrongStatusCodeException("EhrBaseService.class", 93, 2);
     } catch (ClientException e) {
       log.error(ERROR_MESSAGE, e);
-      throw new SystemException("An error has occurred, cannot execute aql", e);
+      throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
     }
   }
 
@@ -154,7 +163,7 @@ public class EhrBaseService {
     SelectDto selectDto = aqlDto.getSelect();
     List<SelectStatementDto> selectStatementDtos = selectDto.getStatement();
     SelectFieldDto pseudosStatement = new SelectFieldDto();
-    pseudosStatement.setAqlPath("/ehr_status/subject/external_ref/id/value");
+    pseudosStatement.setAqlPath(EHR_STATUS_PATH);
     pseudosStatement.setContainmentId(aqlDto.getEhr().getContainmentId());
     selectStatementDtos.add(0, pseudosStatement);
     selectDto.setStatement(selectStatementDtos);
@@ -219,8 +228,7 @@ public class EhrBaseService {
     return aggregatedFlattenedCompositions;
   }
 
-  private void addPseudonyms(
-      List<String> secondLevelPseudos, List<QueryResponseData> listOfResponseData, Long projectId) {
+  private void addPseudonyms(List<String> secondLevelPseudos, List<QueryResponseData> listOfResponseData, Long projectId) {
 
     List<String> pseudonyms = pseudonymity.getPseudonyms(secondLevelPseudos, projectId);
 
@@ -240,11 +248,11 @@ public class EhrBaseService {
 
     List<Map<String, String>> columns = compositions.getColumns();
     if (columns == null || columns.size() < 2) {
-      throw new BadRequestException("No data columns in the query result");
+      throw new BadRequestException(EhrBaseService.class, NO_DATA_COLUMNS_IN_THE_QUERY_RESULT);
     }
     String ehrStatusPath = columns.get(0).get(PATH);
     if (ehrStatusPath == null || !ehrStatusPath.equals(EHR_STATUS_PATH)) {
-      throw new SystemException("query result doesn't contain ehr_status column");
+      throw new SystemException(EhrBaseService.class, QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN);
     }
     columns.remove(0);
     return compositions.getRows().stream()

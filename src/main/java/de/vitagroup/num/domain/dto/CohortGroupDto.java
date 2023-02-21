@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CohortGroupDto {
 
-  @ApiModelProperty(value = "The unique identifier", example = "1")
+  @ApiModelProperty(value = "The unique identifier", example = "1", hidden = true)
   private Long id;
 
   @ApiModelProperty(value = "Cohort group operation to be applied to the children", example = "AND")

@@ -6,6 +6,7 @@ import de.vitagroup.num.domain.dto.MetricsDto;
 import de.vitagroup.num.domain.dto.NavigationItemDto;
 import de.vitagroup.num.domain.dto.ProjectInfoDto;
 import de.vitagroup.num.service.ContentService;
+import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -33,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @AllArgsConstructor
 @RequestMapping(value = "/content", produces = "application/json")
-public class ContentController {
+public class ContentController extends CustomizedExceptionHandler {
 
   private final ContentService contentService;
 
@@ -56,8 +57,8 @@ public class ContentController {
   @GetMapping("/graph/clinic")
   @ApiOperation(value = "Retrieves the list of participating clinics")
   @PreAuthorize(Role.MANAGER)
-  public ResponseEntity<List<String>> getClinics() {
-    return ResponseEntity.ok(contentService.getClinics());
+  public ResponseEntity<List<String>> getClinics(@AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(contentService.getClinics(principal.getSubject()));
   }
 
   @GetMapping("/graph/clinic/{name}/sofaDistribution")
@@ -70,8 +71,8 @@ public class ContentController {
   @GetMapping("/graph/clinic/sofaAverage")
   @PreAuthorize(Role.MANAGER)
   @ApiOperation(value = "Retrieves the sofa averages of participating clinics")
-  public ResponseEntity<Map<String, Double>> getClinicAverages() {
-    return ResponseEntity.ok(contentService.getClinicAverages());
+  public ResponseEntity<Map<String, Double>> getClinicAverages(@AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(contentService.getClinicAverages(principal.getSubject()));
   }
 
   @GetMapping("/latest-projects")

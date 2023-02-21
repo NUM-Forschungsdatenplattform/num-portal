@@ -2,7 +2,8 @@ package de.vitagroup.num.service.ehrbase;
 
 import ca.uhn.fhir.context.FhirContext;
 import de.vitagroup.num.properties.FttpProperties;
-import de.vitagroup.num.web.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -17,6 +18,9 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.StringType;
 import org.springframework.stereotype.Component;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.EHR_ID_MATCHING_THE_PSEUDONYM_WAS_NOT_FOUND;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PSEUDONYMITY_SECRET_IS_NOT_CONFIGURED;
 
 @Component
 @AllArgsConstructor
@@ -41,14 +45,14 @@ public class Pseudonymity {
     if (thirdLevelPseudonyms.isPresent()) {
       var params = thirdLevelPseudonyms.get();
       if (!params.getParameters("error").isEmpty()) {
-        throw new ResourceNotFound(PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+        throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
       }
       return secondLevelPseudonyms.stream().map(original -> {
         var result = findPseudonymForOriginal(params, original);
         return result.orElse(null);
       }).collect(Collectors.toList());
     } else {
-      throw new ResourceNotFound(PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+      throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
     }
   }
 
@@ -65,7 +69,7 @@ public class Pseudonymity {
         return Optional.of(fhirContext.newXmlParser().parseResource(Parameters.class, response.getEntity().getContent()));
       }
     } catch (Exception e) {
-      throw new ResourceNotFound(PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+      throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
     }
 
     return Optional.empty();

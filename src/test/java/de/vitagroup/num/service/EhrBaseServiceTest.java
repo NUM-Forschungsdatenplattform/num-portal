@@ -15,7 +15,7 @@ import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.service.ehrbase.CompositionResponseDataBuilder;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
-import de.vitagroup.num.web.exception.SystemException;
+import de.vitagroup.num.service.exception.SystemException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -145,6 +145,27 @@ public class EhrBaseServiceTest {
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
         .thenThrow(ClientException.class);
     ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
+  }
+
+  @Test(expected = SystemException.class)
+  public void shouldHandleClientExceptionWhenConnectToEhrBase() {
+    when(restClient.aqlEndpoint().execute(any(Query.class)))
+            .thenThrow(ClientException.class);
+    ehr.getAllPatientIds();
+  }
+
+  @Test(expected = WrongStatusCodeException.class)
+  public void shouldHandleWrongStatusCodeExceptionWhenExecutingAql(){
+    when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
+            .thenThrow(WrongStatusCodeException.class);
+    ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
+  }
+
+  @Test(expected = WrongStatusCodeException.class)
+  public void shouldHandleWrongStatusCodeExceptionWhenExecutePlainQuery(){
+    when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
+            .thenThrow(WrongStatusCodeException.class);
+    ehr.executePlainQuery(GOOD_QUERY);
   }
 
   @Before

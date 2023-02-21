@@ -7,6 +7,8 @@ import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public enum ProjectStatus {
   /** Project creation in progress */
@@ -102,4 +104,21 @@ public enum ProjectStatus {
   };
 
   public abstract Map<ProjectStatus, List<String>> nextStatusesAndRoles();
+
+  public static List<ProjectStatus> getAllProjectStatusToViewAsCoordinator() {
+    return Arrays.asList(ProjectStatus.APPROVED, ProjectStatus.PUBLISHED, ProjectStatus.CLOSED);
+  }
+
+  public static List<ProjectStatus> getAllProjectStatusToViewAsResearcher() {
+    return Arrays.asList(ProjectStatus.PUBLISHED);
+  }
+
+  public static List<ProjectStatus> getAllProjectStatusToViewAsApprover() {
+    return Stream.of(ProjectStatus.values())
+            .filter(
+                    projectStatus ->
+                            projectStatus != ProjectStatus.DRAFT
+                            && projectStatus != ProjectStatus.ARCHIVED)
+            .collect(Collectors.toList());
+  }
 }

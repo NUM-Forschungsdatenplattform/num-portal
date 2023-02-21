@@ -2,19 +2,21 @@ package de.vitagroup.num.domain.repository;
 
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.ProjectStatus;
-import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
-public interface ProjectRepository extends JpaRepository<Project, Long> {
+public interface ProjectRepository extends JpaRepository<Project, Long>, CustomProjectRepository {
 
-  List<Project> findByStatusIn(ProjectStatus[] statuses);
+  List<Project> findByStatusIn(List<ProjectStatus> statuses);
 
-  List<Project> findByResearchers_UserIdAndStatusIn(String userId, ProjectStatus[] statuses);
+  List<Project> findByResearchers_UserIdAndStatusIn(String userId, List<ProjectStatus> statuses);
 
-  List<Project> findByCoordinatorUserIdOrStatusIn(String userId, ProjectStatus[] statuses);
+  List<Project> findByCoordinatorUserIdOrStatusIn(String userId, List<ProjectStatus> statuses);
 
   @Query(
       value =
@@ -22,4 +24,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
       nativeQuery = true)
   List<Project> findLatestProjects(
       int count, String status1, String status2, String status3);
+
+
+  @Query(value = "SELECT new Project(pr.id, pr.name, pr.createDate, pr.coordinator) FROM Project pr " +
+          "WHERE pr.status IN (:statuses) ORDER BY pr.createDate DESC ")
+  List<Project> findByStatusInOrderByCreateDateDesc(List<ProjectStatus> statuses, Pageable pageable);
 }

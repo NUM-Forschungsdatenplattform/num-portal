@@ -2,23 +2,13 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.ExportType;
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
-import de.vitagroup.num.domain.ProjectTransition;
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.domain.dto.ProjectDto;
-import de.vitagroup.num.domain.dto.ProjectInfoDto;
-import de.vitagroup.num.domain.dto.TemplateInfoDto;
-import de.vitagroup.num.domain.dto.UserDetailsDto;
-import de.vitagroup.num.domain.dto.ZarsInfoDto;
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
+import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.properties.PrivacyProperties;
@@ -26,47 +16,11 @@ import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.ResponseFilter;
 import de.vitagroup.num.service.email.ZarsService;
+import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.executors.CohortQueryLister;
 import de.vitagroup.num.service.notification.NotificationService;
-import de.vitagroup.num.service.notification.dto.Notification;
-import de.vitagroup.num.service.notification.dto.ProjectApprovalRequestNotification;
-import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
-import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
-import de.vitagroup.num.service.notification.dto.ProjectStatusChangeNotification;
-import de.vitagroup.num.service.policy.EhrPolicy;
-import de.vitagroup.num.service.policy.EuropeanConsentPolicy;
-import de.vitagroup.num.service.policy.Policy;
-import de.vitagroup.num.service.policy.ProjectPolicyService;
-import de.vitagroup.num.service.policy.TemplatesPolicy;
-import de.vitagroup.num.web.exception.BadRequestException;
-import de.vitagroup.num.web.exception.ForbiddenException;
-import de.vitagroup.num.web.exception.PrivacyException;
-import de.vitagroup.num.web.exception.ResourceNotFound;
-import de.vitagroup.num.web.exception.SystemException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
+import de.vitagroup.num.service.notification.dto.*;
+import de.vitagroup.num.service.policy.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -78,6 +32,7 @@ import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
@@ -86,16 +41,43 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
+
 @Service
 @Slf4j
 @AllArgsConstructor
 public class ProjectService {
 
-  private static final String PROJECT_NOT_FOUND = "Project not found: ";
   private static final String ZIP_FILE_ENDING = ".zip";
   private static final String JSON_FILE_ENDING = ".json";
   private static final String ZIP_MEDIA_TYPE = "application/zip";
   private static final String CSV_FILE_PATTERN = "%s_%s.csv";
+
+  private final List<String> availableSortFields = Arrays.asList(PROJECT_NAME, AUTHOR_NAME, ORGANIZATION_NAME, PROJECT_STATUS);
+
+  private static final String AUTHOR_NAME = "author";
+
+  private static final String ORGANIZATION_NAME = "organization";
+
+  private static final String PROJECT_NAME = "name";
+
+  private static final String PROJECT_STATUS = "status";
 
   private final ProjectRepository projectRepository;
 
@@ -136,40 +118,40 @@ public class ProjectService {
 
   private final ProjectMapper projectMapper;
 
-  private static final String ERROR_MESSAGE = "An issue has occurred, cannot execute aql";
 
-  public void deleteProject(Long projectId, String userId, List<String> roles) {
+  @Transactional
+  public boolean deleteProject(Long projectId, String userId, List<String> roles) {
     userDetailsService.checkIsUserApproved(userId);
 
     var project =
         projectRepository
             .findById(projectId)
-            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
+            .orElseThrow(() -> new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId)));
 
     if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
-      throw new ForbiddenException(String.format("Cannot delete project: %s", projectId));
+      throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT, String.format(CANNOT_DELETE_PROJECT, projectId));
     }
 
     if (project.isDeletable()) {
       projectRepository.deleteById(projectId);
     } else {
-      throw new ForbiddenException(
-          String.format(
-              "Cannot delete project: %s, invalid status: %s", projectId, project.getStatus()));
+      throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT_INVALID_STATUS,
+              String.format(CANNOT_DELETE_PROJECT_INVALID_STATUS, projectId, project.getStatus()));
     }
+    return true;
   }
 
   @Transactional
-  public void archiveProject(Long projectId, String userId, List<String> roles) {
+  public boolean archiveProject(Long projectId, String userId, List<String> roles) {
     var user = userDetailsService.checkIsUserApproved(userId);
 
     var project =
         projectRepository
             .findById(projectId)
-            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
+            .orElseThrow(() -> new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId)));
 
     if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
-      throw new ForbiddenException(String.format("Cannot archive project: %s", projectId));
+      throw new ForbiddenException(ProjectService.class, CANNOT_ARCHIVE_PROJECT, String.format(CANNOT_ARCHIVE_PROJECT, projectId));
     }
 
     validateStatus(project.getStatus(), ProjectStatus.ARCHIVED, roles);
@@ -177,6 +159,7 @@ public class ProjectService {
 
     project.setStatus(ProjectStatus.ARCHIVED);
     projectRepository.save(project);
+    return true;
   }
 
   /**
@@ -200,19 +183,16 @@ public class ProjectService {
       return List.of();
     }
 
-    List<Project> projects =
-        projectRepository.findLatestProjects(
-            count,
-            ProjectStatus.APPROVED.name(),
-            ProjectStatus.PUBLISHED.name(),
-            ProjectStatus.CLOSED.name());
+    List<Project> projects = projectRepository.findByStatusInOrderByCreateDateDesc(Arrays.asList(ProjectStatus.APPROVED,
+            ProjectStatus.PUBLISHED, ProjectStatus.CLOSED), PageRequest.of(0, count));
     return projects.stream()
-        .map(project -> toProjectInfo(project, roles))
-        .collect(Collectors.toList());
+            .map(project -> toProjectInfo(project, roles))
+            .collect(Collectors.toList());
   }
 
   public String retrieveData(
       String query, Long projectId, String userId, Boolean defaultConfiguration) {
+    userDetailsService.checkIsUserApproved(userId);
     Project project = validateAndRetrieveProject(projectId, userId);
 
     List<QueryResponseData> responseData;
@@ -226,7 +206,7 @@ public class ProjectService {
     try {
       return mapper.writeValueAsString(responseData);
     } catch (JsonProcessingException e) {
-      throw new SystemException(ERROR_MESSAGE);
+      throw new SystemException(ProjectService.class, AN_ISSUE_HAS_OCCURRED_CANNOT_EXECUTE_AQL);
     }
   }
 
@@ -240,7 +220,7 @@ public class ProjectService {
     Set<String> ehrIds = cohortService.executeCohort(cohort, false);
 
     if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(PrivacyProperties.RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+      throw new PrivacyException(ProjectService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
 
     List<QueryResponseData> response = new LinkedList<>();
@@ -324,13 +304,14 @@ public class ProjectService {
 
     } catch (Exception e) {
       atnaService.logDataExport(userId, project.getId(), project, false);
-      throw new SystemException("Error while retrieving data:" + e.getLocalizedMessage());
+      throw new SystemException(ProjectService.class, ERROR_WHILE_RETRIEVING_DATA,
+              String.format(ERROR_WHILE_RETRIEVING_DATA, e.getLocalizedMessage()));
     }
     atnaService.logDataExport(userId, project.getId(), project, true);
     return queryResponse;
   }
 
-  public void streamResponseAsZip(
+  public boolean streamResponseAsZip(
       List<QueryResponseData> queryResponseDataList,
       String filenameStart,
       OutputStream outputStream) {
@@ -352,9 +333,10 @@ public class ProjectService {
       }
     } catch (IOException e) {
       log.error("Error creating a zip file for data export.", e);
-      throw new SystemException(
-          "Error creating a zip file for data export: " + e.getLocalizedMessage());
+      throw new SystemException(ProjectService.class, ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT,
+              String.format(ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT, e.getLocalizedMessage()));
     }
+    return true;
   }
 
   private void addResponseAsCsv(
@@ -376,7 +358,8 @@ public class ProjectService {
       }
       printer.flush();
     } catch (IOException e) {
-      throw new SystemException("Error while creating the CSV file");
+      throw new SystemException(ProjectService.class, ERROR_WHILE_CREATING_THE_CSV_FILE,
+              String.format(ERROR_WHILE_CREATING_THE_CSV_FILE, e.getMessage()));
     }
   }
 
@@ -387,6 +370,7 @@ public class ProjectService {
       ExportType format,
       Boolean defaultConfiguration) {
 
+    userDetailsService.checkIsUserApproved(userId);
     Project project = validateAndRetrieveProject(projectId, userId);
     List<QueryResponseData> response;
 
@@ -432,7 +416,7 @@ public class ProjectService {
     try {
       json = mapper.writeValueAsString(response);
     } catch (JsonProcessingException e) {
-      throw new SystemException(ERROR_MESSAGE);
+      throw new SystemException(ProjectService.class, AN_ISSUE_HAS_OCCURRED_CANNOT_EXECUTE_AQL);
     }
     return outputStream -> {
       outputStream.write(json.getBytes());
@@ -457,7 +441,8 @@ public class ProjectService {
     return headers;
   }
 
-  public Optional<Project> getProjectById(Long projectId) {
+  public Optional<Project> getProjectById(String loggedInUserId, Long projectId) {
+    userDetailsService.checkIsUserApproved(loggedInUserId);
     return projectRepository.findById(projectId);
   }
 
@@ -523,14 +508,12 @@ public class ProjectService {
     var projectToEdit =
         projectRepository
             .findById(id)
-            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + id));
+            .orElseThrow(() -> new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, id)));
 
     if (ProjectStatus.ARCHIVED.equals(projectToEdit.getStatus())
         || ProjectStatus.CLOSED.equals(projectToEdit.getStatus())) {
-      throw new ForbiddenException(
-          String.format(
-              "Cannot update project: %s, invalid project status: %s",
-              id, projectToEdit.getStatus()));
+      throw new ForbiddenException(ProjectService.class, CANNOT_UPDATE_PROJECT_INVALID_PROJECT_STATUS,
+              String.format(CANNOT_UPDATE_PROJECT_INVALID_PROJECT_STATUS, id, projectToEdit.getStatus()));
     }
 
     if (CollectionUtils.isNotEmpty(roles)
@@ -540,7 +523,7 @@ public class ProjectService {
     } else if (CollectionUtils.isNotEmpty(roles) && roles.contains(Roles.STUDY_APPROVER)) {
       return updateProjectStatus(projectDto, roles, user, projectToEdit);
     } else {
-      throw new ForbiddenException("No permissions to edit this project");
+      throw new ForbiddenException(ProjectService.class, NO_PERMISSIONS_TO_EDIT_THIS_PROJECT);
     }
   }
 
@@ -688,6 +671,7 @@ public class ProjectService {
                     .recipientFirstName(approver.getFirstName())
                     .recipientLastName(approver.getLastName())
                     .projectId(project.getId())
+                    .coordinatorEmail(coordinator.getEmail())
                     .build();
             notifications.add(notification);
           });
@@ -697,19 +681,27 @@ public class ProjectService {
 
       var approver = userService.getUserById(approverUserId, false);
 
-      ProjectStatusChangeNotification notification =
-          ProjectStatusChangeNotification.builder()
-              .recipientFirstName(coordinator.getFirstName())
-              .recipientLastName(coordinator.getLastName())
-              .recipientEmail(coordinator.getEmail())
-              .projectTitle(project.getName())
-              .projectStatus(newStatus)
-              .approverFirstName(approver.getFirstName())
-              .approverLastName(approver.getLastName())
-              .projectId(project.getId())
-              .oldProjectStatus(oldStatus)
-              .build();
-      notifications.add(notification);
+      if (isTransitionToChangeRequest(oldStatus, newStatus)) {
+        ProjectStatusChangeRequestNotification notification = new ProjectStatusChangeRequestNotification(coordinator.getEmail(), coordinator.getFirstName(),
+                                                                  coordinator.getLastName(), approver.getFirstName(), approver.getLastName(),
+                                                                  project.getName(), newStatus, oldStatus, project.getId(), approver.getEmail());
+        notifications.add(notification);
+      } else {
+        ProjectStatusChangeNotification notification =
+                ProjectStatusChangeNotification.builder()
+                        .recipientFirstName(coordinator.getFirstName())
+                        .recipientLastName(coordinator.getLastName())
+                        .recipientEmail(coordinator.getEmail())
+                        .projectTitle(project.getName())
+                        .projectStatus(newStatus)
+                        .approverFirstName(approver.getFirstName())
+                        .approverLastName(approver.getLastName())
+                        .projectId(project.getId())
+                        .oldProjectStatus(oldStatus)
+                        .approverEmail(approver.getEmail())
+                        .build();
+        notifications.add(notification);
+      }
     }
 
     if (isTransitionToPublished(oldStatus, newStatus) && newResearchers != null) {
@@ -819,6 +811,10 @@ public class ProjectService {
     return ProjectStatus.PUBLISHED.equals(oldStatus) && ProjectStatus.PUBLISHED.equals(newStatus);
   }
 
+  private boolean isTransitionToChangeRequest(ProjectStatus oldStatus, ProjectStatus newStatus) {
+    return ProjectStatus.CHANGE_REQUEST.equals(newStatus) && !newStatus.equals(oldStatus);
+  }
+
   private void registerToZarsIfNecessary(
       Project project,
       ProjectStatus oldStatus,
@@ -843,6 +839,7 @@ public class ProjectService {
   }
 
   public List<Project> getProjects(String userId, List<String> roles) {
+    userDetailsService.checkIsUserApproved(userId);
 
     List<Project> projects = new ArrayList<>();
 
@@ -850,28 +847,89 @@ public class ProjectService {
       projects.addAll(
           projectRepository.findByCoordinatorUserIdOrStatusIn(
               userId,
-              new ProjectStatus[] {
-                  ProjectStatus.APPROVED, ProjectStatus.PUBLISHED, ProjectStatus.CLOSED
-              }));
+             ProjectStatus.getAllProjectStatusToViewAsCoordinator()));
     }
     if (roles.contains(Roles.RESEARCHER)) {
       projects.addAll(
           projectRepository.findByResearchers_UserIdAndStatusIn(
-              userId, new ProjectStatus[] {ProjectStatus.PUBLISHED, ProjectStatus.CLOSED}));
+              userId, ProjectStatus.getAllProjectStatusToViewAsResearcher()));
     }
     if (roles.contains(Roles.STUDY_APPROVER)) {
-      ProjectStatus[] statuses =
-          Stream.of(ProjectStatus.values())
-              .filter(
-                  projectStatus ->
-                      projectStatus != ProjectStatus.DRAFT
-                          && projectStatus != ProjectStatus.ARCHIVED)
-              .collect(Collectors.toList())
-              .toArray(new ProjectStatus[] {});
-      projects.addAll(projectRepository.findByStatusIn(statuses));
+      projects.addAll(projectRepository.findByStatusIn(ProjectStatus.getAllProjectStatusToViewAsApprover()));
     }
 
     return projects.stream().distinct().collect(Collectors.toList());
+  }
+
+  public Page<Project> getProjectsWithPagination(String userId, List<String> roles, SearchCriteria searchCriteria, Pageable pageable) {
+
+    UserDetails loggedInUser = userDetailsService.checkIsUserApproved(userId);
+
+    Sort sortBy = validateAndGetSort(searchCriteria);
+    List<Project> projects;
+    Page<Project> projectPage;
+    Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+    Set<String> usersUUID = null;
+    if (searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY)) {
+      String searchValue = (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY);
+      usersUUID = userService.findUsersUUID(searchValue);
+    }
+    boolean sortByAuthor = searchCriteria.isSortByAuthor();
+    if (sortByAuthor) {
+      long count = projectRepository.count();
+      // load all projects because sort by author should be done in memory
+      pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
+    }
+    String sortByField = searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy()) ? searchCriteria.getSortBy() : "modifiedDate";
+    Language language = Objects.nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
+    ProjectSpecification projectSpecification = ProjectSpecification.builder()
+            .filter(searchCriteria.getFilter())
+            .roles(roles)
+            .loggedInUserId(userId)
+            .loggedInUserOrganizationId(loggedInUser.getOrganization().getId())
+            .ownersUUID(usersUUID)
+            .sortOrder(Objects.requireNonNull(sortBy.getOrderFor(sortByField)).ignoreCase())
+            .language(language)
+            .build();
+    projectPage = projectRepository.findProjects(projectSpecification, pageRequest);
+    projects = new ArrayList<>(projectPage.getContent());
+    if (sortByAuthor) {
+      sortProjects(projects, sortBy);
+      projects = projects.stream()
+              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
+              .limit(pageable.getPageSize())
+              .collect(Collectors.toList());
+    }
+    return new PageImpl<>(projects, pageable, projectPage.getTotalElements());
+  }
+
+  private Sort validateAndGetSort(SearchCriteria searchCriteria) {
+    if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
+      if (!availableSortFields.contains(searchCriteria.getSortBy())) {
+        throw new BadRequestException(ProjectService.class, String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
+      }
+      return Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
+              searchCriteria.getSortBy());
+    }
+    return Sort.by(Sort.Direction.DESC, "modifiedDate");
+  }
+
+  private void sortProjects(List<Project> projects, Sort sortBy) {
+    if (sortBy != null) {
+      Sort.Order authorOrder = sortBy.getOrderFor(AUTHOR_NAME);
+      if (authorOrder != null) {
+        Comparator<Project> byAuthorName = Comparator.comparing(project -> {
+          User coordinator = userService.getOwner(project.getCoordinator().getUserId());
+          return Objects.requireNonNull(coordinator).getFullName().toUpperCase();
+        });
+        Sort.Direction sortOrder = authorOrder.getDirection();
+        if (sortOrder.isAscending()) {
+          Collections.sort(projects, Comparator.nullsLast(byAuthorName));
+        } else {
+          Collections.sort(projects, Comparator.nullsLast(byAuthorName.reversed()));
+        }
+      }
+    }
   }
 
   public String getExportFilenameBody(Long projectId) {
@@ -904,11 +962,11 @@ public class ProjectService {
         Optional<UserDetails> researcher = userDetailsService.getUserDetailsById(dto.getUserId());
 
         if (researcher.isEmpty()) {
-          throw new BadRequestException("Researcher not found.");
+          throw new BadRequestException(ProjectService.class, RESEARCHER_NOT_FOUND);
         }
 
         if (researcher.get().isNotApproved()) {
-          throw new BadRequestException("Researcher not approved.");
+          throw new BadRequestException(ProjectService.class, RESEARCHER_NOT_APPROVED);
         }
 
         newResearchersList.add(researcher.get());
@@ -921,12 +979,12 @@ public class ProjectService {
       ProjectStatus initialStatus, ProjectStatus nextStatus, List<String> roles) {
 
     if (nextStatus == null) {
-      throw new BadRequestException("Invalid project status");
+      throw new BadRequestException(ProjectService.class, INVALID_PROJECT_STATUS);
     }
 
     if (initialStatus == null) {
       if (!isValidInitialStatus(nextStatus)) {
-        throw new BadRequestException("Invalid project status: " + nextStatus);
+        throw new BadRequestException(ProjectService.class, INVALID_PROJECT_STATUS_PARAM, String.format(INVALID_PROJECT_STATUS_PARAM, nextStatus));
       }
     } else if (initialStatus.nextStatusesAndRoles().containsKey(nextStatus)) {
       List<String> allowedRoles = initialStatus.nextStatusesAndRoles().get(nextStatus);
@@ -935,16 +993,12 @@ public class ProjectService {
           roles.stream().distinct().filter(allowedRoles::contains).collect(Collectors.toSet());
 
       if (intersectionSet.isEmpty()) {
-        throw new ForbiddenException(
-            "Project status transition from "
-                + initialStatus
-                + " to "
-                + nextStatus
-                + " not allowed");
+        throw new ForbiddenException(ProjectService.class, PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED,
+                String.format(PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED, initialStatus, nextStatus));
       }
     } else {
-      throw new BadRequestException(
-          "Project status transition from " + initialStatus + " to " + nextStatus + " not allowed");
+      throw new BadRequestException(ProjectService.class, PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED,
+           String.format(PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED, initialStatus ,nextStatus ));
     }
   }
 
@@ -980,7 +1034,7 @@ public class ProjectService {
 
   private void validateCoordinatorIsOwner(Project project, String loggedInUser) {
     if (project.hasEmptyOrDifferentOwner(loggedInUser)) {
-      throw new ForbiddenException("Cannot access this resource. User is not owner.");
+      throw new ForbiddenException(ProjectService.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_OWNER);
     }
   }
 
@@ -1085,8 +1139,8 @@ public class ProjectService {
                 project.getId(), ProjectStatus.PUBLISHED, ProjectStatus.CLOSED)
             .orElse(Collections.emptyList());
     if (transitions.size() > 1) {
-      throw new SystemException(
-          "More than one transition from PUBLISHED to CLOSED for project " + project.getId());
+      throw new SystemException(ProjectService.class, MORE_THAN_ONE_TRANSITION_FROM_PUBLISHED_TO_CLOSED_FOR_PROJECT,
+              String.format(MORE_THAN_ONE_TRANSITION_FROM_PUBLISHED_TO_CLOSED_FOR_PROJECT, project.getId()));
     }
     if (transitions.size() == 1) {
       return transitions.get(0).getCreateDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
@@ -1098,24 +1152,24 @@ public class ProjectService {
     Project project =
         projectRepository
             .findById(projectId)
-            .orElseThrow(() -> new ResourceNotFound(PROJECT_NOT_FOUND + projectId));
+            .orElseThrow(() -> new ResourceNotFound(ProjectService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId)));
 
     if (project.getStatus() == null || !project.getStatus().equals(ProjectStatus.PUBLISHED)) {
-      throw new ForbiddenException("Data explorer available for published projects only");
+      throw new ForbiddenException(ProjectService.class, DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY);
     }
 
     if (!project.isProjectResearcher(userId) && project.hasEmptyOrDifferentOwner(userId)) {
-      throw new ForbiddenException("Cannot access this project");
+      throw new ForbiddenException(ProjectService.class, CANNOT_ACCESS_THIS_PROJECT);
     }
 
     if (project.getCohort() == null) {
-      throw new BadRequestException(
-          String.format("Project: %s cohort cannot be null", project.getId()));
+      throw new BadRequestException(ProjectService.class, PROJECT_COHORT_CANNOT_BE_NULL,
+              String.format(PROJECT_COHORT_CANNOT_BE_NULL, project.getId()));
     }
 
     if (project.getTemplates() == null) {
-      throw new BadRequestException(
-          String.format("Project: %s templates cannot be null", project.getId()));
+      throw new BadRequestException(ProjectService.class, PROJECT_TEMPLATES_CANNOT_BE_NULL,
+              String.format(PROJECT_TEMPLATES_CANNOT_BE_NULL, project.getId()));
     }
     return project;
   }
@@ -1143,13 +1197,14 @@ public class ProjectService {
             .findById(id)
             .orElseThrow(
                 () -> {
-                  throw new BadRequestException("Project not found");
+                  throw new BadRequestException(ProjectService.class, PROJECT_NOT_FOUND);
                 });
     ProjectDto projectDto = projectMapper.convertToDto(project);
     try {
       return projectDocCreator.getDocBytesOfProject(projectDto, locale);
     } catch (IOException e) {
-      throw new SystemException("Error creating the project PDF");
+      throw new SystemException(ProjectService.class, ERROR_CREATING_THE_PROJECT_PDF,
+              String.format(ERROR_CREATING_THE_PROJECT_PDF, e.getMessage()));
     }
   }
 }

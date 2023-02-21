@@ -8,16 +8,15 @@ import com.nedap.archie.rm.RMObject;
 import com.nedap.archie.rm.datavalues.DvBoolean;
 import com.nedap.archie.rm.datavalues.DvCodedText;
 import com.nedap.archie.rm.datavalues.SingleValuedDataValue;
+import com.nedap.archie.rm.datavalues.quantity.DvCount;
 import com.nedap.archie.rm.datavalues.quantity.DvOrdinal;
 import com.nedap.archie.rm.datavalues.quantity.DvQuantity;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvDate;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvDateTime;
+import com.nedap.archie.rm.datavalues.quantity.datetime.DvDuration;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvTime;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.service.UserDetailsService;
-import java.time.temporal.TemporalAccessor;
-import java.util.LinkedList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +35,11 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.time.temporal.TemporalAccessor;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -127,28 +131,38 @@ public class ParameterService {
               try {
                 if (row.get(0) != null) {
                   var rowString = buildAqlObjectMapper().writeValueAsString(row.get(0));
+                  log.debug("[AQL parameter] query response data row {} ", rowString);
                   var element =
-                      (SingleValuedDataValue<?>)
-                          buildAqlObjectMapper().readValue(rowString, RMObject.class);
-
-                  if (element.getValue().getClass().isAssignableFrom(DvCodedText.class)) {
-                    convertDvCodedText((DvCodedText) element.getValue(), parameterOptions, postfix);
-                  } else if (element.getValue().getClass().isAssignableFrom(DvQuantity.class)) {
-                    convertDvQuantity((DvQuantity) element.getValue(), parameterOptions, postfix);
-                  } else if (element.getValue().getClass().isAssignableFrom(DvOrdinal.class)) {
-                    convertDvOrdinal((DvOrdinal) element.getValue(), parameterOptions, postfix);
-                  } else if (element.getValue().getClass().isAssignableFrom(DvBoolean.class)) {
-                    convertDvBoolean(parameterOptions);
-                  } else if (element.getValue().getClass().isAssignableFrom(DvDate.class)) {
-                    convertDvDate(parameterOptions);
-                  } else if (element.getValue().getClass().isAssignableFrom(DvDateTime.class)) {
-                    convertDvDateTime(parameterOptions);
-                  } else if (element.getValue().getClass().isAssignableFrom(DvTime.class)) {
-                    convertTime(parameterOptions);
+                          (SingleValuedDataValue<?>)
+                                  buildAqlObjectMapper().readValue(rowString, RMObject.class);
+                  if (Objects.nonNull(element.getValue())) {
+                    if (element.getValue().getClass().isAssignableFrom(DvCodedText.class)) {
+                      convertDvCodedText((DvCodedText) element.getValue(), parameterOptions, postfix);
+                    } else if (element.getValue().getClass().isAssignableFrom(DvQuantity.class)) {
+                      convertDvQuantity((DvQuantity) element.getValue(), parameterOptions, postfix);
+                    } else if (element.getValue().getClass().isAssignableFrom(DvOrdinal.class)) {
+                      convertDvOrdinal((DvOrdinal) element.getValue(), parameterOptions, postfix);
+                    } else if (element.getValue().getClass().isAssignableFrom(DvBoolean.class)) {
+                      convertDvBoolean(parameterOptions);
+                    } else if (element.getValue().getClass().isAssignableFrom(DvDate.class)) {
+                      convertDvDate(parameterOptions);
+                    } else if (element.getValue().getClass().isAssignableFrom(DvDateTime.class)) {
+                      convertDvDateTime(parameterOptions);
+                    } else if (element.getValue().getClass().isAssignableFrom(DvTime.class)) {
+                      convertTime(parameterOptions);
+                    } else if (element.getClass().isAssignableFrom(DvDateTime.class)) {
+                      // workaround for openEHR-EHR-OBSERVATION.blood_pressure.v2 and aqlPath:
+                      ///data[at0001]/events[at0006]/time/value
+                      convertDvDateTime(parameterOptions);
+                    } else if (element.getValue().getClass().isAssignableFrom(DvCount.class)) {
+                      parameterOptions.setType("DV_COUNT");
+                    } else if (element.getValue().getClass().isAssignableFrom(DvDuration.class)) {
+                      parameterOptions.setType("DV_DURATION");
+                    }
                   }
                 }
               } catch (JsonProcessingException e) {
-                log.error("Could not retrieve parameters", e);
+                log.error("Could not retrieve parameters for aqlPath {} and archetypeId {} ", aqlPath, archetypeId, e);
               }
             });
 
@@ -226,7 +240,6 @@ public class ParameterService {
   private void convertTime(ParameterOptionsDto dto) {
     dto.setType("DV_TIME");
   }
-
   private String insertSelect(String query) {
     var result = StringUtils.substringAfter(query, SELECT);
     return new StringBuilder(result).insert(0, SELECT_DISTINCT).toString();

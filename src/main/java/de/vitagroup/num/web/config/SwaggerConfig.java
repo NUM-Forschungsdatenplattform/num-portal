@@ -93,6 +93,7 @@ public class SwaggerConfig {
         .apis(getRequestHandlerSelector(excludedBasePackage))
         .paths(PathSelectors.regex(pathRegexp))
         .build()
+            .pathMapping("/")
         .securitySchemes(Collections.singletonList(securityScheme()))
         .securityContexts(Collections.singletonList(securityContext(pathRegexp)));
   }

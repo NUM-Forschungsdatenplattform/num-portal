@@ -66,11 +66,14 @@ public class AqlDto {
   @ApiModelProperty(value = "Flag marking aql as being public")
   private boolean publicAql = true;
 
-  @ApiModelProperty(value = "The owner of the aql")
+  @ApiModelProperty(value = "The owner of the aql", hidden = true)
   private User owner;
 
-  @ApiModelProperty(value = "The owner of the aql")
+  @ApiModelProperty(value = "The category of the aql")
   private Long categoryId;
+
+  @ApiModelProperty(value = "to for category data", hidden = true)
+  private AqlCategoryDto category;
 
   @ApiModelProperty private OffsetDateTime createDate;
 

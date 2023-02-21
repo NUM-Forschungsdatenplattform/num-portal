@@ -16,7 +16,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class ApplicationSecurity extends WebSecurityConfigurerAdapter {
 
-  private static final String[] AUTH_WHITELIST = {"/swagger-*/**", "/v2/**", "/v3/**"};
+  private static final String[] AUTH_WHITELIST = {"/swagger-*/**", "/v2/**", "/v3/**", "/admin/health",
+          "/admin/log-level", "/admin/log-level/*"};
 
   @Override
   public void configure(HttpSecurity httpSecurity) throws Exception {

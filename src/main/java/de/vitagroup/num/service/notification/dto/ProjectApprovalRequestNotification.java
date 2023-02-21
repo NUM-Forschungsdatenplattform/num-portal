@@ -14,6 +14,8 @@ public class ProjectApprovalRequestNotification extends Notification {
   private final String projectTitle;
   private final Long projectId;
 
+  private final String coordinatorEmail;
+
   @Builder
   public ProjectApprovalRequestNotification(
       String recipientEmail,
@@ -22,7 +24,7 @@ public class ProjectApprovalRequestNotification extends Notification {
       String coordinatorFirstName,
       String coordinatorLastName,
       String projectTitle,
-      Long projectId) {
+      Long projectId, String coordinatorEmail) {
 
     this.recipientEmail = recipientEmail;
     this.recipientFirstName = recipientFirstName;
@@ -31,6 +33,7 @@ public class ProjectApprovalRequestNotification extends Notification {
     this.coordinatorLastName = coordinatorLastName;
     this.projectTitle = projectTitle;
     this.projectId = projectId;
+    this.coordinatorEmail = coordinatorEmail;
   }
 
   @Override
@@ -50,6 +53,7 @@ public class ProjectApprovalRequestNotification extends Notification {
         projectTitle,
         copyright,
         url,
-        getProjectPreviewUrl(url, projectId));
+        getProjectReviewUrl(url, projectId),
+        coordinatorEmail);
   }
 }

@@ -3,6 +3,8 @@ package de.vitagroup.num.domain.admin;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.vitagroup.num.domain.dto.OrganizationDto;
+
+import java.util.Map;
 import java.util.Set;
 
 import io.swagger.annotations.ApiModel;
@@ -65,8 +67,15 @@ public class User {
 
   private Boolean emailVerified;
 
+  private Map<String, Object> attributes;
+
   @JsonIgnore
   public boolean isNotApproved() {
     return !approved;
+  }
+
+  @JsonIgnore
+  public String getFullName() {
+    return this.firstName + " " + this.lastName;
   }
 }
