@@ -7,12 +7,12 @@ spring:
     hikari:
       data-source-properties:
         stringtype: unspecified
-    url: jdbc:postgresql://localhost:5434/numportal?currentSchema=num
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=num
     driver-class-name: org.postgresql.Driver
-    username: num-portal
-    password: HF1ZidZUQbSFQVN31nM026c8IG9pRLYrKJ6DMoML6XBVOyO2dawbt9CuMtpqai6f
+    username: postgres
+    password: postgres
   flyway:
-    enabled: false
+    enabled: true
     user: postgres
     password: postgres
   jpa:
@@ -33,7 +33,7 @@ spring:
           userStoreClient:
             authorization-grant-type: client_credentials
             client-id: num-portal
-            client-secret: 3e6e93f9-3638-4084-b376-49aebc75accb
+            client-secret: 89dddc8f-0f25-4faf-a58d-6cda681f6ed3
         provider:
           userStoreClient:
             token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
@@ -81,7 +81,7 @@ userstore:
   url: ${keycloak.url}/auth/admin/realms/crr
 
 keycloak:
-  url: https://keycloak.pre-prod.num-codex.de
+  url: https://keycloak.dev.num-codex.de
 
 hapi:
   fhir:
@@ -118,9 +118,9 @@ zars:
 
 # use local ehrbase until we get central one
 ehrbase:
-  rest-api-url: http://localhost:8082/ehrbase/rest/openehr/v1/
+  rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
   username: ehrbaseAuth
-  password: brigand_OUTWARD*shaken0hydro5bumpy2braze1graffito_warlord8voguish
+  password: SuperSecretPassword
 
 cors:
   allowedOrigins:
@@ -130,7 +130,7 @@ privacy:
   pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
 
 num:
-  url: https://pre-prod.num-codex.de
+  url: https://dev.num-codex.de
   locale: en
 
 consent:
