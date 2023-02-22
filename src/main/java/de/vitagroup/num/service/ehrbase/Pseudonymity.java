@@ -2,26 +2,26 @@ package de.vitagroup.num.service.ehrbase;
 
 import ca.uhn.fhir.context.FhirContext;
 import de.vitagroup.num.properties.FttpProperties;
+import de.vitagroup.num.properties.PseudonymsPsnWorkflow;
 import de.vitagroup.num.service.exception.ResourceNotFound;
-import de.vitagroup.num.service.exception.SystemException;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Parameters;
-import org.hl7.fhir.r4.model.StringType;
 import org.springframework.stereotype.Component;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.EHR_ID_MATCHING_THE_PSEUDONYM_WAS_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PSEUDONYMITY_SECRET_IS_NOT_CONFIGURED;
-
+@Slf4j
 @Component
 @AllArgsConstructor
 public class Pseudonymity {
@@ -35,8 +35,10 @@ public class Pseudonymity {
   private final FttpProperties fttpProperties;
   private final FhirContext fhirContext;
 
+  private final PseudonymsPsnWorkflow pseudonymsPsnWorkflow;
+
   public List<String> getPseudonyms(List<String> secondLevelPseudonyms, Long projectId) {
-    var parameters = intiParameters(projectId);
+    var parameters = initParameters(projectId);
 
     secondLevelPseudonyms.forEach(original -> parameters.addParameter(ORIGINAL, original));
 
@@ -61,27 +63,35 @@ public class Pseudonymity {
     request.setHeader("Content-Type", FHIR_CONTENT_TYPE);
 
     try {
-      request.setEntity(
-          new StringEntity(fhirContext.newXmlParser().encodeResourceToString(parameters),
-              ContentType.parse(FHIR_CONTENT_TYPE)));
+      String requestBody = fhirContext.newXmlParser().encodeResourceToString(parameters);
+      request.setEntity(new StringEntity(requestBody, ContentType.parse(FHIR_CONTENT_TYPE)));
       var response = httpClient.execute(request);
+      //log.debug("Request body {} ", requestBody);
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-        return Optional.of(fhirContext.newXmlParser().parseResource(Parameters.class, response.getEntity().getContent()));
+        String resp = EntityUtils.toString(response.getEntity());
+        //log.debug("Response {} ", resp);
+        return Optional.of(fhirContext.newXmlParser().parseResource(Parameters.class, resp));
       }
     } catch (Exception e) {
+      log.error("Could not retrieve pseudonyms {}", e);
       throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
     }
 
     return Optional.empty();
   }
 
-  private Parameters intiParameters(Long projectId) {
+  /**
+   * https://simplifier.net/guide/ttp-fhir-gateway-ig/markdown-WorkflowBasierteVerwaltung-Operations-requestPsnWorkflow?version=current
+   * @param projectId
+   * @return
+   */
+  private Parameters initParameters(Long projectId) {
     var parameters = new Parameters();
-    parameters.addParameter("study", new StringType("num"));
-    parameters.addParameter("source", new StringType("codex"));
-    parameters.addParameter("target", new StringType("extern_" + projectId));
-    parameters.addParameter("apikey", new StringType("iCZdh7ZWuf8ms)vvBgU-IaLi4"));
-    parameters.addParameter("event", new StringType("num.get_extern_psn"));
+    parameters.addParameter("study", pseudonymsPsnWorkflow.getStudy());
+    parameters.addParameter("source", pseudonymsPsnWorkflow.getSource());
+    parameters.addParameter("target", pseudonymsPsnWorkflow.getTarget() + projectId);
+    parameters.addParameter("apikey", pseudonymsPsnWorkflow.getApiKey());
+    parameters.addParameter("event",  pseudonymsPsnWorkflow.getEvent());
     return parameters;
   }
 
