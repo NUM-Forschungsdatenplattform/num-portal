@@ -119,7 +119,7 @@ zars:
 # use local ehrbase until we get central one
 ehrbase:
   rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
-  username: ehrbaseAuth
+  username: ehrbase-user
   password: SuperSecretPassword
 
 cors:
@@ -130,7 +130,7 @@ privacy:
   pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
 
 num:
-  url: https://dev.num-codex.de
+  url: https://dev.num-codex.de/home
   locale: en
 
 consent:
