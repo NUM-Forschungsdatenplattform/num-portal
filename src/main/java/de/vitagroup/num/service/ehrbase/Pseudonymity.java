@@ -4,14 +4,11 @@ import ca.uhn.fhir.context.FhirContext;
 import de.vitagroup.num.properties.FttpProperties;
 import de.vitagroup.num.properties.PseudonymsPsnWorkflow;
 import de.vitagroup.num.service.exception.ResourceNotFound;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -20,6 +17,11 @@ import org.apache.http.util.EntityUtils;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Parameters;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -61,22 +63,32 @@ public class Pseudonymity {
   private Optional<Parameters> retrievePseudonyms(Parameters parameters) {
     var request = new HttpPost(fttpProperties.getUrl());
     request.setHeader("Content-Type", FHIR_CONTENT_TYPE);
-
+    CloseableHttpResponse response = null;
     try {
       String requestBody = fhirContext.newXmlParser().encodeResourceToString(parameters);
       request.setEntity(new StringEntity(requestBody, ContentType.parse(FHIR_CONTENT_TYPE)));
-      var response = httpClient.execute(request);
-      //log.debug("Request body {} ", requestBody);
+      response = httpClient.execute(request);
+      log.debug("Request pseudonyms with body: {} ", requestBody);
       if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
         String resp = EntityUtils.toString(response.getEntity());
-        //log.debug("Response {} ", resp);
+        log.debug("Received pseudonyms response: {} ", resp);
         return Optional.of(fhirContext.newXmlParser().parseResource(Parameters.class, resp));
+      } else {
+        log.error("Could not retrieve pseudonyms. Expected status code 200, received {} with response body: {} ",
+                response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
       }
     } catch (Exception e) {
       log.error("Could not retrieve pseudonyms {}", e);
       throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+    } finally {
+      if (response != null) {
+        try {
+          response.close();
+        } catch (IOException e) {
+          log.warn("Could not close response from {} ", fttpProperties.getUrl());
+        }
+      }
     }
-
     return Optional.empty();
   }
 
