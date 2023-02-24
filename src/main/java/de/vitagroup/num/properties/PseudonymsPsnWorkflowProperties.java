@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 @Data
 @Configuration
 @ConfigurationProperties(prefix = "requestpsnworkflow.params")
-public class PseudonymsPsnWorkflow {
+public class PseudonymsPsnWorkflowProperties {
 
     private String study;
 

@@ -105,3 +105,11 @@ fttp:
   useBasicAuth: true
   username: karlea
   password: test123#
+
+requestpsnworkflow:
+  params:
+    study: num
+    source: codex
+    target: extern_
+    apikey: iCZdh7ZWuf8ms)vvBgU-IaLi4
+    event: num.get_extern_psn

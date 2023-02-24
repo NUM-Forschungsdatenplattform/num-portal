@@ -2,7 +2,7 @@ package de.vitagroup.num.service.ehrbase;
 
 import ca.uhn.fhir.context.FhirContext;
 import de.vitagroup.num.properties.FttpProperties;
-import de.vitagroup.num.properties.PseudonymsPsnWorkflow;
+import de.vitagroup.num.properties.PseudonymsPsnWorkflowProperties;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class Pseudonymity {
   private final FttpProperties fttpProperties;
   private final FhirContext fhirContext;
 
-  private final PseudonymsPsnWorkflow pseudonymsPsnWorkflow;
+  private final PseudonymsPsnWorkflowProperties pseudonymsPsnWorkflowProperties;
 
   public List<String> getPseudonyms(List<String> secondLevelPseudonyms, Long projectId) {
     var parameters = initParameters(projectId);
@@ -99,11 +99,11 @@ public class Pseudonymity {
    */
   private Parameters initParameters(Long projectId) {
     var parameters = new Parameters();
-    parameters.addParameter("study", pseudonymsPsnWorkflow.getStudy());
-    parameters.addParameter("source", pseudonymsPsnWorkflow.getSource());
-    parameters.addParameter("target", pseudonymsPsnWorkflow.getTarget() + projectId);
-    parameters.addParameter("apikey", pseudonymsPsnWorkflow.getApiKey());
-    parameters.addParameter("event",  pseudonymsPsnWorkflow.getEvent());
+    parameters.addParameter("study", pseudonymsPsnWorkflowProperties.getStudy());
+    parameters.addParameter("source", pseudonymsPsnWorkflowProperties.getSource());
+    parameters.addParameter("target", pseudonymsPsnWorkflowProperties.getTarget() + projectId);
+    parameters.addParameter("apikey", pseudonymsPsnWorkflowProperties.getApiKey());
+    parameters.addParameter("event",  pseudonymsPsnWorkflowProperties.getEvent());
     return parameters;
   }
 
