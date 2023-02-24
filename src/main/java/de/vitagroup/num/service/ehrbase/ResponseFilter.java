@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 @NoArgsConstructor
 @Slf4j
 public class ResponseFilter {
-
   private HashSet<String> pathFilters;
   private List<Pattern> regexpFilters;
 
@@ -30,8 +29,7 @@ public class ResponseFilter {
       File pathResource = new ClassPathResource("resultfilters/pathfilters.txt").getFile();
       pathFilters = new HashSet<>(Files.readAllLines(pathResource.toPath()));
       File regexpResource = new ClassPathResource("resultfilters/regexpfilters.txt").getFile();
-      regexpFilters =
-          Files.readAllLines(regexpResource.toPath()).stream().map(Pattern::compile).collect(
+      regexpFilters = Files.readAllLines(regexpResource.toPath()).stream().map(Pattern::compile).collect(
               Collectors.toList());
     } catch (IOException e) {
       log.error("Failed to read project data filters, can't filter results.");
