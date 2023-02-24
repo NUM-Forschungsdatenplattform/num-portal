@@ -79,3 +79,11 @@ fttp:
   useBasicAuth: ${FTTP_USE_BASIC_AUTH}
   username: ${FTTP_USERNAME}
   password: ${FTTP_PASSWORD}
+
+requestpsnworkflow:
+  params:
+    study: ${PSNWORKFLOW_STUDY}
+    source: ${PSNWORKFLOW_SOURCE}
+    target: ${PSNWORKFLOW_TARGET}
+    apikey: ${PSNWORKFLOW_API_KEY}
+    event: ${PSNWORKFLOW_EVENT}
