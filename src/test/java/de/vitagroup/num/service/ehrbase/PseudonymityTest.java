@@ -14,7 +14,9 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicStatusLine;
+import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Parameters;
+import org.hl7.fhir.r4.model.StringType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,7 +66,7 @@ public class PseudonymityTest {
       when(response.getStatusLine()).thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"));
       StringEntity entity = new StringEntity(RESPONSE_BODY, ContentType.parse("application/fhir+xml;charset=utf-8"));
       when(response.getEntity()).thenReturn(entity);
-      when(xmlParser.parseResource(Mockito.any(), Mockito.any(String.class))).thenReturn(new Parameters());
+      when(xmlParser.parseResource(Mockito.any(), Mockito.any(String.class))).thenReturn(mockOkParameters());
       when(closeableHttpClient.execute(Mockito.any(HttpPost.class))).thenReturn(response);
       pseudonymity.getPseudonyms(Arrays.asList("codex-AB1234"), 100L);
   }
@@ -103,5 +105,26 @@ public class PseudonymityTest {
       parameters.addParameter("error", "NULL");
       parameters.addParameter("error-code", "exception");
       return parameters;
+    }
+
+    private Parameters mockOkParameters() {
+        Parameters parameters = new Parameters();
+        Parameters.ParametersParameterComponent parametersParameterComponent = new Parameters.ParametersParameterComponent(new StringType("pseudonym"));
+        Parameters.ParametersParameterComponent original = mockParamComponent("original", "codex_WX6QAM");
+        parametersParameterComponent.addPart(original);
+        Parameters.ParametersParameterComponent pseudo = mockParamComponent("pseudonym", "extern_0_E2F4D9");
+        parametersParameterComponent.addPart(pseudo);
+
+        parameters.addParameter(parametersParameterComponent);
+        return parameters;
+    }
+
+    private Parameters.ParametersParameterComponent mockParamComponent(String name, String value){
+        Parameters.ParametersParameterComponent component = new Parameters.ParametersParameterComponent(new StringType(name));
+        Identifier identifier = new Identifier();
+        identifier.setSystem("some system");
+        identifier.setValue(value);
+        component.setValue(identifier);
+        return component;
     }
 }
