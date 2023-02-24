@@ -37,7 +37,7 @@ public class ResponseFilter {
   }
 
   public List<QueryResponseData> filterResponse(List<QueryResponseData> queryResponseDataList) {
-    if (pathFilters == null) {
+    if(pathFilters == null){
       return new ArrayList<>();
     }
     List<QueryResponseData> resultList = new ArrayList<>();
@@ -67,10 +67,9 @@ public class ResponseFilter {
 
   private boolean keepColumn(Map<String, String> column) {
     String path = column.get("path");
-    if (pathFilters.contains(path)) {
+    if(pathFilters.contains(path)){
       return false;
     }
-    return regexpFilters.stream().filter(regexp -> regexp.matcher(path).matches()).findFirst()
-        .isEmpty();
+    return regexpFilters.stream().filter(regexp -> regexp.matcher(path).matches()).findFirst().isEmpty();
   }
 }
