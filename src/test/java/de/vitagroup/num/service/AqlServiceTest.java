@@ -442,6 +442,12 @@ public class AqlServiceTest {
   }
 
   @Test
+  public void shouldGetAllCategories() {
+    aqlService.getAqlCategories();
+    verify(aqlCategoryRepository, times(1)).findAllCategories();
+  }
+
+  @Test
   public void getAqlCategoriesWithPaginationTest() {
     Pageable pageable = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));;
     aqlService.getAqlCategories(pageable, new SearchCriteria());
@@ -499,6 +505,13 @@ public class AqlServiceTest {
     aqlService.countAqls();
     Mockito.verify(aqlRepository, Mockito.times(1)).count();
   }
+
+  @Test
+  public void getVisibleAqlsTest() {
+    aqlService.getVisibleAqls("approvedUserId");
+    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedOrPublic("approvedUserId");
+  }
+
   @Test
   public void getVisibleAqlsWithPaginationAndSortByName() {
     Pageable pageRequest = PageRequest.of(0, 100, Sort.by(Sort.Direction.ASC, "name"));

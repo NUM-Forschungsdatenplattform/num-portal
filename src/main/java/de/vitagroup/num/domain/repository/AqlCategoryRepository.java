@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface AqlCategoryRepository extends JpaRepository<AqlCategory, Long> {
 
@@ -15,4 +17,9 @@ public interface AqlCategoryRepository extends JpaRepository<AqlCategory, Long> 
           countQuery = "SELECT COUNT (*) FROM aql_category",
           nativeQuery = true)
   Page<AqlCategory> findAllCategories(Pageable pageable);
+
+  @Query(
+          value = "SELECT * FROM aql_category ORDER BY aql_category.name->>'de' ASC",
+          nativeQuery = true)
+  List<AqlCategory> findAllCategories();
 }

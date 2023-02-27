@@ -180,7 +180,7 @@ public class AqlControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {MANAGER})
   public void shouldGetAllCategoriesWithPaginationAndSorting() {
-    mockMvc.perform(get(AQL_PATH + "/category")
+    mockMvc.perform(get(AQL_PATH + "/category/all")
             .queryParam("page", "0")
             .queryParam("size", "15")
             .queryParam("sortBy", "name-en")
@@ -192,7 +192,7 @@ public class AqlControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
   public void shouldGetAqlsAsResearcherWithPagination() {
-    mockMvc.perform(get(AQL_PATH)
+    mockMvc.perform(get(AQL_PATH + "/all")
             .queryParam("page", "0")
             .queryParam("size", "20")
             .queryParam("sortBy", "author")
