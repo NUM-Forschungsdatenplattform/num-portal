@@ -72,8 +72,8 @@ num:
 consent:
   allow-usage-outside-eu-oid: ${ALLOW_USAGE_OUTSIDE_EU_OID}
 
-fttp:
-  url: ${FTTP_URL}
+#fttp:
+#  url: ${FTTP_URL}
 #  certificatePath: ${FTTP_CERT_PATH}
 #  certificateKey: ${FTTP_CERT_PASSWORD}
 #  useBasicAuth: ${FTTP_USE_BASIC_AUTH}
