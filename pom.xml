@@ -39,6 +39,7 @@
     <skip.unit.tests>false</skip.unit.tests>
     <skip.dependency.check>false</skip.dependency.check>
     <postgresql.version>42.5.3</postgresql.version>
+    <hapi.version>5.5.1</hapi.version>
   </properties>
 
   <repositories>
@@ -131,6 +132,10 @@
       <artifactId>spring-boot-starter-aop</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.github.ehrbase.openEHR_SDK</groupId>
       <artifactId>client</artifactId>
       <version>${ehr-sdk.version}</version>
@@ -149,6 +154,11 @@
       <groupId>org.modelmapper</groupId>
       <artifactId>modelmapper</artifactId>
       <version>${modelmapper.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ca.uhn.hapi.fhir</groupId>
+      <artifactId>hapi-fhir-jaxrsserver-base</artifactId>
+      <version>${hapi.version}</version>
     </dependency>
     <dependency>
       <groupId>org.assertj</groupId>

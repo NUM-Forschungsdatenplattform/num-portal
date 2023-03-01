@@ -108,7 +108,7 @@ public class ExceptionsTemplate {
     //EhrBaseService service
     public final static String NO_DATA_COLUMNS_IN_THE_QUERY_RESULT = "No data columns in the query result";
     public final static String AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL = "An error has occurred, cannot execute aql: %s";
-    public final static String QUERY_RESULT_DOESN_T_CONTAIN_EHR_ID_COLUMN = "query result doesn't contain ehrId column";
+    public final static String QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN = "query result doesn't contain ehr_status column";
 
     //PrivacyException
     public final static String TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS = "Too few matches, results withheld for privacy reasons.";
@@ -266,7 +266,7 @@ public class ExceptionsTemplate {
         errorMap.put(AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER, new ExceptionDto( 84, new ArrayList<>() ) );//1 parameter
         errorMap.put(FETCHING_USER_FROM_KEYCLOAK_FAILED, new ExceptionDto( 85, new ArrayList<>() ) );
         //EhrBaseService
-        errorMap.put(QUERY_RESULT_DOESN_T_CONTAIN_EHR_ID_COLUMN, new ExceptionDto( 86, new ArrayList<>() ) );
+        errorMap.put(QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN, new ExceptionDto( 86, new ArrayList<>() ) );
         //Pseudonymity
         errorMap.put(PSEUDONYMITY_SECRET_IS_NOT_CONFIGURED, new ExceptionDto( 87, new ArrayList<>() ) );
 

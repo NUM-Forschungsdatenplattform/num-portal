@@ -1,21 +1,28 @@
 package de.vitagroup.num.service.ehrbase;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.ehrbase.response.openehr.QueryResponseData;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Spy;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 import java.util.Map;
-import org.ehrbase.response.openehr.QueryResponseData;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@RunWith(MockitoJUnitRunner.class)
 public class ResponseFilterTest {
-  private static ResponseFilter filter;
+  @InjectMocks
+  @Spy
+  private ResponseFilter filter;
 
   private static List<QueryResponseData> testResponses;
 
-  @BeforeAll
-  static void setup(){
-    filter = new ResponseFilter();
+  @Before
+  public void setup(){
     filter.initialize();
     QueryResponseData testResponse = new QueryResponseData();
     Map<String, String> col1 = Map.of("path","bericht/context/setting|terminology");

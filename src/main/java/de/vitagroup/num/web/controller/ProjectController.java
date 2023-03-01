@@ -10,7 +10,6 @@ import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.mapper.ProjectViewMapper;
 import de.vitagroup.num.service.CommentService;
 import de.vitagroup.num.service.ProjectService;
-import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.logger.AuditLog;
@@ -53,7 +52,6 @@ public class ProjectController extends CustomizedExceptionHandler {
   private final CommentService commentService;
   private final ProjectMapper projectMapper;
   private final CommentMapper commentMapper;
-  private final Pseudonymity pseudonymity;
 
   private final ProjectViewMapper projectViewMapper;
   @AuditLog
@@ -280,18 +278,6 @@ public class ProjectController extends CustomizedExceptionHandler {
     projectService.archiveProject(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
-  @AuditLog
-  @GetMapping("/{id}/resolve/{pseudonym}")
-  @ApiOperation(value = "Resolve pseudonym")
-  @PreAuthorize(Role.MANAGER)
-  public ResponseEntity<String> resolvePseudonym(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @PathVariable Long id,
-      @NotEmpty @PathVariable String pseudonym) {
-    return ResponseEntity.ok(pseudonymity.getEhrIdFromPseudonym(pseudonym, id));
-  }
-
-  @AuditLog
   @GetMapping("/{id}/document")
   @ApiOperation(value = "Get the project info as a document", produces = MediaType.TEXT_PLAIN_VALUE)
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
@@ -299,11 +285,12 @@ public class ProjectController extends CustomizedExceptionHandler {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable Long id,
       @RequestParam
-  @ApiParam(
-      value =
-          "The language the document should be returned in (en/de)")
-      String locale) {
-    byte[] docBytes = projectService.getInfoDocBytes(id, principal.getSubject(), new Locale(locale));
+      @ApiParam(
+          value =
+              "The language the document should be returned in (en/de)")
+          String locale) {
+    byte[] docBytes =
+        projectService.getInfoDocBytes(id, principal.getSubject(), new Locale(locale));
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE);
     headers.add(HttpHeaders.CONTENT_DISPOSITION,

@@ -30,7 +30,7 @@ public class ResponseFilter {
       pathFilters = new HashSet<>(Files.readAllLines(pathResource.toPath()));
       File regexpResource = new ClassPathResource("resultfilters/regexpfilters.txt").getFile();
       regexpFilters = Files.readAllLines(regexpResource.toPath()).stream().map(Pattern::compile).collect(
-          Collectors.toList());
+              Collectors.toList());
     } catch (IOException e) {
       log.error("Failed to read project data filters, can't filter results.");
     }

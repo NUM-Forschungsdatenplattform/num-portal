@@ -99,7 +99,8 @@ public class ProjectService {
 
   private final ModelMapper modelMapper;
 
-  @Nullable private final ZarsService zarsService;
+  @Nullable
+  private final ZarsService zarsService;
 
   private final ProjectPolicyService projectPolicyService;
 
@@ -249,6 +250,9 @@ public class ProjectService {
       response.forEach(data -> data.setName(templateId));
       return response;
 
+    } catch (ResourceNotFound e) {
+      log.error(e.getMessage(), e);
+      throw e;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
 
@@ -792,9 +796,9 @@ public class ProjectService {
 
   private boolean isTransitionMadeByApprover(ProjectStatus oldStatus, ProjectStatus newStatus) {
     return (ProjectStatus.APPROVED.equals(newStatus)
-            || ProjectStatus.DENIED.equals(newStatus)
-            || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
-            || ProjectStatus.REVIEWING.equals(newStatus))
+        || ProjectStatus.DENIED.equals(newStatus)
+        || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
+        || ProjectStatus.REVIEWING.equals(newStatus))
         && !newStatus.equals(oldStatus);
   }
 
@@ -818,12 +822,12 @@ public class ProjectService {
       List<UserDetails> newResearchers) {
     ProjectStatus newStatus = project.getStatus();
     if (((newStatus == ProjectStatus.PENDING
-                || newStatus == ProjectStatus.APPROVED
-                || newStatus == ProjectStatus.PUBLISHED
-                || newStatus == ProjectStatus.CLOSED)
-            && newStatus != oldStatus)
+        || newStatus == ProjectStatus.APPROVED
+        || newStatus == ProjectStatus.PUBLISHED
+        || newStatus == ProjectStatus.CLOSED)
+        && newStatus != oldStatus)
         || (newStatus == ProjectStatus.PUBLISHED
-            && researchersAreDifferent(oldResearchers, newResearchers))) {
+        && researchersAreDifferent(oldResearchers, newResearchers))) {
       registerToZars(project);
     }
   }
