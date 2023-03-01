@@ -72,18 +72,18 @@ num:
 consent:
   allow-usage-outside-eu-oid: ${ALLOW_USAGE_OUTSIDE_EU_OID}
 
-fttp:
-  url: ${FTTP_URL}
-  certificatePath: ${FTTP_CERT_PATH}
-  certificateKey: ${FTTP_CERT_PASSWORD}
-  useBasicAuth: ${FTTP_USE_BASIC_AUTH}
-  username: ${FTTP_USERNAME}
-  password: ${FTTP_PASSWORD}
-
-requestpsnworkflow:
-  params:
-    study: ${PSNWORKFLOW_STUDY}
-    source: ${PSNWORKFLOW_SOURCE}
-    target: ${PSNWORKFLOW_TARGET}
-    apikey: ${PSNWORKFLOW_API_KEY}
-    event: ${PSNWORKFLOW_EVENT}
+#fttp:
+#  url: ${FTTP_URL}
+#  certificatePath: ${FTTP_CERT_PATH}
+#  certificateKey: ${FTTP_CERT_PASSWORD}
+#  useBasicAuth: ${FTTP_USE_BASIC_AUTH}
+#  username: ${FTTP_USERNAME}
+#  password: ${FTTP_PASSWORD}
+#
+#requestpsnworkflow:
+#  params:
+#    study: ${PSNWORKFLOW_STUDY}
+#    source: ${PSNWORKFLOW_SOURCE}
+#    target: ${PSNWORKFLOW_TARGET}
+#    apikey: ${PSNWORKFLOW_API_KEY}
+#    event: ${PSNWORKFLOW_EVENT}
