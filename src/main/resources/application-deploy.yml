@@ -54,7 +54,6 @@ ehrbase:
 
 privacy:
   minHits: ${PRIVACY_MIN_HITS}
-  pseudonymity-secret: ${PSEUDONYMITY_SECRET}
 
 atna:
   enabled: ${ATNA_ENABLED}
