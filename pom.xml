@@ -30,7 +30,7 @@
     <openfeign.version>3.0.3</openfeign.version>
     <commons-csv.version>1.9.0</commons-csv.version>
     <jacoco.version>0.8.7</jacoco.version>
-    <dependency-check.version>6.2.2</dependency-check.version>
+    <dependency-check.version>8.1.2</dependency-check.version>
     <failsafe.version>3.0.0-M5</failsafe.version>
     <surefire.version>3.0.0-M5</surefire.version>
     <ehcache.version>3.10.8</ehcache.version>
@@ -40,6 +40,7 @@
     <skip.dependency.check>false</skip.dependency.check>
     <postgresql.version>42.5.3</postgresql.version>
     <hapi.version>5.5.1</hapi.version>
+    <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
   </properties>
 
   <repositories>
@@ -375,6 +376,7 @@
         <configuration>
           <formats>HTML,XML</formats>
           <skip>${skip.dependency.check}</skip>
+          <ossindexAnalyzerEnabled>${ossindexAnalyzerEnabled}</ossindexAnalyzerEnabled>
         </configuration>
         <executions>
           <execution>
