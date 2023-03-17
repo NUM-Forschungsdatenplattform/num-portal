@@ -92,7 +92,6 @@ cors:
 
 privacy:
   minHits: 0
-  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
 
 zars:
   enabled: false
