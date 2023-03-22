@@ -134,8 +134,7 @@ public abstract class Policy {
     return list.stream()
         .map(
             s -> {
-              SimpleValue simpleValue = new SimpleValue();
-              simpleValue.setValue(s);
+              SimpleValue simpleValue = new SimpleValue(s);
               return simpleValue;
             })
         .collect(Collectors.toList());

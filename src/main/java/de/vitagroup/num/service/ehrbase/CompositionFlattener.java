@@ -2,8 +2,13 @@ package de.vitagroup.num.service.ehrbase;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.nedap.archie.json.DurationDeserializer;
+import com.nedap.archie.json.JacksonUtil;
 import com.nedap.archie.rm.composition.Composition;
 import de.vitagroup.num.service.exception.SystemException;
+
+import java.time.temporal.TemporalAmount;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
@@ -33,7 +38,8 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_
 @RequiredArgsConstructor
 public class CompositionFlattener {
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper = JacksonUtil.getObjectMapper()
+          .registerModule(new SimpleModule().addDeserializer(TemporalAmount.class, new DurationDeserializer()));
 
   private CachedTemplateProvider cachedTemplateProvider;
   private final ClientTemplateProvider clientTemplateProvider;
@@ -64,8 +70,8 @@ public class CompositionFlattener {
 
     if (cachedFlatJson.isEmpty()) {
       FlatJson flatJson =
-          new FlatJasonProvider(cachedTemplateProvider)
-              .buildFlatJson(FlatFormat.SIM_SDT, templateId);
+              (FlatJson) new FlatJasonProvider(cachedTemplateProvider)
+                  .buildFlatJson(FlatFormat.SIM_SDT, templateId);
 
       flatJsonCache.put(templateId, flatJson);
       return flatJson;

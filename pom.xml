@@ -21,7 +21,7 @@
     <commons-collections4.version>4.4</commons-collections4.version>
     <commons-io.version>2.11.0</commons-io.version>
     <!--TODO upgrade to 1.18.0 , but fix breaking changes -->
-    <ehr-sdk.version>v1.5.0</ehr-sdk.version>
+    <ehr-sdk.version>1.23.0</ehr-sdk.version>
     <aql-editor-backend-starter.version>v0.4.0</aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>7.2</logstash-logback-encoder.version>
     <modelmapper.version>3.1.0</modelmapper.version>
@@ -139,12 +139,12 @@
       <artifactId>spring-boot-configuration-processor</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.ehrbase.openEHR_SDK</groupId>
+      <groupId>org.ehrbase.openehr.sdk</groupId>
       <artifactId>client</artifactId>
       <version>${ehr-sdk.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.github.ehrbase.openEHR_SDK</groupId>
+      <groupId>org.ehrbase.openehr.sdk</groupId>
       <artifactId>aql</artifactId>
       <version>${ehr-sdk.version}</version>
     </dependency>
