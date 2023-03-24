@@ -38,8 +38,7 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_
 @RequiredArgsConstructor
 public class CompositionFlattener {
 
-  private final ObjectMapper mapper = JacksonUtil.getObjectMapper()
-          .registerModule(new SimpleModule().addDeserializer(TemporalAmount.class, new DurationDeserializer()));
+  private final ObjectMapper mapper = new ObjectMapper();
 
   private CachedTemplateProvider cachedTemplateProvider;
   private final ClientTemplateProvider clientTemplateProvider;
