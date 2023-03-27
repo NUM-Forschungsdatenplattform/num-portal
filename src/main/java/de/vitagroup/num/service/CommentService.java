@@ -77,6 +77,7 @@ public class CommentService {
   }
 
   public boolean deleteComment(Long commentId, Long projectId, String loggedInUserId) {
+
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (!projectService.exists(projectId)) {
