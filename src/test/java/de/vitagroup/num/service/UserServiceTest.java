@@ -32,6 +32,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -606,20 +607,6 @@ public class UserServiceTest {
             }
         }
     }
-
-    @Test
-    public void findUsersUUIDTest() {
-        Set<User> users = new HashSet<>();
-        users.add(User.builder().firstName("John").lastName("Doe").id("4").build());
-        users.add(User.builder().firstName("Ana").lastName("John").id("99").build());
-
-        when(keycloakFeign.searchUsers(Mockito.eq("john"), Mockito.anyInt(), Mockito.anyInt())).thenReturn(users);
-        Set<String> userUUIDs =
-                userService.findUsersUUID("john", 0, 200);
-
-        Assert.assertEquals(1, userUUIDs.size());
-    }
-
     @Test
     public void findUsersUUIDFromCacheTest() {
         ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
@@ -632,7 +619,7 @@ public class UserServiceTest {
                 .firstName("John")
                 .lastName("Foe").build());
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
-        Set<String> result = userService.findUsersUUID("doe", 0, 100);
+        Set<String> result = userService.findUsersUUID("doe");
         Mockito.verify(keycloakFeign, Mockito.never()).searchUsers("doe", 0, 100);
         Assert.assertEquals(1, result.size());
     }
@@ -644,63 +631,80 @@ public class UserServiceTest {
         filter.put(SearchCriteria.FILTER_APPROVED_KEY, "false");
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
+                .sort("asc")
+                .sortBy("email")
                 .build();
+        mockDataSearchUsers();
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput = argumentCaptor.getValue();
+        Assert.assertEquals(Boolean.FALSE, capturedInput.getApproved());
+        User firstUser = users.getContent().get(0);
+        Assert.assertEquals("ana-maria.doe@vitagroup.ag", firstUser.getEmail());
+    }
+
+    private void mockDataSearchUsers() {
         UserDetails userOne = UserDetails.builder()
                 .userId("userId-one")
                 .organization(
-                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
-                .approved(true)
+                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
+                .approved(false)
                 .build();
         UserDetails userTwo = UserDetails.builder()
                 .userId("userId-two")
                 .organization(
-                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
-                .approved(true)
+                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
+                .approved(false)
                 .build();
+        ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+        usersCache.put("userId-one", User.builder()
+                                            .id("userId-one")
+                                            .firstName("John")
+                                            .lastName("doe")
+                                            .email("john.doe@vitagroup.ag")
+                                            .createdTimestamp(System.currentTimeMillis())
+                                            .build());
+        usersCache.put("userId-two", User.builder()
+                .firstName("Ana")
+                .lastName("Doe")
+                .id("userId-two")
+                .email("ana-maria.doe@vitagroup.ag")
+                .createdTimestamp(System.currentTimeMillis()).build());
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
                 .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo)));
-        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
-        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
-        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
-        UserDetailsSpecification capturedInput = argumentCaptor.getValue();
-        Assert.assertEquals(Boolean.FALSE, capturedInput.getApproved());
     }
 
     @Test
     public void searchUsersWithPaginationAsProjectLeadTest() {
         Pageable pageable = PageRequest.of(0, 50);
         Map<String, String> filter = new HashMap<>();
-        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "some dummy search input");
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "ana");
         filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
-                .sortBy("lastname")
+                .sortBy("lastName")
                 .sort("asc")
                 .build();
-        UserDetails userOne = UserDetails.builder()
-                .userId("userId-one")
-                .organization(
-                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
-                .approved(true)
-                .build();
-        UserDetails userTwo = UserDetails.builder()
+        UserDetails userDetails = UserDetails.builder()
                 .userId("userId-two")
                 .organization(
                         Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                 .approved(true)
                 .build();
-        Set<User> users = new HashSet<>();
-        users.add(User.builder().firstName("John").lastName("Doe").id("userId-one").build());
-        users.add(User.builder().firstName("Ana").lastName("John").id("userId-two").build());
-        when(keycloakFeign.getRolesOfUser("userId-one")).thenReturn(Stream.of(new Role("RR1", "RESEARCHER")).collect(Collectors.toSet()));
-        when(keycloakFeign.searchUsers(Mockito.eq("some dummy search input"), Mockito.anyInt(), Mockito.anyInt())).thenReturn(users);
+        ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+        usersCache.put("userId-one", User.builder().firstName("John").lastName("Doe").id("userId-one").build());
+        usersCache.put("userId-two", User.builder().firstName("Ana").lastName("John").id("userId-two").build());
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo)));
+                .thenReturn(new PageImpl<>(Arrays.asList(userDetails)));
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
         userService.searchUsersWithPagination("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable);
-        Mockito.verify(keycloakFeign, Mockito.times(1)).searchUsers(Mockito.eq("some dummy search input"), Mockito.eq(0), Mockito.eq(50));
-        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertNull(capturedInput.getApproved());
         assertThat(1L, is(capturedInput.getLoggedInUserOrganizationId()));
@@ -714,43 +718,60 @@ public class UserServiceTest {
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
                 .sort("DESC")
-                .sortBy("firstname")
+                .sortBy("firstName")
                 .build();
-        UserDetails userOne = UserDetails.builder()
-                .userId("userId-one")
-                .organization(
-                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
-                .approved(true)
-                .build();
-        UserDetails userTwo = UserDetails.builder()
-                .userId("userId-two")
-                .organization(
-                        Organization.builder().id(99L).name("org 1").domains(Set.of()).build())
-                .approved(true)
-                .build();
+        mockDataSearchUsers();
         Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
                 .userId("user-55")
                 .organization(Organization.builder().id(99L).build())
                 .build());
-        Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo)));
-        Mockito.when(keycloakFeign.getUser("userId-one")).thenReturn(User.builder()
-                .id("userId-one")
-                .firstName("Ana")
-                .lastName("Popescu")
-                .createdTimestamp(System.currentTimeMillis())
-                .build());
-        Mockito.when(keycloakFeign.getUser("userId-two")).thenReturn(User.builder()
-                .id("userId-two")
-                .firstName("Maria")
-                .lastName("Doe")
-                .createdTimestamp(System.currentTimeMillis())
-                .build());
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        userService.searchUsersWithPagination("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
-        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
+        Page<User> userPage = userService.searchUsersWithPagination("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
+        User firstUser = userPage.getContent().get(0);
+        Assert.assertEquals("John", firstUser.getFirstName());
+    }
+
+    @Test
+    public void searchUsersWithPaginationAndSortByOrganizationTest() {
+        Pageable pageable = PageRequest.of(0, 50);
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .sort("asc")
+                .sortBy("organization")
+                .build();
+        mockDataSearchUsers();
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        User firstUser = users.getContent().get(0);
+        Assert.assertEquals("userId-two", firstUser.getId());
+    }
+
+    @Test
+    public void searchUsersWithPaginationAndSortByRegistrationDateTest() {
+        Pageable pageable = PageRequest.of(0, 20);
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .sort("desc")
+                .sortBy("registrationDate")
+                .build();
+        mockDataSearchUsers();
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0, 2)), argumentCaptor.capture());
+        User firstUser = users.getContent().get(0);
+        Assert.assertEquals("userId-two", firstUser.getId());
+    }
+
+    @Test
+    public void initializeUsersCacheTest() {
+        List<String> usersUUID = Arrays.asList("4", "5");
+        ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+        Mockito.when(userDetailsService.getAllUsersUUID()).thenReturn(usersUUID);
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        userService.initializeUsersCache();
+        Assert.assertEquals(2, usersCache.getNativeCache().size());
     }
 
     private boolean testAddRole(Role role, String userRole) {

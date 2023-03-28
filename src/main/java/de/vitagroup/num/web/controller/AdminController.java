@@ -104,9 +104,10 @@ public class AdminController extends CustomizedExceptionHandler {
       @NotNull @PathVariable String userId,
       @NotNull @RequestBody List<String> roles) {
 
-    return ResponseEntity.ok(
-        userService.setUserRoles(
-            userId, roles, principal.getSubject(), Roles.extractRoles(principal)));
+    List<String> updatedRoles = userService.setUserRoles(
+            userId, roles, principal.getSubject(), Roles.extractRoles(principal));
+    userService.addUserToCache(userId);
+    return ResponseEntity.ok(updatedRoles);
   }
 
   @AuditLog

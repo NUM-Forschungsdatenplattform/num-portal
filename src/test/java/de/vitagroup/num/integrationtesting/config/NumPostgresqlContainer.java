@@ -3,7 +3,7 @@ package de.vitagroup.num.integrationtesting.config;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 public class NumPostgresqlContainer extends PostgreSQLContainer<NumPostgresqlContainer> {
-  private static final String IMAGE_VERSION = "postgres:11.1";
+  private static final String IMAGE_VERSION = "postgres:12.14";
   private static NumPostgresqlContainer container;
 
   private NumPostgresqlContainer() {

@@ -129,8 +129,7 @@ public class AqlController extends CustomizedExceptionHandler {
   @PostMapping("/size")
   @Operation(description = "Executes an aql and returns the count of matching ehr ids")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
-  public ResponseEntity<Long> getAqlSize(
-      @AuthenticationPrincipal @NotNull Jwt principal, @Valid @RequestBody SlimAqlDto aql) {
+  public ResponseEntity<Long> getAqlSize(@AuthenticationPrincipal @NotNull Jwt principal, @Valid @RequestBody SlimAqlDto aql) {
     return ResponseEntity.ok(aqlService.getAqlSize(aql, principal.getSubject()));
   }
 
@@ -138,11 +137,10 @@ public class AqlController extends CustomizedExceptionHandler {
   @PostMapping(value = "/category")
   @Operation(description = "Creates a category. If there is an id in the DTO, it is ignored.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
-  public ResponseEntity<AqlCategoryDto> createCategory(
+  public ResponseEntity<AqlCategoryDto> createCategory(@AuthenticationPrincipal @NotNull Jwt principal,
       @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
-
     var aqlCategory =
-        aqlService.createAqlCategory(AqlCategory.builder().name(aqlCategoryDto.getName()).build());
+        aqlService.createAqlCategory(principal.getSubject(), AqlCategory.builder().name(aqlCategoryDto.getName()).build());
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
 
@@ -150,12 +148,12 @@ public class AqlController extends CustomizedExceptionHandler {
   @PutMapping(value = "/category/{id}")
   @Operation(description = "Updates a category. If present, the id in the DTO is ignored.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
-  public ResponseEntity<AqlCategoryDto> updateCategory(
-      @PathVariable("id") Long categoryId,
-      @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
+  public ResponseEntity<AqlCategoryDto> updateCategory(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                       @PathVariable("id") Long categoryId,
+                                                       @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
 
     var aqlCategory =
-        aqlService.updateAqlCategory(
+        aqlService.updateAqlCategory(principal.getSubject(),
             AqlCategory.builder().name(aqlCategoryDto.getName()).build(), categoryId);
 
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
@@ -165,8 +163,8 @@ public class AqlController extends CustomizedExceptionHandler {
   @DeleteMapping(value = "/category/{id}")
   @Operation(description = "Delete a category")
   @PreAuthorize(Role.CRITERIA_EDITOR)
-  public void deleteAqlCategory(@PathVariable Long id) {
-    aqlService.deleteCategoryById(id);
+  public void deleteAqlCategory(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
+    aqlService.deleteCategoryById(principal.getSubject(), id);
   }
 
   @AuditLog

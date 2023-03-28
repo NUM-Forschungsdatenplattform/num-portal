@@ -191,4 +191,16 @@ public class UserDetailsServiceTest {
     userDetailsService.deleteUserDetails("user-to-be-removed");
     Mockito.verify(userDetailsRepository, Mockito.times(1)).deleteById(Mockito.eq("user-to-be-removed"));
   }
+
+  @Test
+  public void getAllUsersUUIDTest() {
+    userDetailsService.getAllUsersUUID();
+    Mockito.verify(userDetailsRepository, Mockito.times(1)).getAllUsersId();
+  }
+
+  @Test
+  public void countUserDetailsTest() {
+    userDetailsService.countUserDetails();
+    Mockito.verify(userDetailsRepository, Mockito.times(1)).count();
+  }
 }

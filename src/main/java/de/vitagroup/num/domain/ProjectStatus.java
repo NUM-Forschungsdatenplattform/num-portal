@@ -110,7 +110,7 @@ public enum ProjectStatus {
   }
 
   public static List<ProjectStatus> getAllProjectStatusToViewAsResearcher() {
-    return Arrays.asList(ProjectStatus.PUBLISHED, ProjectStatus.CLOSED);
+    return Arrays.asList(ProjectStatus.PUBLISHED);
   }
 
   public static List<ProjectStatus> getAllProjectStatusToViewAsApprover() {

@@ -55,7 +55,6 @@ public class ProjectController extends CustomizedExceptionHandler {
   private final CommentService commentService;
   private final ProjectMapper projectMapper;
   private final CommentMapper commentMapper;
-  private final Pseudonymity pseudonymity;
 
   private final ProjectViewMapper projectViewMapper;
   @AuditLog
@@ -87,8 +86,9 @@ public class ProjectController extends CustomizedExceptionHandler {
   @GetMapping("/{id}")
   @Operation(description = "Retrieves a project by id")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
-  public ResponseEntity<ProjectDto> getProjectById(@NotNull @NotEmpty @PathVariable Long id) {
-    Optional<Project> project = projectService.getProjectById(id);
+  public ResponseEntity<ProjectDto> getProjectById(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                   @NotNull @NotEmpty @PathVariable Long id) {
+    Optional<Project> project = projectService.getProjectById(principal.getSubject(), id);
 
     if (project.isEmpty()) {
       throw new ResourceNotFound(ProjectController.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, id));
@@ -276,18 +276,6 @@ public class ProjectController extends CustomizedExceptionHandler {
     projectService.archiveProject(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
-  @AuditLog
-  @GetMapping("/{id}/resolve/{pseudonym}")
-  @Operation(description = "Archive a project")
-  @PreAuthorize(Role.MANAGER)
-  public ResponseEntity<String> resolvePseudonym(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @PathVariable Long id,
-      @NotEmpty @PathVariable String pseudonym) {
-    return ResponseEntity.ok(pseudonymity.getEhrIdFromPseudonym(pseudonym, id));
-  }
-
-  @AuditLog
   @GetMapping(value = "/{id}/document", produces = MediaType.TEXT_PLAIN_VALUE)
   @Operation(description = "Get the project info as a document")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
@@ -296,8 +284,9 @@ public class ProjectController extends CustomizedExceptionHandler {
       @NotNull @PathVariable Long id,
       @RequestParam
       @Parameter(description = "The language the document should be returned in (en/de)")
-      String locale) {
-    byte[] docBytes = projectService.getInfoDocBytes(id, principal.getSubject(), new Locale(locale));
+          String locale) {
+    byte[] docBytes =
+        projectService.getInfoDocBytes(id, principal.getSubject(), new Locale(locale));
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE);
     headers.add(HttpHeaders.CONTENT_DISPOSITION,

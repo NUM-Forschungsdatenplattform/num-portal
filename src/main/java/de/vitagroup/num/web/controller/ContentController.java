@@ -58,8 +58,8 @@ public class ContentController extends CustomizedExceptionHandler {
   @GetMapping("/graph/clinic")
   @Operation(description = "Retrieves the list of participating clinics")
   @PreAuthorize(Role.MANAGER)
-  public ResponseEntity<List<String>> getClinics() {
-    return ResponseEntity.ok(contentService.getClinics());
+  public ResponseEntity<List<String>> getClinics(@AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(contentService.getClinics(principal.getSubject()));
   }
 
   @GetMapping("/graph/clinic/{name}/sofaDistribution")
@@ -72,8 +72,8 @@ public class ContentController extends CustomizedExceptionHandler {
   @GetMapping("/graph/clinic/sofaAverage")
   @PreAuthorize(Role.MANAGER)
   @Operation(description = "Retrieves the sofa averages of participating clinics", security = @SecurityRequirement(name = "security_auth"))
-  public ResponseEntity<Map<String, Double>> getClinicAverages() {
-    return ResponseEntity.ok(contentService.getClinicAverages());
+  public ResponseEntity<Map<String, Double>> getClinicAverages(@AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(contentService.getClinicAverages(principal.getSubject()));
   }
 
   @GetMapping("/latest-projects")
