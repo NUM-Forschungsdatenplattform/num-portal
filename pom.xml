@@ -27,7 +27,7 @@
     <modelmapper.version>3.1.0</modelmapper.version>
     <springdoc.version>1.6.13</springdoc.version>
     <java.version>11</java.version>
-    <openfeign.version>3.1.3</openfeign.version>
+    <openfeign.version>3.1.5</openfeign.version>
     <commons-csv.version>1.9.0</commons-csv.version>
     <jacoco.version>0.8.7</jacoco.version>
     <dependency-check.version>8.1.2</dependency-check.version>
