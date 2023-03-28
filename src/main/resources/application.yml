@@ -158,7 +158,9 @@ requestpsnworkflow:
 
 ---
 spring:
-  profiles: local
+  config:
+    activate:
+      on-profile: local
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres?currentSchema=num
     driver-class-name: org.postgresql.Driver
