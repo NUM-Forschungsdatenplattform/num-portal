@@ -27,9 +27,9 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.spi.CachingProvider;
-import java.time.temporal.TemporalAmount;
 import java.util.Map;
 import java.util.Optional;
+
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID;
@@ -70,8 +70,8 @@ public class CompositionFlattener {
 
     if (cachedFlatJson.isEmpty()) {
       FlatJson flatJson =
-          new FlatJasonProvider(cachedTemplateProvider)
-              .buildFlatJson(FlatFormat.SIM_SDT, templateId);
+              (FlatJson) new FlatJasonProvider(cachedTemplateProvider)
+                  .buildFlatJson(FlatFormat.SIM_SDT, templateId);
 
       flatJsonCache.put(templateId, flatJson);
       return flatJson;
