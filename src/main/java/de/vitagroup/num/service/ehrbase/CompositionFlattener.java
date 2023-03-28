@@ -2,8 +2,6 @@ package de.vitagroup.num.service.ehrbase;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.nedap.archie.json.DurationDeserializer;
 import com.nedap.archie.rm.composition.Composition;
 import de.vitagroup.num.service.exception.SystemException;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +9,6 @@ import org.ehrbase.client.templateprovider.ClientTemplateProvider;
 import org.ehrbase.serialisation.flatencoding.FlatFormat;
 import org.ehrbase.serialisation.flatencoding.FlatJasonProvider;
 import org.ehrbase.serialisation.flatencoding.FlatJson;
-import org.ehrbase.serialisation.jsonencoding.JacksonUtil;
 import org.ehrbase.util.exception.SdkException;
 import org.ehrbase.webtemplate.model.WebTemplate;
 import org.ehrbase.webtemplate.templateprovider.CachedTemplateProvider;
@@ -30,7 +27,6 @@ import javax.cache.spi.CachingProvider;
 import java.util.Map;
 import java.util.Optional;
 
-
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID;
 
@@ -38,8 +34,7 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_
 @RequiredArgsConstructor
 public class CompositionFlattener {
 
-  private final ObjectMapper objectMapper = JacksonUtil.getObjectMapper()
-          .registerModule(new SimpleModule().addDeserializer(TemporalAmount.class, new DurationDeserializer()));
+  private final ObjectMapper objectMapper =  new ObjectMapper();
 
   private CachedTemplateProvider cachedTemplateProvider;
   private final ClientTemplateProvider clientTemplateProvider;
