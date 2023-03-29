@@ -346,6 +346,13 @@ public class UserServiceTest {
     }
 
     @Test
+    public void getUserRolesTestOK() {
+        userService.getUserRoles("6", "4");
+        Mockito.verify(userDetailsService, Mockito.times(1)).checkIsUserApproved("4");
+        Mockito.verify(keycloakFeign, Mockito.times(1)).getRolesOfUser("6");
+    }
+
+    @Test
     public void shouldAddNewRole() {
         userService.setUserRoles(
                 "4",
