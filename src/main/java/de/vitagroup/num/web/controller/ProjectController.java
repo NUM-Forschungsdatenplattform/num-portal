@@ -10,7 +10,6 @@ import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.mapper.ProjectViewMapper;
 import de.vitagroup.num.service.CommentService;
 import de.vitagroup.num.service.ProjectService;
-import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.logger.AuditLog;
