@@ -69,7 +69,7 @@ public class ProjectService {
   private static final String ZIP_MEDIA_TYPE = "application/zip";
   private static final String CSV_FILE_PATTERN = "%s_%s.csv";
 
-  private final List<String> availableSortFields = Arrays.asList(PROJECT_NAME, AUTHOR_NAME, ORGANIZATION_NAME, PROJECT_STATUS);
+  private final List<String> availableSortFields = Arrays.asList(PROJECT_NAME, AUTHOR_NAME, ORGANIZATION_NAME, PROJECT_STATUS, PROJECT_CREATE_DATE);
 
   private static final String AUTHOR_NAME = "author";
 
@@ -78,6 +78,8 @@ public class ProjectService {
   private static final String PROJECT_NAME = "name";
 
   private static final String PROJECT_STATUS = "status";
+
+  private static final String PROJECT_CREATE_DATE = "createDate";
 
   private final ProjectRepository projectRepository;
 
