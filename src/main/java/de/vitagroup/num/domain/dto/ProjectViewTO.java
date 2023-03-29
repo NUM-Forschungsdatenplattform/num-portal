@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 @Data
 @Builder
@@ -28,5 +29,7 @@ public class ProjectViewTO {
     private LocalDate startDate;
 
     private LocalDate endDate;
+
+    private OffsetDateTime createDate;
 
 }
