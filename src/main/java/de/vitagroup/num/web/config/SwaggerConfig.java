@@ -17,36 +17,39 @@ import org.springframework.context.annotation.Configuration;
 public class SwaggerConfig {
   private static final String SEC_CONFIG_NAME = "oauth_setting";
 
+  private static final String NUM_PACKAGES_TO_SCAN = "de.vitagroup.num.web.controller";
+
+
   private final SwaggerProperties swaggerProperties;
 
   @Bean
   public GroupedOpenApi profileApi() {
-    return getDocket("Profile", "/profile/**", "de.vitagroup.num.web.controller");
+    return getDocket("Profile", "/profile/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
   public GroupedOpenApi projectApi() {
-    return getDocket("Project", "/project/**", "de.vitagroup.num.web.controller");
+    return getDocket("Project", "/project/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
   public GroupedOpenApi templateApi() {
-    return getDocket("Template", "/template/**", "de.vitagroup.num.web.controller");
+    return getDocket("Template", "/template/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
   public GroupedOpenApi organizationApi() {
-    return getDocket("Organization", "/organization/**", "de.vitagroup.num.web.controller");
+    return getDocket("Organization", "/organization/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
   public GroupedOpenApi cohortApi() {
-    return getDocket("Cohort", "/cohort/**", "de.vitagroup.num.web.controller");
+    return getDocket("Cohort", "/cohort/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
   public GroupedOpenApi aqlApi() {
-    return getDocket("Aql", "/aql/**", "de.vitagroup.num.web.controller");
+    return getDocket("Aql", "/aql/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
@@ -56,12 +59,12 @@ public class SwaggerConfig {
 
   @Bean
   public GroupedOpenApi adminApi() {
-    return getDocket("Admin", "/admin/**", "de.vitagroup.num.web.controller");
+    return getDocket("Admin", "/admin/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
   public GroupedOpenApi contentApi() {
-    return getDocket("Content", "/content/**", "de.vitagroup.num.web.controller");
+    return getDocket("Content", "/content/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
