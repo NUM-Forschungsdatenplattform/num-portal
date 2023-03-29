@@ -773,10 +773,13 @@ public class UserServiceTest {
 
     @Test
     public void initializeUsersCacheTest() {
-        List<String> usersUUID = Arrays.asList("4", "5");
+        List<String> usersUUID = Arrays.asList("4", "5","99");
         ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
         Mockito.when(userDetailsService.getAllUsersUUID()).thenReturn(usersUUID);
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        Mockito.when(keycloakFeign.getUser("99"))
+                .thenThrow(new FeignException.NotFound("user not found",
+                        Request.create(Request.HttpMethod.GET, "dummyURL", Collections.emptyMap(), Request.Body.empty(), null), null, null));
         userService.initializeUsersCache();
         Assert.assertEquals(2, usersCache.getNativeCache().size());
     }
