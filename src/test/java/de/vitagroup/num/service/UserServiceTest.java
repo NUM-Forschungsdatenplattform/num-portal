@@ -774,6 +774,13 @@ public class UserServiceTest {
         Assert.assertEquals(2, usersCache.getNativeCache().size());
     }
 
+    @Test
+    public void addUserToCacheTest() {
+        userService.addUserToCache("4");
+        Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("4");
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUserDetailsById("4");
+    }
+
     private boolean testAddRole(Role role, String userRole) {
         try {
             userService.setUserRoles(
