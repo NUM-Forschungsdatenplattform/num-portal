@@ -791,6 +791,24 @@ public class UserServiceTest {
         Mockito.verify(userDetailsService, Mockito.times(1)).getUserDetailsById("4");
     }
 
+    @Test
+    public void refreshUsersCacheTest() {
+        ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+        usersCache.put("userId-one", User.builder()
+                .id("userId-one")
+                .firstName("John")
+                .lastName("doe")
+                .email("john.doe@vitagroup.ag")
+                .createdTimestamp(System.currentTimeMillis())
+                .build());
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        Mockito.when(userDetailsService.getAllUsersUUID()).thenReturn(Arrays.asList("4","5","6"));
+        userService.refreshUsersCache();
+        Assert.assertNull(usersCache.getNativeCache().get("userId-one"));
+        Assert.assertNotNull(usersCache.getNativeCache().get("4"));
+        Mockito.verify(userDetailsService, Mockito.times(1)).getAllUsersUUID();
+    }
+
     private boolean testAddRole(Role role, String userRole) {
         try {
             userService.setUserRoles(
