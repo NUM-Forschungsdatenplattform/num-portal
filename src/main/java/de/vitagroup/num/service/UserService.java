@@ -26,12 +26,10 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -78,6 +76,29 @@ public class UserService {
   private static final String MAIL = "email";
 
   @Transactional
+  public void initializeUsersCache() {
+    List<String> usersUUID = userDetailsService.getAllUsersUUID();
+    ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
+    if (usersCache != null) {
+      for (String uuid : usersUUID) {
+        try {
+          User user = getUserById(uuid, true);
+          usersCache.put(uuid, user);
+        } catch (ResourceNotFound fe) {
+          log.warn("skip cache user {} because not found in keycloak", uuid);
+        }
+      }
+    }
+  }
+
+  @Transactional
+  @CachePut(value = USERS_CACHE, key="#uuid")
+  public User addUserToCache(String uuid) {
+    return getUserById(uuid, true);
+  }
+
+  @Transactional
+  @CacheEvict(cacheNames = USERS_CACHE, key = "#userId")
   public void deleteUser(String userId, String loggedInUserId) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
     Optional<UserDetails> userDetails = userDetailsService.getUserDetailsById(userId);
@@ -335,22 +356,24 @@ public class UserService {
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
     validateSort(searchCriteria);
 
-    Set<User> users = new HashSet<>();
+    Set<String> usersUUID = new HashSet<>();
     boolean searchCriteriaProvided = searchCriteria.getFilter() != null &&
             searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY);
     if (searchCriteriaProvided) {
       String searchValue = searchCriteria.getFilter() != null &&
               searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY) ? (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY) : null;
-      users = keycloakFeign.searchUsers(searchValue, (int) pageable.getOffset(), pageable.getPageSize());
+      usersUUID = this.findUsersUUID(searchValue);
     }
-    if (CollectionUtils.isEmpty(users) && searchCriteriaProvided) {
+    if (CollectionUtils.isEmpty(usersUUID) && searchCriteriaProvided) {
       return Page.empty(pageable);
     }
-    Set<String> usersUUID = users.stream().map(User::getId).collect(Collectors.toSet());
-
+    Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     UserDetailsSpecification userDetailsSpecification = buildUserSpecification(loggedInUser, callerRoles, searchCriteria, usersUUID);
-
-    Page<UserDetails> userDetailsPage = userDetailsService.getUsers(pageable, userDetailsSpecification);
+    if (isSortActive(searchCriteria)) {
+      long count = userDetailsService.countUserDetails();
+      pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
+    }
+    Page<UserDetails> userDetailsPage = userDetailsService.getUsers(pageRequest, userDetailsSpecification);
     List<UserDetails> userDetailsList = userDetailsPage.getContent();
     Set<String> filteredUsersUUID = userDetailsList.stream().map(UserDetails::getUserId).collect(Collectors.toSet());
     List<User> filteredUsers = new ArrayList<>();
@@ -360,26 +383,20 @@ public class UserService {
             Boolean.valueOf((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_USER_WITH_ROLES_KEY)) : null;
     boolean loadUserRoles = (withRoles != null && withRoles) || Roles.isProjectLead(callerRoles);
     for (String uuid : filteredUsersUUID) {
-      User user = null;
-      Optional<User> keycloackUser = users.stream().filter(u -> uuid.equals(u.getId())).findFirst();
-      if (keycloackUser.isEmpty()) {
-        try {
-          user = getUserById(uuid, loadUserRoles);
-        } catch (ResourceNotFound rnf) {
-          log.warn("For unknown reasons, user with uuid {} was not found in keycloack ", uuid);
-        }
-      } else {
-        user = keycloackUser.get();
-        addUserDetails(user);
-        if (loadUserRoles) {
-          addRoles(user);
-        }
-      }
-      if(Objects.nonNull(user)) {
+      try {
+        User user = getUser(uuid, loadUserRoles);
         filteredUsers.add(user);
+      } catch (ResourceNotFound rnf) {
+        log.warn("For unknown reasons, user with uuid {} was not found in cache, neither in keycloack ", uuid);
       }
     }
-    sortUsers(filteredUsers, searchCriteria);
+    if (isSortActive(searchCriteria)) {
+      sortUsers(filteredUsers, searchCriteria);
+      filteredUsers = filteredUsers.stream()
+              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
+              .limit(pageable.getPageSize())
+              .collect(Collectors.toList());
+    }
     return new PageImpl<>(new ArrayList<>(filteredUsers), pageable, userDetailsPage.getTotalElements());
   }
 
@@ -427,15 +444,15 @@ public class UserService {
   private Comparator<User> getComparator(String field) {
     switch (field) {
       case FIRST_NAME:
-        return Comparator.comparing(User::getFirstName);
+        return Comparator.comparing(u -> u.getFirstName().toUpperCase());
       case LAST_NAME:
-        return Comparator.comparing(User::getLastName);
+        return Comparator.comparing(u -> u.getLastName().toUpperCase());
       case ORGANIZATION_NAME:
-        return Comparator.comparing(user -> user.getOrganization() != null ? user.getOrganization().getName() : StringUtils.EMPTY);
+        return Comparator.comparing(user -> user.getOrganization() != null ? user.getOrganization().getName().toUpperCase() : StringUtils.EMPTY);
       case REGISTRATION_DATE:
         return Comparator.comparing(User::getCreatedTimestamp);
       case MAIL:
-        return Comparator.comparing(User::getEmail);
+        return Comparator.comparing(u -> u.getEmail().toUpperCase());
       default:
         return Comparator.comparing(User::getCreatedTimestamp);
     }
@@ -552,19 +569,23 @@ public class UserService {
   }
 
   /**
-   * Evicts users cache every 8 hours
+   * Refresh users cache every 8 hours
+   *
    */
   @Scheduled(fixedRate = 28800000)
-  public void evictParametersCache() {
+  @Transactional
+  public void refreshUsersCache() {
     var cache = cacheManager.getCache(USERS_CACHE);
     if (cache != null) {
-      log.trace("Evicting users cache");
+      log.trace("---- Refreshing users cache ----");
       cache.clear();
+      initializeUsersCache();
     }
   }
 
-  @CacheEvict(cacheNames = USERS_CACHE, key = "#userIdToChange")
-  public void changeUserName(
+  @CachePut(cacheNames = USERS_CACHE, key = "#userIdToChange")
+  @Transactional
+  public User changeUserName(
       @NotNull String userIdToChange,
       @NotNull UserNameDto userName,
       @NotNull String loggedInUserId,
@@ -584,15 +605,15 @@ public class UserService {
     }
 
     notificationService.send(collectUserNameUpdateNotification(userIdToChange, loggedInUserId));
+    return getUserById(userIdToChange, true);
   }
 
   /**
    * Retrieved a list of users UUID that match the search criteria
    * @param search A string contained in username, first or last name, or email
-   * @param maxUsersCount
    * @return
    */
-  public Set<String> findUsersUUID(String search, int offset, int maxUsersCount) {
+  public Set<String> findUsersUUID(String search) {
     Set<String> userUUIDs = new HashSet<>();
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
     if (usersCache != null && usersCache.getNativeCache().size() != 0) {
@@ -607,14 +628,7 @@ public class UserService {
       }
       return userUUIDs;
     }
-
-    Set<User> users = keycloakFeign.searchUsers(search, offset, maxUsersCount);
-    if (users == null) {
-      return Collections.emptySet();
-    }
-    users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
-
-    return users.stream().map(User::getId).collect(Collectors.toSet());
+    return Collections.emptySet();
   }
 
   private void updateName(String userId, UserNameDto userNameDto) {
@@ -645,5 +659,20 @@ public class UserService {
         throw new BadRequestException(ProjectService.class, String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
       }
     }
+  }
+
+  private boolean isSortActive(SearchCriteria searchCriteria) {
+    return StringUtils.isNotEmpty(searchCriteria.getSort()) && StringUtils.isNotEmpty(searchCriteria.getSortBy());
+  }
+
+  private User getUser(String uuid, Boolean withRole) {
+    ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
+    if (usersCache != null && usersCache.getNativeCache().size() != 0) {
+      User user = (User) usersCache.getNativeCache().get(uuid);
+      if (user != null) {
+        return user;
+      }
+    }
+      return getUserById(uuid, withRole);
   }
 }

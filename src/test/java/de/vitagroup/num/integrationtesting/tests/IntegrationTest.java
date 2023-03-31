@@ -6,6 +6,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import de.vitagroup.num.NumPortalApplication;
+import de.vitagroup.num.TestNumPortalApplication;
 import de.vitagroup.num.integrationtesting.config.NumPostgresqlContainer;
 import de.vitagroup.num.integrationtesting.security.TokenGenerator;
 import lombok.SneakyThrows;
@@ -24,7 +25,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @RunWith(SpringRunner.class)
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-    classes = NumPortalApplication.class)
+    classes = TestNumPortalApplication.class)
 @AutoConfigureMockMvc()
 @TestPropertySource(locations = "classpath:application.yml")
 public abstract class IntegrationTest {

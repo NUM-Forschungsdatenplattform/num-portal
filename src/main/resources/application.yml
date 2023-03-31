@@ -127,7 +127,6 @@ cors:
     - "*"
 privacy:
   minHits: 30
-  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
 
 num:
   url: https://dev.num-codex.de/home
@@ -135,6 +134,22 @@ num:
 
 consent:
   allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
+
+fttp:
+  url: https://basic-test-fttp-w.num.med.uni-greifswald.de/ttp-fhir/fhir/dispatcher/$requestPsnWorkflow
+  certificatePath: /certificates/fttp.num.p12
+  certificateKey: fttp123
+  useBasicAuth: true
+  username: karlea
+  password: test123#
+
+requestpsnworkflow:
+  params:
+    study: num
+    source: codex
+    target: extern_
+    apikey: iCZdh7ZWuf8ms)vvBgU-IaLi4
+    event: num.get_extern_psn
 
 ---
 spring:
@@ -211,7 +226,6 @@ ehrbase:
 
 privacy:
   minHits: 1
-  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
 
 atna:
   enabled: false

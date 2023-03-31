@@ -6,9 +6,11 @@ import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
@@ -308,6 +310,4 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
                 .build();
         return ResponseEntity.status( HttpStatus.BAD_REQUEST ).body( errorDetails );
     }
-
-
 }

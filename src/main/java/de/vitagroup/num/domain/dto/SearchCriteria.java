@@ -27,6 +27,10 @@ public class SearchCriteria {
     // boolean flag used for users search/filter (optional)
     public static final String FILTER_USER_WITH_ROLES_KEY = "withRoles";
 
+    private static final String AUTHOR_NAME = "author";
+
+    public static final String FILTER_BY_STATUS = "status";
+
     private Map<String, ?> filter;
 
     private String sort;
@@ -43,5 +47,8 @@ public class SearchCriteria {
             throw new BadRequestException(SearchCriteria.class, "sortBy field is required when sort is provided");
         }
         return true;
+    }
+    public boolean isSortByAuthor() {
+        return AUTHOR_NAME.equals(this.getSortBy());
     }
 }
