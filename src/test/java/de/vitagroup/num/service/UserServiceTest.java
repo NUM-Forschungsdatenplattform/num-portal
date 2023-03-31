@@ -631,6 +631,16 @@ public class UserServiceTest {
         Assert.assertEquals(1, result.size());
     }
 
+    @Test(expected = BadRequestException.class)
+    public void shouldHandleInvalidSortField() {
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .sortBy("DESC")
+                .sort("invalid field")
+                .build();
+        userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
+        Mockito.verify(userDetailsService, Mockito.never()).getUsers(Mockito.any(), Mockito.any(UserDetailsSpecification.class));
+    }
+
     @Test
     public void searchUsersWithPaginationAsSuperAdminTest() {
         Pageable pageable = PageRequest.of(0, 50);
