@@ -34,7 +34,7 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_
 @RequiredArgsConstructor
 public class CompositionFlattener {
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper objectMapper =  new ObjectMapper();
 
   private CachedTemplateProvider cachedTemplateProvider;
   private final ClientTemplateProvider clientTemplateProvider;
@@ -51,7 +51,7 @@ public class CompositionFlattener {
 
     try {
       String templateId = composition.getArchetypeDetails().getTemplateId().getValue();
-      return mapper.readValue(getFlatJson(templateId).marshal(composition), Map.class);
+      return objectMapper.readValue(getFlatJson(templateId).marshal(composition), Map.class);
     } catch (JsonProcessingException e) {
       throw new SystemException(CompositionFlattener.class, CANNOT_PARSE_RESULTS,
               String.format(CANNOT_PARSE_RESULTS, e.getMessage()));

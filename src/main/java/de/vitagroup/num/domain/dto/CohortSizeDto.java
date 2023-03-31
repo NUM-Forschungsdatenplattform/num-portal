@@ -1,22 +1,22 @@
 package de.vitagroup.num.domain.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import java.util.Map;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
-@ApiModel
+import java.util.Map;
+
+@Schema
 @Data
 @Builder
 public class CohortSizeDto {
 
-  @ApiModelProperty(value = "Count of patients in the cohort.")
+  @Schema(description = "Count of patients in the cohort.")
   private int count;
 
-  @ApiModelProperty(value = "The age distribution of the cohort.")
+  @Schema(description = "The age distribution of the cohort.")
   private Map<String, Integer> ages;
 
-  @ApiModelProperty(value = "The number of patients per hospital.")
+  @Schema(description = "The number of patients per hospital.")
   private Map<String, Integer> hospitals;
 }

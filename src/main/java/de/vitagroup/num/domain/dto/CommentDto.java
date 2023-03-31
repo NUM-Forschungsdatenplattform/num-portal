@@ -1,34 +1,34 @@
 package de.vitagroup.num.domain.dto;
 
 import de.vitagroup.num.domain.admin.User;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import java.time.OffsetDateTime;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@ApiModel
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import java.time.OffsetDateTime;
+
+@Schema
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommentDto {
 
-  @ApiModelProperty(value = "The unique identifier", example = "1")
+  @Schema(description = "The unique identifier", example = "1")
   private Long id;
 
-  @ApiModelProperty
+  @Schema
   @NotEmpty(message = "The text of the comment cannot be empty")
   @NotNull(message = "The text of the comment is mandatory")
   private String text;
 
-  @ApiModelProperty private Long projectId;
+  private Long projectId;
 
-  @ApiModelProperty private User author;
+  private User author;
 
   private OffsetDateTime createDate;
 }

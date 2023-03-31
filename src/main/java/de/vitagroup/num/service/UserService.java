@@ -656,7 +656,7 @@ public class UserService {
   private void validateSort(SearchCriteria searchCriteria) {
     if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
       if (!availableSortFields.contains(searchCriteria.getSortBy())) {
-        throw new BadRequestException(ProjectService.class, String.format("Invalid %s sortBy field for projects", searchCriteria.getSortBy()));
+        throw new BadRequestException(ProjectService.class, String.format("Invalid %s sortBy field for users", searchCriteria.getSortBy()));
       }
     }
   }
