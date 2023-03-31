@@ -48,7 +48,7 @@ swagger:
     client-secret: ${SWAGGER_OAUTH2_CLIENT-NAME}
 
 ehrbase:
-  rest-api-url: ${EHRBASE_ENDPOINT}/ehrbase/rest/openehr/v1/
+  rest-api-url: ${EHRBASE_ENDPOINT}/ehrbase/
   username: ${EHRBASE_USER}
   password: ${EHRBASE_PASSWORD}
 

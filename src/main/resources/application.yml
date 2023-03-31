@@ -118,7 +118,7 @@ zars:
 
 # use local ehrbase until we get central one
 ehrbase:
-  rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
+  rest-api-url: http://localhost:8080/ehrbase/
   username: ehrbase-user
   password: SuperSecretPassword
 
@@ -220,7 +220,7 @@ logging:
     org.springframework.web: trace
 
 ehrbase:
-  rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
+  rest-api-url: http://localhost:8080/ehrbase/
   username: ehrbase-user
   password: SuperSecretPassword
 
