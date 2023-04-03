@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.parser.XmlParser;
 import de.vitagroup.num.properties.FttpProperties;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.properties.PseudonymsPsnWorkflowProperties;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import org.apache.http.HttpStatus;
@@ -40,6 +41,9 @@ public class PseudonymityTest {
   private FttpProperties fttpProperties;
 
   @Mock
+  private PrivacyProperties privacyProperties;
+
+  @Mock
   private FhirContext fhirContext;
 
   @Mock
@@ -68,7 +72,7 @@ public class PseudonymityTest {
       when(response.getEntity()).thenReturn(entity);
       when(xmlParser.parseResource(Mockito.any(), Mockito.any(String.class))).thenReturn(mockOkParameters());
       when(closeableHttpClient.execute(Mockito.any(HttpPost.class))).thenReturn(response);
-      pseudonymity.getPseudonyms(Arrays.asList("codex-AB1234"), 100L);
+      pseudonymity.getPseudonyms(Arrays.asList("codex_WX6QAM", "123"), 100L);
   }
 
     @Test(expected = ResourceNotFound.class)
@@ -98,6 +102,7 @@ public class PseudonymityTest {
         when(fttpProperties.getUrl()).thenReturn("http://url.com");
         xmlParser = Mockito.mock(XmlParser.class);
         when(fhirContext.newXmlParser()).thenReturn(xmlParser);
+        when(privacyProperties.getPseudonymitySecret()).thenReturn("testSecret123");
     }
 
     private Parameters mockErrorParameters() {
