@@ -65,7 +65,7 @@ public class ResponseFilter {
   }
 
   private boolean isValidQueryResponseData(QueryResponseData queryResponseData) {
-    return Objects.nonNull(queryResponseData) && queryResponseData.getRows() != null && queryResponseData.getColumns() != null;
+    return queryResponseData.getRows() != null && queryResponseData.getColumns() != null;
   }
 
   private boolean keepColumn(Map<String, String> column) {
