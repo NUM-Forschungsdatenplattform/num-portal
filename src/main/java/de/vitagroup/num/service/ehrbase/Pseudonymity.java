@@ -73,7 +73,7 @@ public class Pseudonymity {
     if (thirdLevelPseudonyms.isPresent()) {
       var params = thirdLevelPseudonyms.get();
       if (!params.getParameters("error").isEmpty()) {
-        log.warn("Could not retrieve pseudonyms for secondLevelPseudonyms {} ", parameters.getParameters("original"));
+        log.warn("Could not retrieve pseudonyms for secondLevelPseudonyms {} ", parameters.getParameters(ORIGINAL));
         // this might be remove when API on Greisfwald side is ready and working for any kind of id
         return generateNumThirdLevelPseudonym(secondLevelPseudonyms, projectId);
         //throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
@@ -142,12 +142,10 @@ public class Pseudonymity {
   }
 
   private Optional<String> findPseudonymForOriginal(Map<String, Parameters.ParametersParameterComponent> parameters, String original, Long projectId) {
-    if (Pattern.matches(EXTERNAL_REF_ID_REGEX_GREIFSWALD_COMPLIANT, original)) {
-      if (parameters.containsKey(original)) {
-        var param = parameters.get(original);
-        String pseudonym = getPartValue(PSEUDONYM, param);
-        return StringUtils.isNotEmpty(pseudonym) ? Optional.of(pseudonym) : Optional.of(generateNumThirdLevelPseudonym(original, projectId));
-      }
+    if (Pattern.matches(EXTERNAL_REF_ID_REGEX_GREIFSWALD_COMPLIANT, original) && parameters.containsKey(original)) {
+      var param = parameters.get(original);
+      String pseudonym = getPartValue(PSEUDONYM, param);
+      return StringUtils.isNotEmpty(pseudonym) ? Optional.of(pseudonym) : Optional.of(generateNumThirdLevelPseudonym(original, projectId));
     }
     log.debug("For id {} was generated fake 3rd level pseudonym", original);
     return Optional.of(generateNumThirdLevelPseudonym(original, projectId));
@@ -166,11 +164,9 @@ public class Pseudonymity {
 
   private String getPartValue(String value, Parameters.ParametersParameterComponent param) {
     for (var part : param.getPart()) {
-      if (value.equals(part.getName())) {
-        if (part.getValue() != null) {
-          Identifier identifier = (Identifier) part.getValue();
-          return identifier.getValue() != null ? identifier.getValue() : StringUtils.EMPTY;
-        }
+      if (value.equals(part.getName()) && part.getValue() != null) {
+        Identifier identifier = (Identifier) part.getValue();
+        return identifier.getValue() != null ? identifier.getValue() : StringUtils.EMPTY;
       }
     }
     return StringUtils.EMPTY;
