@@ -2,10 +2,13 @@ package de.vitagroup.num.service.ehrbase;
 
 import ca.uhn.fhir.context.FhirContext;
 import de.vitagroup.num.properties.FttpProperties;
+import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.properties.PseudonymsPsnWorkflowProperties;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -19,8 +22,8 @@ import org.hl7.fhir.r4.model.Parameters;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,59 +36,78 @@ public class Pseudonymity {
   private static final String FHIR_CONTENT_TYPE = "application/fhir+xml;charset=utf-8";
   private static final String PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE =
       "Pseudonyms could not be retrieved";
+
+  // is just a guessing...because there are also codes that start with codex_ but we do not receive the pseudonym back (example codex_A12CB2)
+  private static final String EXTERNAL_REF_ID_REGEX_GREIFSWALD_COMPLIANT = "codex_[A-Z0-9-]{6}";
+
+  private static final String DIGEST_ALGORITHM = "SHA3-256";
   private final CloseableHttpClient httpClient;
   private final FttpProperties fttpProperties;
   private final FhirContext fhirContext;
-
   private final PseudonymsPsnWorkflowProperties pseudonymsPsnWorkflowProperties;
+  private final PrivacyProperties privacyProperties;
 
   public List<String> getPseudonyms(List<String> secondLevelPseudonyms, Long projectId) {
     var parameters = initParameters(projectId);
 
-    secondLevelPseudonyms.forEach(original -> parameters.addParameter(ORIGINAL, original));
+    secondLevelPseudonyms.forEach(original -> {
+      if (Pattern.matches(EXTERNAL_REF_ID_REGEX_GREIFSWALD_COMPLIANT, original)) {
+        parameters.addParameter(ORIGINAL, original);
+      }
+    });
 
     var thirdLevelPseudonyms = retrievePseudonyms(parameters);
 
     if (thirdLevelPseudonyms.isPresent()) {
       var params = thirdLevelPseudonyms.get();
       if (!params.getParameters("error").isEmpty()) {
+        log.warn("Could not retrieve pseudonyms for secondLevelPseudonyms {} ", secondLevelPseudonyms);
         throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
       }
+      Map<String, Parameters.ParametersParameterComponent> paramsData = groupPseudonyms(params);
       return secondLevelPseudonyms.stream().map(original -> {
-        var result = findPseudonymForOriginal(params, original);
-        return result.orElse(null);
+        var result = findPseudonymForOriginal(paramsData, original, projectId);
+        return result.orElse(generateNumThirdLevelPseudonym(original, projectId));
       }).collect(Collectors.toList());
     } else {
-      throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+      // something did not work on Greisfwald side, so generate fake 3rd party pseudonyms
+      // this might be remove when API on Greisfwald side is ready and working for any kind of id
+      return secondLevelPseudonyms.stream()
+              .map(original -> generateNumThirdLevelPseudonym(original, projectId))
+              .collect(Collectors.toList());
+      //throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
     }
   }
 
   private Optional<Parameters> retrievePseudonyms(Parameters parameters) {
-    var request = new HttpPost(fttpProperties.getUrl());
-    request.setHeader("Content-Type", FHIR_CONTENT_TYPE);
-    CloseableHttpResponse response = null;
-    try {
-      String requestBody = fhirContext.newXmlParser().encodeResourceToString(parameters);
-      request.setEntity(new StringEntity(requestBody, ContentType.parse(FHIR_CONTENT_TYPE)));
-      response = httpClient.execute(request);
-      log.debug("Request pseudonyms with body: {} ", requestBody);
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-        String resp = EntityUtils.toString(response.getEntity());
-        log.debug("Received pseudonyms response: {} ", resp);
-        return Optional.of(fhirContext.newXmlParser().parseResource(Parameters.class, resp));
-      } else {
-        log.error("Could not retrieve pseudonyms. Expected status code 200, received {} with response body: {} ",
-                response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
-      }
-    } catch (Exception e) {
-      log.error("Could not retrieve pseudonyms {}", e);
-      throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
-    } finally {
-      if (response != null) {
-        try {
-          response.close();
-        } catch (IOException e) {
-          log.warn("Could not close response from {} ", fttpProperties.getUrl());
+    if (CollectionUtils.isNotEmpty(parameters.getParameters(ORIGINAL))) {
+      var request = new HttpPost(fttpProperties.getUrl());
+      request.setHeader("Content-Type", FHIR_CONTENT_TYPE);
+      CloseableHttpResponse response = null;
+      try {
+        String requestBody = fhirContext.newXmlParser().encodeResourceToString(parameters);
+        request.setEntity(new StringEntity(requestBody, ContentType.parse(FHIR_CONTENT_TYPE)));
+        response = httpClient.execute(request);
+        log.debug("Request pseudonyms with body: {} ", requestBody);
+        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+          String resp = EntityUtils.toString(response.getEntity());
+          log.debug("Received pseudonyms response: {} ", resp);
+          return Optional.of(fhirContext.newXmlParser().parseResource(Parameters.class, resp));
+        } else {
+          log.error("Could not retrieve pseudonyms. Expected status code 200, received {} with response body: {} ",
+                  response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
+          // TODO waiting for response from their side related to limited original params per request
+        }
+      } catch (Exception e) {
+        log.error("Could not retrieve pseudonyms {}", e);
+        throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+      } finally {
+        if (response != null) {
+          try {
+            response.close();
+          } catch (IOException e) {
+            log.warn("Could not close response from {} ", fttpProperties.getUrl());
+          }
         }
       }
     }
@@ -107,21 +129,41 @@ public class Pseudonymity {
     return parameters;
   }
 
-  private Optional<String> findPseudonymForOriginal(Parameters parameters, String original) {
-    for (var param : parameters.getParameter()) {
-      if (original.equals(getPartValue(ORIGINAL, param))) {
-        return Optional.of(getPartValue(PSEUDONYM, param));
+  private Optional<String> findPseudonymForOriginal(Map<String, Parameters.ParametersParameterComponent> parameters, String original, Long projectId) {
+    if (Pattern.matches(EXTERNAL_REF_ID_REGEX_GREIFSWALD_COMPLIANT, original)) {
+      if (parameters.containsKey(original)) {
+        var param = parameters.get(original);
+        String pseudonym = getPartValue(PSEUDONYM, param);
+        return StringUtils.isNotEmpty(pseudonym) ? Optional.of(pseudonym) : Optional.of(generateNumThirdLevelPseudonym(original, projectId));
       }
     }
-    return Optional.empty();
+    log.warn("For id {} was generated fake 3rd level pseudonym", original);
+    return Optional.of(generateNumThirdLevelPseudonym(original, projectId));
+  }
+
+  private String generateNumThirdLevelPseudonym(String original, Long projectId) {
+    return new DigestUtils(DIGEST_ALGORITHM)
+            .digestAsHex(original + projectId + privacyProperties.getPseudonymitySecret());
   }
 
   private String getPartValue(String value, Parameters.ParametersParameterComponent param) {
     for (var part : param.getPart()) {
-      if (part.getName().equals(value)) {
-        return ((Identifier) part.getValue()).getValue();
+      if (value.equals(part.getName())) {
+        if (part.getValue() != null) {
+          Identifier identifier = (Identifier) part.getValue();
+          return identifier.getValue() != null ? identifier.getValue() : StringUtils.EMPTY;
+        }
       }
     }
     return StringUtils.EMPTY;
+  }
+
+  private Map<String, Parameters.ParametersParameterComponent> groupPseudonyms(Parameters params) {
+    Map<String, Parameters.ParametersParameterComponent> paramsData = new HashMap<>();
+    for (var param : params.getParameter()) {
+      String org = getPartValue(ORIGINAL, param);
+      paramsData.put(org, param);
+    }
+    return paramsData;
   }
 }
