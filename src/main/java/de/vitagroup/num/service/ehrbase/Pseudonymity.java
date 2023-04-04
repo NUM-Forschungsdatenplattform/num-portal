@@ -37,6 +37,8 @@ public class Pseudonymity {
   private static final String FHIR_CONTENT_TYPE = "application/fhir+xml;charset=utf-8";
   private static final String PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE =
       "Pseudonyms could not be retrieved";
+  private static final String REQUEST_FAILED_RETRIEVED_MESSAGE =
+          "Request to retrieve pseudonyms failed";
 
   // is just a guessing...because there are also codes that start with codex_ but we do not receive the pseudonym back (example codex_A12CB2)
   private static final String EXTERNAL_REF_ID_REGEX_GREIFSWALD_COMPLIANT = "codex_[A-Z0-9-]{6}";
@@ -106,6 +108,7 @@ public class Pseudonymity {
         } else {
           log.error("Could not retrieve pseudonyms. Expected status code 200, received {} with response body: {} ",
                   response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
+          throw new ResourceNotFound(Pseudonymity.class, REQUEST_FAILED_RETRIEVED_MESSAGE);
         }
       } catch (Exception e) {
         log.error("Could not retrieve pseudonyms {}", e);
@@ -146,7 +149,7 @@ public class Pseudonymity {
         return StringUtils.isNotEmpty(pseudonym) ? Optional.of(pseudonym) : Optional.of(generateNumThirdLevelPseudonym(original, projectId));
       }
     }
-    log.warn("For id {} was generated fake 3rd level pseudonym", original);
+    log.debug("For id {} was generated fake 3rd level pseudonym", original);
     return Optional.of(generateNumThirdLevelPseudonym(original, projectId));
   }
 
