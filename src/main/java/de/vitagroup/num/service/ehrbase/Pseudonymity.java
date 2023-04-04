@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -48,6 +49,15 @@ public class Pseudonymity {
   private final PrivacyProperties privacyProperties;
 
   public List<String> getPseudonyms(List<String> secondLevelPseudonyms, Long projectId) {
+
+    List<String> result = new LinkedList<>();
+    // I guess Greisfwald restricted the number of original params per request
+    List<List<String>> chunks = ListUtils.partition(secondLevelPseudonyms, privacyProperties.getPseudonomityChunksSize());
+    chunks.forEach(listChunks -> result.addAll(getPseudonymsData(listChunks, projectId)));
+    return result;
+  }
+
+  private List<String> getPseudonymsData(List<String> secondLevelPseudonyms, Long projectId) {
     var parameters = initParameters(projectId);
 
     secondLevelPseudonyms.forEach(original -> {
@@ -61,8 +71,10 @@ public class Pseudonymity {
     if (thirdLevelPseudonyms.isPresent()) {
       var params = thirdLevelPseudonyms.get();
       if (!params.getParameters("error").isEmpty()) {
-        log.warn("Could not retrieve pseudonyms for secondLevelPseudonyms {} ", secondLevelPseudonyms);
-        throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+        log.warn("Could not retrieve pseudonyms for secondLevelPseudonyms {} ", parameters.getParameters("original"));
+        // this might be remove when API on Greisfwald side is ready and working for any kind of id
+        return generateNumThirdLevelPseudonym(secondLevelPseudonyms, projectId);
+        //throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
       }
       Map<String, Parameters.ParametersParameterComponent> paramsData = groupPseudonyms(params);
       return secondLevelPseudonyms.stream().map(original -> {
@@ -72,9 +84,7 @@ public class Pseudonymity {
     } else {
       // something did not work on Greisfwald side, so generate fake 3rd party pseudonyms
       // this might be remove when API on Greisfwald side is ready and working for any kind of id
-      return secondLevelPseudonyms.stream()
-              .map(original -> generateNumThirdLevelPseudonym(original, projectId))
-              .collect(Collectors.toList());
+      return generateNumThirdLevelPseudonym(secondLevelPseudonyms, projectId);
       //throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
     }
   }
@@ -96,7 +106,6 @@ public class Pseudonymity {
         } else {
           log.error("Could not retrieve pseudonyms. Expected status code 200, received {} with response body: {} ",
                   response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
-          // TODO waiting for response from their side related to limited original params per request
         }
       } catch (Exception e) {
         log.error("Could not retrieve pseudonyms {}", e);
@@ -139,6 +148,12 @@ public class Pseudonymity {
     }
     log.warn("For id {} was generated fake 3rd level pseudonym", original);
     return Optional.of(generateNumThirdLevelPseudonym(original, projectId));
+  }
+
+  private List<String> generateNumThirdLevelPseudonym(List<String> secondLevelPseudonyms, Long projectId) {
+    return secondLevelPseudonyms.stream()
+            .map(original -> generateNumThirdLevelPseudonym(original, projectId))
+            .collect(Collectors.toList());
   }
 
   private String generateNumThirdLevelPseudonym(String original, Long projectId) {

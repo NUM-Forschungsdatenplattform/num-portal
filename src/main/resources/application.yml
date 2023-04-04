@@ -133,6 +133,7 @@ cors:
 privacy:
   minHits: 30
   pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
+  pseudonomityChunksSize: 50
 
 num:
   url: https://dev.num-codex.de/home
@@ -235,6 +236,7 @@ ehrbase:
 privacy:
   minHits: 1
   pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
+  pseudonomityChunksSize: 20
 
 atna:
   enabled: false
