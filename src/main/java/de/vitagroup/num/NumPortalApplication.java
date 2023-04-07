@@ -12,7 +12,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableAsync
 @SpringBootApplication
-@EnableFeignClients
 @EnableJpaRepositories
 @EnableConfigurationProperties({AtnaProperties.class})
 public class NumPortalApplication {
