@@ -176,7 +176,7 @@ jobs:
 
   build_and_deploy:
     docker:
-      - image: cimg/openjdk:11.0.9
+      - image: cimg/openjdk:17.0.6
         auth:
           username: $DOCKER_USER
           password: $DOCKER_HUB_PASSWORD
