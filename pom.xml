@@ -25,7 +25,7 @@
     <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
     <modelmapper.version>3.1.1</modelmapper.version>
     <springdoc.version>1.6.15</springdoc.version>
-    <java.version>17</java.version>
+    <java.version>11</java.version>
     <openfeign.version>3.1.6</openfeign.version>
     <commons-csv.version>1.10.0</commons-csv.version>
     <jacoco.version>0.8.8</jacoco.version>
