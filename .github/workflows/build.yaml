@@ -1,16 +1,6 @@
 name: build
 
-on:
-  push:
-    branches:
-      - develop
-      - 'feature/**'
-      - 'feat/**'
-      - 'fix/**'
-    paths-ignore:
-      - '.circleci/**'
-      - 'scripts/**'
-      - '**/*.md'
+on: [push]
 
 jobs:
   build:
