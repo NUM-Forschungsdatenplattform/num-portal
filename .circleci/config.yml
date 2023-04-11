@@ -185,7 +185,7 @@ jobs:
       - configure-git-for-ci-bot
       - cache-out-maven-dependencies
       - setup_remote_docker:
-          version: 19.03.13
+          version: 20.10.17
       - run:
           name: Build and tag image and push
           command: |
