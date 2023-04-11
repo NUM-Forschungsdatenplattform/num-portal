@@ -1,0 +1,54 @@
+name: build
+
+on:
+  push:
+    branches:
+      - develop
+      - 'feature/**'
+      - 'feat/**'
+      - 'fix/**'
+    paths-ignore:
+      - '.circleci/**'
+      - 'scripts/**'
+      - '**/*.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-2204:2022.10.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Set some variables for the build
+        run: |
+          if [ ${{ github.ref }} != 'refs/heads/main' ]; then
+            echo "IS NOT main branch"
+            echo "BUILD_VERSION=1.0.$GITHUB_RUN_NUMBER-PR" >> $GITHUB_ENV
+          else
+            echo "IS main branch"
+            echo "BUILD_VERSION=1.0.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: See some values
+        run: |
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "GITHUB_REF_NAME=$GITHUB_REF_NAME"
+          echo "GITHUB_RUN_NUMBER=$GITHUB_RUN_NUMBER"
+          echo "GITHUB_RUN_ID=$GITHUB_RUN_ID"
+          echo "BUILD_VERSION=$BUILD_VERSION"
+
+      - name: Set Build-Version in pom.xml
+        run: ./mvnw versions:set -DnewVersion=$BUILD_VERSION
+
+      - name: Build with Maven
+        run: ./mvnw verify
