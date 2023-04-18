@@ -357,14 +357,19 @@ public class UserService {
     validateSort(searchCriteria);
 
     Set<String> usersUUID = new HashSet<>();
+    List<String> requestedRoles = Collections.emptyList();
     boolean searchCriteriaProvided = searchCriteria.getFilter() != null &&
             searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY);
-    if (searchCriteriaProvided) {
+    boolean filterByRoles = searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_BY_ROLES);
+    if (filterByRoles) {
+      requestedRoles = getRequestedRoles((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_BY_ROLES));
+    }
+    if (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles)) {
       String searchValue = searchCriteria.getFilter() != null &&
               searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY) ? (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY) : null;
-      usersUUID = this.findUsersUUID(searchValue);
+      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles);
     }
-    if (CollectionUtils.isEmpty(usersUUID) && searchCriteriaProvided) {
+    if (CollectionUtils.isEmpty(usersUUID) && (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles))) {
       return Page.empty(pageable);
     }
     Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
@@ -614,14 +619,26 @@ public class UserService {
    * @return
    */
   public Set<String> findUsersUUID(String search) {
+    return filterKeycloakUsers(search, Collections.emptyList());
+  }
+
+  private Set<String> filterKeycloakUsers(String search, List<String> roles) {
     Set<String> userUUIDs = new HashSet<>();
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
-    if (usersCache != null && usersCache.getNativeCache().size() != 0) {
+    if ((StringUtils.isNotEmpty(search) || CollectionUtils.isNotEmpty(roles)) && usersCache != null && usersCache.getNativeCache().size() != 0) {
       ConcurrentMap<Object, Object> users = usersCache.getNativeCache();
       for (Map.Entry<Object, Object> entry : users.entrySet()) {
         if (entry.getValue() instanceof User) {
           User user = (User) entry.getValue();
-          if (StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) {
+          if (StringUtils.isNotEmpty(search) && CollectionUtils.isNotEmpty(roles)) {
+            if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
+                    CollectionUtils.containsAny(user.getRoles(), roles)) {
+              userUUIDs.add((String) entry.getKey());
+            }
+          } else if (StringUtils.isNotEmpty(search) && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
+                  StringUtils.containsIgnoreCase(user.getEmail(), search))) {
+            userUUIDs.add((String) entry.getKey());
+          } else if (CollectionUtils.isNotEmpty(roles) && CollectionUtils.containsAny(user.getRoles(), roles)) {
             userUUIDs.add((String) entry.getKey());
           }
         }
@@ -630,7 +647,6 @@ public class UserService {
     }
     return Collections.emptySet();
   }
-
   private void updateName(String userId, UserNameDto userNameDto) {
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
     if (userRaw == null) {
@@ -674,5 +690,10 @@ public class UserService {
       }
     }
       return getUserById(uuid, withRole);
+  }
+
+  private List<String> getRequestedRoles(String roles) {
+    return Arrays.stream(roles.split(","))
+            .collect(Collectors.toList());
   }
 }

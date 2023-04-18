@@ -31,6 +31,8 @@ public class SearchCriteria {
 
     public static final String FILTER_BY_STATUS = "status";
 
+    public static final String FILTER_BY_ROLES = "roles";
+
     private Map<String, ?> filter;
 
     private String sort;

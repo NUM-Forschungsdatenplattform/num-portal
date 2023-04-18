@@ -682,13 +682,16 @@ public class UserServiceTest {
                                             .lastName("doe")
                                             .email("john.doe@vitagroup.ag")
                                             .createdTimestamp(System.currentTimeMillis())
+                                            .roles(Set.of(Roles.RESEARCHER, Roles.STUDY_COORDINATOR, Roles.CRITERIA_EDITOR))
                                             .build());
         usersCache.put("userId-two", User.builder()
                 .firstName("Ana")
                 .lastName("Doe")
                 .id("userId-two")
                 .email("ana-maria.doe@vitagroup.ag")
-                .createdTimestamp(System.currentTimeMillis()).build());
+                .createdTimestamp(System.currentTimeMillis())
+                .roles(Set.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR, Roles.CRITERIA_EDITOR))
+                .build());
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
         Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
@@ -732,6 +735,7 @@ public class UserServiceTest {
         Pageable pageable = PageRequest.of(0, 50);
         Map<String, String> filter = new HashMap<>();
         filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
+        filter.put(SearchCriteria.FILTER_BY_ROLES, "ORGANIZATION_ADMIN,RESEARCHER");
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
                 .sort("DESC")
