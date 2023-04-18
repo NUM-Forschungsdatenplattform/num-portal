@@ -42,6 +42,7 @@
     <wiremock-standalone.version>3.0.0-beta-2</wiremock-standalone.version>
     <testcontainers.postgresql.version>1.17.6</testcontainers.postgresql.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
+    <spring-security.version>5.8.2</spring-security.version>
   </properties>
 
   <repositories>
