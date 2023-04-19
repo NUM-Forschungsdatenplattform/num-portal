@@ -14,7 +14,7 @@ import org.hibernate.annotations.JoinColumnOrFormula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;

@@ -8,7 +8,7 @@ import lombok.Getter;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.data.jpa.domain.Specification;
 
-import javax.persistence.criteria.*;
+import jakarta.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

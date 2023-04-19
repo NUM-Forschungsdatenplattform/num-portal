@@ -4,7 +4,7 @@ import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.service.UserService;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;

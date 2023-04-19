@@ -1,8 +1,8 @@
 package de.vitagroup.num.domain.validation;
 
 import java.util.Map;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import org.apache.logging.log4j.util.Strings;
 
 public class TranslatedStringValidator

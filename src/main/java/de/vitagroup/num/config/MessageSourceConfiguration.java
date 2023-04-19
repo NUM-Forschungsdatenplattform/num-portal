@@ -3,7 +3,7 @@ package de.vitagroup.num.config;
 import de.vitagroup.num.properties.NumProperties;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;

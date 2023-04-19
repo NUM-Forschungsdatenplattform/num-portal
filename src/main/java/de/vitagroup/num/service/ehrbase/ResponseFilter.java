@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.response.openehr.QueryResponseData;

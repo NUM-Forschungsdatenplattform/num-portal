@@ -10,8 +10,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Convert;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Convert;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 

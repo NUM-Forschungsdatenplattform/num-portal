@@ -20,7 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;

@@ -12,22 +12,21 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.7.10</version>
+    <version>3.0.5</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
   <properties>
-    <log4j2.version>2.19.0</log4j2.version>
     <commons-collections4.version>4.4</commons-collections4.version>
     <commons-io.version>2.11.0</commons-io.version>
     <ehr-sdk.version>v1.18.0</ehr-sdk.version>
     <aql-editor-backend-starter.version>v0.5.1</aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
     <modelmapper.version>3.1.1</modelmapper.version>
-    <springdoc.version>1.6.15</springdoc.version>
+    <springdoc.version>1.7.0</springdoc.version>
     <java.version>17</java.version>
     <commons-csv.version>1.10.0</commons-csv.version>
-    <jacoco.version>0.8.8</jacoco.version>
+    <jacoco.version>0.8.9</jacoco.version>
     <dependency-check.version>8.1.2</dependency-check.version>
     <failsafe.version>3.0.0-M5</failsafe.version>
     <surefire.version>3.0.0-M5</surefire.version>
@@ -41,8 +40,8 @@
     <wiremock-standalone.version>3.0.0-beta-7</wiremock-standalone.version>
     <testcontainers.version>1.18.0</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
-    <spring-security.version>5.8.2</spring-security.version>
-    <spring.cloud-version>2021.0.5</spring.cloud-version>
+<!--    <spring-security.version>5.8.2</spring-security.version>-->
+    <spring.cloud-version>2022.0.2</spring.cloud-version>
   </properties>
 
   <repositories>

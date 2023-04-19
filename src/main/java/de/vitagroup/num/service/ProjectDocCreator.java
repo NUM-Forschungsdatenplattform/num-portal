@@ -19,7 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;

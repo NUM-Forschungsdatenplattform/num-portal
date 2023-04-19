@@ -8,7 +8,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
