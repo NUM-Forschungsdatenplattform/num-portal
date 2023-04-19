@@ -26,7 +26,6 @@
     <modelmapper.version>3.1.1</modelmapper.version>
     <springdoc.version>1.6.15</springdoc.version>
     <java.version>17</java.version>
-    <openfeign.version>3.1.6</openfeign.version>
     <commons-csv.version>1.10.0</commons-csv.version>
     <jacoco.version>0.8.8</jacoco.version>
     <dependency-check.version>8.1.2</dependency-check.version>
@@ -39,10 +38,11 @@
     <skip.dependency.check>false</skip.dependency.check>
     <postgresql.version>42.6.0</postgresql.version>
     <hapi.version>5.5.1</hapi.version>
-    <wiremock-standalone.version>3.0.0-beta-2</wiremock-standalone.version>
-    <testcontainers.postgresql.version>1.17.6</testcontainers.postgresql.version>
+    <wiremock-standalone.version>3.0.0-beta-7</wiremock-standalone.version>
+    <testcontainers.version>1.18.0</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
     <spring-security.version>5.8.2</spring-security.version>
+    <spring.cloud-version>2021.0.5</spring.cloud-version>
   </properties>
 
   <repositories>
@@ -59,6 +59,17 @@
       <url>https://jitpack.io</url>
     </repository>
   </repositories>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring.cloud-version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -120,7 +131,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>${testcontainers.postgresql.version}</version>
+      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -187,7 +198,6 @@
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-openfeign</artifactId>
-      <version>${openfeign.version}</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.security</groupId>
