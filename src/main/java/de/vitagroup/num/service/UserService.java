@@ -33,9 +33,9 @@ import org.springframework.data.domain.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.Nullable;
-import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.NotNull;
+import javax.annotation.Nullable;
+import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;

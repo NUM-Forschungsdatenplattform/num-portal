@@ -6,7 +6,7 @@ import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import java.util.stream.Collectors;
-import jakarta.annotation.PostConstruct;
+import javax.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;

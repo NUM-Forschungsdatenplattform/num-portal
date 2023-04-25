@@ -4,7 +4,7 @@ import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import org.apache.commons.collections4.CollectionUtils;
 
-import jakarta.validation.*;
+import javax.validation.*;
 import java.util.ArrayDeque;
 import java.util.Queue;
 

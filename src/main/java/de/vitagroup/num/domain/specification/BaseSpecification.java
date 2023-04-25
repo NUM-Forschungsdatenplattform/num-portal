@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.domain.Sort;
 
-import jakarta.annotation.Nonnull;
+import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.Set;
 
