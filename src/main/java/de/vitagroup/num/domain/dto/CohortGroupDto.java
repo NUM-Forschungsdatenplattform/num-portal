@@ -4,41 +4,40 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.vitagroup.num.domain.Operator;
 import de.vitagroup.num.domain.Type;
 import de.vitagroup.num.domain.repository.AqlConverter;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import java.util.List;
-import java.util.Map;
-import javax.persistence.Convert;
-import javax.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@ApiModel
+import javax.persistence.Convert;
+import javax.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Map;
+
+@Schema
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class CohortGroupDto {
 
-  @ApiModelProperty(value = "The unique identifier", example = "1")
+  @Schema(description = "The unique identifier", example = "1")
   private Long id;
 
-  @ApiModelProperty(value = "Cohort group operation to be applied to the children", example = "AND")
+  @Schema(description = "Cohort group operation to be applied to the children", example = "AND")
   private Operator operator;
 
-  @ApiModelProperty(
-      value =
+  @Schema(
+      description =
           "Cohort group parameter map representing the name of the aql parameter and the corresponding value")
   private Map<String, Object> parameters;
 
-  @ApiModelProperty(required = true, value = "Type of the cohort group", example = "AQL")
+  @Schema(description = "Type of the cohort group", example = "AQL")
   @NotNull(message = "Type cannot be null")
   private Type type;
 
-  @ApiModelProperty(
-      value =
+  @Schema(description =
           "Children of the cohort group in case the type of the group is: GROUP; can be other groups or aqls")
   private List<CohortGroupDto> children;
 

@@ -1,143 +1,93 @@
 package de.vitagroup.num.web.config;
 
 import de.vitagroup.num.properties.SwaggerProperties;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.function.Predicate;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.security.OAuthFlow;
+import io.swagger.v3.oas.models.security.OAuthFlows;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import springfox.documentation.RequestHandler;
-import springfox.documentation.builders.AuthorizationCodeGrantBuilder;
-import springfox.documentation.builders.OAuthBuilder;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.AuthorizationScope;
-import springfox.documentation.service.GrantType;
-import springfox.documentation.service.SecurityReference;
-import springfox.documentation.service.SecurityScheme;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spi.service.contexts.SecurityContext;
-import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger.web.SecurityConfiguration;
-import springfox.documentation.swagger.web.SecurityConfigurationBuilder;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @Configuration
-@EnableSwagger2
 @AllArgsConstructor
 public class SwaggerConfig {
   private static final String SEC_CONFIG_NAME = "oauth_setting";
 
+  private static final String NUM_PACKAGES_TO_SCAN = "de.vitagroup.num.web.controller";
+
+
   private final SwaggerProperties swaggerProperties;
 
   @Bean
-  public Docket profileApi() {
-    return getDocket("Profile", "/profile.*");
+  public GroupedOpenApi profileApi() {
+    return getDocket("Profile", "/profile/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
-  public Docket projectApi() {
-    return getDocket("Project", "/project.*");
+  public GroupedOpenApi projectApi() {
+    return getDocket("Project", "/project/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
-  public Docket templateApi() {
-    return getDocket("Template", "/template.*");
+  public GroupedOpenApi templateApi() {
+    return getDocket("Template", "/template/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
-  public Docket organizationApi() {
-    return getDocket("Organization", "/organization.*");
+  public GroupedOpenApi organizationApi() {
+    return getDocket("Organization", "/organization/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
-  public Docket cohortApi() {
-    return getDocket("Cohort", "/cohort.*");
+  public GroupedOpenApi cohortApi() {
+    return getDocket("Cohort", "/cohort/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
-  public Docket aqlApi() {
-    return getDocket("Aql", "/aql.*", "org.ehrbase.aqleditor");
+  public GroupedOpenApi aqlApi() {
+    return getDocket("Aql", "/aql/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
-  public Docket aqlEditorApi() {
-    return getDocket("Aql editor", "/aqleditor.*");
+  public GroupedOpenApi aqlEditorApi() {
+    return getDocket("Aql editor", "/aqleditor/**", "org.ehrbase.aqleditor.controler");
   }
 
   @Bean
-  public Docket adminApi() {
-    return getDocket("Admin", "/admin.*");
+  public GroupedOpenApi adminApi() {
+    return getDocket("Admin", "/admin/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
-  public Docket contentApi() {
-    return getDocket("Content", "/content.*").useDefaultResponseMessages(false);
+  public GroupedOpenApi contentApi() {
+    return getDocket("Content", "/content/**", NUM_PACKAGES_TO_SCAN);
   }
 
   @Bean
-  public SecurityConfiguration security(SwaggerProperties properties) {
-    return SecurityConfigurationBuilder.builder()
-        .clientId(properties.getClientName())
-        .clientSecret(properties.getClientSecret())
-        .scopeSeparator(" ")
-        .useBasicAuthenticationWithAccessCodeGrant(true)
-        .build();
-  }
+  public OpenAPI customOpenAPI() {
+    OAuthFlow oAuthFlow = new OAuthFlow()
+            .tokenUrl(swaggerProperties.getTokenUri())
+            .authorizationUrl(swaggerProperties.getAuthUri());
 
-  private Docket getDocket(String groupName, String pathRegexp, String... excludedBasePackage) {
-    return new Docket(DocumentationType.SWAGGER_2)
-        .groupName(groupName)
-        .select()
-        .apis(getRequestHandlerSelector(excludedBasePackage))
-        .paths(PathSelectors.regex(pathRegexp))
-        .build()
-            .pathMapping("/")
-        .securitySchemes(Collections.singletonList(securityScheme()))
-        .securityContexts(Collections.singletonList(securityContext(pathRegexp)));
-  }
+    return new OpenAPI()
+            .components(new Components()
+                    .addSecuritySchemes("security_auth", new SecurityScheme()
+                            .name(SEC_CONFIG_NAME)
+                            .flows(new OAuthFlows().authorizationCode(oAuthFlow))
+                            .type(SecurityScheme.Type.OAUTH2)
+                            .scheme("oauth2")))
+            .addSecurityItem(new SecurityRequirement().addList("security_auth"));
 
-  private Predicate<RequestHandler> getRequestHandlerSelector(String... excludedBasePackage) {
-    if (excludedBasePackage.length > 0) {
-      return Predicate.not(RequestHandlerSelectors.basePackage(excludedBasePackage[0]));
-    }
-    return RequestHandlerSelectors.any();
   }
-
-  private SecurityScheme securityScheme() {
-    GrantType grantType =
-        new AuthorizationCodeGrantBuilder()
-            .tokenEndpoint(
-                tokenEndpointBuilder ->
-                    tokenEndpointBuilder
-                        .url(swaggerProperties.getTokenUri())
-                        .tokenName("oauthtoken"))
-            .tokenRequestEndpoint(
-                tokenRequestEndpointBuilder ->
-                    tokenRequestEndpointBuilder
-                        .url(swaggerProperties.getAuthUri())
-                        .clientIdName(swaggerProperties.getClientName())
-                        .clientSecretName(swaggerProperties.getClientSecret()))
+  private GroupedOpenApi getDocket(String groupName, String pathRegexp, String... packagesToScan) {
+    return GroupedOpenApi.builder()
+            .group(groupName)
+            .packagesToScan(packagesToScan)
+            .pathsToMatch(pathRegexp)
             .build();
-
-    return new OAuthBuilder()
-        .name(SEC_CONFIG_NAME)
-        .grantTypes(Collections.singletonList(grantType))
-        .scopes(Arrays.asList(scopes()))
-        .build();
-  }
-
-  private AuthorizationScope[] scopes() {
-    return new AuthorizationScope[] {};
-  }
-
-  private SecurityContext securityContext(String pathRegexp) {
-    return SecurityContext.builder()
-        .securityReferences(
-            Collections.singletonList(new SecurityReference(SEC_CONFIG_NAME, scopes())))
-        .operationSelector(
-            operationContext -> operationContext.requestMappingPattern().matches(pathRegexp))
-        .build();
   }
 }

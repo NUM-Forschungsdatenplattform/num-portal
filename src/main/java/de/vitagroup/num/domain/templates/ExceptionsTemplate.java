@@ -40,6 +40,8 @@ public class ExceptionsTemplate {
     public final static String COHORT_NOT_FOUND = "Cohort not found: %s";
     public final static String COHORT_GROUP_CANNOT_BE_EMPTY = "Cohort group cannot be empty";
     public final static String INVALID_COHORT_GROUP_AQL_MISSING = "Invalid cohort group. Aql missing.";
+    public static final String INVALID_COHORT_GROUP_CHILDREN_MISSING = "The query is invalid. Please select at least one criterion.";
+    public static final String INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS = "The query is invalid. The value of at least one criterion is missing.";
     public final static String INVALID_COMMENTID_ID = "Invalid commentId id";
     public final static String ORGANIZATION_NAME_MUST_BE_UNIQUE = "Organization name must be unique: %s";
     public final static String ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS = "Organization mail domain already exists: %s";
@@ -106,7 +108,7 @@ public class ExceptionsTemplate {
     //EhrBaseService service
     public final static String NO_DATA_COLUMNS_IN_THE_QUERY_RESULT = "No data columns in the query result";
     public final static String AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL = "An error has occurred, cannot execute aql: %s";
-    public final static String QUERY_RESULT_DOESN_T_CONTAIN_EHR_ID_COLUMN = "query result doesn't contain ehrId column";
+    public final static String QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN = "query result doesn't contain ehr_status column";
 
     //PrivacyException
     public final static String TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS = "Too few matches, results withheld for privacy reasons.";
@@ -264,7 +266,7 @@ public class ExceptionsTemplate {
         errorMap.put(AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER, new ExceptionDto( 84, new ArrayList<>() ) );//1 parameter
         errorMap.put(FETCHING_USER_FROM_KEYCLOAK_FAILED, new ExceptionDto( 85, new ArrayList<>() ) );
         //EhrBaseService
-        errorMap.put(QUERY_RESULT_DOESN_T_CONTAIN_EHR_ID_COLUMN, new ExceptionDto( 86, new ArrayList<>() ) );
+        errorMap.put(QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN, new ExceptionDto( 86, new ArrayList<>() ) );
         //Pseudonymity
         errorMap.put(PSEUDONYMITY_SECRET_IS_NOT_CONFIGURED, new ExceptionDto( 87, new ArrayList<>() ) );
 
