@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-@Disabled("Should be fixed")
 public class TemplateControllerIT extends IntegrationTest {
 
   @Autowired public MockMvc mockMvc;
@@ -27,7 +26,6 @@ public class TemplateControllerIT extends IntegrationTest {
 
   private static final String TEMPLATE_PATH = "/template/metadata";
 
-  @Ignore("till is fixed for spring boot 3")
   @Test
   @SneakyThrows
   @WithMockNumUser
