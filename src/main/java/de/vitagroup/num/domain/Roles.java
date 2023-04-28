@@ -2,6 +2,7 @@ package de.vitagroup.num.domain;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -39,7 +40,7 @@ public class Roles {
     if (access == null) {
       return new ArrayList<>();
     }
-    return (List<String>) access.get(ROLES_CLAIM);
+    return Arrays.asList((String[])access.get(ROLES_CLAIM));
   }
 
   public static boolean isAllowedToSet(String roleToSet, List<String> callersRoles) {
