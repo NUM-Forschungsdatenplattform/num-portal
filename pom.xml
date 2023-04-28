@@ -41,7 +41,7 @@
     <testcontainers.version>1.18.0</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
     <spring-security.version>5.8.2</spring-security.version>
-    <spring.cloud-version>2022.0.2</spring.cloud-version>
+    <spring.cloud-version>2021.0.6</spring.cloud-version>
   </properties>
 
   <repositories>
