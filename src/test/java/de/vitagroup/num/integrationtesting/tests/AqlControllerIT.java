@@ -176,8 +176,6 @@ public class AqlControllerIT extends IntegrationTest {
     mockMvc.perform(get(AQL_PATH + "/category").with(csrf())).andExpect(status().isOk());
   }
 
-  @Ignore(
-          "till is fixed for spring boot 3")
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {CRITERIA_EDITOR})
