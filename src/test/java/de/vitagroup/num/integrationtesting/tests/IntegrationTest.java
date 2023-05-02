@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -27,8 +26,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
     webEnvironment = SpringBootTest.WebEnvironment.MOCK,
     classes = TestNumPortalApplication.class)
 @AutoConfigureMockMvc
-//@ActiveProfiles("itest")
-@TestPropertySource(locations = "classpath:application.yml")
+@ActiveProfiles("itest")
 public abstract class IntegrationTest {
 
   public static final String UNAUTHORIZED_USER_ID = "b59e5edb-3121-4e0a-8ccb-af6798207a73";
