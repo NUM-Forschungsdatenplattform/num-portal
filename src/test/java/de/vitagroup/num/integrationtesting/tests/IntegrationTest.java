@@ -71,5 +71,10 @@ public abstract class IntegrationTest {
             .willReturn(
                 okJson(
                     "[{\"template_id\": \"IDCR - Immunisation summary.v0\",\"concept\": \"IDCR - Immunisation summary.v0\",\"archetype_id\": \"openEHR-EHR-COMPOSITION.health_summary.v1\",\"created_timestamp\": \"2020-11-25T16:19:37.812Z\"}]")));
+    stubFor(WireMock.get("/auth/admin/realms/Num/roles/SUPER_ADMIN/users").willReturn(okJson("[]")));
+    stubFor(
+            WireMock.get("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a72")
+                    .willReturn(okJson(
+                            "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"admin-user\", \"firstname\":\"Admin\", \"email\": \"admin.doe@vitagroup.ag\"}")));
   }
 }
