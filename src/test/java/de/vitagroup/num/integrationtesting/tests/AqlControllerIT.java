@@ -1,15 +1,5 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static de.vitagroup.num.domain.Roles.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.dto.AqlDto;
@@ -17,21 +7,26 @@ import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import lombok.SneakyThrows;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-@Disabled("Should be fixed")
+import static de.vitagroup.num.domain.Roles.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 public class AqlControllerIT extends IntegrationTest {
 
   private static final String AQL_PATH = "/aql";
   @Autowired public MockMvc mockMvc;
   @Autowired private ObjectMapper mapper;
 
-  @Ignore(
-          "till is fixed for spring boot 3")
+
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {SUPER_ADMIN})
@@ -39,8 +34,7 @@ public class AqlControllerIT extends IntegrationTest {
     mockMvc.perform(get(String.format("%s/%s", AQL_PATH, 1))).andExpect(status().isForbidden());
   }
 
-  @Ignore(
-          "till is fixed for spring boot 3")
+  @Ignore("fix mock expired token")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -50,8 +44,6 @@ public class AqlControllerIT extends IntegrationTest {
     mockMvc.perform(get(String.format("%s/%s", AQL_PATH, 1))).andExpect(status().isUnauthorized());
   }
 
-  @Ignore(
-          "till is fixed for spring boot 3")
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
@@ -61,8 +53,6 @@ public class AqlControllerIT extends IntegrationTest {
         .andExpect(status().isNotFound());
   }
 
-  @Ignore(
-          "till is fixed for spring boot 3")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -165,8 +155,6 @@ public class AqlControllerIT extends IntegrationTest {
         .andExpect(status().isOk());
   }
 
-  @Ignore(
-          "till is fixed for spring boot 3")
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
@@ -181,8 +169,6 @@ public class AqlControllerIT extends IntegrationTest {
         .andExpect(status().isBadRequest());
   }
 
-  @Ignore(
-          "till is fixed for spring boot 3")
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {MANAGER})
