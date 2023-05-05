@@ -11,7 +11,6 @@ import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -82,23 +81,6 @@ public class AqlController extends CustomizedExceptionHandler {
   @PreAuthorize(Role.CRITERIA_EDITOR_OR_SUPER_ADMIN)
   public void deleteAql(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
     aqlService.deleteById(id, principal.getSubject(), Roles.extractRoles(principal));
-  }
-
-  @AuditLog
-  @GetMapping("/search")
-  @Operation(description = "Retrieves a list of aqls based on a search string and search type")
-  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
-  public ResponseEntity<List<AqlDto>> searchAqls(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @Parameter(description = "A string contained in the name of the aqls")
-          @RequestParam(required = false)
-          String name,
-      @Parameter(description = "Type of the search", required = true) @RequestParam @Valid @NotNull
-      SearchFilter filter) {
-    return ResponseEntity.ok(
-        aqlService.searchAqls(name, filter, principal.getSubject()).stream()
-            .map(mapper::convertToDto)
-            .collect(Collectors.toList()));
   }
 
   /**

@@ -220,34 +220,6 @@ public class AqlService {
     }
   }
 
-  /**
-   * Searches among a list of visible AQLs.
-   *
-   * @param name A string contained in the name of the aqls
-   * @param filter Type of the search. Search all owned or public, searched owned only or search
-   *     among own organization
-   * @param loggedInUserId the user ID of the user sending the search request
-   * @return the list of AQLs that match the search filters
-   */
-  public List<Aql> searchAqls(String name, SearchFilter filter, String loggedInUserId) {
-
-    var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
-
-    String searchInput = StringUtils.isNotEmpty(name) ? name.toUpperCase() : name;
-
-    switch (filter) {
-      case ALL:
-        return aqlRepository.findAllOwnedOrPublicByName(userDetails.getUserId(), searchInput);
-      case OWNED:
-        return aqlRepository.findAllOwnedByName(userDetails.getUserId(), searchInput);
-      case ORGANIZATION:
-        return aqlRepository.findAllOrganizationOwnedByName(
-            userDetails.getOrganization().getId(), userDetails.getUserId(), searchInput);
-      default:
-        return List.of();
-    }
-  }
-
   public long getAqlSize(SlimAqlDto aql, String userId) {
     userDetailsService.checkIsUserApproved(userId);
 

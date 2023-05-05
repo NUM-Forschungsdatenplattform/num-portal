@@ -546,7 +546,7 @@ public class UserServiceTest {
                 .sortBy("DESC")
                 .sort("invalid field")
                 .build();
-        userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
+        userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
         Mockito.verify(userDetailsService, Mockito.never()).getUsers(Mockito.any(), Mockito.any(UserDetailsSpecification.class));
     }
 

@@ -53,11 +53,10 @@ public class OrganizationController extends CustomizedExceptionHandler {
   }
 
   @AuditLog
-  @GetMapping()
+  @GetMapping("/all")
   @Operation(description = "Retrieves a list of available organizations")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<Page<OrganizationDto>> getOrganizations(@AuthenticationPrincipal @NotNull Jwt principal,
-  @Operation(description = "Retrieves a list of available organizations")
                                                                 @PageableDefault(size = 20) Pageable pageable,
                                                                 SearchCriteria criteria) {
 

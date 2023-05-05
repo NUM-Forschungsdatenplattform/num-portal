@@ -24,7 +24,7 @@ public class OrganizationControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldGetAllOrganizationsSuccessfully() {
-    mockMvc.perform(get(ORGANIZATION_PATH)).andExpect(status().isOk());
+    mockMvc.perform(get(ORGANIZATION_PATH + "/all")).andExpect(status().isOk());
   }
 
   @Test
@@ -50,7 +50,7 @@ public class OrganizationControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldGetAllOrganizationsSuccessfullyWithPagination() {
-    mockMvc.perform(get(ORGANIZATION_PATH)
+    mockMvc.perform(get(ORGANIZATION_PATH + "/all")
                     .queryParam("page", "0")
                     .queryParam("size", "5"))
             .andExpect(status().isOk());
@@ -60,7 +60,7 @@ public class OrganizationControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldGetAllOrganizationsSuccessfullyWithPaginationAndFilter() {
-    mockMvc.perform(get(ORGANIZATION_PATH)
+    mockMvc.perform(get(ORGANIZATION_PATH + "/all")
                     .queryParam("page", "0")
                     .queryParam("filter[search]", "dummySearchInput"))
             .andExpect(status().isOk());
