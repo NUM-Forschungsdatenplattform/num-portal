@@ -1,11 +1,7 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import de.vitagroup.num.NumPortalApplication;
 import de.vitagroup.num.TestNumPortalApplication;
 import de.vitagroup.num.integrationtesting.config.NumPostgresqlContainer;
 import de.vitagroup.num.integrationtesting.security.TokenGenerator;
@@ -17,17 +13,20 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.MOCK,
     classes = TestNumPortalApplication.class)
-@AutoConfigureMockMvc()
-@TestPropertySource(locations = "classpath:application.yml")
+@AutoConfigureMockMvc
+@ActiveProfiles("itest")
 public abstract class IntegrationTest {
 
   public static final String UNAUTHORIZED_USER_ID = "b59e5edb-3121-4e0a-8ccb-af6798207a73";
@@ -72,5 +71,10 @@ public abstract class IntegrationTest {
             .willReturn(
                 okJson(
                     "[{\"template_id\": \"IDCR - Immunisation summary.v0\",\"concept\": \"IDCR - Immunisation summary.v0\",\"archetype_id\": \"openEHR-EHR-COMPOSITION.health_summary.v1\",\"created_timestamp\": \"2020-11-25T16:19:37.812Z\"}]")));
+    stubFor(WireMock.get("/auth/admin/realms/Num/roles/SUPER_ADMIN/users").willReturn(okJson("[]")));
+    stubFor(
+            WireMock.get("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a72")
+                    .willReturn(okJson(
+                            "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"admin-user\", \"firstname\":\"Admin\", \"email\": \"admin.doe@vitagroup.ag\"}")));
   }
 }

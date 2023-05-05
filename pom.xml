@@ -12,23 +12,21 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.7.10</version>
+    <version>2.7.11</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
   <properties>
-    <log4j2.version>2.19.0</log4j2.version>
     <commons-collections4.version>4.4</commons-collections4.version>
     <commons-io.version>2.11.0</commons-io.version>
     <ehr-sdk.version>v1.18.0</ehr-sdk.version>
     <aql-editor-backend-starter.version>v0.5.1</aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
     <modelmapper.version>3.1.1</modelmapper.version>
-    <springdoc.version>1.6.15</springdoc.version>
+    <springdoc.version>1.7.0</springdoc.version>
     <java.version>17</java.version>
-    <openfeign.version>3.1.6</openfeign.version>
     <commons-csv.version>1.10.0</commons-csv.version>
-    <jacoco.version>0.8.8</jacoco.version>
+    <jacoco.version>0.8.9</jacoco.version>
     <dependency-check.version>8.1.2</dependency-check.version>
     <failsafe.version>3.0.0-M5</failsafe.version>
     <surefire.version>3.0.0-M5</surefire.version>
@@ -39,9 +37,11 @@
     <skip.dependency.check>false</skip.dependency.check>
     <postgresql.version>42.6.0</postgresql.version>
     <hapi.version>5.5.1</hapi.version>
-    <wiremock-standalone.version>3.0.0-beta-2</wiremock-standalone.version>
-    <testcontainers.postgresql.version>1.17.6</testcontainers.postgresql.version>
+    <wiremock-standalone.version>3.0.0-beta-7</wiremock-standalone.version>
+    <testcontainers.version>1.18.0</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
+    <spring-security.version>5.8.2</spring-security.version>
+    <spring.cloud-version>2021.0.6</spring.cloud-version>
   </properties>
 
   <repositories>
@@ -58,6 +58,17 @@
       <url>https://jitpack.io</url>
     </repository>
   </repositories>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring.cloud-version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -119,7 +130,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>${testcontainers.postgresql.version}</version>
+      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -186,7 +197,6 @@
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-openfeign</artifactId>
-      <version>${openfeign.version}</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.security</groupId>
@@ -249,7 +259,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.2.0</version>
+        <version>3.5.0</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
