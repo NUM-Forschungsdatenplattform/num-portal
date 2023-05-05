@@ -40,7 +40,7 @@ public class Roles {
     if (access == null) {
       return new ArrayList<>();
     }
-    return Arrays.asList((String[])access.get(ROLES_CLAIM));
+    return (List<String>) access.get(ROLES_CLAIM);
   }
 
   public static boolean isAllowedToSet(String roleToSet, List<String> callersRoles) {

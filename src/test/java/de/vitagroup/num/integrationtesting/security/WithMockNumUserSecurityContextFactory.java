@@ -32,7 +32,7 @@ public class WithMockNumUserSecurityContextFactory
             .expiresAt(exp)
             .claim("name", numUser.name())
             .claim("email", numUser.email())
-            .claim("realm_access", Map.of("roles", numUser.roles()))
+            .claim("realm_access", Map.of("roles", Arrays.asList(numUser.roles())))
             .claim("username", numUser.username())
             .header("dummy", "dummy")
             .build();
