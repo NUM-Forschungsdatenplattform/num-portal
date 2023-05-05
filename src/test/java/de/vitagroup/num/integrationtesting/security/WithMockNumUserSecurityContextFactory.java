@@ -1,20 +1,19 @@
 package de.vitagroup.num.integrationtesting.security;
 
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import java.time.Instant;
 import lombok.SneakyThrows;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.BearerTokenAuthenticationToken;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.test.context.support.WithSecurityContextFactory;
+
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class WithMockNumUserSecurityContextFactory
     implements WithSecurityContextFactory<WithMockNumUser> {
@@ -24,46 +23,23 @@ public class WithMockNumUserSecurityContextFactory
   public SecurityContext createSecurityContext(WithMockNumUser numUser) {
 
     SecurityContext context = SecurityContextHolder.createEmptyContext();
-    JWSSigner signer = new RSASSASigner(TokenGenerator.rsaJWK);
 
-    JWSObject jwsObject =
-        new JWSObject(
-            new JWSHeader.Builder(JWSAlgorithm.RS256)
-                .keyID(TokenGenerator.rsaJWK.getKeyID())
-                .type(JOSEObjectType.JWT)
-                .build(),
-            new Payload(createPayload(numUser)));
+    Instant issuedAt = Instant.now();
+    Instant exp = numUser.expiredToken() ? issuedAt.plusNanos(1) : Instant.now().plusSeconds(60L);
+    Jwt jwt = Jwt.withTokenValue("1111")
+            .subject(numUser.userId())
+            .issuedAt(issuedAt)
+            .expiresAt(exp)
+            .claim("name", numUser.name())
+            .claim("email", numUser.email())
+            .claim("realm_access", Map.of("roles", Arrays.asList(numUser.roles())))
+            .claim("username", numUser.username())
+            .header("dummy", "dummy")
+            .build();
+    Set<GrantedAuthority> authorities = Arrays.stream(numUser.roles()).map(r -> "ROLE_" + r).map(r -> new SimpleGrantedAuthority(r)).collect(Collectors.toSet());
 
-    jwsObject.sign(signer);
-
-    String token = jwsObject.serialize();
-
-    context.setAuthentication(new BearerTokenAuthenticationToken(token));
+    context.setAuthentication( new JwtAuthenticationToken(jwt, authorities));
 
     return context;
-  }
-
-  private String createPayload(WithMockNumUser numUser) {
-
-    JSONObject payload = new JSONObject();
-
-    payload.put(
-        "exp",
-        numUser.expiredToken()
-            ? Instant.now().toEpochMilli()
-            : Instant.now().plusSeconds(60L).toEpochMilli());
-
-    payload.put("iat", Instant.now().toEpochMilli());
-    payload.put("username", numUser.username());
-    payload.put("name", numUser.name());
-    payload.put("email", numUser.email());
-    payload.put("sub", numUser.userId());
-
-    JSONObject roles = new JSONObject();
-    roles.put("roles", new JSONArray(numUser.roles()));
-
-    payload.put("realm_access", roles);
-
-    return payload.toString();
   }
 }
