@@ -294,21 +294,18 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);
     }
+    protected ResponseEntity<Object> handleBindException(BindException exception, HttpHeaders headers,
+                                                         HttpStatus status, WebRequest request) {
 
-    // TODO test behaviour and find replacement if is the case because of deprecated handleBindException
-    // as of 6.0 since ModelAttributeMethodProcessor now raises the MethodArgumentNotValidException subclass instead.
-//    protected ResponseEntity<Object> handleBindException(BindException exception, HttpHeaders headers,
-//                                                         HttpStatus status, WebRequest request) {
-//
-//        Map<String, String> errors = new HashMap<>();
-//        exception.getFieldErrors()
-//                .forEach( error -> errors.put( error.getField(), error.getDefaultMessage() ) );
-//
-//        ErrorDetails errorDetails = ErrorDetails
-//                .builder()
-//                .message( "Error" )
-//                .details( errors )
-//                .build();
-//        return ResponseEntity.status( HttpStatus.BAD_REQUEST ).body( errorDetails );
-//    }
+        Map<String, String> errors = new HashMap<>();
+        exception.getFieldErrors()
+                .forEach( error -> errors.put( error.getField(), error.getDefaultMessage() ) );
+
+        ErrorDetails errorDetails = ErrorDetails
+                .builder()
+                .message( "Error" )
+                .details( errors )
+                .build();
+        return ResponseEntity.status( HttpStatus.BAD_REQUEST ).body( errorDetails );
+    }
 }
