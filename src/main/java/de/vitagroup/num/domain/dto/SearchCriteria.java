@@ -1,7 +1,7 @@
 package de.vitagroup.num.domain.dto;
 
 import de.vitagroup.num.service.exception.BadRequestException;
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Data
 @Builder
-@ApiModel
+@Schema
 @NoArgsConstructor
 @AllArgsConstructor
 public class SearchCriteria {
@@ -30,6 +30,8 @@ public class SearchCriteria {
     private static final String AUTHOR_NAME = "author";
 
     public static final String FILTER_BY_STATUS = "status";
+
+    public static final String FILTER_BY_ROLES = "roles";
 
     private Map<String, ?> filter;
 

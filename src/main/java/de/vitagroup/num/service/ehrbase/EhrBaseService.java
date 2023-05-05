@@ -4,7 +4,7 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_MESSAGE;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL_QUERY;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_DATA_COLUMNS_IN_THE_QUERY_RESULT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.QUERY_RESULT_DOESN_T_CONTAIN_EHR_ID_COLUMN;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.SystemException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.ehrbase.aql.binder.AqlBinder;
@@ -37,12 +40,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.service.exception.BadRequestException;
-import de.vitagroup.num.service.exception.SystemException;
+/**
+ * Service using the EhrBaseSDK to talk to the EhrBaseAPI
+ */
 import lombok.extern.slf4j.Slf4j;
 
-/** Service using the EhrBaseSDK to talk to the EhrBaseAPI */
 @Slf4j
 @Service
 public class EhrBaseService {
@@ -55,7 +57,7 @@ public class EhrBaseService {
   private static final String NAME = "name";
   private static final String PATH = "path";
   private static final String PSEUDONYM = "pseudonym";
-  private static final String EHR_ID_PATH = "/ehr_id/value";
+  private static final String EHR_STATUS_PATH = "/ehr_status/subject/external_ref/id/value";
 
   private final DefaultRestClient restClient;
   private final CompositionResponseDataBuilder compositionResponseDataBuilder;
@@ -114,7 +116,7 @@ public class EhrBaseService {
    */
   public List<QueryResponseData> executeRawQuery(AqlDto aqlDto, Long projectId) {
 
-    addSelectEhrId(aqlDto);
+    addSelectSecondlevelPseudonyms(aqlDto);
     Query<Record> query = new AqlBinder().bind(aqlDto).getLeft();
 
     try {
@@ -157,13 +159,13 @@ public class EhrBaseService {
     }
   }
 
-  private void addSelectEhrId(AqlDto aqlDto) {
+  private void addSelectSecondlevelPseudonyms(AqlDto aqlDto) {
     SelectDto selectDto = aqlDto.getSelect();
     List<SelectStatementDto> selectStatementDtos = selectDto.getStatement();
-    SelectFieldDto ehrIdStatement = new SelectFieldDto();
-    ehrIdStatement.setAqlPath(EhrFields.EHR_ID().getPath());
-    ehrIdStatement.setContainmentId(aqlDto.getEhr().getContainmentId());
-    selectStatementDtos.add(0, ehrIdStatement);
+    SelectFieldDto pseudosStatement = new SelectFieldDto();
+    pseudosStatement.setAqlPath(EHR_STATUS_PATH);
+    pseudosStatement.setContainmentId(aqlDto.getEhr().getContainmentId());
+    selectStatementDtos.add(0, pseudosStatement);
     selectDto.setStatement(selectStatementDtos);
   }
 
@@ -178,10 +180,10 @@ public class EhrBaseService {
 
   public List<QueryResponseData> flattenIfCompositionPresent(
       QueryResponseData responseData, Long projectId) {
-    List<String> ehrIds = getAndRemoveEhrIdColumn(responseData);
+    List<String> ehrStatusIds = getAndRemoveEhrStatusColumn(responseData);
     List<QueryResponseData> listOfResponseData = flattenCompositions(responseData);
     if (projectId != null) {
-      addPseudonyms(ehrIds, listOfResponseData, projectId);
+      addPseudonyms(ehrStatusIds, listOfResponseData, projectId);
     }
     return listOfResponseData;
   }
@@ -226,12 +228,10 @@ public class EhrBaseService {
     return aggregatedFlattenedCompositions;
   }
 
-  private void addPseudonyms(
-      List<String> ehrIds, List<QueryResponseData> listOfResponseData, Long projectId) {
-    List<String> pseudonyms =
-        ehrIds.stream()
-            .map(ehrId -> pseudonymity.getPseudonym(ehrId, projectId))
-            .collect(Collectors.toList());
+  private void addPseudonyms(List<String> secondLevelPseudos, List<QueryResponseData> listOfResponseData, Long projectId) {
+
+    List<String> pseudonyms = pseudonymity.getPseudonyms(secondLevelPseudos, projectId);
+
     Map<String, String> pseudonymityColumn = new HashMap<>();
     pseudonymityColumn.put(PATH, PSEUDONYM);
     pseudonymityColumn.put(NAME, PSEUDONYM);
@@ -244,15 +244,15 @@ public class EhrBaseService {
     }
   }
 
-  private List<String> getAndRemoveEhrIdColumn(QueryResponseData compositions) {
+  private List<String> getAndRemoveEhrStatusColumn(QueryResponseData compositions) {
 
     List<Map<String, String>> columns = compositions.getColumns();
     if (columns == null || columns.size() < 2) {
       throw new BadRequestException(EhrBaseService.class, NO_DATA_COLUMNS_IN_THE_QUERY_RESULT);
     }
-    String ehrIdPath = columns.get(0).get(PATH);
-    if (ehrIdPath == null || !ehrIdPath.equals(EHR_ID_PATH)) {
-      throw new SystemException(EhrBaseService.class, QUERY_RESULT_DOESN_T_CONTAIN_EHR_ID_COLUMN);
+    String ehrStatusPath = columns.get(0).get(PATH);
+    if (ehrStatusPath == null || !ehrStatusPath.equals(EHR_STATUS_PATH)) {
+      throw new SystemException(EhrBaseService.class, QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN);
     }
     columns.remove(0);
     return compositions.getRows().stream()

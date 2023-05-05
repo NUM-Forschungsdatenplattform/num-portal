@@ -326,6 +326,13 @@ public class UserServiceTest {
     }
 
     @Test
+    public void getUserRolesTestOK() {
+        userService.getUserRoles("6", "4");
+        Mockito.verify(userDetailsService, Mockito.times(1)).checkIsUserApproved("4");
+        Mockito.verify(keycloakFeign, Mockito.times(1)).getRolesOfUser("6");
+    }
+
+    @Test
     public void shouldAddNewRole() {
         userService.setUserRoles(
                 "4",
@@ -381,7 +388,7 @@ public class UserServiceTest {
     }
     @Test
     public void shouldHandleMissingOwner() {
-        when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null), null));
+        when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null), null, null));
         de.vitagroup.num.domain.admin.User userReturn = userService.getOwner("missingUserId");
 
         assertNull(userReturn);
@@ -533,6 +540,16 @@ public class UserServiceTest {
         Assert.assertEquals(1, result.size());
     }
 
+    @Test(expected = BadRequestException.class)
+    public void shouldHandleInvalidSortField() {
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .sortBy("DESC")
+                .sort("invalid field")
+                .build();
+        userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
+        Mockito.verify(userDetailsService, Mockito.never()).getUsers(Mockito.any(), Mockito.any(UserDetailsSpecification.class));
+    }
+
     @Test
     public void searchUsersWithPaginationAsSuperAdminTest() {
         Pageable pageable = PageRequest.of(0, 50);
@@ -574,13 +591,16 @@ public class UserServiceTest {
                                             .lastName("doe")
                                             .email("john.doe@vitagroup.ag")
                                             .createdTimestamp(System.currentTimeMillis())
+                                            .roles(Set.of(Roles.RESEARCHER, Roles.STUDY_COORDINATOR, Roles.CRITERIA_EDITOR))
                                             .build());
         usersCache.put("userId-two", User.builder()
                 .firstName("Ana")
                 .lastName("Doe")
                 .id("userId-two")
                 .email("ana-maria.doe@vitagroup.ag")
-                .createdTimestamp(System.currentTimeMillis()).build());
+                .createdTimestamp(System.currentTimeMillis())
+                .roles(Set.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR, Roles.CRITERIA_EDITOR))
+                .build());
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
         Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
@@ -624,6 +644,7 @@ public class UserServiceTest {
         Pageable pageable = PageRequest.of(0, 50);
         Map<String, String> filter = new HashMap<>();
         filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
+        filter.put(SearchCriteria.FILTER_BY_ROLES, "ORGANIZATION_ADMIN,RESEARCHER");
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
                 .sort("DESC")
@@ -675,12 +696,40 @@ public class UserServiceTest {
 
     @Test
     public void initializeUsersCacheTest() {
-        List<String> usersUUID = Arrays.asList("4", "5");
+        List<String> usersUUID = Arrays.asList("4", "5","99");
         ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
         Mockito.when(userDetailsService.getAllUsersUUID()).thenReturn(usersUUID);
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        Mockito.when(keycloakFeign.getUser("99"))
+                .thenThrow(new FeignException.NotFound("user not found",
+                        Request.create(Request.HttpMethod.GET, "dummyURL", Collections.emptyMap(), Request.Body.empty(), null), null, null));
         userService.initializeUsersCache();
         Assert.assertEquals(2, usersCache.getNativeCache().size());
+    }
+
+    @Test
+    public void addUserToCacheTest() {
+        userService.addUserToCache("4");
+        Mockito.verify(keycloakFeign, Mockito.times(1)).getUser("4");
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUserDetailsById("4");
+    }
+
+    @Test
+    public void refreshUsersCacheTest() {
+        ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+        usersCache.put("userId-one", User.builder()
+                .id("userId-one")
+                .firstName("John")
+                .lastName("doe")
+                .email("john.doe@vitagroup.ag")
+                .createdTimestamp(System.currentTimeMillis())
+                .build());
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        Mockito.when(userDetailsService.getAllUsersUUID()).thenReturn(Arrays.asList("4","5","6"));
+        userService.refreshUsersCache();
+        Assert.assertNull(usersCache.getNativeCache().get("userId-one"));
+        Assert.assertNotNull(usersCache.getNativeCache().get("4"));
+        Mockito.verify(userDetailsService, Mockito.times(1)).getAllUsersUUID();
     }
 
     private boolean testAddRole(Role role, String userRole) {

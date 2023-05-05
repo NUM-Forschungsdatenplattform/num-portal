@@ -144,7 +144,7 @@ public class AqlService {
       if (authorOrder != null) {
         Comparator<Aql> byAuthorName = Comparator.comparing(aql -> {
           User owner = userService.getOwner(aql.getOwner().getUserId());
-          return owner.getFullName();
+          return owner.getFullName().toUpperCase();
         });
         Sort.Direction sortOrder = authorOrder.getDirection();
         if (sortOrder.isAscending()) {

@@ -11,7 +11,10 @@ import de.vitagroup.num.service.UserService;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.HealthEndpoint;
@@ -33,6 +36,8 @@ import java.util.Set;
 @RestController
 @RequestMapping(value = "/admin/", produces = "application/json")
 @AllArgsConstructor
+@Tag(description = "admin controller operations", name = "admin-controller")
+@SecurityRequirement(name = "security_auth")
 public class AdminController extends CustomizedExceptionHandler {
 
   private static final String SUCCESS_REPLY = "Success";
@@ -75,7 +80,7 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("user/{userId}")
-  @ApiOperation(value = "Retrieves the information about the given user")
+  @Operation(description = "Retrieves the information about the given user")
   public ResponseEntity<User> getUser(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserById(userId, true, principal.getSubject()));
@@ -83,7 +88,7 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("user/{userId}/role")
-  @ApiOperation(value = "Retrieves the roles of the given user")
+  @Operation(description = "Retrieves the roles of the given user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<Set<de.vitagroup.num.domain.admin.Role>> getRolesOfUser(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
@@ -92,7 +97,7 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("user/{userId}/role")
-  @ApiOperation(value = "Updates the users roles to the given set.")
+  @Operation(description = "Updates the users roles to the given set.")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<List<String>> updateRoles(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -107,7 +112,7 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("user/{userId}/organization")
-  @ApiOperation(value = "Sets the user's organization")
+  @Operation(description = "Sets the user's organization")
   @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<String> setOrganization(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -120,7 +125,7 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("user/{userId}")
-  @ApiOperation(value = "Creates user details")
+  @Operation(description = "Creates user details")
   public ResponseEntity<String> createUserOnFirstLogin(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
 
@@ -130,7 +135,7 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("user/{userId}/name")
-  @ApiOperation(value = "Changes user name")
+  @Operation(description = "Changes user name")
   public ResponseEntity<String> changeUserName(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId,
       @NotNull @Valid @RequestBody UserNameDto userName) {
@@ -140,7 +145,7 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("user/{userId}/approve")
-  @ApiOperation(value = "Adds the given organization to the user")
+  @Operation(description = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<String> approveUser(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
@@ -150,9 +155,15 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("user")
-  @ApiOperation(value = "Retrieves a set of users that match the search string")
+  @Operation(description = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
   public ResponseEntity<Page<User>> searchUsers(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable,
+          @Parameter(
+              description =
+          @Parameter(description = "A string contained in username, first or last name, or email")
+          @Parameter(
+              description =
+  @Operation(description = "Retrieves a set of users that match the search string")
                                                 SearchCriteria criteria) {
     // filter[approved] true, false (optional -> omitting it returns both)
     // filter[search] search input (optional)

@@ -69,7 +69,7 @@ public class ProjectService {
   private static final String ZIP_MEDIA_TYPE = "application/zip";
   private static final String CSV_FILE_PATTERN = "%s_%s.csv";
 
-  private final List<String> availableSortFields = Arrays.asList(PROJECT_NAME, AUTHOR_NAME, ORGANIZATION_NAME, PROJECT_STATUS);
+  private final List<String> availableSortFields = Arrays.asList(PROJECT_NAME, AUTHOR_NAME, ORGANIZATION_NAME, PROJECT_STATUS, PROJECT_CREATE_DATE);
 
   private static final String AUTHOR_NAME = "author";
 
@@ -78,6 +78,8 @@ public class ProjectService {
   private static final String PROJECT_NAME = "name";
 
   private static final String PROJECT_STATUS = "status";
+
+  private static final String PROJECT_CREATE_DATE = "createDate";
 
   private final ProjectRepository projectRepository;
 
@@ -99,7 +101,8 @@ public class ProjectService {
 
   private final ModelMapper modelMapper;
 
-  @Nullable private final ZarsService zarsService;
+  @Nullable
+  private final ZarsService zarsService;
 
   private final ProjectPolicyService projectPolicyService;
 
@@ -249,13 +252,15 @@ public class ProjectService {
       response.forEach(data -> data.setName(templateId));
       return response;
 
+    } catch (ResourceNotFound e) {
+      log.error("Could not retrieve data for template {} and project {}. Failed with message {} ", templateId, projectId, e.getMessage(), e);
+      log.error(e.getMessage(), e);
     } catch (Exception e) {
       log.error(e.getMessage(), e);
-
-      QueryResponseData response = new QueryResponseData();
-      response.setName(templateId);
-      return List.of(response);
     }
+    QueryResponseData response = new QueryResponseData();
+    response.setName(templateId);
+    return List.of(response);
   }
 
   public List<QueryResponseData> executeAql(String query, Long projectId, String userId) {
@@ -792,9 +797,9 @@ public class ProjectService {
 
   private boolean isTransitionMadeByApprover(ProjectStatus oldStatus, ProjectStatus newStatus) {
     return (ProjectStatus.APPROVED.equals(newStatus)
-            || ProjectStatus.DENIED.equals(newStatus)
-            || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
-            || ProjectStatus.REVIEWING.equals(newStatus))
+        || ProjectStatus.DENIED.equals(newStatus)
+        || ProjectStatus.CHANGE_REQUEST.equals(newStatus)
+        || ProjectStatus.REVIEWING.equals(newStatus))
         && !newStatus.equals(oldStatus);
   }
 
@@ -818,12 +823,12 @@ public class ProjectService {
       List<UserDetails> newResearchers) {
     ProjectStatus newStatus = project.getStatus();
     if (((newStatus == ProjectStatus.PENDING
-                || newStatus == ProjectStatus.APPROVED
-                || newStatus == ProjectStatus.PUBLISHED
-                || newStatus == ProjectStatus.CLOSED)
-            && newStatus != oldStatus)
+        || newStatus == ProjectStatus.APPROVED
+        || newStatus == ProjectStatus.PUBLISHED
+        || newStatus == ProjectStatus.CLOSED)
+        && newStatus != oldStatus)
         || (newStatus == ProjectStatus.PUBLISHED
-            && researchersAreDifferent(oldResearchers, newResearchers))) {
+        && researchersAreDifferent(oldResearchers, newResearchers))) {
       registerToZars(project);
     }
   }
