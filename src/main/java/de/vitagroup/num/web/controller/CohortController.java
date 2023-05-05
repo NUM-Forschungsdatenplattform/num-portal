@@ -24,13 +24,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.WebRequest;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import org.springframework.web.context.request.WebRequest;
 
 @Slf4j
 @RestController
@@ -149,6 +149,6 @@ public class CohortController extends CustomizedExceptionHandler {
             .message( "Request body is required" )
             .details( errors )
             .build();
-    return ResponseEntity.status( HttpStatus.BAD_REQUEST ).body( errorDetails );
+    return ResponseEntity.status(status).body( errorDetails );
   }
 }

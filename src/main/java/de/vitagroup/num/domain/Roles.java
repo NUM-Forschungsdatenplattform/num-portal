@@ -2,6 +2,7 @@ package de.vitagroup.num.domain;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.oauth2.jwt.Jwt;

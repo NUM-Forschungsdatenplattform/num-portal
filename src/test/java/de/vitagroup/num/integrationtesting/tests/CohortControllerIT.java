@@ -1,13 +1,5 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static de.vitagroup.num.domain.Roles.MANAGER;
-import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
-import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.domain.Operator;
@@ -19,9 +11,6 @@ import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -29,11 +18,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static de.vitagroup.num.domain.Roles.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 public class CohortControllerIT extends IntegrationTest {
 
   private static final String COHORT_PATH = "/cohort";
   private static final String COHORT_SIZE_PATH = "/cohort/size";
-  private static final String AQL_PATH = "/aql";
 
   @Autowired public MockMvc mockMvc;
   @Autowired private ObjectMapper mapper;
