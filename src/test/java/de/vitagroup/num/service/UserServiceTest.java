@@ -12,6 +12,7 @@ import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
+import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
@@ -71,6 +72,9 @@ public class UserServiceTest {
 
     @Spy
     private final ModelMapper modelMapper = new ModelMapper();
+
+    @Spy
+    private final OrganizationMapper organizationMapper = new OrganizationMapper(modelMapper);
 
     @InjectMocks
     private UserService userService;
