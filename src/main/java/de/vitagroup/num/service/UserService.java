@@ -7,6 +7,7 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.exception.BadRequestException;
@@ -36,16 +37,21 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Nullable;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
+import static java.util.Objects.isNull;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class UserService {
+  private final UserDetailsRepository userDetailsRepository;
 
   private static final int MAX_USER_COUNT = 100000;
 
@@ -224,7 +230,7 @@ public class UserService {
       removeRoles =
           existingRoles.stream()
               .filter(role -> !roleNames.contains(role.getName()))
-              .collect(Collectors.toList())
+              .toList()
               .toArray(new Role[] {});
 
       addRoles =
@@ -238,7 +244,7 @@ public class UserService {
                       throw new BadRequestException(UserService.class, UNKNOWN_ROLE);
                     }
                   })
-              .collect(Collectors.toList())
+              .toList()
               .toArray(new Role[] {});
 
       if (Arrays.stream(removeRoles)
@@ -587,6 +593,40 @@ public class UserService {
       initializeUsersCache();
     }
   }
+  private void deleteNotApprovedUser(UserDetails userDetails) {
+  	String userId = userDetails.getUserId();
+    try {
+		if (userId != null && userDetails.isNotApproved()){
+
+          User userForDeletion = keycloakFeign.getUser(userDetails.getUserId());
+          if (isNull(userForDeletion.getCreatedTimestamp())){
+            return;
+          }
+          Timestamp createdAt = new Timestamp(userForDeletion.getCreatedTimestamp());
+          Date createdAtDate=new Date(createdAt.getTime());
+          boolean shouldDelete = LocalDateTime.from(createdAtDate.toInstant().atZone(ZoneId.of("UTC"))).
+                  plusDays(30).isBefore(LocalDateTime.now());
+          if (shouldDelete) {
+            keycloakFeign.deleteUser(userId);
+            userDetailsService.deleteUserDetails(userId);
+            log.warn("- deleteUnapprovedUsersAfter30Days - userID: {} isApproved: {} deletedUser: {}", userId, userDetails.isApproved(), userForDeletion);
+          }
+          }
+    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
+    } catch (FeignException.NotFound e) {
+      log.warn("User not found in keycloak: {}", userId);
+      throw new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, userId));
+    }
+  }
+
+  @Scheduled(fixedRate = 8*60*60*1000)//24*60*60*1000 - each 8 hours
+  @Transactional
+  public void deleteUnapprovedUsersAfter30Days() {
+    List<UserDetails> userIDs = userDetailsRepository.findAll();
+    userIDs.forEach(this::deleteNotApprovedUser);
+  }
 
   @CachePut(cacheNames = USERS_CACHE, key = "#userIdToChange")
   @Transactional
@@ -616,7 +656,7 @@ public class UserService {
   /**
    * Retrieved a list of users UUID that match the search criteria
    * @param search A string contained in username, first or last name, or email
-   * @return
+   * @return a Set of filteredUsers
    */
   public Set<String> findUsersUUID(String search) {
     return filterKeycloakUsers(search, Collections.emptyList());

@@ -10,8 +10,8 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
-import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
@@ -38,10 +38,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.nio.charset.Charset;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
@@ -58,6 +61,9 @@ public class UserServiceTest {
     private UserDetailsService userDetailsService;
 
     @Mock
+    private UserDetailsRepository userDetailsRepository;
+
+    @Mock
     private NotificationService notificationService;
 
     @Mock
@@ -65,9 +71,6 @@ public class UserServiceTest {
 
     @Spy
     private final ModelMapper modelMapper = new ModelMapper();
-
-    @Spy
-    private final OrganizationMapper organizationMapper = new OrganizationMapper(modelMapper);
 
     @InjectMocks
     private UserService userService;
@@ -516,6 +519,71 @@ public class UserServiceTest {
 
         assertThat(notificationSent.size(), is(1));
         assertThat(notificationSent.get(0).getClass(), is(UserNameUpdateNotification.class));
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30Days() {
+        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
+        getUserDetailsFromRepository(localDateTime);
+
+        when(keycloakFeign.getUser("4")).thenReturn(User.builder().id("4").createdTimestamp(localDateTime.atZone(ZoneOffset.UTC).toInstant().toEpochMilli()).build());
+        userService.deleteUnapprovedUsersAfter30Days();
+    }
+
+    private void getUserDetailsFromRepository(LocalDateTime localDateTime) {
+        when(userDetailsRepository.findAll()).thenReturn(
+                List.of(
+                        UserDetails.builder()
+                                .userId("4")
+                                .organization(
+                                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                                .approved(false)
+                                .createdDate(localDateTime)
+                                .build())
+        );
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30DaysKeycloakCreatedTimestampIsMissing() {
+        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
+        getUserDetailsFromRepository(localDateTime);
+
+        userService.deleteUnapprovedUsersAfter30Days();
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30DaysNoUser() {
+        userService.deleteUnapprovedUsersAfter30Days();
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30DaysResourceNotFound() {
+        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
+        getUserDetailsFromRepository(localDateTime);
+
+        when(keycloakFeign.getUser("4")).thenThrow(new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, "4")));
+        assertThrows(ResourceNotFound.class,
+                () -> userService.deleteUnapprovedUsersAfter30Days());
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30DaysBadRequest() {
+        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
+        getUserDetailsFromRepository(localDateTime);
+
+        when(keycloakFeign.getUser("4")).thenThrow(FeignException.BadRequest.class);
+        assertThrows(SystemException.class,
+                () -> userService.deleteUnapprovedUsersAfter30Days());
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30DaysInternalServerError() {
+        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
+        getUserDetailsFromRepository(localDateTime);
+
+        when(keycloakFeign.getUser("4")).thenThrow(FeignException.InternalServerError.class);
+        assertThrows(SystemException.class,
+                () -> userService.deleteUnapprovedUsersAfter30Days());
     }
 
     @Test(expected = ForbiddenException.class)
