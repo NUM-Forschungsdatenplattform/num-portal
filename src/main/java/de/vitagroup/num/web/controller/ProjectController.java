@@ -58,7 +58,7 @@ public class ProjectController extends CustomizedExceptionHandler {
   private final ProjectViewMapper projectViewMapper;
 
   @AuditLog
-  @GetMapping
+  @GetMapping("/all")
   @Operation(description = "Retrieves a list of projects the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<Page<ProjectViewTO>> getProjects(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable, SearchCriteria criteria) {
