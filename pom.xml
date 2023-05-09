@@ -213,7 +213,7 @@
     <dependency>
       <groupId>org.openehealth.ipf.commons</groupId>
       <artifactId>ipf-commons-audit</artifactId>
-      <version>4.4.0</version>
+      <version>4.5.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>

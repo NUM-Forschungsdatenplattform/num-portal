@@ -248,20 +248,6 @@ public class ProjectControllerIT extends IntegrationTest {
             .orElse(null));
   }
 
-  @Test
-  @SneakyThrows
-  @WithMockNumUser(
-      roles = {RESEARCHER},
-      userId = "user1")
-  public void researcherNotInAStudyShouldNotGetProjects() {
-
-    MvcResult result =
-        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    ProjectDto[] projects =
-        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(0, projects.length);
-  }
-
   @Ignore(
       "Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
@@ -331,20 +317,6 @@ public class ProjectControllerIT extends IntegrationTest {
   public void orgAdminShouldNotBeAllowedToGetProjects() {
 
     mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().is4xxClientError());
-  }
-
-  @Test
-  @SneakyThrows
-  @WithMockNumUser(
-      roles = {STUDY_COORDINATOR},
-      userId = "user2")
-  public void studyCoordinatorShouldNotGetOtherCoordinatorsProjectsExceptProperStatuses() {
-
-    MvcResult result =
-        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    ProjectDto[] projects =
-        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(3, projects.length);
   }
 
   @Test

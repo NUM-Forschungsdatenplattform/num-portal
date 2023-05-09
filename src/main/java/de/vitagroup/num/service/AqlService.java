@@ -220,34 +220,6 @@ public class AqlService {
     }
   }
 
-  /**
-   * Searches among a list of visible AQLs.
-   *
-   * @param name A string contained in the name of the aqls
-   * @param filter Type of the search. Search all owned or public, searched owned only or search
-   *     among own organization
-   * @param loggedInUserId the user ID of the user sending the search request
-   * @return the list of AQLs that match the search filters
-   */
-  public List<Aql> searchAqls(String name, SearchFilter filter, String loggedInUserId) {
-
-    var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
-
-    String searchInput = StringUtils.isNotEmpty(name) ? name.toUpperCase() : name;
-
-    switch (filter) {
-      case ALL:
-        return aqlRepository.findAllOwnedOrPublicByName(userDetails.getUserId(), searchInput);
-      case OWNED:
-        return aqlRepository.findAllOwnedByName(userDetails.getUserId(), searchInput);
-      case ORGANIZATION:
-        return aqlRepository.findAllOrganizationOwnedByName(
-            userDetails.getOrganization().getId(), userDetails.getUserId(), searchInput);
-      default:
-        return List.of();
-    }
-  }
-
   public long getAqlSize(SlimAqlDto aql, String userId) {
     userDetailsService.checkIsUserApproved(userId);
 
@@ -273,8 +245,7 @@ public class AqlService {
 
   public Page<AqlCategory> getAqlCategories(Pageable pageable, SearchCriteria searchCriteria) {
     Optional<Sort> sortBy = validateAndGetSort(searchCriteria);
-    PageRequest pageRequest = sortBy.isPresent() ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortBy.get()) :
-                                                   PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
+    PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortBy.get());
     return aqlCategoryRepository.findAllCategories(pageRequest);
   }
 
@@ -344,7 +315,7 @@ public class AqlService {
         return Optional.of(JpaSort.unsafe(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()), "name->>'en'"));
       }
     }
-    return Optional.empty();
+    return Optional.of(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
   }
 
   private Sort validateAndGetSortForAQLQuery(SearchCriteria searchCriteria) {
