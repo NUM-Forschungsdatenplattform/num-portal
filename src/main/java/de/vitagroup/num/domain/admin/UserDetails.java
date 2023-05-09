@@ -3,6 +3,7 @@ package de.vitagroup.num.domain.admin;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.vitagroup.num.domain.Organization;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -28,7 +29,16 @@ public class UserDetails implements Serializable {
 
   private boolean approved = false;
 
+  private LocalDateTime createdDate;
+
   public boolean isNotApproved() {
     return !approved;
   }
+
+  public UserDetails(String userId, Organization organization, boolean approved) {
+    this.userId = userId;
+    this.organization = organization;
+    this.approved = approved;
+  }
+
 }

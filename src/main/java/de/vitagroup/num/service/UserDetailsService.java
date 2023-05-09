@@ -15,6 +15,8 @@ import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
 import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import de.vitagroup.num.service.exception.ForbiddenException;
@@ -78,7 +80,8 @@ public class UserDetailsService {
     if (userDetails.isPresent()) {
       return userDetails.get();
     } else {
-      UserDetails newUserDetails = UserDetails.builder().userId(userId).build();
+      UserDetails newUserDetails = UserDetails.builder().userId(userId)
+      .createdDate(LocalDateTime.now(ZoneOffset.UTC)).build();
       organizationService
           .resolveOrganization(emailAddress)
           .ifPresent(newUserDetails::setOrganization);
@@ -232,7 +235,7 @@ public class UserDetailsService {
     String userDepartment = !departmentAtrs.isEmpty() ? departmentAtrs.get(0) : StringUtils.EMPTY;
     List<String> requestedRoles = getUserAttribute(user, USER_ATTRIBUTE_REQUESTED_ROLE);
     List<String> notesAtrs = getUserAttribute(user, USER_ATTRIBUTE_ADDITIONAl_NOTES);
-    String notes = !notesAtrs.isEmpty() ? notesAtrs.get(0) : StringUtils.EMPTY;;
+    String notes = !notesAtrs.isEmpty() ? notesAtrs.get(0) : StringUtils.EMPTY;
 
     admins.forEach(
         admin -> {
