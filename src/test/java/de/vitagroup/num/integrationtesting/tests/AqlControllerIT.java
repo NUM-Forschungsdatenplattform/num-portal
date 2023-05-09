@@ -81,11 +81,18 @@ public class AqlControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
-  @WithMockNumUser(roles = {RESEARCHER})
-  @Ignore("For this test to work we need to stub the calls made to keycloak to retrieve users")
+  @WithMockNumUser(roles = {CRITERIA_EDITOR})
   public void shouldSaveAndRetrieveAqlSuccessfully() {
 
-    Aql aql = Aql.builder().name("t1").query("t3").publicAql(true).build();
+    Aql aql = Aql.builder()
+            .name("t1")
+            .use("aql use")
+            .purpose("aql purpose")
+            .nameTranslated("aql name translated")
+            .useTranslated("aql use translated")
+            .purposeTranslated("aql purpose translated")
+            .query("t3")
+            .publicAql(true).build();
     String aqlJson = mapper.writeValueAsString(aql);
 
     MvcResult result =
@@ -98,6 +105,8 @@ public class AqlControllerIT extends IntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value(aql.getName()))
             .andExpect(jsonPath("$.query").value(aql.getQuery()))
+            .andExpect(jsonPath("$.purpose").value(aql.getPurpose()))
+            .andExpect(jsonPath("$.purposeTranslated").value(aql.getPurposeTranslated()))
             .andReturn();
 
     AqlDto dto = mapper.readValue(result.getResponse().getContentAsString(), AqlDto.class);
@@ -115,11 +124,17 @@ public class AqlControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
-  @WithMockNumUser(roles = {RESEARCHER})
-  @Ignore("For this test to work we need to stub the calls made to keycloak to retrieve users")
+  @WithMockNumUser(roles = {CRITERIA_EDITOR})
+  //@Ignore("For this test to work we need to stub the calls made to keycloak to retrieve users")
   public void shouldSaveAndDeleteAqlSuccessfully() {
 
-    Aql aql = Aql.builder().name("d1").query("d3").publicAql(true).build();
+    Aql aql = Aql.builder()
+            .name("d1")
+            .query("d3")
+            .use("d1 aql use")
+            .purpose("d1 aql purpose")
+
+            .publicAql(true).build();
     String aqlJson = mapper.writeValueAsString(aql);
 
     MvcResult result =

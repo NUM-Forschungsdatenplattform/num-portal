@@ -45,7 +45,7 @@ public class AqlController extends CustomizedExceptionHandler {
   @AuditLog
   @GetMapping("/{id}")
   @Operation(description = "Retrieves public or owned aql query by id.")
-  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
+  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<AqlDto> getAqlById(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @NotEmpty @PathVariable Long id) {
     return ResponseEntity.ok(
