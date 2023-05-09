@@ -52,6 +52,25 @@ public class OrganizationController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(mapper.convertToDto(organizationService.getOrganizationById(id)));
   }
 
+  /**
+   * used when edit user
+   * @param principal
+   * @return
+   */
+  @AuditLog
+  @GetMapping
+  @Operation(description = "Retrieves a list of available organizations")
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
+  public ResponseEntity<List<OrganizationDto>> getAllOrganizations(
+          @AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(
+            organizationService
+                    .getAllOrganizations(Roles.extractRoles(principal), principal.getSubject())
+                    .stream()
+                    .map(mapper::convertToDto)
+                    .collect(Collectors.toList()));
+  }
+
   @AuditLog
   @GetMapping("/all")
   @Operation(description = "Retrieves a list of available organizations")

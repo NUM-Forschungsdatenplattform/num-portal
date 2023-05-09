@@ -84,6 +84,24 @@ public class OrganizationService {
 
   /**
    * Retrieves a list with available organizations
+   *
+   * @return List with available organizations
+   * @param roles
+   * @param loggedInUserId
+   */
+  public List<Organization> getAllOrganizations(List<String> roles, String loggedInUserId) {
+    UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
+
+    if (roles.contains(Roles.SUPER_ADMIN)) {
+      return organizationRepository.findAll();
+    } else if (roles.contains(Roles.ORGANIZATION_ADMIN)) {
+      return List.of(user.getOrganization());
+    }
+    return List.of();
+  }
+
+  /**
+   * Retrieves a list with available organizations
    * @param roles
    * @param loggedInUserId
    * @param searchCriteria
