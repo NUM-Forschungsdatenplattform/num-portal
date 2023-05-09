@@ -83,10 +83,11 @@ public class OrganizationService {
   }
 
   /**
-   * TODO remove this when FE is ready
    * Retrieves a list with available organizations
    *
    * @return List with available organizations
+   * @param roles
+   * @param loggedInUserId
    */
   public List<Organization> getAllOrganizations(List<String> roles, String loggedInUserId) {
     UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
@@ -99,6 +100,14 @@ public class OrganizationService {
     return List.of();
   }
 
+  /**
+   * Retrieves a list with available organizations
+   * @param roles
+   * @param loggedInUserId
+   * @param searchCriteria
+   * @param pageable
+   * @return
+   */
   public Page<Organization> getAllOrganizations(List<String> roles, String loggedInUserId, SearchCriteria searchCriteria, Pageable pageable) {
     UserDetails user = userDetailsService.checkIsUserApproved(loggedInUserId);
     OrganizationSpecification organizationSpecification = new OrganizationSpecification(searchCriteria.getFilter());

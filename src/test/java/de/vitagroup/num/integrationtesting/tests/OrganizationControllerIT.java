@@ -62,7 +62,7 @@ public class OrganizationControllerIT extends IntegrationTest {
   public void shouldGetAllOrganizationsSuccessfullyWithPaginationAndFilter() {
     mockMvc.perform(get(ORGANIZATION_PATH + "/all")
                     .queryParam("page", "0")
-                    .queryParam("filter[name]", "dummySearchInput"))
+                    .queryParam("filter[search]", "dummySearchInput"))
             .andExpect(status().isOk());
   }
 }

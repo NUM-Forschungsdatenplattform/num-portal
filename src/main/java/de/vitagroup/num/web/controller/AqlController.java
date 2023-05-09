@@ -11,7 +11,6 @@ import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -84,40 +83,27 @@ public class AqlController extends CustomizedExceptionHandler {
     aqlService.deleteById(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
-  @AuditLog
-  @GetMapping("/search")
-  @Operation(description = "Retrieves a list of aqls based on a search string and search type")
-  @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
-  public ResponseEntity<List<AqlDto>> searchAqls(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @Parameter(description = "A string contained in the name of the aqls")
-          @RequestParam(required = false)
-          String name,
-      @Parameter(description = "Type of the search", required = true) @RequestParam @Valid @NotNull
-      SearchFilter filter) {
-    return ResponseEntity.ok(
-        aqlService.searchAqls(name, filter, principal.getSubject()).stream()
-            .map(mapper::convertToDto)
-            .collect(Collectors.toList()));
-  }
-
+  /**
+   * endpoint required in search area
+   * @param principal
+   * @return
+   */
   @AuditLog
   @GetMapping()
   @Operation(description = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<List<AqlDto>> getAqls(@AuthenticationPrincipal @NotNull Jwt principal) {
-    return ResponseEntity.ok(
-        aqlService.getVisibleAqls(principal.getSubject()).stream()
-            .map(mapper::convertToDto)
-            .collect(Collectors.toList()));
+    return ResponseEntity.ok(aqlService.getVisibleAqls(principal.getSubject()).stream()
+                    .map(mapper::convertToDto)
+                    .collect(Collectors.toList()));
   }
 
   @AuditLog
   @GetMapping("/all")
   @Operation(description = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
-  public ResponseEntity<Page<AqlDto>> getAqlsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal,
-                                                            @PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
+  public ResponseEntity<Page<AqlDto>> getAqls(@AuthenticationPrincipal @NotNull Jwt principal,
+                                              @PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
     Page<Aql> searchResult = aqlService.getVisibleAqls(principal.getSubject(), pageable, searchCriteria);
     List<AqlDto> content = searchResult.getContent().stream()
             .map(mapper::convertToDto)
@@ -167,20 +153,24 @@ public class AqlController extends CustomizedExceptionHandler {
     aqlService.deleteCategoryById(principal.getSubject(), id);
   }
 
+  /**
+   * endpoint used in search area
+   * @return
+   */
   @AuditLog
   @GetMapping(value = "/category")
   @Operation(description = "Retrieves the list of categories.")
   public ResponseEntity<List<AqlCategoryDto>> getAqlCategories() {
     return ResponseEntity.ok(
-        aqlService.getAqlCategories().stream()
-            .map(category -> modelMapper.map(category, AqlCategoryDto.class))
-            .collect(Collectors.toList()));
+            aqlService.getAqlCategories().stream()
+                    .map(category -> modelMapper.map(category, AqlCategoryDto.class))
+                    .collect(Collectors.toList()));
   }
 
   @AuditLog
   @GetMapping(value = "/category/all")
   @Operation(description = "Retrieves the list of categories.")
-  public ResponseEntity<Page<AqlCategoryDto>> getAqlCategoriesWithPagination(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
+  public ResponseEntity<Page<AqlCategoryDto>> getAqlCategories(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
     Page<AqlCategory> searchResult = aqlService.getAqlCategories(pageable, searchCriteria);
     List<AqlCategoryDto> content = searchResult.getContent().stream()
             .map(category -> modelMapper.map(category, AqlCategoryDto.class))

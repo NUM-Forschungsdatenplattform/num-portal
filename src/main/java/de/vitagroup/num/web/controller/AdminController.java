@@ -154,30 +154,6 @@ public class AdminController extends CustomizedExceptionHandler {
   }
 
   @AuditLog
-  @GetMapping("user")
-  @Operation(description = "Retrieves a set of users that match the search string")
-  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
-  public ResponseEntity<Set<User>> searchUsers(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @RequestParam(required = false)
-          @Parameter(
-              description =
-                  "A flag for controlling whether to list approved or not approved users, omitting it returns both)")
-          Boolean approved,
-      @RequestParam(required = false)
-          @Parameter(description = "A string contained in username, first or last name, or email")
-          String search,
-      @RequestParam(required = false)
-          @Parameter(
-              description =
-                  "A flag for controlling whether to include user's roles in the response (a bit slower)")
-          Boolean withRoles) {
-    return ResponseEntity.ok(
-        userService.searchUsers(
-            principal.getSubject(), approved, search, withRoles, Roles.extractRoles(principal)));
-  }
-
-  @AuditLog
   @GetMapping("user/all")
   @Operation(description = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
@@ -187,6 +163,6 @@ public class AdminController extends CustomizedExceptionHandler {
     // filter[search] search input (optional)
     // filter[withRoles] true or false (optional)
     return ResponseEntity.ok(
-            userService.searchUsersWithPagination(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
+            userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
   }
 }
