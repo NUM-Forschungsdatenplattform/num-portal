@@ -530,13 +530,12 @@ public class UserServiceTest {
         LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
         getUserDetailsFromRepository(localDateTime);
 
-        when(keycloakFeign.getUser("4")).thenReturn(User.builder().id("4").createdTimestamp(localDateTime.atZone(ZoneOffset.UTC).toInstant().toEpochMilli()).build());
         userService.deleteUnapprovedUsersAfter30Days();
     }
 
     private void getUserDetailsFromRepository(LocalDateTime localDateTime) {
-        when(userDetailsRepository.findAll()).thenReturn(
-                List.of(
+        when(userDetailsRepository.findAllByApproved(false)).thenReturn(
+                Optional.of(List.of(
                         UserDetails.builder()
                                 .userId("4")
                                 .organization(
@@ -544,7 +543,7 @@ public class UserServiceTest {
                                 .approved(false)
                                 .createdDate(localDateTime)
                                 .build())
-        );
+        ));
     }
 
     @Test
@@ -562,8 +561,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldDeleteUnapprovedUsersAfter30DaysResourceNotFound() {
-        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
-        getUserDetailsFromRepository(localDateTime);
+        getUserDetailsFromRepository(null);
 
         when(keycloakFeign.getUser("4")).thenThrow(new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, "4")));
         assertThrows(ResourceNotFound.class,
@@ -572,8 +570,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldDeleteUnapprovedUsersAfter30DaysBadRequest() {
-        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
-        getUserDetailsFromRepository(localDateTime);
+        getUserDetailsFromRepository(null);
 
         when(keycloakFeign.getUser("4")).thenThrow(FeignException.BadRequest.class);
         assertThrows(SystemException.class,
@@ -582,8 +579,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldDeleteUnapprovedUsersAfter30DaysInternalServerError() {
-        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
-        getUserDetailsFromRepository(localDateTime);
+        getUserDetailsFromRepository(null);
 
         when(keycloakFeign.getUser("4")).thenThrow(FeignException.InternalServerError.class);
         assertThrows(SystemException.class,

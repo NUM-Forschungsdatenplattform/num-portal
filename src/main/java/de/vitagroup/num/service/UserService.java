@@ -40,6 +40,7 @@ import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -596,22 +597,29 @@ public class UserService {
   private void deleteNotApprovedUser(UserDetails userDetails) {
   	String userId = userDetails.getUserId();
     try {
-		if (userId != null && userDetails.isNotApproved()){
+		if (userId != null){
 
-          User userForDeletion = keycloakFeign.getUser(userDetails.getUserId());
-          if (isNull(userForDeletion.getCreatedTimestamp())){
-            return;
+          Timestamp createdAt;
+          if (isNull(userDetails.getCreatedDate())) {
+            User userForDeletion = keycloakFeign.getUser(userDetails.getUserId());
+            if (isNull(userForDeletion.getCreatedTimestamp())){
+              return;
+            } else {
+              createdAt = new Timestamp(userForDeletion.getCreatedTimestamp());
+            }
+          } else {
+            createdAt = new Timestamp(userDetails.getCreatedDate().toInstant(ZoneOffset.UTC).toEpochMilli());
           }
-          Timestamp createdAt = new Timestamp(userForDeletion.getCreatedTimestamp());
+
           Date createdAtDate=new Date(createdAt.getTime());
           boolean shouldDelete = LocalDateTime.from(createdAtDate.toInstant().atZone(ZoneId.of("UTC"))).
                   plusDays(30).isBefore(LocalDateTime.now());
           if (shouldDelete) {
             keycloakFeign.deleteUser(userId);
             userDetailsService.deleteUserDetails(userId);
-            log.warn("- deleteUnapprovedUsersAfter30Days - userID: {} isApproved: {} deletedUser: {}", userId, userDetails.isApproved(), userForDeletion);
+            log.warn("- deleteUnapprovedUsersAfter30Days - userID: {} isApproved: {} deletedUser: {}", userId, userDetails.isApproved(), userDetails);
           }
-          }
+        }
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
       throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER,
               String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
@@ -621,11 +629,11 @@ public class UserService {
     }
   }
 
-  @Scheduled(fixedRate = 8*60*60*1000)//24*60*60*1000 - each 8 hours
+  @Scheduled(cron = "${user-service.delete-users-cron}", zone = "UTC")//0 0 5 * * *
   @Transactional
   public void deleteUnapprovedUsersAfter30Days() {
-    List<UserDetails> userIDs = userDetailsRepository.findAll();
-    userIDs.forEach(this::deleteNotApprovedUser);
+    List<UserDetails> users = userDetailsRepository.findAllByApproved(false).orElse(new ArrayList<>());
+    users.forEach(this::deleteNotApprovedUser);
   }
 
   @CachePut(cacheNames = USERS_CACHE, key = "#userIdToChange")
