@@ -63,8 +63,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<List<OrganizationDto>> getAllOrganizations(
           @AuthenticationPrincipal @NotNull Jwt principal) {
-    return ResponseEntity.ok(
-            organizationService
+    return ResponseEntity.ok(organizationService
                     .getAllOrganizations(Roles.extractRoles(principal), principal.getSubject())
                     .stream()
                     .map(mapper::convertToDto)
