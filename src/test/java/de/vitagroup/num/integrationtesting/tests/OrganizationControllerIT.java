@@ -24,7 +24,7 @@ public class OrganizationControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldGetAllOrganizationsSuccessfully() {
-    mockMvc.perform(get(ORGANIZATION_PATH + "/all")).andExpect(status().isOk());
+    mockMvc.perform(get(ORGANIZATION_PATH)).andExpect(status().isOk());
   }
 
   @Test
