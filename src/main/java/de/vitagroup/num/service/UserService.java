@@ -433,12 +433,11 @@ public class UserService {
         organizationId = loggedInUser.getOrganization().getId();
       }
     }
-    UserDetailsSpecification userDetailsSpecification = UserDetailsSpecification.builder()
+    return UserDetailsSpecification.builder()
             .approved(approved)
             .loggedInUserOrganizationId(organizationId)
             .usersUUID(usersUUID)
             .build();
-    return userDetailsSpecification;
   }
 
   private void sortUsers(List<User> users, SearchCriteria searchCriteria) {
@@ -447,9 +446,9 @@ public class UserService {
             Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()) : Sort.Direction.DESC;
     Comparator<User> userComparator = getComparator(field);
     if (sortOrder.isAscending()) {
-      Collections.sort(users, Comparator.nullsLast(userComparator));
+      users.sort(Comparator.nullsLast(userComparator));
     } else {
-      Collections.sort(users, Comparator.nullsLast(userComparator.reversed()));
+      users.sort(Comparator.nullsLast(userComparator.reversed()));
     }
   }
 
@@ -676,8 +675,7 @@ public class UserService {
     if ((StringUtils.isNotEmpty(search) || CollectionUtils.isNotEmpty(roles)) && usersCache != null && usersCache.getNativeCache().size() != 0) {
       ConcurrentMap<Object, Object> users = usersCache.getNativeCache();
       for (Map.Entry<Object, Object> entry : users.entrySet()) {
-        if (entry.getValue() instanceof User) {
-          User user = (User) entry.getValue();
+        if (entry.getValue() instanceof User user) {
           if (StringUtils.isNotEmpty(search) && CollectionUtils.isNotEmpty(roles)) {
             if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
                     CollectionUtils.containsAny(user.getRoles(), roles)) {
@@ -695,6 +693,7 @@ public class UserService {
     }
     return Collections.emptySet();
   }
+
   private void updateName(String userId, UserNameDto userNameDto) {
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
     if (userRaw == null) {
