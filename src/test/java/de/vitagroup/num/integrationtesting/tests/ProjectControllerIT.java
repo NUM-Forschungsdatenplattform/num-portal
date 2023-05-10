@@ -235,7 +235,6 @@ public class ProjectControllerIT extends IntegrationTest {
         .andExpect(jsonPath("$.firstHypotheses").value(validProject.getFirstHypotheses()));
   }
 
-  // this one will be removed at cleanup deprecated endpoints
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -244,10 +243,9 @@ public class ProjectControllerIT extends IntegrationTest {
   public void studyCoordinatorShouldGetAllHisProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    ProjectDto[] projects =
-        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(8, projects.length);
+        mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(8, projectsPage.getContent().size());
   }
 
   @Test
@@ -280,15 +278,30 @@ public class ProjectControllerIT extends IntegrationTest {
   public void researcherInAStudyShouldGetPublishedProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    ProjectDto[] projects =
-        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(1, projects.length);
+        mockMvc.perform(get(PROJECT_PATH + "/all")
+                .param("page","0")
+                .param("size", "10")
+                .with(csrf())).andExpect(status().isOk()).andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(1, projectsPage.getContent().size());
     assertNotNull(
-        Arrays.stream(projects)
-            .filter(projectDto -> projectDto.getName().equals("published"))
+            projectsPage.getContent().stream()
+            .filter(projectViewTO -> projectViewTO.getName().equals("published"))
             .findFirst()
             .orElse(null));
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(
+          roles = {RESEARCHER},
+          userId = "user1")
+  public void researcherNotInAStudyShouldNotGetProjects() {
+
+    MvcResult result =
+            mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(0, projectsPage.getContent().size());
   }
 
   @Test
@@ -299,42 +312,34 @@ public class ProjectControllerIT extends IntegrationTest {
   public void studyApproverShouldGetAllExceptDraftAndArchivedProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    ProjectDto[] projects =
-        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(7, projects.length);
-    assertNotNull(
-        Arrays.stream(projects)
+        mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(7, projectsPage.getContent().size());
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("pending"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("reviewing"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("approved"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("changeRequest"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("denied"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("closed"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("published"))
             .findFirst()
             .orElse(null));
@@ -357,8 +362,22 @@ public class ProjectControllerIT extends IntegrationTest {
       userId = "user1")
   public void orgAdminShouldNotBeAllowedToGetProjects() {
 
-    mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().is4xxClientError());
+    mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().is4xxClientError());
   }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(
+          roles = {STUDY_COORDINATOR},
+          userId = "user2")
+  public void studyCoordinatorShouldNotGetOtherCoordinatorsProjectsExceptProperStatuses() {
+
+    MvcResult result =
+            mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(3, projectsPage.getContent().size());
+  }
+
 
   @Test
   @SneakyThrows
