@@ -1,0 +1,41 @@
+{
+  "q": "Select distinct o0/data[at0001]/events[at0006]/data[at0003]/items[at0005] as F1 from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.blood_pressure.v2] order by o0/data[at0001]/events[at0006]/data[at0003]/items[at0005] ASCENDING",
+  "columns": [
+    {
+      "path": "/data[at0001]/events[at0006]/data[at0003]/items[at0005]",
+      "name": "F1"
+    }
+  ],
+  "rows": [
+    [
+      {
+        "name": {
+          "value": "Diastolisch",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_QUANTITY",
+          "units": "mm[Hg]",
+          "magnitude": 105.0
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0005"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Diastolisch",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_QUANTITY",
+          "units": "mm[Hg]",
+          "magnitude": 107.0
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0005"
+      }
+    ]
+  ]
+}

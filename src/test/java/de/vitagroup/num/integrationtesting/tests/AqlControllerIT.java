@@ -1,10 +1,12 @@
 package de.vitagroup.num.integrationtesting.tests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Aql;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import de.vitagroup.num.domain.dto.AqlDto;
+import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import lombok.SneakyThrows;
+import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,11 +14,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.nio.charset.StandardCharsets;
+
 import static de.vitagroup.num.domain.Roles.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -60,8 +65,8 @@ public class AqlControllerIT extends IntegrationTest {
       roles = {RESEARCHER})
   public void shouldHandleNotApprovedUserWhenSavingAql() {
 
-    Aql aql =
-        Aql.builder()
+    AqlDto aql =
+        AqlDto.builder()
             .name("t1")
             .use("use")
             .purpose("purpose")
@@ -84,7 +89,7 @@ public class AqlControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {CRITERIA_EDITOR})
   public void shouldSaveAndRetrieveAqlSuccessfully() {
 
-    Aql aql = Aql.builder()
+    AqlDto aql = AqlDto.builder()
             .name("t1")
             .use("aql use")
             .purpose("aql purpose")
@@ -119,21 +124,24 @@ public class AqlControllerIT extends IntegrationTest {
                 .content(aqlJson))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value(aql.getName()))
-        .andExpect(jsonPath("$.query").value(aql.getQuery()));
+        .andExpect(jsonPath("$.query").value(aql.getQuery()))
+        .andExpect(jsonPath("$.use").value(aql.getUse()))
+        .andExpect(jsonPath("$.useTranslated").value(aql.getUseTranslated()));
   }
 
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {CRITERIA_EDITOR})
-  //@Ignore("For this test to work we need to stub the calls made to keycloak to retrieve users")
   public void shouldSaveAndDeleteAqlSuccessfully() {
 
-    Aql aql = Aql.builder()
+    AqlDto aql = AqlDto.builder()
             .name("d1")
+            .nameTranslated("d1 translated")
             .query("d3")
             .use("d1 aql use")
             .purpose("d1 aql purpose")
-
+            .purposeTranslated("d1 aql purpose translated")
+            .useTranslated("d1 aql use translated")
             .publicAql(true).build();
     String aqlJson = mapper.writeValueAsString(aql);
 
@@ -175,7 +183,9 @@ public class AqlControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {RESEARCHER})
   public void shouldValidateAql() {
 
-    Aql noQueryNoDescriptionAql = Aql.builder().name("d1").publicAql(true).build();
+    AqlDto noQueryNoDescriptionAql = AqlDto.builder()
+            .name("d1")
+            .publicAql(true).build();
     String aqlJson = mapper.writeValueAsString(noQueryNoDescriptionAql);
 
     mockMvc
@@ -225,8 +235,14 @@ public class AqlControllerIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {RESEARCHER})
-  @Ignore("EhrBase mock is needed to run this test")
   public void shouldRetrieveParameterValues() {
+    WireMock.stubFor(
+            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
+                    .inScenario("Retrieve aql parameters")
+                    .withRequestBody(WireMock.containing("openEHR-EHR-OBSERVATION.blood_pressure.v2"))
+                    .willReturn(
+                            WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/blood_pressure_response.json"),
+                                            StandardCharsets.UTF_8))));
     MvcResult result =
         mockMvc
             .perform(
@@ -240,81 +256,87 @@ public class AqlControllerIT extends IntegrationTest {
             .andReturn();
     assertThat(
         result.getResponse().getContentAsString(), containsString("\"type\":\"DV_QUANTITY\""));
-  }
 
-  @Test
-  @SneakyThrows
-  @WithMockNumUser(roles = {RESEARCHER})
-  @Ignore("EhrBase mock is needed to run this test")
-  public void shouldRetrieveParameterCodePhrase() {
-    MvcResult result =
-        mockMvc
-            .perform(
-                get(AQL_PATH + "/parameter/values")
-                    .queryParam(
-                        "aqlPath",
-                        "/data[at0001]/events[at0002]/data[at0003]/items[at0011]/value/defining_code")
-                    .queryParam("archetypeId", "openEHR-EHR-OBSERVATION.pregnancy_status.v0")
-                    .with(csrf()))
-            .andExpect(status().isOk())
-            .andReturn();
+        WireMock.stubFor(
+            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
+                    .withRequestBody(WireMock.containing("openEHR-EHR-OBSERVATION.pregnancy_status.v0"))
+                    .inScenario("Retrieve aql parameters")
+                    .willReturn(WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/pregnancy_status_response.json"),
+                            StandardCharsets.UTF_8))));
+    MvcResult result2 =
+            mockMvc
+                    .perform(
+                            get(AQL_PATH + "/parameter/values")
+                                    .queryParam(
+                                            "aqlPath",
+                                            "/data[at0001]/events[at0002]/data[at0003]/items[at0011]/value/defining_code/code_string")
+                                    .queryParam("archetypeId", "openEHR-EHR-OBSERVATION.pregnancy_status.v0")
+                                    .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andReturn();
     assertThat(
-        result.getResponse().getContentAsString(), containsString("\"type\":\"DV_CODED_TEXT\""));
-  }
+            result2.getResponse().getContentAsString(), containsString("\"type\":\"DV_CODED_TEXT\""));
 
-  @Test
-  @SneakyThrows
-  @WithMockNumUser(roles = {RESEARCHER})
-  @Ignore("EhrBase mock is needed to run this test")
-  public void shouldRetrieveParameterEnumValues() {
-    MvcResult result =
-        mockMvc
-            .perform(
-                get(AQL_PATH + "/parameter/values")
-                    .queryParam(
-                        "aqlPath", "/data[at0001]/events[at0002]/data[at0003]/items[at0007]/value")
-                    .queryParam("archetypeId", "openEHR-EHR-OBSERVATION.sofa_score.v0")
-                    .with(csrf()))
-            .andExpect(status().isOk())
-            .andReturn();
+    WireMock.stubFor(
+            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
+                    .inScenario("Retrieve aql parameters")
+                    .withRequestBody(WireMock.containing("openEHR-EHR-OBSERVATION.clinical_frailty_scale.v1"))
+                    .willReturn(
+                            WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/frailty_score_response.json"),
+                                    StandardCharsets.UTF_8))));
+    MvcResult result3 =
+            mockMvc
+                    .perform(
+                            get(AQL_PATH + "/parameter/values")
+                                    .queryParam(
+                                            "aqlPath", "/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/value")
+                                    .queryParam("archetypeId", "openEHR-EHR-OBSERVATION.clinical_frailty_scale.v1")
+                                    .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andReturn();
     assertThat(
-        result.getResponse().getContentAsString(), containsString("\"type\":\"DV_ORDINAL\""));
-    assertThat(result.getResponse().getContentAsString(), containsString("\"local::at0028\""));
-  }
+            result3.getResponse().getContentAsString(), containsString("\"type\":\"DV_ORDINAL\""));
 
-  @Test
-  @SneakyThrows
-  @WithMockNumUser(roles = {RESEARCHER})
-  @Ignore("EhrBase mock is needed to run this test")
-  public void shouldRetrieveParameterMagnitude() {
-    MvcResult result =
-        mockMvc
-            .perform(
-                get(AQL_PATH + "/parameter/values")
-                    .queryParam("aqlPath", "/items[at0005]/value/defining_code")
-                    .queryParam("archetypeId", "openEHR-EHR-CLUSTER.laboratory_test_analyte.v1")
-                    .with(csrf()))
-            .andExpect(status().isOk())
-            .andReturn();
+    WireMock.stubFor(
+            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
+                    .inScenario("Retrieve aql parameters")
+                    .withRequestBody(WireMock.containing("openEHR-EHR-CLUSTER.laboratory_test_analyte.v1"))
+                    .willReturn(
+                            WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/laboratory_antithrombin_result.json"),
+                                    StandardCharsets.UTF_8))));
+    MvcResult result4 =
+            mockMvc
+                    .perform(
+                            get(AQL_PATH + "/parameter/values")
+                                    .queryParam("aqlPath", "/items[at0001]/value/magnitude")
+                                    .queryParam("archetypeId", "openEHR-EHR-CLUSTER.laboratory_test_analyte.v1")
+                                    .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andReturn();
     assertThat(
-        result.getResponse().getContentAsString(), containsString("\"type\":\"DV_CODED_TEXT\""));
-  }
+            result4.getResponse().getContentAsString(), containsString("\"type\":\"DV_QUANTITY\""));
+    assertThat(
+            result4.getResponse().getContentAsString(), containsString("\"unit\":\"mg/dL\""));
 
-  @Test
-  @SneakyThrows
-  @WithMockNumUser(roles = {RESEARCHER})
-  @Ignore("EhrBase mock is needed to run this test")
-  public void shouldRetrieveParameterGender() {
-    MvcResult result =
-        mockMvc
-            .perform(
-                get(AQL_PATH + "/parameter/values")
-                    .queryParam("aqlPath", "/data[at0002]/items[at0019]/value/defining_code")
-                    .queryParam("archetypeId", "openEHR-EHR-EVALUATION.gender.v1")
-                    .with(csrf()))
-            .andExpect(status().isOk())
-            .andReturn();
-    assertThat(
-        result.getResponse().getContentAsString(), containsString("\"type\":\"DV_CODED_TEXT\""));
+    WireMock.stubFor(
+            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
+                    .inScenario("Retrieve aql parameters")
+                    .withRequestBody(WireMock.containing("openEHR-EHR-EVALUATION.gender.v1"))
+                    .willReturn(WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/gender_response.json"),
+                            StandardCharsets.UTF_8))));
+    MvcResult genderResult =
+            mockMvc
+                    .perform(
+                            get(AQL_PATH + "/parameter/values")
+                                    .queryParam("aqlPath", "/data[at0002]/items[at0019]/value/defining_code/code_string")
+                                    .queryParam("archetypeId", "openEHR-EHR-EVALUATION.gender.v1")
+                                    .with(csrf()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.type").value("DV_CODED_TEXT"))
+                    .andReturn();
+    ParameterOptionsDto dto = mapper.readValue(genderResult.getResponse().getContentAsString(), ParameterOptionsDto.class);
+    assertThat((String)dto.getOptions().get("female"),containsString("Female"));
+    assertThat((String)dto.getOptions().get("male"),containsString("Male"));
   }
 }
