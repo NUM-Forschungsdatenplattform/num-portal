@@ -1,23 +1,30 @@
 package de.vitagroup.num.integrationtesting.tests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.domain.Operator;
-import de.vitagroup.num.domain.Type;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.google.common.collect.Lists;
+import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CohortAqlDto;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.repository.AqlRepository;
+import de.vitagroup.num.domain.repository.CohortRepository;
+import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
+import de.vitagroup.num.service.CohortService;
 import lombok.SneakyThrows;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.apache.commons.io.IOUtils;
+import org.junit.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,11 +45,83 @@ public class CohortControllerIT extends IntegrationTest {
   @Autowired private AqlRepository aqlRepository;
   @Autowired private UserDetailsRepository userDetailsRepository;
 
+  @Autowired
+  private ProjectRepository projectRepository;
+
+  @Autowired
+  private CohortRepository cohortRepository;
+  @Autowired
+  private CohortService cohortService;
+
+  @Before
+  public void setupCohortData() {
+    String query = "SELECT  c0 as GECCO_Personendaten " +
+            " FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
+            " WHERE (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value > $Geburtsdatum)";
+    CohortAqlDto cohortAqlDto = CohortAqlDto.builder()
+            .id(1L)
+            .name("Geburtsdatum")
+            .query(query)
+            .build();
+
+    CohortGroupDto first =
+            CohortGroupDto.builder()
+                    .type(Type.AQL)
+                    .query(cohortAqlDto)
+                    .parameters(Map.of("Geburtsdatum", "1982-06-08"))
+                    .operator(Operator.AND)
+                    .build();
+    CohortGroupDto andCohort =
+            CohortGroupDto.builder()
+                    .type(Type.GROUP)
+                    .operator(Operator.AND)
+                    .children(List.of(first))
+                    .build();
+    CohortDto cohortDto =
+            CohortDto.builder()
+                    .name("Cohort for birthdate")
+                    .projectId(1L)
+                    .cohortGroup(andCohort)
+                    .build();
+    UserDetails userOne = UserDetails.builder().userId("b59e5edb-3121-4e0a-8ccb-af6798207a72").approved(true).build();
+    Project approvedProject =
+            Project.builder()
+                    .name("approved")
+                    .goal("Default")
+                    .startDate(LocalDate.now())
+                    .endDate(LocalDate.now())
+                    .coordinator(userOne)
+                    .researchers(Lists.newArrayList(userOne))
+                    .status(ProjectStatus.DRAFT)
+                    .build();
+    Map<String, String> tr1 = new HashMap<>();
+    tr1.put("en", "category one in english");
+    tr1.put("de", "category one in german");
+    Aql aqlOne = Aql.builder()
+            .name("Geburtsdatum")
+            .publicAql(true)
+            .query(query)
+            .owner(UserDetails.builder()
+                    .userId("b59e5edb-3121-4e0a-8ccb-af6798207a72")
+                    .build())
+            .build();
+    aqlRepository.save(aqlOne);
+    projectRepository.save(approvedProject);
+    cohortService.createCohort(cohortDto, "b59e5edb-3121-4e0a-8ccb-af6798207a72");
+  }
+
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldNotAccessCohortApiWithWrongRole() {
     mockMvc.perform(get(String.format("%s/%s", COHORT_PATH, 1))).andExpect(status().isForbidden());
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {STUDY_APPROVER})
+  public void shouldAccessCohortApiWithRightRole() {
+    mockMvc.perform(get(String.format("%s/%s", COHORT_PATH, 1))).andExpect(status().isOk());
   }
 
   @Test
@@ -98,7 +177,6 @@ public class CohortControllerIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_COORDINATOR, MANAGER})
-  @Ignore("EhrBase mock is needed to run this test")
   public void shouldHandleCohortWithNullParameter() {
 
     UserDetails userDetails =
@@ -155,6 +233,16 @@ public class CohortControllerIT extends IntegrationTest {
             .build();
 
     String cohortDtoJson = mapper.writeValueAsString(cohortGroupDto);
+    WireMock.stubFor(
+            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
+                    .withRequestBody(WireMock.containing("[openEHR-EHR-OBSERVATION.height.v2] where (c1/archetype_details/template_id/value = 'Körpergröße'"))
+                    .willReturn(
+                            WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/height_ehr_ids_result.json"),
+                                    StandardCharsets.UTF_8))));
+    WireMock.stubFor(WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
+            .withRequestBody(WireMock.containing("Select e/ehr_id/value as F1 from EHR e"))
+            .willReturn(WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/ehr_id_response.json"),
+                    StandardCharsets.UTF_8))));
 
     var response =
         mockMvc
