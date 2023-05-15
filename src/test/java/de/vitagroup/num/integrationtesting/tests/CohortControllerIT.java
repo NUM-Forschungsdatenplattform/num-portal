@@ -13,12 +13,9 @@ import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
-import de.vitagroup.num.service.CohortService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
-import org.junit.*;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -50,65 +47,7 @@ public class CohortControllerIT extends IntegrationTest {
 
   @Autowired
   private CohortRepository cohortRepository;
-  @Autowired
-  private CohortService cohortService;
 
-  @Before
-  public void setupCohortData() {
-    String query = "SELECT  c0 as GECCO_Personendaten " +
-            " FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
-            " WHERE (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value > $Geburtsdatum)";
-    CohortAqlDto cohortAqlDto = CohortAqlDto.builder()
-            .id(1L)
-            .name("Geburtsdatum")
-            .query(query)
-            .build();
-
-    CohortGroupDto first =
-            CohortGroupDto.builder()
-                    .type(Type.AQL)
-                    .query(cohortAqlDto)
-                    .parameters(Map.of("Geburtsdatum", "1982-06-08"))
-                    .operator(Operator.AND)
-                    .build();
-    CohortGroupDto andCohort =
-            CohortGroupDto.builder()
-                    .type(Type.GROUP)
-                    .operator(Operator.AND)
-                    .children(List.of(first))
-                    .build();
-    CohortDto cohortDto =
-            CohortDto.builder()
-                    .name("Cohort for birthdate")
-                    .projectId(1L)
-                    .cohortGroup(andCohort)
-                    .build();
-    UserDetails userOne = UserDetails.builder().userId("b59e5edb-3121-4e0a-8ccb-af6798207a72").approved(true).build();
-    Project approvedProject =
-            Project.builder()
-                    .name("approved")
-                    .goal("Default")
-                    .startDate(LocalDate.now())
-                    .endDate(LocalDate.now())
-                    .coordinator(userOne)
-                    .researchers(Lists.newArrayList(userOne))
-                    .status(ProjectStatus.DRAFT)
-                    .build();
-    Map<String, String> tr1 = new HashMap<>();
-    tr1.put("en", "category one in english");
-    tr1.put("de", "category one in german");
-    Aql aqlOne = Aql.builder()
-            .name("Geburtsdatum")
-            .publicAql(true)
-            .query(query)
-            .owner(UserDetails.builder()
-                    .userId("b59e5edb-3121-4e0a-8ccb-af6798207a72")
-                    .build())
-            .build();
-    aqlRepository.save(aqlOne);
-    projectRepository.save(approvedProject);
-    cohortService.createCohort(cohortDto, "b59e5edb-3121-4e0a-8ccb-af6798207a72");
-  }
 
   @Test
   @SneakyThrows
@@ -121,7 +60,48 @@ public class CohortControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_APPROVER})
   public void shouldAccessCohortApiWithRightRole() {
-    mockMvc.perform(get(String.format("%s/%s", COHORT_PATH, 1))).andExpect(status().isOk());
+    UserDetails userOne = UserDetails.builder().userId("b59e5edb-3121-4e0a-8ccb-af6798207a72").approved(true).build();
+    String query = "SELECT  c0 as GECCO_Personendaten " +
+            " FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
+            " WHERE (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value > $Geburtsdatum)";
+    Aql aql = Aql.builder()
+            .name("Geburtsdatum")
+            .query(query)
+            .owner(userOne)
+            .build();
+    aql = aqlRepository.save(aql);
+
+    Project approvedProject =
+            Project.builder()
+                    .name("approved")
+                    .goal("Default")
+                    .startDate(LocalDate.now())
+                    .endDate(LocalDate.now())
+                    .coordinator(userOne)
+                    .researchers(Lists.newArrayList(userOne))
+                    .status(ProjectStatus.DRAFT)
+                    .build();
+    projectRepository.save(approvedProject);
+    CohortAql cohortAql = CohortAql.builder()
+            .id(aql.getId())
+            .name("Geburtsdatum")
+            .query(query)
+            .build();
+    CohortGroup cohortGroup = CohortGroup.builder()
+            .type(Type.AQL)
+            .operator(Operator.AND)
+            .query(cohortAql)
+            .parameters(Map.of("Geburtsdatum", "1982-06-08"))
+            .build();
+    Cohort cohort = Cohort.builder()
+            .name("Geburtsdatum cohort")
+            .project(projectRepository.findById(1L).get())
+            .cohortGroup(cohortGroup)
+            .description("just testing")
+            .build();
+    cohort = cohortRepository.save(cohort);
+    Long id = cohort.getId();
+    mockMvc.perform(get(String.format("%s/%s", COHORT_PATH, id))).andExpect(status().isOk());
   }
 
   @Test
@@ -178,28 +158,6 @@ public class CohortControllerIT extends IntegrationTest {
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_COORDINATOR, MANAGER})
   public void shouldHandleCohortWithNullParameter() {
-
-    UserDetails userDetails =
-        userDetailsRepository.save(UserDetails.builder().userId("user1").approved(true).build());
-
-    Aql aql =
-        Aql.builder()
-            .id(1L)
-            .name("q1")
-            .owner(userDetails)
-            .query(
-                "SELECT\n"
-                    + "  o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Gr__e_L_nge__magnitude\n"
-                    + "FROM\n"
-                    + "  EHR e\n"
-                    + "  contains COMPOSITION c1[openEHR-EHR-COMPOSITION.registereintrag.v1]\n"
-                    + "  contains OBSERVATION o0[openEHR-EHR-OBSERVATION.height.v2]\n"
-                    + "WHERE\n"
-                    + "  (c1/archetype_details/template_id/value = 'Körpergröße'\n"
-                    + "  and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude = $kg)")
-            .publicAql(true)
-            .build();
-    aqlRepository.save(aql);
 
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("kg", null);
