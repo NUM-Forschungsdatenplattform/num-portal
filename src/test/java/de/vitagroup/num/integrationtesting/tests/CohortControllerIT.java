@@ -159,6 +159,22 @@ public class CohortControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {STUDY_COORDINATOR, MANAGER})
   public void shouldHandleCohortWithNullParameter() {
 
+    String query = "SELECT\n"
+            + "  o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Gr__e_L_nge__magnitude\n"
+            + "FROM\n"
+            + "  EHR e\n"
+            + "  contains COMPOSITION c1[openEHR-EHR-COMPOSITION.registereintrag.v1]\n"
+            + "  contains OBSERVATION o0[openEHR-EHR-OBSERVATION.height.v2]\n"
+            + "WHERE\n"
+            + "  (c1/archetype_details/template_id/value = 'Körpergröße'\n"
+            + "  and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude = $kg)";
+    Aql aql = Aql.builder()
+            .name("Body weight")
+            .query(query)
+            .owner(UserDetails.builder().userId("b59e5edb-3121-4e0a-8ccb-af6798207a72").approved(true).build())
+            .build();
+    aql = aqlRepository.save(aql);
+
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("kg", null);
 
@@ -168,17 +184,8 @@ public class CohortControllerIT extends IntegrationTest {
             .operator(Operator.OR)
             .query(
                 CohortAqlDto.builder()
-                    .id(1L)
-                    .query(
-                        "SELECT\n"
-                            + "  o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Gr__e_L_nge__magnitude\n"
-                            + "FROM\n"
-                            + "  EHR e\n"
-                            + "  contains COMPOSITION c1[openEHR-EHR-COMPOSITION.registereintrag.v1]\n"
-                            + "  contains OBSERVATION o0[openEHR-EHR-OBSERVATION.height.v2]\n"
-                            + "WHERE\n"
-                            + "  (c1/archetype_details/template_id/value = 'Körpergröße'\n"
-                            + "  and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude = $kg)")
+                    .id(aql.getId())
+                    .query(query)
                     .build())
             .parameters(parameters)
             .build();
