@@ -552,7 +552,7 @@ public class UserService {
 
           Date createdAtDate=new Date(createdAt.getTime());
           boolean shouldDelete = LocalDateTime.from(createdAtDate.toInstant().atZone(ZoneId.of("UTC"))).
-                  plusDays(30).isBefore(LocalDateTime.now());
+                  plusMinutes(10).isBefore(LocalDateTime.now());
           if (shouldDelete) {
             keycloakFeign.deleteUser(userId);
             userDetailsService.deleteUserDetails(userId);
