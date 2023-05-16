@@ -139,6 +139,12 @@ public class OrganizationServiceTest {
             is("*.b.c.example.com"));
   }
 
+  @Test
+  public void shouldHandleInvalidDomain() {
+    Optional<Organization> organization = organizationService.resolveOrganization("invalidEmail");
+    assertThat(organization.isEmpty(), is(true));
+  }
+
   @Test(expected = SystemException.class)
   public void shouldHandleMissingUserWhenCreating() {
     organizationService.create("missingUserId", OrganizationDto.builder().build());
