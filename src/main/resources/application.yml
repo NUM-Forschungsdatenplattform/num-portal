@@ -159,7 +159,7 @@ requestpsnworkflow:
     event: num.get_extern_psn
 
 user-service:
-  delete-users-cron: 0 0 5 * * *
+  delete-users-cron: 0/10 * * * * *
 
 ---
 spring:
@@ -255,4 +255,4 @@ num:
   locale: en
 
 user-service:
-  delete-users-cron: 0 0 5 * * *
+  delete-users-cron: 0/10 * * * * *
