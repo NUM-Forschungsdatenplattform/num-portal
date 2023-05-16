@@ -22,9 +22,6 @@ public class AdminControllerIT extends IntegrationTest {
 
   @Autowired public MockMvc mockMvc;
 
-  @MockBean
-  private EmailService emailService;
-
   private static final String ADMIN_PATH = "/admin/user";
 
   private static final String USER_ID = "b59e5edb-3121-4e0a-8ccb-af6798207a79";
