@@ -17,6 +17,7 @@ import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.exception.SystemException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.util.Lists;
@@ -81,7 +82,7 @@ public class EhrBaseServiceTest {
 
   @Test
   public void shouldReplaceSelect() {
-    when(restClient.aqlEndpoint().execute(any(Query.class))).thenReturn(Lists.emptyList());
+    when(restClient.aqlEndpoint().execute(any(Query.class))).thenReturn(Collections.emptyList());
     ehr.retrieveEligiblePatientIds(Aql.builder().query("SELECT e/ehr_id FROM EHR e").build());
     ArgumentCaptor<EntityQuery<Record>> queryArgumentCaptor =
         ArgumentCaptor.forClass(EntityQuery.class);

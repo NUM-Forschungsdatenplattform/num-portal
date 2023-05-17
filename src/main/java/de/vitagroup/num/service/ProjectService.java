@@ -350,8 +350,9 @@ public class ProjectService {
     CSVPrinter printer;
     try {
       printer =
-          CSVFormat.EXCEL
-              .withHeader(paths.toArray(new String[] {}))
+          CSVFormat.EXCEL.builder()
+                  .setHeader(paths.toArray(new String[] {}))
+                  .build()
               .print(new OutputStreamWriter(zipOutputStream, StandardCharsets.UTF_8));
 
       for (List<Object> row : queryResponseData.getRows()) {

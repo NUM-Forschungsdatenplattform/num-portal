@@ -222,13 +222,10 @@ public class ProjectServiceTest {
     projectService.archiveProject(1L, "1", List.of(Roles.SUPER_ADMIN));
   }
 
-/*  @Test(expected = ForbiddenException.class)
-  public void archiveProjectBadRequestExceptionInvalidStatusArchived() {
-    when(projectService.archiveProject(5L, "1", List.of()))
-            .thenThrow(new ForbiddenException(ProjectService.class, PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED,
-                    String.format(PROJECT_STATUS_TRANSITION_FROM_TO_IS_NOT_ALLOWED, PUBLISHED, ARCHIVED)));
-    projectService.archiveProject(5L, "1", List.of());
-  }*/
+ @Test(expected = ForbiddenException.class)
+  public void archiveProjectBadRequestExceptionNotAllowed() {
+    projectService.archiveProject(5L, "1", List.of(STUDY_COORDINATOR));
+  }
 
   @Test(expected = ResourceNotFound.class)
   public void retrieveDataResourceNotFound() {

@@ -423,7 +423,7 @@ public class AqlServiceTest {
 
   @Test
   public void getAqlCategoriesWithPaginationTest() {
-    Pageable pageable = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));;
+    Pageable pageable = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
     aqlService.getAqlCategories(pageable, new SearchCriteria());
     verify(aqlCategoryRepository, times(1)).findAllCategories(Mockito.eq(pageable));
   }

@@ -113,7 +113,7 @@ public class OrganizationService {
     OrganizationSpecification organizationSpecification = new OrganizationSpecification(searchCriteria.getFilter());
     Optional<Sort> sortBy = validateAndGetSort(searchCriteria);
     if (roles.contains(Roles.SUPER_ADMIN)) {
-      PageRequest pageRequest = sortBy.isPresent() ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortBy.get()) : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+      PageRequest pageRequest = sortBy.map(sort -> PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort)).orElseGet(() -> PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
       return organizationRepository.findAll(organizationSpecification, pageRequest);
     } else if (roles.contains(Roles.ORGANIZATION_ADMIN)) {
       return new PageImpl<>(List.of(user.getOrganization()));
