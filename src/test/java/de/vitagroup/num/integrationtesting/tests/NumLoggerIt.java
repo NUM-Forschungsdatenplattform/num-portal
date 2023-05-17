@@ -9,9 +9,9 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.BearerTokenAuthenticationToken;
 
 import de.vitagroup.num.service.logger.NumLogger;
+import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 
 public class NumLoggerIt {
 

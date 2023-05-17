@@ -18,6 +18,7 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProjectRepositoryImplTest {
@@ -67,7 +68,7 @@ public class ProjectRepositoryImplTest {
         Mockito.when(resultQuery.getResultList()).thenReturn(Collections.emptyList());
         Mockito.when(resultQuery.getSingleResult()).thenReturn(0L);
         ProjectSpecification ps = ProjectSpecification.builder()
-                .roles(Arrays.asList(Roles.STUDY_APPROVER))
+                .roles(List.of(Roles.STUDY_APPROVER))
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(9L)
                 .language(Language.en)

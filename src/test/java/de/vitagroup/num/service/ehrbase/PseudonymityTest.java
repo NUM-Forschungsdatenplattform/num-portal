@@ -28,6 +28,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.Mockito.when;
 
@@ -83,7 +84,7 @@ public class PseudonymityTest {
         when(response.getEntity()).thenReturn(entity);
         when(xmlParser.parseResource(Mockito.any(), Mockito.any(String.class))).thenReturn(mockErrorParameters());
         when(closeableHttpClient.execute(Mockito.any(HttpPost.class))).thenReturn(response);
-        pseudonymity.getPseudonyms(Arrays.asList("codex-AB1234"), 100L);
+        pseudonymity.getPseudonyms(List.of("codex-AB1234"), 100L);
     }
 
     @Test(expected = ResourceNotFound.class)
@@ -93,7 +94,7 @@ public class PseudonymityTest {
         StringEntity entity = new StringEntity(RESPONSE_BODY_BAD_REQUEST_ERROR, ContentType.parse("application/fhir+xml;charset=utf-8"));
         when(response.getEntity()).thenReturn(entity);
         when(closeableHttpClient.execute(Mockito.any(HttpPost.class))).thenReturn(response);
-        pseudonymity.getPseudonyms(Arrays.asList("codex_AB1234"), 100L);
+        pseudonymity.getPseudonyms(List.of("codex_AB1234"), 100L);
     }
 
     @Before

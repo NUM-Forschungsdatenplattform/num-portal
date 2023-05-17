@@ -8,7 +8,6 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.Language;
-import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
@@ -148,9 +147,9 @@ public class AqlService {
         });
         Sort.Direction sortOrder = authorOrder.getDirection();
         if (sortOrder.isAscending()) {
-          Collections.sort(aqlQueries, Comparator.nullsLast(byAuthorName));
+          aqlQueries.sort(Comparator.nullsLast(byAuthorName));
         } else {
-          Collections.sort(aqlQueries, Comparator.nullsLast(byAuthorName.reversed()));
+          aqlQueries.sort(Comparator.nullsLast(byAuthorName.reversed()));
         }
       }
     }

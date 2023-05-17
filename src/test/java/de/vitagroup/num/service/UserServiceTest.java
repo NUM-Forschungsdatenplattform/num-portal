@@ -698,7 +698,7 @@ public class UserServiceTest {
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
         Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(userDetails)));
+                .thenReturn(new PageImpl<>(List.of(userDetails)));
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
         userService.searchUsers("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());

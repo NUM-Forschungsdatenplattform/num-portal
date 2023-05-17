@@ -167,7 +167,7 @@ public class UserDetailsServiceTest {
             .organization(organization)
             .build());
     when(userService.getUserById(userId, false)).thenReturn(user);
-    when(userService.getByRole(Roles.ORGANIZATION_ADMIN)).thenReturn(new HashSet<>(Arrays.asList(organizationAdmin)));
+    when(userService.getByRole(Roles.ORGANIZATION_ADMIN)).thenReturn(new HashSet<>(List.of(organizationAdmin)));
     userDetailsService.createUserDetails(userId, userEmail);
     verify(notificationService, times(1)).send(notificationCaptor.capture());
     List<Notification> notificationSent = notificationCaptor.getValue();

@@ -17,16 +17,12 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RELATIVE_COMP
 public class SetOperationsService {
 
   public Set<String> apply(Operator operator, List<Set<String>> sets, Set<String> all) {
-    switch (operator) {
-      case AND:
-        return intersection(sets);
-      case OR:
-        return union(sets);
-      case NOT:
-        return exclude(all, sets.get(0));
-      default:
-        return SetUtils.emptySet();
-    }
+    return switch (operator) {
+      case AND -> intersection(sets);
+      case OR -> union(sets);
+      case NOT -> exclude(all, sets.get(0));
+      default -> SetUtils.emptySet();
+    };
   }
 
   public Set<String> intersection(List<Set<String>> listOfSets) {

@@ -485,7 +485,7 @@ public class CohortServiceTest {
                         .build())
                 .build();
         TemplateSizeRequestDto requestDto = TemplateSizeRequestDto.builder()
-                .templateIds(Arrays.asList("Alter"))
+                .templateIds(List.of("Alter"))
                 .cohortDto(cohortDto)
                 .build();
         when(cohortExecutor.execute(any(Cohort.class), Mockito.eq(false)))

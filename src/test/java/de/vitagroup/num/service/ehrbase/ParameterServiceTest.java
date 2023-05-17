@@ -60,7 +60,7 @@ public class ParameterServiceTest {
 
     private static final String AQL_VALUE_SYMBOL_QUERY = "Select distinct c0/items[at0009] as F1 from EHR e contains CLUSTER c0[openEHR-EHR-CLUSTER.laboratory_test_analyte.v1] order by c0/items[at0009] ASCENDING";
 
-    @Parameterized.Parameter(0)
+    @Parameterized.Parameter()
     public String aqlPath;
 
     @Parameterized.Parameter(1)

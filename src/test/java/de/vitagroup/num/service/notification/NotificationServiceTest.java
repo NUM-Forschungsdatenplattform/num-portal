@@ -80,7 +80,7 @@ public class NotificationServiceTest {
                     .newUserEmail("newAccount@vita.ag")
                     .newUserFirstName("super firstname")
                     .newUserLastName("lastname")
-                    .requestedRoles(Arrays.asList("Researcher"))
+                    .requestedRoles(List.of("Researcher"))
                     .department("some department")
                     .recipientEmail("recipient@vita.ag")
                     .build()));

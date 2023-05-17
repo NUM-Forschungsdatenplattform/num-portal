@@ -209,7 +209,6 @@ public class CohortControllerIT extends IntegrationTest {
             .willReturn(WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/ehr_id_response.json"),
                     StandardCharsets.UTF_8))));
 
-    var response =
         mockMvc
             .perform(
                 post(COHORT_SIZE_PATH)

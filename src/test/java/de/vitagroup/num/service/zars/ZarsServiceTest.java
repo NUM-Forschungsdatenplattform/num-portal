@@ -36,7 +36,7 @@ public class ZarsServiceTest {
   @Spy private final MessageSource messageSource = new TestMessageSource();
 
   @Before
-  public void setUp() throws IOException {
+  public void setUp() {
     zarsService.initialize();
 
     Logger logger = (Logger) LoggerFactory.getLogger(ZarsService.class);

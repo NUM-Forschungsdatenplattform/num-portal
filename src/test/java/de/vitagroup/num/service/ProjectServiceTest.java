@@ -270,7 +270,7 @@ public class ProjectServiceTest {
     ProjectDto project =
             ProjectDto.builder().name("Project")
                     .status(ProjectStatus.DRAFT)
-                    .researchers(Arrays.asList(new UserDetailsDto()))
+                    .researchers(List.of(new UserDetailsDto()))
                     .build();
 
     projectService.createProject(project, "ownerCoordinatorId", List.of(STUDY_COORDINATOR));
@@ -284,7 +284,7 @@ public class ProjectServiceTest {
     ProjectDto project =
             ProjectDto.builder().name("Project")
                     .status(ProjectStatus.DRAFT)
-                    .researchers(Arrays.asList(userDetailsDto))
+                    .researchers(List.of(userDetailsDto))
                     .build();
 
     when(userDetailsService.getUserDetailsById("1")).thenReturn(Optional.of(UserDetails.builder().userId("1").approved(Boolean.FALSE).build()));
@@ -298,7 +298,7 @@ public class ProjectServiceTest {
   }
 
   @Test//(expected = SystemException.class)
-  public void getInfoDocBytesSystemException() throws IOException {
+  public void getInfoDocBytesSystemException() {
 //    when(projectDocCreator.getDocBytesOfProject(new ProjectDto(), null)).thenThrow(new SystemException(ProjectService.class, ""){});
     projectService.getInfoDocBytes(1L, "ownerCoordinatorId", null);
   }
@@ -568,7 +568,7 @@ public class ProjectServiceTest {
     setupDataForProjectsWithPagination();
     Pageable pageable = PageRequest.of(0,100);
     ArgumentCaptor<ProjectSpecification> specificationArgumentCaptor = ArgumentCaptor.forClass(ProjectSpecification.class);
-    Page<Project> filteredProjects = projectService.getProjects("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
+    Page<Project> filteredProjects = projectService.getProjects("approvedCoordinatorId", List.of(STUDY_COORDINATOR),
             SearchCriteria.builder()
                     .sort("ASC")
                     .sortBy("organization")
@@ -618,7 +618,7 @@ public class ProjectServiceTest {
     when(userService.getOwner("approvedCoordinatorId")).thenReturn(User.builder().id("approvedCoordinatorId").firstName("AA Coordinator first name").build());
     Mockito.when(projectRepository.count()).thenReturn(50L);
     Pageable pageable = PageRequest.of(0,100);
-    Page<Project> filteredProjects = projectService.getProjects("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR),
+    Page<Project> filteredProjects = projectService.getProjects("approvedCoordinatorId", List.of(STUDY_COORDINATOR),
             SearchCriteria.builder()
                     .sort("DESC")
                     .sortBy("author")
@@ -638,7 +638,7 @@ public class ProjectServiceTest {
             .build();
     when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
             .thenReturn(UserDetails.builder().build());
-    projectService.getProjects("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR), searchCriteria, pageable);
+    projectService.getProjects("approvedCoordinatorId", List.of(STUDY_COORDINATOR), searchCriteria, pageable);
     verify(projectRepository, never());
   }
 
@@ -650,7 +650,7 @@ public class ProjectServiceTest {
             .build();
     when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
             .thenReturn(UserDetails.builder().build());
-    projectService.getProjects("approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR), searchCriteria, pageable);
+    projectService.getProjects("approvedCoordinatorId", List.of(STUDY_COORDINATOR), searchCriteria, pageable);
     verify(projectRepository, never());
   }
 
@@ -1410,7 +1410,7 @@ public class ProjectServiceTest {
 
   @Test
   public void shouldReturnNoProjectsWhenCounterLessOneTest() {
-    List<ProjectInfoDto> projects = projectService.getLatestProjectsInfo(0, Arrays.asList(STUDY_COORDINATOR));
+    List<ProjectInfoDto> projects = projectService.getLatestProjectsInfo(0, List.of(STUDY_COORDINATOR));
     Mockito.verifyNoInteractions(projectRepository);
     Assert.assertTrue(projects.isEmpty());
   }
@@ -1430,7 +1430,7 @@ public class ProjectServiceTest {
                                     .status(ProjectStatus.CHANGE_REQUEST)
                                     .coordinator(userDetails)
                                     .build()));
-    projectService.deleteProject(9L, userId, Arrays.asList(STUDY_COORDINATOR));
+    projectService.deleteProject(9L, userId, List.of(STUDY_COORDINATOR));
     verify(projectRepository, times(1)).deleteById(9L);
   }
 
@@ -1444,7 +1444,7 @@ public class ProjectServiceTest {
                                     .coordinator(UserDetails.builder().userId("some-user-id").approved(true).build())
                                     .build()));
 
-    projectService.deleteProject(1L, "approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR));
+    projectService.deleteProject(1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(projectRepository, times(0)).deleteById(1L);
   }
 
@@ -1458,7 +1458,7 @@ public class ProjectServiceTest {
                                     .status(ProjectStatus.CLOSED)
                                     .coordinator(UserDetails.builder().userId("approvedCoordinatorId").approved(true).build())
                                     .build()));
-    projectService.archiveProject(5L, "approvedCoordinatorId", Arrays.asList(STUDY_COORDINATOR));
+    projectService.archiveProject(5L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(projectRepository, times(1)).save(any());
   }
 
@@ -1518,7 +1518,7 @@ public class ProjectServiceTest {
             new ArrayList<>(List.of("ehr-id-1", Map.of("_type", "OBSERVATION", "uuid", "12345"))),
             new ArrayList<>(List.of("ehr-id-2", Map.of("_type", "SECTION", "uuid", "bla")))));
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    projectService.streamResponseAsZip(Arrays.asList(response), "testFile", out);
+    projectService.streamResponseAsZip(List.of(response), "testFile", out);
 
     ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
     ZipEntry expectedFile = zipInputStream.getNextEntry();

@@ -34,7 +34,8 @@ public class TemplateControllerIT extends IntegrationTest {
     List<TemplateMetadataDto> templateMetadataDtos =
         mapper.readValue(
             result.getResponse().getContentAsString(),
-            new TypeReference<List<TemplateMetadataDto>>() {});
+                new TypeReference<>() {
+                });
 
     assertThat(templateMetadataDtos, notNullValue());
     assertThat(templateMetadataDtos.size(), is(1));

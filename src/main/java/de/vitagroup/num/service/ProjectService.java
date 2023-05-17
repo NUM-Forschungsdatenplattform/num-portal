@@ -902,9 +902,9 @@ public class ProjectService {
         });
         Sort.Direction sortOrder = authorOrder.getDirection();
         if (sortOrder.isAscending()) {
-          Collections.sort(projects, Comparator.nullsLast(byAuthorName));
+          projects.sort(Comparator.nullsLast(byAuthorName));
         } else {
-          Collections.sort(projects, Comparator.nullsLast(byAuthorName.reversed()));
+          projects.sort(Comparator.nullsLast(byAuthorName.reversed()));
         }
       }
     }
