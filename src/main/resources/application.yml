@@ -77,8 +77,8 @@ springdoc:
       client-secret: num-portal-webapp
 swagger:
   oauth2:
-    token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
-    auth-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/auth
+    token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/auth
     client-name: num-portal-webapp
     client-secret: num-portal-webapp
 
@@ -179,7 +179,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/certs
+          jwk-set-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/certs
       client:
         registration:
           userStoreClient:
@@ -188,7 +188,7 @@ spring:
             client-secret: 3c18c1dc-ba8d-4ab7-9a91-0178130f74ba
         provider:
           userStoreClient:
-            token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
+            token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
   mvc:
     log-request-details: false
   mail:
@@ -207,8 +207,8 @@ spring:
 
 swagger:
   oauth2:
-    token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
-    auth-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/auth
+    token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/auth
     client-name: numPortalWebapp
     client-secret: numPortalWebapp
 
