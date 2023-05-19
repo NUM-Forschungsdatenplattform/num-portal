@@ -97,15 +97,6 @@ public class UserServiceTest {
                     new Role("R5", "CONTENT_ADMIN"),
                     new Role("R6", "STUDY_APPROVER")).collect(Collectors.toSet());
 
-    private final Set<User> allValidUsers =
-            Sets.newHashSet(
-                    User.builder().id("4").build(),
-                    User.builder().id("5").build(),
-                    User.builder().id("6").build(),
-                    User.builder().id("7").build(),
-                    User.builder().id("8").build(),
-                    User.builder().id("9").build());
-
     @Before
     public void setup() {
         when(keycloakFeign.getUser("1")).thenThrow(FeignException.BadRequest.class);

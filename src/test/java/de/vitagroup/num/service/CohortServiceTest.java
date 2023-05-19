@@ -501,7 +501,7 @@ public class CohortServiceTest {
     public void getCohortGroupSizeWithDistributionTest() {
         CohortAqlDto cohortAqlDto = CohortAqlDto.builder().id(1L).name(NAME1).query(Q1).build();
         CohortGroupDto groupDto = CohortGroupDto.builder().type(Type.AQL).query(cohortAqlDto).build();
-        Mockito.when(contentService.getClinics(approvedUser.getUserId())).thenReturn(Arrays.asList("clinic one"));
+        Mockito.when(contentService.getClinics(approvedUser.getUserId())).thenReturn(List.of("clinic one"));
         QueryResponseData responseData1 = new QueryResponseData();
         responseData1.setRows(  List.of(
                 new ArrayList<>(List.of("ehr-id-1", Map.of("_type", "OBSERVATION", "uuid", "12"))),

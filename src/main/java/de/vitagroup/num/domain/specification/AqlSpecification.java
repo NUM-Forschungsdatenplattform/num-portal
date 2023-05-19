@@ -69,7 +69,6 @@ public class AqlSpecification extends BaseSpecification implements Specification
             switch (filterType) {
                 case ALL -> {
                     predicates.add(ownedOrPublic);
-                    break;
                 }
                 case OWNED -> predicates.add(ownedPred);
                 case ORGANIZATION -> {
@@ -77,7 +76,6 @@ public class AqlSpecification extends BaseSpecification implements Specification
                     Predicate sameOrganization = criteriaBuilder.equal(ownerOrganization.get("id"), loggedInUserOrganizationId);
                     predicates.add(sameOrganization);
                     predicates.add(ownedOrPublic);
-                    break;
                 }
             }
             if (CollectionUtils.isNotEmpty(nameLikePredicates)) {

@@ -247,7 +247,7 @@ public class CohortService {
       }
     }
     if (CollectionUtils.isNotEmpty(cohortGroupDto.getChildren())) {
-      cohortGroupDto.getChildren().stream()
+      cohortGroupDto.getChildren()
               .forEach(this::validateCohortParameters);
     }
   }
