@@ -18,13 +18,9 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Ignore //TODO: Integration testing infrastructure to include keycloak dependency as container
 public class AdminControllerIT extends IntegrationTest {
 
   @Autowired public MockMvc mockMvc;
-
-  @MockBean
-  private EmailService emailService;
 
   private static final String ADMIN_PATH = "/admin/user";
 
