@@ -3,10 +3,7 @@ package de.vitagroup.num.service.ehrbase;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -45,15 +42,17 @@ public class ResponseFilter {
       List<Map<String, String>> filteredColumns = new ArrayList<>();
       List<List<Object>> filteredRows = new ArrayList<>();
       QueryResponseData filteredResponse = new QueryResponseData();
-      for (int i = 0; i < queryResponseData.getRows().size(); i++) {
-        filteredRows.add(new ArrayList<>());
-      }
-      for (int c = 0; c < queryResponseData.getColumns().size(); c++) {
-        Map<String, String> column = queryResponseData.getColumns().get(c);
-        if (keepColumn(column)) {
-          filteredColumns.add(column);
-          for (int i = 0; i < queryResponseData.getRows().size(); i++) {
-            filteredRows.get(i).add(queryResponseData.getRows().get(i).get(c));
+      if(isValidQueryResponseData(queryResponseData)) {
+        for (int i = 0; i < queryResponseData.getRows().size(); i++) {
+          filteredRows.add(new ArrayList<>());
+        }
+        for (int c = 0; c < queryResponseData.getColumns().size(); c++) {
+          Map<String, String> column = queryResponseData.getColumns().get(c);
+          if (keepColumn(column)) {
+            filteredColumns.add(column);
+            for (int i = 0; i < queryResponseData.getRows().size(); i++) {
+              filteredRows.get(i).add(queryResponseData.getRows().get(i).get(c));
+            }
           }
         }
       }
@@ -63,6 +62,10 @@ public class ResponseFilter {
       resultList.add(filteredResponse);
     }
     return resultList;
+  }
+
+  private boolean isValidQueryResponseData(QueryResponseData queryResponseData) {
+    return queryResponseData.getRows() != null && queryResponseData.getColumns() != null;
   }
 
   private boolean keepColumn(Map<String, String> column) {

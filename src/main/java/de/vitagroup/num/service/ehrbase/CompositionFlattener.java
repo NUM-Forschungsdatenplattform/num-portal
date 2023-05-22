@@ -4,17 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nedap.archie.rm.composition.Composition;
 import de.vitagroup.num.service.exception.SystemException;
-import java.util.Map;
-import java.util.Optional;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.cache.Cache;
-import javax.cache.CacheManager;
-import javax.cache.Caching;
-import javax.cache.configuration.MutableConfiguration;
-import javax.cache.expiry.CreatedExpiryPolicy;
-import javax.cache.expiry.Duration;
-import javax.cache.spi.CachingProvider;
 import lombok.RequiredArgsConstructor;
 import org.ehrbase.client.templateprovider.ClientTemplateProvider;
 import org.ehrbase.serialisation.flatencoding.FlatFormat;
@@ -26,6 +15,18 @@ import org.ehrbase.webtemplate.templateprovider.CachedTemplateProvider;
 import org.openehr.schemas.v1.OPERATIONALTEMPLATE;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
+import javax.cache.spi.CachingProvider;
+import java.util.Map;
+import java.util.Optional;
+
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID;
 
@@ -33,7 +34,7 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_
 @RequiredArgsConstructor
 public class CompositionFlattener {
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper objectMapper =  new ObjectMapper();
 
   private CachedTemplateProvider cachedTemplateProvider;
   private final ClientTemplateProvider clientTemplateProvider;
@@ -50,7 +51,7 @@ public class CompositionFlattener {
 
     try {
       String templateId = composition.getArchetypeDetails().getTemplateId().getValue();
-      return mapper.readValue(getFlatJson(templateId).marshal(composition), Map.class);
+      return objectMapper.readValue(getFlatJson(templateId).marshal(composition), Map.class);
     } catch (JsonProcessingException e) {
       throw new SystemException(CompositionFlattener.class, CANNOT_PARSE_RESULTS,
               String.format(CANNOT_PARSE_RESULTS, e.getMessage()));
@@ -64,8 +65,8 @@ public class CompositionFlattener {
 
     if (cachedFlatJson.isEmpty()) {
       FlatJson flatJson =
-          new FlatJasonProvider(cachedTemplateProvider)
-              .buildFlatJson(FlatFormat.SIM_SDT, templateId);
+              (FlatJson) new FlatJasonProvider(cachedTemplateProvider)
+                  .buildFlatJson(FlatFormat.SIM_SDT, templateId);
 
       flatJsonCache.put(templateId, flatJson);
       return flatJson;

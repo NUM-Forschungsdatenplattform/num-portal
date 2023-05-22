@@ -253,15 +253,14 @@ public class ProjectService {
       return response;
 
     } catch (ResourceNotFound e) {
+      log.error("Could not retrieve data for template {} and project {}. Failed with message {} ", templateId, projectId, e.getMessage(), e);
       log.error(e.getMessage(), e);
-      throw e;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
-
-      QueryResponseData response = new QueryResponseData();
-      response.setName(templateId);
-      return List.of(response);
     }
+    QueryResponseData response = new QueryResponseData();
+    response.setName(templateId);
+    return List.of(response);
   }
 
   public List<QueryResponseData> executeAql(String query, Long projectId, String userId) {

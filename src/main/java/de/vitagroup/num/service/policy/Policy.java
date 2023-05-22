@@ -133,11 +133,7 @@ public abstract class Policy {
   protected List<Value> toSimpleValueList(Collection<String> list) {
     return list.stream()
         .map(
-            s -> {
-              SimpleValue simpleValue = new SimpleValue();
-              simpleValue.setValue(s);
-              return simpleValue;
-            })
+            s -> new SimpleValue(s))
         .collect(Collectors.toList());
   }
 

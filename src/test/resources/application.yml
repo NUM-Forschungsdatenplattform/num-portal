@@ -82,7 +82,7 @@ logging:
     root: debug
 
 ehrbase:
-  rest-api-url: http://localhost:8099/ehrbase/rest/openehr/v1/
+  rest-api-url: http://localhost:8099/ehrbase/
   username: ehrbase-user
   password: SuperSecretPassword
 
@@ -92,6 +92,8 @@ cors:
 
 privacy:
   minHits: 0
+  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
+  pseudonomityChunksSize: 5
 
 zars:
   enabled: false

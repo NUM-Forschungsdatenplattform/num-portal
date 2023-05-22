@@ -14,8 +14,9 @@ import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -46,6 +47,7 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_F
 @RestController
 @AllArgsConstructor
 @RequestMapping(value = "/project", produces = "application/json")
+@SecurityRequirement(name = "security_auth")
 public class ProjectController extends CustomizedExceptionHandler {
 
   private final ProjectService projectService;
@@ -56,7 +58,7 @@ public class ProjectController extends CustomizedExceptionHandler {
   private final ProjectViewMapper projectViewMapper;
   @AuditLog
   @GetMapping()
-  @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
+  @Operation(description = "Retrieves a list of projects the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<ProjectDto>> getProjects(
       @AuthenticationPrincipal @NotNull Jwt principal) {
@@ -68,7 +70,7 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/all")
-  @ApiOperation(value = "Retrieves a list of projects the user is allowed to see")
+  @Operation(description = "Retrieves a list of projects the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<Page<ProjectViewTO>> getProjectsWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable, SearchCriteria criteria) {
     Page<Project> projectPage = projectService.getProjectsWithPagination(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable);
@@ -81,7 +83,7 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/{id}")
-  @ApiOperation(value = "Retrieves a project by id")
+  @Operation(description = "Retrieves a project by id")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<ProjectDto> getProjectById(@AuthenticationPrincipal @NotNull Jwt principal,
                                                    @NotNull @NotEmpty @PathVariable Long id) {
@@ -96,8 +98,8 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping()
-  @ApiOperation(
-      value = "Creates a project; the logged in user is assigned as coordinator of the project")
+  @Operation(
+      description = "Creates a project; the logged in user is assigned as coordinator of the project")
   @PreAuthorize(Role.STUDY_COORDINATOR)
   public ResponseEntity<ProjectDto> createProject(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -112,8 +114,8 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PutMapping(value = "/{id}")
-  @ApiOperation(
-      value =
+  @Operation(
+      description =
           "Updates a project; the logged in user is assigned as coordinator of the project at creation time")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
   public ResponseEntity<ProjectDto> updateProject(
@@ -130,7 +132,7 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("/{projectId}/execute")
-  @ApiOperation(value = "Executes the aql")
+  @Operation(description = "Executes the aql")
   @PreAuthorize(Role.RESEARCHER)
   public ResponseEntity<String> executeAql(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -144,9 +146,8 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("/manager/execute")
-  @ApiOperation(
-      value =
-          "Executes the manager project aql in the cohort returning medical data matching the templates")
+  @Operation(
+      description = "Executes the manager project aql in the cohort returning medical data matching the templates")
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<String> executeManagerProject(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -160,7 +161,7 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping(value = "/{projectId}/export")
-  @ApiOperation(value = "Executes the aql and returns the result as a csv file attachment")
+  @Operation(description = "Executes the aql and returns the result as a csv file attachment")
   @PreAuthorize(Role.RESEARCHER)
   public ResponseEntity<StreamingResponseBody> exportResults(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -168,9 +169,7 @@ public class ProjectController extends CustomizedExceptionHandler {
       @NotNull @NotEmpty @PathVariable Long projectId,
       @RequestParam(required = false) Boolean defaultConfiguration,
       @RequestParam(required = false)
-      @ApiParam(
-          value =
-              "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
+      @Parameter( description = "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
           ExportType format) {
     StreamingResponseBody streamingResponseBody =
         projectService.getExportResponseBody(
@@ -182,15 +181,13 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping(value = "/manager/export")
-  @ApiOperation(value = "Executes the cohort default configuration returns the result as a csv file attachment")
+  @Operation(description = "Executes the cohort default configuration returns the result as a csv file attachment")
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<StreamingResponseBody> exportManagerResults(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid ManagerProjectDto managerProjectDto,
       @RequestParam(required = false)
-      @ApiParam(
-          value =
-              "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
+      @Parameter(description = "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
           ExportType format) {
     StreamingResponseBody streamingResponseBody =
         projectService.getManagerExportResponseBody(
@@ -203,7 +200,7 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/{projectId}/comment")
-  @ApiOperation(value = "Retrieves the list of attached comments to a particular project")
+  @Operation(description = "Retrieves the list of attached comments to a particular project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<CommentDto>> getComments(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -216,7 +213,7 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("/{projectId}/comment")
-  @ApiOperation(value = "Adds a comment to a particular project")
+  @Operation(description = "Adds a comment to a particular project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<CommentDto> addComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -232,7 +229,7 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PutMapping("/{projectId}/comment/{commentId}")
-  @ApiOperation(value = "Updates a comment")
+  @Operation(description = "Updates a comment")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<CommentDto> updateComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -262,7 +259,7 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @DeleteMapping("/{id}")
-  @ApiOperation(value = "Deletes a project")
+  @Operation(description = "Deletes a project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
   public void deleteProject(@AuthenticationPrincipal @NotNull Jwt principal,
       @PathVariable Long id) {
@@ -271,23 +268,21 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   @AuditLog
   @PostMapping("/{id}/archive")
-  @ApiOperation(value = "Archive a project")
+  @Operation(description = "Archive a project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
   public void archiveProject(@AuthenticationPrincipal @NotNull Jwt principal,
       @PathVariable Long id) {
     projectService.archiveProject(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
-  @GetMapping("/{id}/document")
-  @ApiOperation(value = "Get the project info as a document", produces = MediaType.TEXT_PLAIN_VALUE)
+  @GetMapping(value = "/{id}/document", produces = MediaType.TEXT_PLAIN_VALUE)
+  @Operation(description = "Get the project info as a document")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
   public ResponseEntity<byte[]> getProjectInfoPDF(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable Long id,
       @RequestParam
-      @ApiParam(
-          value =
-              "The language the document should be returned in (en/de)")
+      @Parameter(description = "The language the document should be returned in (en/de)")
           String locale) {
     byte[] docBytes =
         projectService.getInfoDocBytes(id, principal.getSubject(), new Locale(locale));

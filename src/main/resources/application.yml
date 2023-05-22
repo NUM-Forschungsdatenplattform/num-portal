@@ -70,6 +70,11 @@ management:
   server:
     port: 8091
 
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: num-portal-webapp
+      client-secret: num-portal-webapp
 swagger:
   oauth2:
     token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
@@ -118,7 +123,7 @@ zars:
 
 # use local ehrbase until we get central one
 ehrbase:
-  rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
+  rest-api-url: http://localhost:8080/ehrbase/
   username: ehrbase-user
   password: SuperSecretPassword
 
@@ -127,6 +132,8 @@ cors:
     - "*"
 privacy:
   minHits: 30
+  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
+  pseudonomityChunksSize: 50
 
 num:
   url: https://dev.num-codex.de/home
@@ -153,7 +160,9 @@ requestpsnworkflow:
 
 ---
 spring:
-  profiles: local
+  config:
+    activate:
+      on-profile: local
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres?currentSchema=num
     driver-class-name: org.postgresql.Driver
@@ -220,12 +229,14 @@ logging:
     org.springframework.web: trace
 
 ehrbase:
-  rest-api-url: http://localhost:8080/ehrbase/rest/openehr/v1/
+  rest-api-url: http://localhost:8080/ehrbase/
   username: ehrbase-user
   password: SuperSecretPassword
 
 privacy:
   minHits: 1
+  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
+  pseudonomityChunksSize: 20
 
 atna:
   enabled: false

@@ -1,14 +1,15 @@
 package de.vitagroup.num.domain.dto;
 
-import io.swagger.annotations.ApiModel;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@ApiModel
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+@Schema
 @Data
 @Builder
 @NoArgsConstructor

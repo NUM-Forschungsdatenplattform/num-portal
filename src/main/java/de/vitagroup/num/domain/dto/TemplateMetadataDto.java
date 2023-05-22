@@ -1,7 +1,6 @@
 package de.vitagroup.num.domain.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,17 +11,17 @@ import java.time.OffsetDateTime;
 /** Dto for template metadata retrieved from ehr base */
 @Data
 @Builder
-@ApiModel
+@Schema
 @NoArgsConstructor
 @AllArgsConstructor
 public class TemplateMetadataDto {
 
-  @ApiModelProperty(value = "The ehrbase template id")
+  @Schema(description = "The ehrbase template id")
   private String templateId;
 
-  @ApiModelProperty private String name;
+  private String name;
 
-  @ApiModelProperty private String archetypeId;
+  private String archetypeId;
 
-  @ApiModelProperty private OffsetDateTime createdOn;
+  private OffsetDateTime createdOn;
 }
