@@ -1,8 +1,11 @@
 package de.vitagroup.num.service.ehrbase;
 
+import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.service.UserDetailsService;
 import org.ehrbase.response.openehr.QueryResponseData;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -13,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
 
 import java.util.*;
 
@@ -247,5 +251,15 @@ public class ParameterServiceTest {
                 {AQL_PATH_UNITS, ARCHETYPE_ID_VALUE_UNITS},
                 {AQL_PATH_VALUE_VALUE_ORDINAL, ARCHETYPE_ID_VALUE_VALUE_ORDINAL}
         });
+    }
+
+    @Test
+    public void evictParametersCache() {
+        ConcurrentMapCache paramsCache = new ConcurrentMapCache("aqlParameters", false);
+        paramsCache.putIfAbsent("aqlPath1", ParameterOptionsDto.builder().aqlPath("aqlPath1").type("DV_BOOLEAN").build());
+        paramsCache.putIfAbsent("aqlPath2", ParameterOptionsDto.builder().aqlPath("aqlPath2").type("DV_ORDINAL").build());
+        Mockito.when(cacheManager.getCache("aqlParameters")).thenReturn(paramsCache);
+        parameterService.evictParametersCache();
+        Assert.assertTrue(paramsCache.getNativeCache().isEmpty());
     }
 }
