@@ -336,7 +336,7 @@ public class OrganizationService {
   static class MailDomainDetails {
     String domain;
     String regex;
-    int matches = 0;
+    int matches;
     Organization organization;
   }
 }

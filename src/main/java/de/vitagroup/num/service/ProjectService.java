@@ -177,7 +177,7 @@ public class ProjectService {
    * Retrieves a list of latest projects information
    *
    * @param count number of projects to be retrieved
-   * @return The list of max requested count of latest projects
+   * @return The list of max requested count of the latest projects
    */
   public List<ProjectInfoDto> getLatestProjectsInfo(int count, List<String> roles) {
 

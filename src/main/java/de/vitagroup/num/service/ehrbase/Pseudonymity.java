@@ -74,7 +74,7 @@ public class Pseudonymity {
       var params = thirdLevelPseudonyms.get();
       if (!params.getParameters("error").isEmpty()) {
         log.warn("Could not retrieve pseudonyms for secondLevelPseudonyms {} ", parameters.getParameters(ORIGINAL));
-        // this might be remove when API on Greisfwald side is ready and working for any kind of id
+        // this might be removed when API on Greisfwald side is ready and working for any kind of id
         return generateNumThirdLevelPseudonym(secondLevelPseudonyms, projectId);
         //throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
       }
@@ -85,7 +85,7 @@ public class Pseudonymity {
       }).collect(Collectors.toList());
     } else {
       // something did not work on Greisfwald side, so generate fake 3rd party pseudonyms
-      // this might be remove when API on Greisfwald side is ready and working for any kind of id
+      // this might be removed when API on Greisfwald side is ready and working for any kind of id
       return generateNumThirdLevelPseudonym(secondLevelPseudonyms, projectId);
       //throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
     }

@@ -159,15 +159,16 @@ public class CohortControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {STUDY_COORDINATOR, MANAGER})
   public void shouldHandleCohortWithNullParameter() {
 
-    String query = "SELECT\n"
-            + "  o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Gr__e_L_nge__magnitude\n"
-            + "FROM\n"
-            + "  EHR e\n"
-            + "  contains COMPOSITION c1[openEHR-EHR-COMPOSITION.registereintrag.v1]\n"
-            + "  contains OBSERVATION o0[openEHR-EHR-OBSERVATION.height.v2]\n"
-            + "WHERE\n"
-            + "  (c1/archetype_details/template_id/value = 'Körpergröße'\n"
-            + "  and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude = $kg)";
+    String query = """
+            SELECT
+              o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude as Gr__e_L_nge__magnitude
+            FROM
+              EHR e
+              contains COMPOSITION c1[openEHR-EHR-COMPOSITION.registereintrag.v1]
+              contains OBSERVATION o0[openEHR-EHR-OBSERVATION.height.v2]
+            WHERE
+              (c1/archetype_details/template_id/value = 'Körpergröße'
+              and o0/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/magnitude = $kg)""";
     Aql aql = Aql.builder()
             .name("Body weight")
             .query(query)

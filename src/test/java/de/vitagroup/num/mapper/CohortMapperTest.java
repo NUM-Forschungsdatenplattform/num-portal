@@ -72,10 +72,10 @@ public class CohortMapperTest {
     assertThat(cohortDto.getId(), is(cohort.getId()));
     assertThat(cohortDto.getCohortGroup().getId(), is(andCohort.getId()));
     assertThat(
-        cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId().equals(first.getId())),
+        cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == first.getId()),
         is(true));
     assertThat(
-        cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId().equals(second.getId())),
+        cohort.getCohortGroup().getChildren().stream().anyMatch(c -> c.getId() == second.getId()),
         is(true));
     assertThat(
         cohort.getCohortGroup().getChildren().stream()
