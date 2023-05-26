@@ -7,35 +7,34 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULDN_T_SAVE
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Content;
 import de.vitagroup.num.domain.ContentType;
+import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.CardDto;
 import de.vitagroup.num.domain.dto.CardDto.LocalizedPart;
+import de.vitagroup.num.domain.dto.MetricsDto;
 import de.vitagroup.num.domain.dto.NavigationItemDto;
 import de.vitagroup.num.domain.repository.ContentItemRepository;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.SystemException;
 import joptsimple.internal.Strings;
+import org.ehrbase.response.openehr.QueryResponseData;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -44,6 +43,21 @@ public class ContentServiceTest {
   @Spy private ObjectMapper mapper;
 
   @Spy private ContentItemRepository repository;
+
+  @Mock
+  private ProjectService projectService;
+
+  @Mock
+  private AqlService aqlService;
+
+  @Mock
+  private OrganizationService organizationService;
+
+  @Mock
+  private UserDetailsService userDetailsService;
+
+  @Mock
+  private EhrBaseService ehrBaseService;
 
   @InjectMocks private ContentService contentService;
 
@@ -188,5 +202,70 @@ public class ContentServiceTest {
             .thenThrow(new SystemException(ContentService.class, COULDN_T_SAVE_CARD,
                     String.format(COULDN_T_SAVE_CARD, Strings.EMPTY)));
     contentService.setCards(new ArrayList<>());
+  }
+
+  @Test
+  public void shouldGetLatestProjects() {
+    contentService.getLatestProjects(List.of(Roles.STUDY_COORDINATOR));
+    verify(projectService, times(1)).getLatestProjectsInfo(5, List.of(Roles.STUDY_COORDINATOR));
+  }
+
+  @Test
+  public void shouldGetMetrics() {
+    Mockito.when(aqlService.countAqls()).thenReturn(50L);
+    Mockito.when(projectService.countProjects()).thenReturn(100L);
+    Mockito.when(organizationService.countOrganizations()).thenReturn(12L);
+    MetricsDto respone = contentService.getMetrics();
+    assertEquals(50L, respone.getAqls());
+    assertEquals(100L, respone.getProjects());
+    assertEquals(12, respone.getOrganizations());
+  }
+
+  @Test
+  public void shouldGetClinics() {
+    mockGetClinicsData();
+    List<String> clinics = contentService.getClinics("approvedUserId");
+    assertEquals(2, clinics.size());
+  }
+
+  @Test
+  public void shouldGetClinicDistributions() {
+    QueryResponseData responseData = new QueryResponseData();
+    responseData.setColumns(
+            new ArrayList<>(List.of(Map.of("path", "/count(r/data[at0001]/events[at0002]/data[at0003]/items[at0041]/value/magnitude)"),
+                    Map.of("name", "sofa_score"))));
+    responseData.setRows(List.of(new ArrayList<>(List.of(25))));
+    Mockito.when(ehrBaseService.executePlainQuery(Mockito.contains("openEHR-EHR-OBSERVATION.sofa_score.v0"))).thenReturn(responseData);
+    Map<String, Integer> distribution = contentService.getClinicDistributions("dummy clinic");
+    assertTrue(distribution.containsKey("0-4"));
+    assertEquals(25, distribution.get("0-4"));
+  }
+
+  @Test
+  public void shouldGetClinicAverages() {
+    QueryResponseData responseData = new QueryResponseData();
+    responseData.setColumns(
+            new ArrayList<>(List.of(Map.of("path", "/avg(r/data[at0001]/events[at0002]/data[at0003]/items[at0041]/value/magnitude)"),
+                    Map.of("name", "sofa_avg"))));
+    responseData.setRows(List.of(new ArrayList<>(List.of(12.33))));
+    Mockito.when(ehrBaseService.executePlainQuery(Mockito.contains("avg(r/data[at0001]/events[at0002]/data[at0003]/items[at0041]/value/magnitude) as sofa_avg"))).thenReturn(responseData);
+    mockGetClinicsData();
+    Map<String, Double> clinicAverages = contentService.getClinicAverages("approvedUserId");
+    assertTrue(clinicAverages.containsKey("Hospital"));
+    assertEquals(12.33, clinicAverages.get("Hospital"));
+  }
+
+  private void mockGetClinicsData () {
+    Mockito.when(userDetailsService.checkIsUserApproved("approvedUserId"))
+            .thenReturn(UserDetails.builder()
+                    .userId("approvedUserId")
+                    .approved(true)
+                    .build());
+    QueryResponseData responseData = new QueryResponseData();
+    responseData.setColumns(
+            new ArrayList<>(List.of(Map.of("path", "/context/health_care_facility/name"), Map.of("name", "health_care_facility"))));
+    responseData.setRows(List.of(new ArrayList<>(List.of("Hospital")),
+            new ArrayList<>(List.of("Medizinische Hochschule Hannover"))));
+    Mockito.when(ehrBaseService.executePlainQuery(Mockito.eq(ContentService.LIST_CLINICS))).thenReturn(responseData);
   }
 }

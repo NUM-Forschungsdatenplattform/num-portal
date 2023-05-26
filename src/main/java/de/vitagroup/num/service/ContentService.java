@@ -50,7 +50,7 @@ public class ContentService {
   private static final int SOFA_MAX = 24;
   private static final int SOFA_INTERVAL_LEN = 5;
 
-  private static final String LIST_CLINICS =
+  public static final String LIST_CLINICS =
       "SELECT distinct c/context/health_care_facility/name as health_care_facility FROM EHR e CONTAINS COMPOSITION c";
 
   private static final String GET_CLINIC_SOFA_AVG =
