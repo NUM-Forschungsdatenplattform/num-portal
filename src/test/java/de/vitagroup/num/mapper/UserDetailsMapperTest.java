@@ -44,7 +44,7 @@ public class UserDetailsMapperTest {
     }
 
     @Test
-    public void shouldConvertToEntity() {
+    public void shouldConvertEntityToDto() {
         UserDetails entity = UserDetails
                 .builder()
                 .userId("userId")
