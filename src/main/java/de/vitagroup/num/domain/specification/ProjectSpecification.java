@@ -84,7 +84,7 @@ public class ProjectSpecification extends BaseSpecification {
                     if (CollectionUtils.isNotEmpty(ownersUUID)) {
                         authorNameLike = coordinator.get("userId").in(ownersUUID);
                     }
-                    if (authorNameLike != null) {
+                    if (Objects.nonNull(authorNameLike)) {
                         predicates.add(criteriaBuilder.or(projectNameLike, authorNameLike));
                     } else {
                         predicates.add(projectNameLike);

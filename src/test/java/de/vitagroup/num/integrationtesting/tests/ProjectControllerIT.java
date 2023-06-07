@@ -1,39 +1,46 @@
 package de.vitagroup.num.integrationtesting.tests;
 
-import static de.vitagroup.num.domain.Roles.ORGANIZATION_ADMIN;
-import static de.vitagroup.num.domain.Roles.RESEARCHER;
-import static de.vitagroup.num.domain.Roles.STUDY_APPROVER;
-import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
-import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Lists;
+import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.ProjectCategories;
 import de.vitagroup.num.domain.ProjectStatus;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.ProjectDto;
+import de.vitagroup.num.domain.dto.ProjectViewTO;
+import de.vitagroup.num.domain.dto.TemplateInfoDto;
+import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
-import java.time.LocalDate;
-import java.util.Arrays;
 import lombok.SneakyThrows;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.openfeign.support.PageJacksonModule;
+import org.springframework.cloud.openfeign.support.SortJacksonModule;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static de.vitagroup.num.domain.Roles.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class ProjectControllerIT extends IntegrationTest {
 
@@ -42,14 +49,20 @@ public class ProjectControllerIT extends IntegrationTest {
   UserDetails user1;
   UserDetails user2;
   UserDetails user3;
-  @Autowired private ObjectMapper mapper;
+  private ObjectMapper mapper = new ObjectMapper()
+          .registerModule(new PageJacksonModule())
+          .registerModule(new SortJacksonModule())
+          .registerModule(new JavaTimeModule());
   @Autowired private ProjectRepository projectRepository;
   @Autowired private UserDetailsRepository userDetailsRepository;
+  @Autowired
+  private OrganizationRepository organizationRepository;
 
   @Before
   public void setupProjects() {
     projectRepository.deleteAll();
-    user1 = UserDetails.builder().userId("user1").approved(true).build();
+    Optional<Organization> organizationOne = organizationRepository.findByName("Organization A");
+    user1 = UserDetails.builder().userId("user1").approved(true).organization(organizationOne.get()).build();
     userDetailsRepository.save(user1);
     user2 = UserDetails.builder().userId("user2").approved(true).build();
     userDetailsRepository.save(user2);
@@ -190,14 +203,25 @@ public class ProjectControllerIT extends IntegrationTest {
         .andExpect(status().isForbidden());
   }
 
-  @Ignore(
-      "Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_COORDINATOR})
   public void shouldCreateProject() {
+    TemplateInfoDto templateInfoDto = TemplateInfoDto.builder()
+            .templateId("Alter")
+            .name("Alter")
+            .build();
     ProjectDto validProject =
-        ProjectDto.builder().name("s1").firstHypotheses("fh1").status(ProjectStatus.DRAFT).build();
+        ProjectDto.builder()
+                .name("s1")
+                .description("some dummy description")
+                .firstHypotheses("fh1")
+                .goal("demo project")
+                .categories(Set.of(ProjectCategories.PREVENTION))
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now().plusDays(50))
+                .templates(List.of(templateInfoDto))
+                .status(ProjectStatus.DRAFT).build();
     String studyJson = mapper.writeValueAsString(validProject);
 
     mockMvc
@@ -211,8 +235,6 @@ public class ProjectControllerIT extends IntegrationTest {
         .andExpect(jsonPath("$.firstHypotheses").value(validProject.getFirstHypotheses()));
   }
 
-  @Ignore(
-      "Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -221,34 +243,50 @@ public class ProjectControllerIT extends IntegrationTest {
   public void studyCoordinatorShouldGetAllHisProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    ProjectDto[] projects =
-        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(8, projects.length);
+        mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(8, projectsPage.getContent().size());
   }
 
-  @Ignore(
-      "Ignore until integration testing infrastructure includes keycloak dependency as container")
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(
+          roles = {STUDY_COORDINATOR},
+          userId = "user1")
+  public void studyCoordinatorShouldGetAllHisProjectsPaginated() {
+    MvcResult result =
+            mockMvc.perform(get(PROJECT_PATH + "/all")
+                            .param("page","0")
+                            .param("size", "10")
+                            .param("sort", "ASC")
+                            .param("sortBy", "name")
+                    .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(8, projectsPage.getContent().size());
+    List<ProjectViewTO> projects = projectsPage.getContent();
+    assertEquals("approved", projects.get(0).getName());
+
+  }
+
   @Test
   @SneakyThrows
   @WithMockNumUser(
       roles = {RESEARCHER},
       userId = "user2")
-  public void researcherInAStudyShouldGetPublicAndClosedProjects() {
+  public void researcherInAStudyShouldGetPublishedProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    ProjectDto[] projects =
-        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(2, projects.length);
+        mockMvc.perform(get(PROJECT_PATH + "/all")
+                .param("page","0")
+                .param("size", "10")
+                .with(csrf())).andExpect(status().isOk()).andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(1, projectsPage.getContent().size());
     assertNotNull(
-        Arrays.stream(projects)
-            .filter(projectDto -> projectDto.getName().equals("closed"))
-            .findFirst()
-            .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
-            .filter(projectDto -> projectDto.getName().equals("published"))
+            projectsPage.getContent().stream()
+            .filter(projectViewTO -> projectViewTO.getName().equals("published"))
             .findFirst()
             .orElse(null));
   }
@@ -256,19 +294,16 @@ public class ProjectControllerIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser(
-      roles = {RESEARCHER},
-      userId = "user1")
+          roles = {RESEARCHER},
+          userId = "user1")
   public void researcherNotInAStudyShouldNotGetProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    ProjectDto[] projects =
-        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(0, projects.length);
+            mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(0, projectsPage.getContent().size());
   }
 
-  @Ignore(
-      "Ignore until integration testing infrastructure includes keycloak dependency as container")
   @Test
   @SneakyThrows
   @WithMockNumUser(
@@ -277,42 +312,34 @@ public class ProjectControllerIT extends IntegrationTest {
   public void studyApproverShouldGetAllExceptDraftAndArchivedProjects() {
 
     MvcResult result =
-        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    ProjectDto[] projects =
-        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(7, projects.length);
-    assertNotNull(
-        Arrays.stream(projects)
+        mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(7, projectsPage.getContent().size());
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("pending"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("reviewing"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("approved"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("changeRequest"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("denied"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("closed"))
             .findFirst()
             .orElse(null));
-    assertNotNull(
-        Arrays.stream(projects)
+    assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("published"))
             .findFirst()
             .orElse(null));
@@ -335,22 +362,22 @@ public class ProjectControllerIT extends IntegrationTest {
       userId = "user1")
   public void orgAdminShouldNotBeAllowedToGetProjects() {
 
-    mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().is4xxClientError());
+    mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().is4xxClientError());
   }
 
   @Test
   @SneakyThrows
   @WithMockNumUser(
-      roles = {STUDY_COORDINATOR},
-      userId = "user2")
+          roles = {STUDY_COORDINATOR},
+          userId = "user2")
   public void studyCoordinatorShouldNotGetOtherCoordinatorsProjectsExceptProperStatuses() {
 
     MvcResult result =
-        mockMvc.perform(get(PROJECT_PATH).with(csrf())).andExpect(status().isOk()).andReturn();
-    ProjectDto[] projects =
-        mapper.readValue(result.getResponse().getContentAsString(), ProjectDto[].class);
-    assertEquals(3, projects.length);
+            mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
+    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    assertEquals(3, projectsPage.getContent().size());
   }
+
 
   @Test
   @SneakyThrows

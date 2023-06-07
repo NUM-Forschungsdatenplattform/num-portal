@@ -1,0 +1,26 @@
+{
+  "q": "Select e/ehr_id/value as F1 from EHR e contains COMPOSITION c1[openEHR-EHR-COMPOSITION.registereintrag.v1] contains OBSERVATION o0[openEHR-EHR-OBSERVATION.height.v2] where (c1/archetype_details/template_id/value = 'Körpergröße' )",
+  "columns": [
+    {
+      "path": "/ehr_id/value",
+      "name": "F1"
+    }
+  ],
+  "rows": [
+    [
+      "011a5594-76f3-4af4-aff4-69bdd024471e"
+    ],
+    [
+      "01dd519d-3b63-49c4-9189-c864d2fedd75"
+    ],
+    [
+      "06f024ef-cc83-4c6e-acd1-7fe093575e81"
+    ],
+    [
+      "0941f528-3c79-4547-a31a-0f1cd5b242b1"
+    ],
+    [
+      "0b01d946-0ba8-47a0-9357-d4cbba7e47a3"
+    ]
+  ]
+}

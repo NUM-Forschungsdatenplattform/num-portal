@@ -10,6 +10,7 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
 import de.vitagroup.num.mapper.OrganizationMapper;
 import de.vitagroup.num.service.exception.BadRequestException;
@@ -38,10 +39,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.nio.charset.Charset;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
@@ -56,6 +60,9 @@ public class UserServiceTest {
 
     @Mock
     private UserDetailsService userDetailsService;
+
+    @Mock
+    private UserDetailsRepository userDetailsRepository;
 
     @Mock
     private NotificationService notificationService;
@@ -113,14 +120,8 @@ public class UserServiceTest {
         when(keycloakFeign.getRolesOfUser("4")).thenReturn(Stream.of(new Role("R2", "RESEARCHER")).collect(Collectors.toSet()));
         when(keycloakFeign.getRolesOfUser("5")).thenReturn(Collections.emptySet());
         when(keycloakFeign.getRolesOfUser("6")).thenReturn(roles);
-        when(keycloakFeign.getRolesOfUser("7")).thenReturn(Set.of(new Role("R2", "RESEARCHER")));
-        when(keycloakFeign.getRolesOfUser("8")).thenReturn(Set.of(new Role("R4", "STUDY_COORDINATOR")));
-        when(keycloakFeign.getRolesOfUser("9"))
-                .thenReturn(Set.of(new Role("R3", "ORGANIZATION_ADMIN")));
 
         when(keycloakFeign.getRoles()).thenReturn(roles);
-
-        when(keycloakFeign.searchUsers(any(), eq(100000))).thenReturn(allValidUsers);
 
         when(userDetailsService.getUserDetailsById("4"))
                 .thenReturn(
@@ -209,21 +210,7 @@ public class UserServiceTest {
                                 .organization(Organization.builder().id(2L).name("org 2").domains(Set.of()).build())
                                 .approved(true)
                                 .build());
-        when(userDetailsService.getUserDetailsById("8"))
-                .thenReturn(
-                        Optional.of(
-                                UserDetails.builder()
-                                        .userId("8")
-                                        .organization(
-                                                Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
-                                        .approved(true)
-                                        .build()));
         when(userDetailsService.checkIsUserApproved("8")).thenThrow(new ForbiddenException());
-        when(userDetailsService.getUserDetailsById("9"))
-                .thenReturn(Optional.of(UserDetails.builder().userId("9")
-                        .approved(true).build()));
-        when(userDetailsService.checkIsUserApproved("9"))
-                .thenReturn(UserDetails.builder().userId("9").approved(true).build());
     }
 
     @Test
@@ -406,40 +393,6 @@ public class UserServiceTest {
         verify(keycloakFeign, times(1)).getRolesOfUser("4");
         verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
     }
-
-    @Test
-    public void shouldReturnUserWithRoles() {
-        Set<User> users = new HashSet<>();
-        users.add(User.builder().firstName("John").id("4").build());
-
-        when(keycloakFeign.searchUsers(null, 100000)).thenReturn(users);
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers("user", null, null, true, List.of(Roles.SUPER_ADMIN));
-
-        assertThat(userReturn.iterator().next().getRoles().iterator().next(), is("RESEARCHER"));
-        verify(keycloakFeign, times(1)).getRolesOfUser("4");
-    }
-
-    @Test
-    public void shouldReturnEnoughUsers() {
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
-        assertEquals(6, userReturn.size());
-    }
-
-    @Test
-    public void shouldReturnUserWithoutRoles() {
-        Set<User> users = new HashSet<>();
-        users.add(User.builder().firstName("John").id("4").build());
-
-        when(keycloakFeign.searchUsers(null, 100000)).thenReturn(users);
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers("user", null, null, false, List.of(Roles.SUPER_ADMIN));
-
-        assertNull(userReturn.iterator().next().getRoles());
-        verify(keycloakFeign, times(0)).getRolesOfUser("4");
-    }
-
     @Test
     public void shouldHandleMissingOwner() {
         when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null), null, null));
@@ -448,43 +401,6 @@ public class UserServiceTest {
         assertNull(userReturn);
         verify(keycloakFeign, times(1)).getUser("missingUserId");
     }
-
-    @Test
-    public void shouldReturnUserWithRolesWithinOrg() {
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers("5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN));
-
-        assertEquals(4, userReturn.size());
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
-    }
-
-    @Test
-    public void shouldReturnUserWithRolesWithinOrgAndResearchers() {
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers(
-                        "5", null, null, false, List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
-        assertEquals(5, userReturn.size());
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("5")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("8")));
-    }
-
-    @Test
-    public void shouldNotReturnUsersWithinOrgWhenCallerDoesntHaveOrg() {
-        Set<de.vitagroup.num.domain.admin.User> userReturn =
-                userService.searchUsers(
-                        "9", null, null, false, List.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR));
-        assertEquals(3, userReturn.size());
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("4")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("6")));
-        assertTrue(userReturn.stream().anyMatch(user -> user.getId().equals("7")));
-    }
-
     @Test(expected = ForbiddenException.class)
     public void shouldShouldNotAllowOrgAdminSetRolesUserDifferentOrg() {
         userService.setUserRoles(
@@ -516,6 +432,67 @@ public class UserServiceTest {
 
         assertThat(notificationSent.size(), is(1));
         assertThat(notificationSent.get(0).getClass(), is(UserNameUpdateNotification.class));
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30Days() {
+        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
+        getUserDetailsFromRepository(localDateTime);
+
+        userService.deleteUnapprovedUsersAfter30Days();
+    }
+
+    private void getUserDetailsFromRepository(LocalDateTime localDateTime) {
+        when(userDetailsRepository.findAllByApproved(false)).thenReturn(
+                Optional.of(List.of(
+                        UserDetails.builder()
+                                .userId("4")
+                                .organization(
+                                        Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
+                                .approved(false)
+                                .createdDate(localDateTime)
+                                .build())
+        ));
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30DaysKeycloakCreatedTimestampIsMissing() {
+        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
+        getUserDetailsFromRepository(localDateTime);
+
+        userService.deleteUnapprovedUsersAfter30Days();
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30DaysNoUser() {
+        userService.deleteUnapprovedUsersAfter30Days();
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30DaysResourceNotFound() {
+        getUserDetailsFromRepository(null);
+
+        when(keycloakFeign.getUser("4")).thenThrow(new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, "4")));
+        assertThrows(ResourceNotFound.class,
+                () -> userService.deleteUnapprovedUsersAfter30Days());
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30DaysBadRequest() {
+        getUserDetailsFromRepository(null);
+
+        when(keycloakFeign.getUser("4")).thenThrow(FeignException.BadRequest.class);
+        assertThrows(SystemException.class,
+                () -> userService.deleteUnapprovedUsersAfter30Days());
+    }
+
+    @Test
+    public void shouldDeleteUnapprovedUsersAfter30DaysInternalServerError() {
+        getUserDetailsFromRepository(null);
+
+        when(keycloakFeign.getUser("4")).thenThrow(FeignException.InternalServerError.class);
+        assertThrows(SystemException.class,
+                () -> userService.deleteUnapprovedUsersAfter30Days());
     }
 
     @Test(expected = ForbiddenException.class)
@@ -637,7 +614,7 @@ public class UserServiceTest {
                 .sortBy("DESC")
                 .sort("invalid field")
                 .build();
-        userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
+        userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
         Mockito.verify(userDetailsService, Mockito.never()).getUsers(Mockito.any(), Mockito.any(UserDetailsSpecification.class));
     }
 
@@ -653,7 +630,7 @@ public class UserServiceTest {
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
         Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
@@ -682,13 +659,16 @@ public class UserServiceTest {
                                             .lastName("doe")
                                             .email("john.doe@vitagroup.ag")
                                             .createdTimestamp(System.currentTimeMillis())
+                                            .roles(Set.of(Roles.RESEARCHER, Roles.STUDY_COORDINATOR, Roles.CRITERIA_EDITOR))
                                             .build());
         usersCache.put("userId-two", User.builder()
                 .firstName("Ana")
                 .lastName("Doe")
                 .id("userId-two")
                 .email("ana-maria.doe@vitagroup.ag")
-                .createdTimestamp(System.currentTimeMillis()).build());
+                .createdTimestamp(System.currentTimeMillis())
+                .roles(Set.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR, Roles.CRITERIA_EDITOR))
+                .build());
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
         Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
@@ -720,7 +700,7 @@ public class UserServiceTest {
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
                 .thenReturn(new PageImpl<>(Arrays.asList(userDetails)));
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        userService.searchUsersWithPagination("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable);
+        userService.searchUsers("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertNull(capturedInput.getApproved());
@@ -732,6 +712,7 @@ public class UserServiceTest {
         Pageable pageable = PageRequest.of(0, 50);
         Map<String, String> filter = new HashMap<>();
         filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
+        filter.put(SearchCriteria.FILTER_BY_ROLES, "ORGANIZATION_ADMIN,RESEARCHER");
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
                 .sort("DESC")
@@ -743,7 +724,7 @@ public class UserServiceTest {
                 .organization(Organization.builder().id(99L).build())
                 .build());
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> userPage = userService.searchUsersWithPagination("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
@@ -760,7 +741,7 @@ public class UserServiceTest {
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         User firstUser = users.getContent().get(0);
         Assert.assertEquals("userId-two", firstUser.getId());
@@ -775,7 +756,7 @@ public class UserServiceTest {
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsersWithPagination("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0, 2)), argumentCaptor.capture());
         User firstUser = users.getContent().get(0);
         Assert.assertEquals("userId-two", firstUser.getId());

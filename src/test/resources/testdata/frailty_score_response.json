@@ -1,0 +1,219 @@
+{
+  "q": "Select distinct o0/data[at0001]/events[at0002]/data[at0003]/items[at0004] as F1 from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.clinical_frailty_scale.v1] order by o0/data[at0001]/events[at0002]/data[at0003]/items[at0004] ASCENDING",
+  "columns": [
+    {
+      "path": "/data[at0001]/events[at0002]/data[at0003]/items[at0004]",
+      "name": "F1"
+    }
+  ],
+  "rows": [
+    [
+      {
+        "name": {
+          "value": "Beurteilung",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_ORDINAL",
+          "value": 2.0,
+          "symbol": {
+            "_type": "DV_CODED_TEXT",
+            "value": "2",
+            "defining_code": {
+              "_type": "CODE_PHRASE",
+              "code_string": "at0006",
+              "terminology_id": {
+                "_type": "TERMINOLOGY_ID",
+                "value": "local"
+              }
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0004"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Beurteilung",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_ORDINAL",
+          "value": 3.0,
+          "symbol": {
+            "_type": "DV_CODED_TEXT",
+            "value": "3",
+            "defining_code": {
+              "_type": "CODE_PHRASE",
+              "code_string": "at0007",
+              "terminology_id": {
+                "_type": "TERMINOLOGY_ID",
+                "value": "local"
+              }
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0004"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Beurteilung",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_ORDINAL",
+          "value": 4.0,
+          "symbol": {
+            "_type": "DV_CODED_TEXT",
+            "value": "4",
+            "defining_code": {
+              "_type": "CODE_PHRASE",
+              "code_string": "at0008",
+              "terminology_id": {
+                "_type": "TERMINOLOGY_ID",
+                "value": "local"
+              }
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0004"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Beurteilung",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_ORDINAL",
+          "value": 5.0,
+          "symbol": {
+            "_type": "DV_CODED_TEXT",
+            "value": "5",
+            "defining_code": {
+              "_type": "CODE_PHRASE",
+              "code_string": "at0009",
+              "terminology_id": {
+                "_type": "TERMINOLOGY_ID",
+                "value": "local"
+              }
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0004"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Beurteilung",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_ORDINAL",
+          "value": 6.0,
+          "symbol": {
+            "_type": "DV_CODED_TEXT",
+            "value": "6",
+            "defining_code": {
+              "_type": "CODE_PHRASE",
+              "code_string": "at0010",
+              "terminology_id": {
+                "_type": "TERMINOLOGY_ID",
+                "value": "local"
+              }
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0004"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Beurteilung",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_ORDINAL",
+          "value": 7.0,
+          "symbol": {
+            "_type": "DV_CODED_TEXT",
+            "value": "7",
+            "defining_code": {
+              "_type": "CODE_PHRASE",
+              "code_string": "at0011",
+              "terminology_id": {
+                "_type": "TERMINOLOGY_ID",
+                "value": "local"
+              }
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0004"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Beurteilung",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_ORDINAL",
+          "value": 8.0,
+          "symbol": {
+            "_type": "DV_CODED_TEXT",
+            "value": "8",
+            "defining_code": {
+              "_type": "CODE_PHRASE",
+              "code_string": "at0012",
+              "terminology_id": {
+                "_type": "TERMINOLOGY_ID",
+                "value": "local"
+              }
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0004"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Beurteilung",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_ORDINAL",
+          "value": 9.0,
+          "symbol": {
+            "_type": "DV_CODED_TEXT",
+            "value": "9",
+            "defining_code": {
+              "_type": "CODE_PHRASE",
+              "code_string": "at0013",
+              "terminology_id": {
+                "_type": "TERMINOLOGY_ID",
+                "value": "local"
+              }
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0004"
+      }
+    ]
+  ]
+}

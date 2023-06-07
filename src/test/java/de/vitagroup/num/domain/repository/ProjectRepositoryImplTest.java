@@ -2,7 +2,6 @@ package de.vitagroup.num.domain.repository;
 
 import de.vitagroup.num.domain.Project;
 import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.Translation;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import org.junit.Test;

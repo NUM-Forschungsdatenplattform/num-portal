@@ -294,7 +294,6 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);
     }
-
     @Override
     protected ResponseEntity<Object> handleBindException(BindException exception, HttpHeaders headers,
                                                          HttpStatus status, WebRequest request) {

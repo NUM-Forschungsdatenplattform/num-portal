@@ -158,6 +158,9 @@ requestpsnworkflow:
     apikey: iCZdh7ZWuf8ms)vvBgU-IaLi4
     event: num.get_extern_psn
 
+user-service:
+  delete-users-cron: 0 0 5 * * *
+
 ---
 spring:
   config:
@@ -250,3 +253,6 @@ zars:
 num:
   url: http://localhost:8180
   locale: en
+
+user-service:
+  delete-users-cron: 0 0 5 * * *

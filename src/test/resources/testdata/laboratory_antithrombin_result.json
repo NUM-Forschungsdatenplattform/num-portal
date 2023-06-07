@@ -1,0 +1,71 @@
+{
+  "q": "Select distinct c0/items[at0001] as F1 from EHR e contains CLUSTER c0[openEHR-EHR-CLUSTER.laboratory_test_analyte.v1] order by c0/items[at0001] ASCENDING",
+  "columns": [
+    {
+      "path": "/items[at0001]",
+      "name": "F1"
+    }
+  ],
+  "rows": [
+    [
+      {
+        "name": {
+          "value": "Analyt-Resultat",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_QUANTITY",
+          "units": "mmHg",
+          "magnitude": 44.0
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0001"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Messwert",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_QUANTITY",
+          "units": "mg/dL",
+          "magnitude": 0.39
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0001"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Messwert",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_QUANTITY",
+          "units": "mg/dL",
+          "magnitude": 0.44
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0001"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Messwert",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_QUANTITY",
+          "units": "mg/dL",
+          "magnitude": 0.45
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0001"
+      }
+    ]
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "q": "Select distinct e0/data[at0002]/items[at0019] as F1 from EHR e contains EVALUATION e0[openEHR-EHR-EVALUATION.gender.v1] order by e0/data[at0002]/items[at0019] ASCENDING",
+  "columns": [
+    {
+      "path": "/data[at0002]/items[at0019]",
+      "name": "F1"
+    }
+  ],
+  "rows": [
+    [
+      {
+        "name": {
+          "value": "Geschlecht bei der Geburt",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_CODED_TEXT",
+          "value": "divers",
+          "defining_code": {
+            "_type": "CODE_PHRASE",
+            "code_string": "D",
+            "terminology_id": {
+              "_type": "TERMINOLOGY_ID",
+              "value": "http://fhir.de/CodeSystem/gender-amtlich-de"
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0019"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Geschlecht bei der Geburt",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_CODED_TEXT",
+          "value": "Female",
+          "defining_code": {
+            "_type": "CODE_PHRASE",
+            "code_string": "female",
+            "terminology_id": {
+              "_type": "TERMINOLOGY_ID",
+              "value": "http://hl7.org/fhir/administrative-gender"
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0019"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Geschlecht bei der Geburt",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_CODED_TEXT",
+          "value": "Male",
+          "defining_code": {
+            "_type": "CODE_PHRASE",
+            "code_string": "male",
+            "terminology_id": {
+              "_type": "TERMINOLOGY_ID",
+              "value": "http://hl7.org/fhir/administrative-gender"
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0019"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Geschlecht bei der Geburt",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_CODED_TEXT",
+          "value": "unbestimmt",
+          "defining_code": {
+            "_type": "CODE_PHRASE",
+            "code_string": "X",
+            "terminology_id": {
+              "_type": "TERMINOLOGY_ID",
+              "value": "http://fhir.de/CodeSystem/gender-amtlich-de"
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0019"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Geschlecht bei der Geburt",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_CODED_TEXT",
+          "value": "Unknown",
+          "defining_code": {
+            "_type": "CODE_PHRASE",
+            "code_string": "unknown",
+            "terminology_id": {
+              "_type": "TERMINOLOGY_ID",
+              "value": "http://hl7.org/fhir/administrative-gender"
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0019"
+      }
+    ]
+  ]
+}

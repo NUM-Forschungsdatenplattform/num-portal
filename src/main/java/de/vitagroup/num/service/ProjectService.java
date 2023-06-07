@@ -838,31 +838,7 @@ public class ProjectService {
     return !(oldResearchers.containsAll(newResearchers)
         && newResearchers.containsAll(oldResearchers));
   }
-
-  public List<Project> getProjects(String userId, List<String> roles) {
-    userDetailsService.checkIsUserApproved(userId);
-
-    List<Project> projects = new ArrayList<>();
-
-    if (roles.contains(Roles.STUDY_COORDINATOR)) {
-      projects.addAll(
-          projectRepository.findByCoordinatorUserIdOrStatusIn(
-              userId,
-             ProjectStatus.getAllProjectStatusToViewAsCoordinator()));
-    }
-    if (roles.contains(Roles.RESEARCHER)) {
-      projects.addAll(
-          projectRepository.findByResearchers_UserIdAndStatusIn(
-              userId, ProjectStatus.getAllProjectStatusToViewAsResearcher()));
-    }
-    if (roles.contains(Roles.STUDY_APPROVER)) {
-      projects.addAll(projectRepository.findByStatusIn(ProjectStatus.getAllProjectStatusToViewAsApprover()));
-    }
-
-    return projects.stream().distinct().collect(Collectors.toList());
-  }
-
-  public Page<Project> getProjectsWithPagination(String userId, List<String> roles, SearchCriteria searchCriteria, Pageable pageable) {
+  public Page<Project> getProjects(String userId, List<String> roles, SearchCriteria searchCriteria, Pageable pageable) {
 
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(userId);
 
@@ -887,7 +863,7 @@ public class ProjectService {
             .filter(searchCriteria.getFilter())
             .roles(roles)
             .loggedInUserId(userId)
-            .loggedInUserOrganizationId(loggedInUser.getOrganization().getId())
+            .loggedInUserOrganizationId(loggedInUser.getOrganization() != null ? loggedInUser.getOrganization().getId() : null)
             .ownersUUID(usersUUID)
             .sortOrder(Objects.requireNonNull(sortBy.getOrderFor(sortByField)).ignoreCase())
             .language(language)

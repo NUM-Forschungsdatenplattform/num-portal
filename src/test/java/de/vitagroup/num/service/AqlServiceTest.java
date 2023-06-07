@@ -160,32 +160,6 @@ public class AqlServiceTest {
     aqlService.getAqlById(1L, "approvedUserId");
     Mockito.verify(aqlRepository, Mockito.times(1)).findById(Mockito.eq(1L));
   }
-
-  @Test
-  public void searchOwnedAqlsTest() {
-    String searchInput = "dummy search";
-    aqlService.searchAqls(searchInput, SearchFilter.OWNED, "approvedUserId");
-    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedByName(Mockito.eq("approvedUserId"), Mockito.eq(searchInput.toUpperCase()));
-  }
-
-  @Test
-  public void searchAllAqlsTest() {
-    String searchInput = "text to search";
-    aqlService.searchAqls(searchInput, SearchFilter.ALL, "approvedUserId");
-    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOwnedOrPublicByName(Mockito.eq("approvedUserId"), Mockito.eq(searchInput.toUpperCase()));
-  }
-
-  @Test
-  public void searchOrganizationAqlsTest() {
-    aqlService.searchAqls(null, SearchFilter.ORGANIZATION, "approvedCriteriaEditorId");
-    Mockito.verify(aqlRepository, Mockito.times(1)).findAllOrganizationOwnedByName(1L, "approvedCriteriaEditorId", null);
-  }
-
-  @Test(expected = ForbiddenException.class)
-  public void shouldHandleNotApprovedUserWhenSearchAql() {
-    aqlService.searchAqls(null, SearchFilter.OWNED, "notApprovedId");
-  }
-
   @Test
   public void getAqlSizeTest() {
     SlimAqlDto aqlDto = new SlimAqlDto();

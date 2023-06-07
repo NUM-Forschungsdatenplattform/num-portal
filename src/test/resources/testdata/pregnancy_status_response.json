@@ -1,0 +1,121 @@
+{
+  "q": "Select distinct o0/data[at0001]/events[at0002]/data[at0003]/items[at0011] as F1 from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.pregnancy_status.v0] order by o0/data[at0001]/events[at0002]/data[at0003]/items[at0011] ASCENDING",
+  "columns": [
+    {
+      "path": "/data[at0001]/events[at0002]/data[at0003]/items[at0011]",
+      "name": "F1"
+    }
+  ],
+  "rows": [
+    [
+      {
+        "name": {
+          "value": "Status",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_CODED_TEXT",
+          "value": "Nicht schwanger",
+          "defining_code": {
+            "_type": "CODE_PHRASE",
+            "code_string": "at0013",
+            "terminology_id": {
+              "name": "local",
+              "_type": "TERMINOLOGY_ID",
+              "value": "local"
+            }
+          }
+        },
+        "_type": "ELEMENT"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Status",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_CODED_TEXT",
+          "value": "Nicht schwanger",
+          "defining_code": {
+            "_type": "CODE_PHRASE",
+            "code_string": "at0013",
+            "terminology_id": {
+              "_type": "TERMINOLOGY_ID",
+              "value": "local"
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0011"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Status",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_CODED_TEXT",
+          "value": "nicht schwanger",
+          "defining_code": {
+            "_type": "CODE_PHRASE",
+            "code_string": "LA26683-5",
+            "terminology_id": {
+              "name": "LOINC",
+              "_type": "TERMINOLOGY_ID",
+              "value": "LOINC"
+            }
+          }
+        },
+        "_type": "ELEMENT"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Status",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_CODED_TEXT",
+          "value": "Schwanger",
+          "defining_code": {
+            "_type": "CODE_PHRASE",
+            "code_string": "at0012",
+            "terminology_id": {
+              "_type": "TERMINOLOGY_ID",
+              "value": "local"
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0011"
+      }
+    ],
+    [
+      {
+        "name": {
+          "value": "Status",
+          "_type": "DV_TEXT"
+        },
+        "value": {
+          "_type": "DV_CODED_TEXT",
+          "value": "Unbekannt",
+          "defining_code": {
+            "_type": "CODE_PHRASE",
+            "code_string": "at0014",
+            "terminology_id": {
+              "_type": "TERMINOLOGY_ID",
+              "value": "local"
+            }
+          }
+        },
+        "_type": "ELEMENT",
+        "archetype_node_id": "at0011"
+      }
+    ]
+  ]
+}

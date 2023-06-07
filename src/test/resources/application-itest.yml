@@ -1,0 +1,118 @@
+server:
+  port: 8090
+spring:
+  application:
+    name: num-portal
+  datasource:
+    hikari:
+      data-source-properties:
+        stringtype: unspecified
+    url: ${DB_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  flyway:
+    enabled: true
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/certs
+      client:
+        registration:
+          userStoreClient:
+            authorization-grant-type: client_credentials
+            client-id: numPortal
+            client-secret: bc1843c0-3c57-4c2c-9b40-ac38e6dd545e
+        provider:
+          userStoreClient:
+            token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: numportalwebapp@gmail.com
+    password: notPassword
+    from: numportalwebapp@gmail.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+            required: true
+
+swagger:
+  oauth2:
+    token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/auth
+    client-name: numPortalWebapp
+    client-secret: numPortalWebapp
+
+userstore:
+  url: ${keycloak.url}/auth/admin/realms/Num
+
+keycloak:
+  url: http://localhost:8099
+
+hapi:
+  fhir:
+    version: r4
+    rest:
+      server-name: num-portal
+      default-response-encoding: json
+      default-pretty-print: true
+    validation:
+      enabled: false
+      request-only: true
+
+feign:
+  client:
+    config:
+      numPortal:
+        connectTimeout: 10000
+        readTimeout: 10000
+        loggerLevel: FULL
+
+logging:
+  level:
+    root: debug
+
+ehrbase:
+  rest-api-url: http://localhost:8099/ehrbase/
+  username: ehrbase-user
+  password: SuperSecretPassword
+
+cors:
+  allowedOrigins:
+    - "*"
+
+privacy:
+  minHits: 0
+  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
+  pseudonomityChunksSize: 5
+
+zars:
+  enabled: false
+  email: foo@foo.bar
+
+fttp:
+  url: https://basic-test-fttp-w.num.med.uni-greifswald.de/ttp-fhir/fhir/dispatcher/$requestPsnWorkflow
+  certificatePath: /certificates/fttp.num.p12
+  certificateKey: fttp123
+  useBasicAuth: true
+  username: karlea
+  password: test123#
+
+requestpsnworkflow:
+  params:
+    study: num
+    source: codex
+    target: extern_
+    apikey: iCZdh7ZWuf8ms)vvBgU-IaLi4
+    event: num.get_extern_psn
+consent:
+  allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
