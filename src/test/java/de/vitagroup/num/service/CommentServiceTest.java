@@ -3,7 +3,7 @@ package de.vitagroup.num.service;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_COMMENT;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COMMENT_EDIT_FOR_COMMENT_WITH_ID_IS_NOT_ALLOWED_COMMENT_HAS_DIFFERENT_AUTHOR;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COMMENT_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_COMMENTID_ID;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_COMMENT_ID;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_DOES_NOT_EXIST;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -154,7 +154,7 @@ public class CommentServiceTest {
     when(projectService.exists(1L))
             .thenReturn(true);
     when(commentService.deleteComment(3L, 1L, "approvedCoordinatorId"))
-            .thenThrow(new BadRequestException(EmptyResultDataAccessException.class, INVALID_COMMENTID_ID, String.format("%s: %s", INVALID_COMMENTID_ID, 3L)));
+            .thenThrow(new BadRequestException(EmptyResultDataAccessException.class, INVALID_COMMENT_ID, String.format("%s: %s", INVALID_COMMENT_ID, 3L)));
     commentService.deleteComment(3L, 1L, "approvedCoordinatorId");
   }
 
