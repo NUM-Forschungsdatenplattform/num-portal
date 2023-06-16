@@ -9,9 +9,7 @@ import de.vitagroup.num.service.exception.IllegalArgumentException;
 import org.apache.commons.collections4.SetUtils;
 import org.junit.Test;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class SetOperationsServiceTest {
 
@@ -135,6 +133,11 @@ public class SetOperationsServiceTest {
   @Test(expected = IllegalArgumentException.class)
   public void shouldHandleRelativeComplementNullValues() {
     setOperations.exclude(null, Set.of("1", "5"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldHandleEmptyExcludeValues() {
+    setOperations.exclude(Set.of("1", "5"), Collections.emptySet());
   }
 
   @Test
