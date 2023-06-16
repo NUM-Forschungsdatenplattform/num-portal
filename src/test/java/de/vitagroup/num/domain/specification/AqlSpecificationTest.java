@@ -12,7 +12,9 @@ import org.springframework.data.domain.Sort;
 
 import javax.persistence.criteria.*;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AqlSpecificationTest {
@@ -50,17 +52,22 @@ public class AqlSpecificationTest {
         Mockito.when(root.get("publicAql")).thenReturn(publicAql);
         Join aqlCategory = Mockito.mock(Join.class);
         Mockito.when(root.join("category", JoinType.LEFT)).thenReturn(aqlCategory);
+        Mockito.when(owner.get("userId")).thenReturn(Mockito.mock(Path.class));
         Map<String, String> filter = new HashMap<>();
         filter.put("search", "some search input");
+        Set<String> usersUUID = new HashSet<>();
+        usersUUID.add("user-id-1");
+        usersUUID.add("user-id-2");
         AqlSpecification ps = AqlSpecification.builder()
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(2L)
                 .language(Language.en)
                 .filter(filter)
+                .ownersUUID(usersUUID)
                 .build();
         ps.toPredicate(root, query, criteriaBuilder);
         Mockito.verify(root, Mockito.times(1)).get("publicAql");
-        Mockito.verify(owner, Mockito.times(1)).get("userId");
+        Mockito.verify(owner, Mockito.times(2)).get("userId");
         Mockito.verify(root, Mockito.times(1)).get("nameTranslated");
         Mockito.verify(aqlCategory, Mockito.times(1)).get("name");
     }
@@ -107,5 +114,27 @@ public class AqlSpecificationTest {
         Mockito.verify(root, Mockito.times(1)).get("publicAql");
         Mockito.verify(owner, Mockito.times(1)).get("userId");
         Mockito.verify(aqlCategory, Mockito.times(1)).get("name");
+    }
+
+    @Test
+    public void ownedAqlOrderByCategoryDescSpecificationTest() {
+        Join owner = Mockito.mock(Join.class);
+        Mockito.when(root.join("owner", JoinType.INNER)).thenReturn(owner);
+        Mockito.when(owner.get("userId")).thenReturn(Mockito.mock(Path.class));
+        Join aqlCategory = Mockito.mock(Join.class);
+        Mockito.when(root.join("category", JoinType.LEFT)).thenReturn(aqlCategory);
+        Map<String, String> filter = new HashMap<>();
+        filter.put("type", SearchFilter.OWNED.name());
+        AqlSpecification ps = AqlSpecification.builder()
+                .loggedInUserId("userId")
+                .loggedInUserOrganizationId(2L)
+                .language(Language.en)
+                .sortOrder(Sort.Order.desc("category"))
+                .filter(filter)
+                .build();
+        ps.toPredicate(root, query, criteriaBuilder);
+        Mockito.verify(owner, Mockito.times(1)).get("userId");
+        Mockito.verify(aqlCategory, Mockito.times(1)).get("name");
+        Mockito.verify(query, Mockito.times(1)).orderBy(criteriaBuilder.desc(Mockito.any()));
     }
 }
