@@ -44,6 +44,19 @@ public class RolesTest {
         Assert.assertTrue(result.contains(Roles.STUDY_COORDINATOR));
         Assert.assertTrue(result.contains(Roles.STUDY_APPROVER));
     }
+    @Test
+    public void shouldReturnEmptyListExtractRolesTest() {
+        Jwt jwt = Jwt.withTokenValue("1112")
+                .subject("user-uuid-1234")
+                .issuedAt(Instant.now())
+                .claim("name", "John")
+                .claim("email", "john.doe@vitagroup.de")
+                .claim("username", "john.doe")
+                .header("dummy", "dummy")
+                .build();
+        List<String> result = Roles.extractRoles(jwt);
+        Assert.assertTrue(result.isEmpty());
+    }
 
     @Test
     public void isAllowedToSetTest() {
