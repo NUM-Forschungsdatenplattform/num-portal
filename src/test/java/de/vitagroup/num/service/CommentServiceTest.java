@@ -158,6 +158,18 @@ public class CommentServiceTest {
     commentService.deleteComment(3L, 1L, "approvedCoordinatorId");
   }
 
+  @Test(expected = BadRequestException.class)
+  public void deleteCommentAlreadyDeleted() {
+    when(projectService.exists(1L)).thenReturn(true);
+    Comment toDelete = Comment.builder()
+            .text("new comment content")
+            .build();
+    toDelete.setAuthor(approvedCoordinator);
+    Mockito.when(commentRepository.findById(3L)).thenReturn(Optional.of(toDelete));
+    Mockito.doThrow(new EmptyResultDataAccessException(String.format("No %s entity with id %s exists!", Comment.class, 3L), 1)).when(commentRepository).deleteById(3L);
+    commentService.deleteComment(3L, 1L, "approvedCoordinatorId");
+  }
+
   @Test
   public void shouldGetCommentsForExistingProject() {
     when(projectService.exists(9L)).thenReturn(true);
