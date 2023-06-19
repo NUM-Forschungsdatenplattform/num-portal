@@ -18,8 +18,6 @@ public class CohortQueryListerTest {
     @InjectMocks
     private CohortQueryLister cohortQueryLister;
 
-    private final String AQL_QUERY = "SELECT a FROM Ehr e";
-
     @Test
     public void shouldReturnEmptyListWhenGroupIsNull() {
         List<String> result = cohortQueryLister.list(Cohort.builder()
@@ -30,6 +28,7 @@ public class CohortQueryListerTest {
 
     @Test
     public void shouldReturnListOfQueriesForGroup() {
+        final String AQL_QUERY = "SELECT a FROM Ehr e";
         CohortGroup cohortGroup = CohortGroup.builder()
                 .type(Type.GROUP)
                 .children(List.of(CohortGroup.builder()

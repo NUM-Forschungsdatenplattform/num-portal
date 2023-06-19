@@ -34,9 +34,6 @@ public class AqlExecutorTest {
     private AqlExecutor aqlExecutor;
 
     private final String Q1 = "Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
-    private final String Q2_PARAMS = "SELECT  c0 as GECCO_Personendaten " +
-            "FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
-            "WHERE (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value = $Geburtsdatum)";
 
     @Before
     public void setup() {
@@ -64,6 +61,9 @@ public class AqlExecutorTest {
 
     @Test
     public void shouldExecuteCohortAqlWithParams() {
+        final String Q2_PARAMS = "SELECT  c0 as GECCO_Personendaten " +
+                "FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
+                "WHERE (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value = $Geburtsdatum)";
         CohortAql aql = CohortAql.builder()
                 .name("test query")
                 .query(Q2_PARAMS)

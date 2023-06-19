@@ -149,16 +149,11 @@ public abstract class Policy {
     while (!queue.isEmpty()) {
       ContainmentExpresionDto current = queue.remove();
 
-      if (current instanceof ContainmentLogicalOperator) {
-
-        ContainmentLogicalOperator containmentLogicalOperator =
-            (ContainmentLogicalOperator) current;
+      if (current instanceof ContainmentLogicalOperator containmentLogicalOperator) {
 
         queue.addAll(containmentLogicalOperator.getValues());
 
-      } else if (current instanceof ContainmentDto) {
-
-        ContainmentDto containmentDto = (ContainmentDto) current;
+      } else if (current instanceof ContainmentDto containmentDto) {
 
         if (containmentDto.getArchetypeId().contains(COMPOSITION_ARCHETYPE_ID)) {
           compositions.add(containmentDto.getId());
@@ -186,16 +181,11 @@ public abstract class Policy {
     while (!queue.isEmpty()) {
       ContainmentExpresionDto current = queue.remove();
 
-      if (current instanceof ContainmentLogicalOperator) {
-
-        ContainmentLogicalOperator containmentLogicalOperator =
-            (ContainmentLogicalOperator) current;
+      if (current instanceof ContainmentLogicalOperator containmentLogicalOperator) {
 
         queue.addAll(containmentLogicalOperator.getValues());
 
-      } else if (current instanceof ContainmentDto) {
-
-        ContainmentDto containmentDto = (ContainmentDto) current;
+      } else if (current instanceof ContainmentDto containmentDto) {
 
         if (containmentDto.getId() > nextId) {
           nextId = containmentDto.getId();

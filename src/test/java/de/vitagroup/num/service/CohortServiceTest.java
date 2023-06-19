@@ -103,7 +103,7 @@ public class CohortServiceTest {
 
     private final String NAME4 = "Height";
 
-    UserDetails approvedUser = UserDetails.builder().userId("approvedUserId").approved(true).build();
+    private UserDetails approvedUser = UserDetails.builder().userId("approvedUserId").approved(true).build();
 
     @Test(expected = ResourceNotFound.class)
     public void shouldHandleMissingCohortWhenRetrieving() {

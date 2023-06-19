@@ -67,9 +67,7 @@ public class AqlSpecification extends BaseSpecification implements Specification
                     SearchFilter.valueOf((String) filter.get(SearchCriteria.FILTER_BY_TYPE_KEY)) :
                     SearchFilter.ALL;
             switch (filterType) {
-                case ALL -> {
-                    predicates.add(ownedOrPublic);
-                }
+                case ALL -> predicates.add(ownedOrPublic);
                 case OWNED -> predicates.add(ownedPred);
                 case ORGANIZATION -> {
                     Join<UserDetails, Organization> ownerOrganization = owner.join("organization", JoinType.INNER);

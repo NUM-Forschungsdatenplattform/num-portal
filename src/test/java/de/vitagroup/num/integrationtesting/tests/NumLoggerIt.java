@@ -18,7 +18,7 @@ public class NumLoggerIt {
     @InjectMocks
     private NumLogger numLogger;
 
-    JoinPoint joinPoint = null;
+    private JoinPoint joinPoint = null;
 
     @Test(expected = Exception.class)
     public void logMethodCallException() {

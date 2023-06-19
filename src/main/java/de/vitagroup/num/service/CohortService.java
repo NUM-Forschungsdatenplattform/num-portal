@@ -218,8 +218,7 @@ public class CohortService {
       ConditionDto conditionDto = aqlDto.getWhere();
       if (conditionDto instanceof ConditionComparisonOperatorDto) {
         Value value = ((ConditionComparisonOperatorDto) conditionDto).getValue();
-        if (value instanceof org.ehrbase.aql.dto.condition.ParameterValue) {
-          ParameterValue parameterValue = (ParameterValue) value;
+        if (value instanceof ParameterValue parameterValue) {
           parameterNames.add(parameterValue.getName());
         }
       } else if (conditionDto instanceof ConditionLogicalOperatorDto) {
@@ -227,8 +226,7 @@ public class CohortService {
         for (ConditionDto v : values) {
           if (v instanceof ConditionComparisonOperatorDto) {
             Value value = ((ConditionComparisonOperatorDto) v).getValue();
-            if (value instanceof org.ehrbase.aql.dto.condition.ParameterValue) {
-              ParameterValue parameterValue = (ParameterValue) value;
+            if (value instanceof ParameterValue parameterValue) {
               parameterNames.add(parameterValue.getName());
             }
           }

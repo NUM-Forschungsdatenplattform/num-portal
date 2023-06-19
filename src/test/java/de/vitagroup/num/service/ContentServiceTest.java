@@ -61,30 +61,30 @@ public class ContentServiceTest {
 
   @InjectMocks private ContentService contentService;
 
-  NavigationItemDto navigation1 =
+  private NavigationItemDto navigation1 =
       NavigationItemDto.builder().title("Link 11").url(new URL("https://www.google1.de")).build();
-  NavigationItemDto navigation2 =
+  private NavigationItemDto navigation2 =
       NavigationItemDto.builder().title("Link 22").url(new URL("https://www.google2.de")).build();
-  List<NavigationItemDto> navigations = List.of(navigation1, navigation2);
-  String navigationJson =
+  private List<NavigationItemDto> navigations = List.of(navigation1, navigation2);
+  private String navigationJson =
       "[{\"title\":\"Link 11\",\"url\":\"https://www.google1.de\"},{\"title\":\"Link 22\",\"url\":\"https://www.google2.de\"}]";
 
-  CardDto card1 =
+  private CardDto card1 =
       CardDto.builder()
           .en(LocalizedPart.builder().title("Title 1").text("text 1").build())
           .de(LocalizedPart.builder().title("Title de 1").text("text de 1").build())
           .imageId("image1")
           .url(new URL("http://test.test/"))
           .build();
-  CardDto card2 =
+  private CardDto card2 =
       CardDto.builder()
           .en(LocalizedPart.builder().title("Title 2").text("text 2").build())
           .de(LocalizedPart.builder().title("Title de 2").text("text de 2").build())
           .imageId("image2")
           .url(new URL("http://test2.test/"))
           .build();
-  List<CardDto> cards = List.of(card1, card2);
-  String cardJson =
+  private List<CardDto> cards = List.of(card1, card2);
+  private String cardJson =
       "[{\"en\":{\"title\":\"Title 1\",\"text\":\"text 1\"},\"de\":{\"title\":\"Title de 1\",\"text\":\"text de 1\"},\"imageId\":\"image1\",\"url\":\"http://test.test/\"},{\"en\":{\"title\":\"Title 2\",\"text\":\"text 2\"},\"de\":{\"title\":\"Title de 2\",\"text\":\"text de 2\"},\"imageId\":\"image2\",\"url\":\"http://test2.test/\"}]";
 
   public ContentServiceTest() throws MalformedURLException {}

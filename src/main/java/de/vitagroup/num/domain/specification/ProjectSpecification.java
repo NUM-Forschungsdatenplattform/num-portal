@@ -64,13 +64,9 @@ public class ProjectSpecification extends BaseSpecification {
                             predicates.add(criteriaBuilder.equal(coordinatorOrganization.get("id"), loggedInUserOrganizationId));
                             predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                         }
-                        case ARCHIVED -> {
-                            predicates.add(searchByStatus(root, List.of(ProjectStatus.ARCHIVED)));
-                        }
-                        case ALL -> {
-                            // IN FE default ALL tag shows all projects based on roles except archived ones
-                            predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
-                        }
+                        case ARCHIVED -> predicates.add(searchByStatus(root, List.of(ProjectStatus.ARCHIVED)));
+                        case ALL -> // IN FE default ALL tag shows all projects based on roles except archived ones
+                                predicates.add(criteriaBuilder.notEqual(root.get(COLUMN_PROJECT_STATUS), ProjectStatus.ARCHIVED));
                     }
                 }
                 if (SearchCriteria.FILTER_SEARCH_BY_KEY.equals(entry.getKey()) && StringUtils.isNotEmpty((String) entry.getValue())) {
