@@ -1474,6 +1474,12 @@ public class ProjectServiceTest {
     verify(cohortService, times(1)).executeCohort(Mockito.any(Cohort.class), Mockito.eq(false));
   }
 
+    @Test
+    public void retrieveDataCustomConfigurationTest() {
+        projectService.retrieveData("Select e from EHR e", 2L,"approvedCoordinatorId", false);
+        verify(cohortService, times(1)).executeCohort(Mockito.eq(2L), Mockito.eq(false));
+    }
+
   @Test
   public void getExportFilenameBodyTest() {
     String currentDate = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).format(DateTimeFormatter.ISO_LOCAL_DATE);
@@ -1509,6 +1515,12 @@ public class ProjectServiceTest {
     Mockito.verify(cohortService, times(1)).executeCohort(Mockito.any(Cohort.class), Mockito.eq(false));
   }
 
+    @Test
+    public void getExportResponseBodyAsCSVTest() {
+        projectService.getExportResponseBody(QUERY_5, 2L, "approvedCoordinatorId", ExportType.csv, false);
+        Mockito.verify(cohortService, times(1)).executeCohort(Mockito.eq(2L), Mockito.eq(false));
+    }
+
   @Test
   public void streamResponseBody() throws IOException {
     QueryResponseData response = new QueryResponseData();
@@ -1523,6 +1535,15 @@ public class ProjectServiceTest {
     ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
     ZipEntry expectedFile = zipInputStream.getNextEntry();
     Assert.assertEquals("testFile_response-one.csv", expectedFile.getName());
+  }
+
+  @Test
+  public void getManagerExportResponseBodyTest() {
+    CohortDto cohortDto = CohortDto.builder()
+            .name("alter cohort")
+            .projectId(2L).build();
+    projectService.getManagerExportResponseBody(cohortDto, List.of("Alter"), "approvedCoordinatorId", ExportType.json);
+    Mockito.verify(cohortService, Mockito.times(1)).toCohort(Mockito.any(CohortDto.class));
   }
 
   @Before
