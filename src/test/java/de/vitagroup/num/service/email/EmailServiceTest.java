@@ -12,13 +12,11 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.internet.MimeMessage;
-import java.io.IOException;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EmaiServiceTest {
+public class EmailServiceTest {
 
     @Mock
     private JavaMailSender javaMailSender;
