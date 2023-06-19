@@ -8,7 +8,10 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
+import de.vitagroup.num.domain.templates.ExceptionsTemplate;
+import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.Notification;
@@ -24,7 +27,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -202,5 +204,30 @@ public class UserDetailsServiceTest {
   public void countUserDetailsTest() {
     userDetailsService.countUserDetails();
     Mockito.verify(userDetailsRepository, Mockito.times(1)).count();
+  }
+
+  @Test
+  public void shouldHandleNotFoundUserWhenCheckIsUserApproved() {
+    try {
+      userDetailsService.checkIsUserApproved("not-found-id");
+    } catch (SystemException se) {
+      Assert.assertTrue(true);
+      Assert.assertEquals(ExceptionsTemplate.USER_NOT_FOUND, se.getParamValue());
+    }
+  }
+
+  @Test
+  public void shouldHandleNotApprovedUserWhenCheckIsUserApproved() {
+    UserDetails notApproved = UserDetails.builder()
+            .userId("not-approved-id")
+            .approved(false)
+            .build();
+    Mockito.when(userDetailsRepository.findByUserId("not-approved-id")).thenReturn(Optional.of(notApproved));
+    try {
+      userDetailsService.checkIsUserApproved("not-approved-id");
+    } catch (ForbiddenException fe) {
+      Assert.assertTrue(true);
+      Assert.assertEquals(ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED, fe.getMessage());
+    }
   }
 }

@@ -1546,6 +1546,12 @@ public class ProjectServiceTest {
     Mockito.verify(cohortService, Mockito.times(1)).toCohort(Mockito.any(CohortDto.class));
   }
 
+  @Test
+  public void existsTest() {
+    projectService.exists(5L);
+    Mockito.verify(projectRepository, Mockito.times(1)).existsById(5L);
+  }
+
   @Before
   public void setup() {
     when(userDetailsService.getUserDetailsById("researcher1"))
