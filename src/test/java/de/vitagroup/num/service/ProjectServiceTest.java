@@ -8,6 +8,7 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
+import de.vitagroup.num.domain.templates.ExceptionsTemplate;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
@@ -143,6 +144,10 @@ public class ProjectServiceTest {
   @Spy private AqlEditorAqlService aqlEditorAqlService;
 
   @Captor ArgumentCaptor<List<Notification>> notificationCaptor;
+
+  private Project projectOne;
+
+  private ProjectDto projectDtoOne;
 
   @Ignore(
       value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/217 is fixed")
@@ -297,11 +302,17 @@ public class ProjectServiceTest {
     projectService.getInfoDocBytes(1000000L, "ownerCoordinatorId", Locale.ENGLISH);
   }
 
-  @Test//(expected = SystemException.class)
-  public void getInfoDocBytesSystemException() {
-//    when(projectDocCreator.getDocBytesOfProject(new ProjectDto(), null)).thenThrow(new SystemException(ProjectService.class, ""){});
-    projectService.getInfoDocBytes(1L, "ownerCoordinatorId", null);
-  }
+    @Test
+    public void getInfoDocBytesSystemException() throws IOException {
+        when(projectDocCreator.getDocBytesOfProject(projectDtoOne, null))
+                .thenThrow(new IOException());
+        try {
+            projectService.getInfoDocBytes(1L, "ownerCoordinatorId", null);
+        } catch (SystemException se) {
+            Assert.assertTrue(true);
+            Assert.assertEquals(ERROR_CREATING_THE_PROJECT_PDF, se.getParamValue());
+        }
+    }
 
   @Test
   public void shouldBeConsistentInParsingAql() {
@@ -1480,6 +1491,17 @@ public class ProjectServiceTest {
         verify(cohortService, times(1)).executeCohort(Mockito.eq(2L), Mockito.eq(false));
     }
 
+    @Test
+    public void retrieveDataForProjectWithoutTemplatesTest() {
+        try {
+            projectService.retrieveData("select * from dummy", 22L, "approvedCoordinatorId", true);
+        } catch (BadRequestException be) {
+            Assert.assertTrue(true);
+            Assert.assertEquals(PROJECT_TEMPLATES_CANNOT_BE_NULL, be.getParamValue());
+            verify(cohortService, Mockito.never()).executeCohort(Mockito.anyLong(), Mockito.eq(false));
+        }
+    }
+
   @Test
   public void getExportFilenameBodyTest() {
     String currentDate = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).format(DateTimeFormatter.ISO_LOCAL_DATE);
@@ -1601,16 +1623,19 @@ public class ProjectServiceTest {
                     .researchers(List.of(approvedCoordinator))
                     .build()));
 
+    projectOne = Project.builder()
+            .id(1L)
+            .status(PUBLISHED)
+            .cohort(Cohort.builder().id(2L).build())
+            .researchers(List.of(approvedCoordinator))
+            .build();
     when(projectRepository.findById(1L))
-        .thenReturn(
-            Optional.of(
-                Project.builder()
-                    .id(1L)
-                    .status(PUBLISHED)
-                    .cohort(Cohort.builder().id(2L).build())
-                    .researchers(List.of(approvedCoordinator))
-                    .build()));
-
+        .thenReturn(Optional.of(projectOne));
+    projectDtoOne = ProjectDto.builder()
+            .id(1L)
+            .status(PUBLISHED)
+            .build();
+    when(projectMapper.convertToDto(projectOne)).thenReturn(projectDtoOne);
     when(projectRepository.findById(2L))
         .thenReturn(
             Optional.of(
@@ -1681,9 +1706,20 @@ public class ProjectServiceTest {
                                     .coordinator(new UserDetails("ownerCoordinatorId", null, true))
                                     .build()));
 
-    when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
-    when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
-    when(cohortService.executeCohort(any(), any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
-    when(privacyProperties.getMinHits()).thenReturn(0);
+      when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
+      when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
+      when(cohortService.executeCohort(any(), any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
+      when(privacyProperties.getMinHits()).thenReturn(0);
+
+      //project without template
+      when(projectRepository.findById(22L))
+              .thenReturn(
+                      Optional.of(
+                              Project.builder()
+                                      .id(22L)
+                                      .status(PUBLISHED)
+                                      .cohort(Cohort.builder().id(2L).build())
+                                      .researchers(List.of(approvedCoordinator))
+                                      .build()));
   }
 }
