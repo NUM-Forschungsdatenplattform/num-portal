@@ -10,6 +10,7 @@ import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.domain.templates.ExceptionsTemplate;
 import de.vitagroup.num.mapper.ProjectMapper;
+import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.atna.AtnaService;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
@@ -121,6 +122,9 @@ public class ProjectServiceTest {
   @Mock private NotificationService notificationService;
 
   @Mock private PrivacyProperties privacyProperties;
+
+  @Mock
+  private ConsentProperties consentProperties;
 
   @Mock private UserService userService;
 
@@ -353,6 +357,18 @@ public class ProjectServiceTest {
 
     assertThat(restrictedQuery.getWhere(), notNullValue());
   }
+
+    @Test
+    public void shouldExecuteAqlForProjectOutsideEU() {
+        projectService.executeAql(QUERY_5, 33L, "approvedCoordinatorId");
+        Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
+        AqlDto restrictedQuery = aqlDtoArgumentCaptor.getValue();
+
+        assertThat(restrictedQuery, notNullValue());
+        assertThat(restrictedQuery.getWhere(), notNullValue());
+
+        assertThat(restrictedQuery.getWhere(), notNullValue());
+    }
 
   @Test(expected = ForbiddenException.class)
   public void shouldNotExecuteIfProjectNotPublished() {
@@ -1708,8 +1724,10 @@ public class ProjectServiceTest {
 
       when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
       when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
+      when(cohortService.executeCohort(5L, true)).thenReturn(Set.of(EHR_ID_2, EHR_ID_3));
       when(cohortService.executeCohort(any(), any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
       when(privacyProperties.getMinHits()).thenReturn(0);
+      when(consentProperties.getAllowUsageOutsideEuOid()).thenReturn("1937.777.24.5.1.37");
 
       //project without template
       when(projectRepository.findById(22L))
@@ -1720,6 +1738,19 @@ public class ProjectServiceTest {
                                       .status(PUBLISHED)
                                       .cohort(Cohort.builder().id(2L).build())
                                       .researchers(List.of(approvedCoordinator))
+                                      .build()));
+
+      // project used outside eu
+      when(projectRepository.findById(33L))
+              .thenReturn(
+                      Optional.of(
+                              Project.builder()
+                                      .id(33L)
+                                      .status(PUBLISHED)
+                                      .cohort(Cohort.builder().id(5L).build())
+                                      .researchers(List.of(approvedCoordinator))
+                                      .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+                                      .usedOutsideEu(true)
                                       .build()));
   }
 }
