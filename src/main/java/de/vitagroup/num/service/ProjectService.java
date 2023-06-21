@@ -295,7 +295,7 @@ public class ProjectService {
     var project = createManagerProject();
     try {
       userDetailsService.checkIsUserApproved(userId);
-      var templateMap = templates.stream().collect(Collectors.toMap(k -> k, v -> v));
+      var templateMap = CollectionUtils.isNotEmpty(templates) ? templates.stream().collect(Collectors.toMap(k -> k, v -> v)) : Collections.EMPTY_MAP;
 
       List<QueryResponseData> responseData =
           executeDefaultConfiguration(

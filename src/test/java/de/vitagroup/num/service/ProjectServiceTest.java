@@ -8,7 +8,6 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
-import de.vitagroup.num.domain.templates.ExceptionsTemplate;
 import de.vitagroup.num.mapper.ProjectMapper;
 import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.properties.PrivacyProperties;
@@ -1252,15 +1251,24 @@ public class ProjectServiceTest {
 
     assertThat(result, is("[]"));
   }
+
     @Test
     public void shouldHandleExecuteManagerProjectWithEmptyTemplates() {
-        CohortDto cohortDto = CohortDto.builder().name("Cohort name").id(2L).build();
+        executeManagerProjectWithoutTemplates(Collections.EMPTY_LIST);
+    }
 
+    @Test
+    public void shouldHandleExecuteManagerProjectWithNullTemplates() {
+        executeManagerProjectWithoutTemplates(null);
+    }
+
+    private void executeManagerProjectWithoutTemplates(List<String> templates) {
+        CohortDto cohortDto = CohortDto.builder().name("Cohort name").id(2L).build();
         UserDetails userDetails =
                 UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
         String result =
                 projectService.executeManagerProject(
-                        cohortDto, Collections.EMPTY_LIST, userDetails.getUserId());
+                        cohortDto, templates, userDetails.getUserId());
         assertThat(result, is("[]"));
     }
 
