@@ -21,7 +21,6 @@ public class SetOperationsService {
       case AND -> intersection(sets);
       case OR -> union(sets);
       case NOT -> exclude(all, sets.get(0));
-      default -> SetUtils.emptySet();
     };
   }
 
