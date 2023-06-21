@@ -8,12 +8,17 @@ import de.vitagroup.num.domain.Operator;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
 import org.apache.commons.collections4.SetUtils;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
 
+@RunWith(MockitoJUnitRunner.class)
 public class SetOperationsServiceTest {
 
-  private final SetOperationsService setOperations = new SetOperationsService();
+  @InjectMocks
+  private SetOperationsService setOperations;
 
   @Test
   public void shouldCorrectlyComputeSingleSetIntersection() {

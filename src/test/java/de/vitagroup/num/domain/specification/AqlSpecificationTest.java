@@ -69,6 +69,29 @@ public class AqlSpecificationTest {
         Mockito.verify(root, Mockito.times(1)).get("publicAql");
         Mockito.verify(owner, Mockito.times(2)).get("userId");
         Mockito.verify(root, Mockito.times(1)).get("nameTranslated");
+        Mockito.verify(root, Mockito.never()).get("name");
+        Mockito.verify(aqlCategory, Mockito.times(1)).get("name");
+    }
+    @Test
+    public void searchByGermanNameSpecificationTest() {
+        Join owner = Mockito.mock(Join.class);
+        Mockito.when(root.join("owner", JoinType.INNER)).thenReturn(owner);
+        Path publicAql = Mockito.mock(Path.class);
+        Mockito.when(root.get("publicAql")).thenReturn(publicAql);
+        Join aqlCategory = Mockito.mock(Join.class);
+        Mockito.when(root.join("category", JoinType.LEFT)).thenReturn(aqlCategory);
+        Mockito.when(owner.get("userId")).thenReturn(Mockito.mock(Path.class));
+        Map<String, String> filter = new HashMap<>();
+        filter.put("search", "some search input");
+        AqlSpecification ps = AqlSpecification.builder()
+                .loggedInUserId("userId")
+                .loggedInUserOrganizationId(2L)
+                .language(Language.de)
+                .filter(filter)
+                .build();
+        ps.toPredicate(root, query, criteriaBuilder);
+        Mockito.verify(root, Mockito.times(1)).get("name");
+        Mockito.verify(root, Mockito.never()).get("nameTranslated");
         Mockito.verify(aqlCategory, Mockito.times(1)).get("name");
     }
 
