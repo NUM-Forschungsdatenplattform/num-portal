@@ -299,7 +299,7 @@ public class ProjectService {
 
       List<QueryResponseData> responseData =
           executeDefaultConfiguration(
-              project.getId(), cohortService.toCohort(cohortDto), templateMap);
+              project.getId(), cohortService.toCohort(cohortDto), (Map<String, String>) templateMap);
 
       queryResponse = mapper.writeValueAsString(responseData);
 
