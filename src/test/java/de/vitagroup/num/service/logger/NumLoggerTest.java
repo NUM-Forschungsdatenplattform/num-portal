@@ -1,28 +1,42 @@
-package de.vitagroup.num.integrationtesting.tests;
+package de.vitagroup.num.service.logger;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import org.aspectj.lang.JoinPoint;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import de.vitagroup.num.service.logger.NumLogger;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
-public class NumLoggerIt {
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+@RunWith(MockitoJUnitRunner.class)
+public class NumLoggerTest {
 
     @InjectMocks
     private NumLogger numLogger;
 
-    private JoinPoint joinPoint = null;
+    @Mock
+    private JoinPoint joinPoint;
 
     @Test(expected = Exception.class)
     public void logMethodCallException() {
-        NumLogger numLogger = org.mockito.Mockito.mock(NumLogger.class);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(new BearerTokenAuthenticationToken(
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"));
@@ -35,23 +49,27 @@ public class NumLoggerIt {
 
     @Test
     public void logMethodCallAuthentication() {
-        NumLogger numLogger = org.mockito.Mockito.mock(NumLogger.class);
         SecurityContextHolder.getContext().setAuthentication(null);
-        when(numLogger.logMethodCall(joinPoint))
-                .thenReturn(Boolean.FALSE);
-        assertFalse(numLogger.logMethodCall(joinPoint));
+        boolean result = numLogger.logMethodCall(joinPoint);
+        assertFalse(result);
     }
 
     @Test
     public void logMethodCallReturnTrue() {
+        Jwt jwt = Jwt.withTokenValue("12345")
+                .subject("user-uuid-12345")
+                .issuedAt(Instant.now())
+                .claim("name", "John")
+                .claim("email", "john.doe@vitagroup.de")
+                .claim("username", "john.doe")
+                .header("dummy", "dummy")
+                .build();
         SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(new BearerTokenAuthenticationToken(
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"));
+        context.setAuthentication(new JwtAuthenticationToken(jwt, Collections.emptySet()));
         SecurityContextHolder.setContext(context);
-        NumLogger numLogger = org.mockito.Mockito.mock(NumLogger.class);
-        when(numLogger.logMethodCall(joinPoint))
-                .thenReturn(Boolean.TRUE);
-        assertTrue(numLogger.logMethodCall(joinPoint));
+        boolean result = numLogger.logMethodCall(joinPoint);
+        assertTrue(result);
+        Mockito.verify(joinPoint, Mockito.times(1)).getSignature();
     }
 
 }

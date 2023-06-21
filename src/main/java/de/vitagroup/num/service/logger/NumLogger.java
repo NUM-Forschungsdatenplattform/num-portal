@@ -41,9 +41,7 @@ public class NumLogger {
       return false;
     }
     try {
-
-      logApiOperations(
-          joinPoint, (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+      logApiOperations(joinPoint, (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     } catch (Exception e) {
       log.error("Cannot log audit log {}", e);
     }
