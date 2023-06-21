@@ -20,6 +20,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProjectDocCreatorTest {
@@ -65,6 +66,7 @@ public class ProjectDocCreatorTest {
                             .userId("researcherId")
                     .build()))
             .cohortId(3L)
+            .categories(Set.of(ProjectCategories.PREVENTION, ProjectCategories.DECISION_SUPPORT))
             .build();
     Mockito.when(userService.getUserById("researcherId", false))
             .thenReturn(User.builder()
