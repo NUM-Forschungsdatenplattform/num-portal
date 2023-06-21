@@ -1,12 +1,7 @@
 package de.vitagroup.num.service.logger;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -15,16 +10,17 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NumLoggerTest {
@@ -55,7 +51,7 @@ public class NumLoggerTest {
     }
 
     @Test
-    public void logMethodCallReturnTrue() {
+    public void logMethodCallReturnTrue() throws NoSuchMethodException {
         Jwt jwt = Jwt.withTokenValue("12345")
                 .subject("user-uuid-12345")
                 .issuedAt(Instant.now())
@@ -67,9 +63,17 @@ public class NumLoggerTest {
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(new JwtAuthenticationToken(jwt, Collections.emptySet()));
         SecurityContextHolder.setContext(context);
+        MethodSignature signature = Mockito.mock(MethodSignature.class);
+        Mockito.when(joinPoint.getSignature()).thenReturn(signature);
+        Mockito.when(signature.getMethod()).thenReturn(testMethod());
         boolean result = numLogger.logMethodCall(joinPoint);
         assertTrue(result);
         Mockito.verify(joinPoint, Mockito.times(1)).getSignature();
+    }
+    private Method testMethod() throws NoSuchMethodException {
+        return getClass().getDeclaredMethod("someTestMethod");
+    }
+    private void someTestMethod() {
     }
 
 }
