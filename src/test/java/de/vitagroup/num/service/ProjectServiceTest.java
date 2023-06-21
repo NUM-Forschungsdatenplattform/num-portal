@@ -1252,6 +1252,17 @@ public class ProjectServiceTest {
 
     assertThat(result, is("[]"));
   }
+    @Test
+    public void shouldHandleExecuteManagerProjectWithEmptyTemplates() {
+        CohortDto cohortDto = CohortDto.builder().name("Cohort name").id(2L).build();
+
+        UserDetails userDetails =
+                UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
+        String result =
+                projectService.executeManagerProject(
+                        cohortDto, Collections.EMPTY_LIST, userDetails.getUserId());
+        assertThat(result, is("[]"));
+    }
 
   @Test
   public void shouldSendNotificationWhenProjectStarts() {
