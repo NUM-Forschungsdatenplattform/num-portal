@@ -885,6 +885,13 @@ public class ProjectServiceTest {
 
     ProjectDto projectDto =
         ProjectDto.builder().name("Project is edited").status(ProjectStatus.PENDING).build();
+    User userOne = User.builder()
+            .firstName("John")
+            .lastName("Doe")
+            .email("john.doe@vitagorup.de")
+            .approved(true)
+            .build();
+    Mockito.when(userService.getByRole(STUDY_APPROVER)).thenReturn(Set.of(userOne));
 
     projectService.updateProject(
         projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
