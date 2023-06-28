@@ -616,6 +616,23 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldReturnEmptyPageWhenNoUsersFound() {
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "dummy input");
+        filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .filter(filter)
+                .sortBy("email")
+                .sort("asc")
+                .build();
+        mockDataSearchUsers();
+        Page<User> response = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
+        Assert.assertTrue(response.isEmpty());
+        Mockito.verify(userDetailsService, Mockito.never()).countUserDetails();
+        Mockito.verify(userDetailsService, Mockito.never()).getUsers(Mockito.any(PageRequest.class), Mockito.any(UserDetailsSpecification.class));
+    }
+
+    @Test
     public void searchUsersWithPaginationAsSuperAdminTest() {
         Pageable pageable = PageRequest.of(0, 50);
         Map<String, String> filter = new HashMap<>();
