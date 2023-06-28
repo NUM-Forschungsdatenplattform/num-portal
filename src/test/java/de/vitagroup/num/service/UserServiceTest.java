@@ -1,6 +1,5 @@
 package de.vitagroup.num.service;
 
-import com.google.common.collect.Sets;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
@@ -49,7 +48,8 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUN
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -431,6 +431,8 @@ public class UserServiceTest {
         getUserDetailsFromRepository(localDateTime);
 
         userService.deleteUnapprovedUsersAfter30Days();
+        Mockito.verify(keycloakFeign, Mockito.times(1)).deleteUser("4");
+        Mockito.verify(userDetailsService, Mockito.times(1)).deleteUserDetails("4");
     }
 
     private void getUserDetailsFromRepository(LocalDateTime localDateTime) {
@@ -457,6 +459,8 @@ public class UserServiceTest {
     @Test
     public void shouldDeleteUnapprovedUsersAfter30DaysNoUser() {
         userService.deleteUnapprovedUsersAfter30Days();
+        Mockito.verify(keycloakFeign, Mockito.never()).deleteUser(Mockito.anyString());
+        Mockito.verify(userDetailsService, Mockito.never()).deleteUserDetails(Mockito.anyString());
     }
 
     @Test
@@ -466,6 +470,8 @@ public class UserServiceTest {
         when(keycloakFeign.getUser("4")).thenThrow(new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, "4")));
         assertThrows(ResourceNotFound.class,
                 () -> userService.deleteUnapprovedUsersAfter30Days());
+        Mockito.verify(keycloakFeign, Mockito.never()).deleteUser(Mockito.anyString());
+        Mockito.verify(userDetailsService, Mockito.never()).deleteUserDetails(Mockito.anyString());
     }
 
     @Test
@@ -721,6 +727,32 @@ public class UserServiceTest {
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
         User firstUser = userPage.getContent().get(0);
         Assert.assertEquals("John", firstUser.getFirstName());
+    }
+
+    @Test
+    public void searchUsersFilterByRolesTest() {
+        Pageable pageable = PageRequest.of(0, 50);
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
+        filter.put(SearchCriteria.FILTER_BY_ROLES, "RESEARCHER");
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "Doe");
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .filter(filter)
+                .sort("ASC")
+                .sortBy("firstName")
+                .build();
+        mockDataSearchUsers();
+        Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
+                .userId("user-55")
+                .organization(Organization.builder().id(99L).build())
+                .build());
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput = argumentCaptor.getValue();
+        Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
+        User firstUser = userPage.getContent().get(0);
+        Assert.assertEquals("Ana", firstUser.getFirstName());
     }
 
     @Test
