@@ -16,8 +16,8 @@ public enum ProjectStatus {
     @Override
     public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          DRAFT, Arrays.asList(STUDY_COORDINATOR),
-          PENDING, Arrays.asList(STUDY_COORDINATOR));
+          DRAFT, List.of(STUDY_COORDINATOR),
+          PENDING, List.of(STUDY_COORDINATOR));
     }
   },
 
@@ -26,9 +26,9 @@ public enum ProjectStatus {
     @Override
     public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          PENDING, Arrays.asList(STUDY_COORDINATOR),
-          REVIEWING, Arrays.asList(STUDY_APPROVER),
-          DRAFT, Arrays.asList(STUDY_COORDINATOR));
+          PENDING, List.of(STUDY_COORDINATOR),
+          REVIEWING, List.of(STUDY_APPROVER),
+          DRAFT, List.of(STUDY_COORDINATOR));
     }
   },
 
@@ -37,10 +37,10 @@ public enum ProjectStatus {
     @Override
     public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          REVIEWING, Arrays.asList(STUDY_APPROVER),
-          APPROVED, Arrays.asList(STUDY_APPROVER),
-          CHANGE_REQUEST, Arrays.asList(STUDY_APPROVER),
-          DENIED, Arrays.asList(STUDY_APPROVER));
+          REVIEWING, List.of(STUDY_APPROVER),
+          APPROVED, List.of(STUDY_APPROVER),
+          CHANGE_REQUEST, List.of(STUDY_APPROVER),
+          DENIED, List.of(STUDY_APPROVER));
     }
   },
 
@@ -49,9 +49,9 @@ public enum ProjectStatus {
     @Override
     public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          CHANGE_REQUEST, Arrays.asList(STUDY_COORDINATOR),
-          DRAFT, Arrays.asList(STUDY_COORDINATOR),
-          PENDING, Arrays.asList(STUDY_COORDINATOR));
+          CHANGE_REQUEST, List.of(STUDY_COORDINATOR),
+          DRAFT, List.of(STUDY_COORDINATOR),
+          PENDING, List.of(STUDY_COORDINATOR));
     }
   },
 
@@ -60,8 +60,8 @@ public enum ProjectStatus {
     @Override
     public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          DENIED, Arrays.asList(STUDY_COORDINATOR),
-          ARCHIVED, Arrays.asList(STUDY_COORDINATOR, SUPER_ADMIN));
+          DENIED, List.of(STUDY_COORDINATOR),
+          ARCHIVED, List.of(STUDY_COORDINATOR, SUPER_ADMIN));
     }
   },
 
@@ -70,8 +70,8 @@ public enum ProjectStatus {
     @Override
     public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          APPROVED, Arrays.asList(STUDY_COORDINATOR),
-          PUBLISHED, Arrays.asList(STUDY_COORDINATOR));
+          APPROVED, List.of(STUDY_COORDINATOR),
+          PUBLISHED, List.of(STUDY_COORDINATOR));
     }
   },
 
@@ -80,8 +80,8 @@ public enum ProjectStatus {
     @Override
     public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          PUBLISHED, Arrays.asList(STUDY_COORDINATOR),
-          CLOSED, Arrays.asList(STUDY_COORDINATOR));
+          PUBLISHED, List.of(STUDY_COORDINATOR),
+          CLOSED, List.of(STUDY_COORDINATOR));
     }
   },
 
@@ -90,8 +90,8 @@ public enum ProjectStatus {
     @Override
     public Map<ProjectStatus, List<String>> nextStatusesAndRoles() {
       return Map.of(
-          CLOSED, Arrays.asList(STUDY_COORDINATOR),
-          ARCHIVED, Arrays.asList(STUDY_COORDINATOR, SUPER_ADMIN));
+          CLOSED, List.of(STUDY_COORDINATOR),
+          ARCHIVED, List.of(STUDY_COORDINATOR, SUPER_ADMIN));
     }
   },
 
@@ -110,7 +110,7 @@ public enum ProjectStatus {
   }
 
   public static List<ProjectStatus> getAllProjectStatusToViewAsResearcher() {
-    return Arrays.asList(ProjectStatus.PUBLISHED);
+    return List.of(ProjectStatus.PUBLISHED);
   }
 
   public static List<ProjectStatus> getAllProjectStatusToViewAsApprover() {

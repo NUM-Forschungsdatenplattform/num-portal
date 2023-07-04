@@ -1,25 +1,11 @@
 package de.vitagroup.num.service;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Aql;
 import de.vitagroup.num.service.ehrbase.CompositionResponseDataBuilder;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.exception.SystemException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import org.assertj.core.util.Lists;
 import org.ehrbase.aql.parser.AqlParseException;
 import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.client.aql.field.AqlFieldImp;
@@ -40,6 +26,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EhrBaseServiceTest {
@@ -81,7 +78,7 @@ public class EhrBaseServiceTest {
 
   @Test
   public void shouldReplaceSelect() {
-    when(restClient.aqlEndpoint().execute(any(Query.class))).thenReturn(Lists.emptyList());
+    when(restClient.aqlEndpoint().execute(any(Query.class))).thenReturn(Collections.emptyList());
     ehr.retrieveEligiblePatientIds(Aql.builder().query("SELECT e/ehr_id FROM EHR e").build());
     ArgumentCaptor<EntityQuery<Record>> queryArgumentCaptor =
         ArgumentCaptor.forClass(EntityQuery.class);

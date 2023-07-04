@@ -1,6 +1,5 @@
 package de.vitagroup.num.service;
 
-import com.google.common.collect.Sets;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
@@ -49,7 +48,8 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUN
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -96,15 +96,6 @@ public class UserServiceTest {
                     new Role("R4", "STUDY_COORDINATOR"),
                     new Role("R5", "CONTENT_ADMIN"),
                     new Role("R6", "STUDY_APPROVER")).collect(Collectors.toSet());
-
-    private final Set<User> allValidUsers =
-            Sets.newHashSet(
-                    User.builder().id("4").build(),
-                    User.builder().id("5").build(),
-                    User.builder().id("6").build(),
-                    User.builder().id("7").build(),
-                    User.builder().id("8").build(),
-                    User.builder().id("9").build());
 
     @Before
     public void setup() {
@@ -440,6 +431,8 @@ public class UserServiceTest {
         getUserDetailsFromRepository(localDateTime);
 
         userService.deleteUnapprovedUsersAfter30Days();
+        Mockito.verify(keycloakFeign, Mockito.times(1)).deleteUser("4");
+        Mockito.verify(userDetailsService, Mockito.times(1)).deleteUserDetails("4");
     }
 
     private void getUserDetailsFromRepository(LocalDateTime localDateTime) {
@@ -466,6 +459,8 @@ public class UserServiceTest {
     @Test
     public void shouldDeleteUnapprovedUsersAfter30DaysNoUser() {
         userService.deleteUnapprovedUsersAfter30Days();
+        Mockito.verify(keycloakFeign, Mockito.never()).deleteUser(Mockito.anyString());
+        Mockito.verify(userDetailsService, Mockito.never()).deleteUserDetails(Mockito.anyString());
     }
 
     @Test
@@ -475,6 +470,8 @@ public class UserServiceTest {
         when(keycloakFeign.getUser("4")).thenThrow(new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, "4")));
         assertThrows(ResourceNotFound.class,
                 () -> userService.deleteUnapprovedUsersAfter30Days());
+        Mockito.verify(keycloakFeign, Mockito.never()).deleteUser(Mockito.anyString());
+        Mockito.verify(userDetailsService, Mockito.never()).deleteUserDetails(Mockito.anyString());
     }
 
     @Test
@@ -619,6 +616,23 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldReturnEmptyPageWhenNoUsersFound() {
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "dummy input");
+        filter.put(SearchCriteria.FILTER_BY_TYPE_KEY, SearchFilter.ORGANIZATION.name());
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .filter(filter)
+                .sortBy("email")
+                .sort("asc")
+                .build();
+        mockDataSearchUsers();
+        Page<User> response = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
+        Assert.assertTrue(response.isEmpty());
+        Mockito.verify(userDetailsService, Mockito.never()).countUserDetails();
+        Mockito.verify(userDetailsService, Mockito.never()).getUsers(Mockito.any(PageRequest.class), Mockito.any(UserDetailsSpecification.class));
+    }
+
+    @Test
     public void searchUsersWithPaginationAsSuperAdminTest() {
         Pageable pageable = PageRequest.of(0, 50);
         Map<String, String> filter = new HashMap<>();
@@ -698,7 +712,7 @@ public class UserServiceTest {
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
         Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(userDetails)));
+                .thenReturn(new PageImpl<>(List.of(userDetails)));
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
         userService.searchUsers("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
@@ -730,6 +744,32 @@ public class UserServiceTest {
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
         User firstUser = userPage.getContent().get(0);
         Assert.assertEquals("John", firstUser.getFirstName());
+    }
+
+    @Test
+    public void searchUsersFilterByRolesTest() {
+        Pageable pageable = PageRequest.of(0, 50);
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
+        filter.put(SearchCriteria.FILTER_BY_ROLES, "RESEARCHER");
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "Doe");
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .filter(filter)
+                .sort("ASC")
+                .sortBy("firstName")
+                .build();
+        mockDataSearchUsers();
+        Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
+                .userId("user-55")
+                .organization(Organization.builder().id(99L).build())
+                .build());
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput = argumentCaptor.getValue();
+        Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
+        User firstUser = userPage.getContent().get(0);
+        Assert.assertEquals("Ana", firstUser.getFirstName());
     }
 
     @Test

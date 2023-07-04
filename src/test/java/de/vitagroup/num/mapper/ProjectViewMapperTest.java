@@ -6,7 +6,6 @@ import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.ProjectViewTO;
 import de.vitagroup.num.service.UserService;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

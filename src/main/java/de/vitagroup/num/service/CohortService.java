@@ -119,16 +119,9 @@ public class CohortService {
     return cohortExecutor.execute(cohort, allowUsageOutsideEu);
   }
 
-  public long getCohortGroupSize(
-      CohortGroupDto cohortGroupDto, String userId, Boolean allowUsageOutsideEu) {
+  public long getCohortGroupSize(CohortGroupDto cohortGroupDto, String userId, Boolean allowUsageOutsideEu) {
     userDetailsService.checkIsUserApproved(userId);
-
-    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
-    validateCohortParameters(cohortGroupDto);
-    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
-    if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
-    }
+    Set<String> ehrIds = getCohortGroupEhrIds(cohortGroupDto, allowUsageOutsideEu);
     return ehrIds.size();
   }
 
@@ -225,8 +218,7 @@ public class CohortService {
       ConditionDto conditionDto = aqlDto.getWhere();
       if (conditionDto instanceof ConditionComparisonOperatorDto) {
         Value value = ((ConditionComparisonOperatorDto) conditionDto).getValue();
-        if (value instanceof org.ehrbase.aql.dto.condition.ParameterValue) {
-          ParameterValue parameterValue = (ParameterValue) value;
+        if (value instanceof ParameterValue parameterValue) {
           parameterNames.add(parameterValue.getName());
         }
       } else if (conditionDto instanceof ConditionLogicalOperatorDto) {
@@ -234,8 +226,7 @@ public class CohortService {
         for (ConditionDto v : values) {
           if (v instanceof ConditionComparisonOperatorDto) {
             Value value = ((ConditionComparisonOperatorDto) v).getValue();
-            if (value instanceof org.ehrbase.aql.dto.condition.ParameterValue) {
-              ParameterValue parameterValue = (ParameterValue) value;
+            if (value instanceof ParameterValue parameterValue) {
               parameterNames.add(parameterValue.getName());
             }
           }
@@ -254,7 +245,7 @@ public class CohortService {
       }
     }
     if (CollectionUtils.isNotEmpty(cohortGroupDto.getChildren())) {
-      cohortGroupDto.getChildren().stream()
+      cohortGroupDto.getChildren()
               .forEach(this::validateCohortParameters);
     }
   }
@@ -296,18 +287,10 @@ public class CohortService {
     return cohortGroup;
   }
 
-  public CohortSizeDto getCohortGroupSizeWithDistribution(
-      CohortGroupDto cohortGroupDto, String userId, Boolean allowUsageOutsideEu) {
+  public CohortSizeDto getCohortGroupSizeWithDistribution(CohortGroupDto cohortGroupDto, String userId, Boolean allowUsageOutsideEu) {
     userDetailsService.checkIsUserApproved(userId);
-
-    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
-    validateCohortParameters(cohortGroupDto);
-    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
-    if (ehrIds.size() < privacyProperties.getMinHits()) {
-      throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
-    }
+    Set<String> ehrIds = getCohortGroupEhrIds(cohortGroupDto, allowUsageOutsideEu);
     int count = ehrIds.size();
-
     String idsString = "'" + String.join("','", ehrIds) + "'";
 
     var hospitals = getSizesPerHospital(userId, idsString);
@@ -315,6 +298,16 @@ public class CohortService {
     var ageGroups = getSizesPerAgeGroup(idsString);
 
     return CohortSizeDto.builder().hospitals(hospitals).ages(ageGroups).count(count).build();
+  }
+
+  private Set<String> getCohortGroupEhrIds(CohortGroupDto cohortGroupDto, Boolean allowUsageOutsideEu) {
+    CohortGroup cohortGroup = convertToCohortGroupEntity(cohortGroupDto);
+    validateCohortParameters(cohortGroupDto);
+    Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
+    if (ehrIds.size() < privacyProperties.getMinHits()) {
+      throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
+    }
+    return ehrIds;
   }
 
   private Map<String, Integer> getSizesPerAgeGroup(String idsString) {

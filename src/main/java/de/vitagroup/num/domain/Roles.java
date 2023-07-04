@@ -51,10 +51,6 @@ public class Roles {
         && ORGANIZATION_ADMIN_ASSIGNABLE.contains(roleToSet);
   }
 
-  public static boolean hasRole(String role, Jwt principal) {
-    return extractRoles(principal).contains(role);
-  }
-
   public static boolean isSuperAdmin(List<String> roles) {
     return roles.contains(Roles.SUPER_ADMIN);
   }

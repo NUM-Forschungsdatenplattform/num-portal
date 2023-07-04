@@ -17,7 +17,6 @@ import org.openehealth.ipf.commons.audit.model.ActiveParticipantType;
 import org.openehealth.ipf.commons.audit.model.AuditMessage;
 import org.openehealth.ipf.commons.audit.model.TypeValuePairType;
 import org.openehealth.ipf.commons.audit.types.EventType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,8 +26,13 @@ public class AtnaService {
   private static final String EVENT_CODE_DATA_EXPORT = "110106";
   private static final String SYSTEM_NAME = "Num portal";
   private DefaultAuditContext auditContext;
-  @Autowired private AtnaProperties properties;
-  @Autowired private ObjectMapper mapper;
+  private final AtnaProperties properties;
+  private final ObjectMapper mapper;
+
+  public AtnaService(AtnaProperties properties, ObjectMapper mapper) {
+    this.properties = properties;
+    this.mapper = mapper;
+  }
 
   @PostConstruct
   private void initialize() {

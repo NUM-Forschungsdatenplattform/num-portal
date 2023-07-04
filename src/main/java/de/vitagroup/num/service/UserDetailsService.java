@@ -4,28 +4,18 @@ import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.NewUserWithoutOrganizationNotification;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
 import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
-
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
-
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
-import de.vitagroup.num.service.exception.SystemException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +24,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 @Service

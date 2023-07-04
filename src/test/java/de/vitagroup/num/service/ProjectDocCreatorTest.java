@@ -1,69 +1,95 @@
 package de.vitagroup.num.service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_COMMENT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CAN_T_FIND_THE_COHORT_BY_ID;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COMMENT_EDIT_FOR_COMMENT_WITH_ID_IS_NOT_ALLOWED_COMMENT_HAS_DIFFERENT_AUTHOR;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COMMENT_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_COMMENTID_ID;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_DOES_NOT_EXIST;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThrows;
-import static org.mockito.Mockito.when;
-
-import java.time.OffsetDateTime;
-import java.util.Locale;
-import java.util.Optional;
-
+import de.vitagroup.num.domain.*;
+import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.ProjectDto;
+import de.vitagroup.num.domain.dto.UserDetailsDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
-import de.vitagroup.num.service.exception.SystemException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.context.MessageSource;
 
-import de.vitagroup.num.domain.Comment;
-import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.repository.CommentRepository;
-import de.vitagroup.num.domain.repository.ProjectRepository;
-import de.vitagroup.num.service.exception.BadRequestException;
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
+import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProjectDocCreatorTest {
 
-  @Mock private UserDetailsService userDetailsService;
+  @Mock
+  private UserService userService;
+  @Mock
+  private CohortRepository cohortRepository;
+  @Mock
+  private MessageSource messageSource;
 
   @InjectMocks
   private ProjectDocCreator projectDocCreator;
 
-  @Mock private CohortRepository cohortRepository;
+
 
   private ProjectDto projectDto;
 
   @Before
   public void setup() {
-    projectDto = new ProjectDto();
-    projectDto.setCohortId(1L);
-    projectDto.setCreateDate(OffsetDateTime.now());
-    projectDto.setId(1L);
+    projectDto = ProjectDto.builder()
+            .id(1L)
+            .createDate(OffsetDateTime.now())
+            .description("project's description")
+            .simpleDescription("some simple description")
+            .firstHypotheses("first hypotheses")
+            .secondHypotheses("2nd hypotheses")
+            .goal("dummy goal")
+            .status(ProjectStatus.PUBLISHED)
+            .financed(false)
+            .usedOutsideEu(true)
+            .coordinator(User.builder()
+                    .id("user-id")
+                    .firstName("John")
+                    .lastName("Doe")
+                    .organization(OrganizationDto.builder()
+                            .id(2L)
+                            .name("super duper organization")
+                            .build())
+                    .build())
+            .researchers(List.of(UserDetailsDto.builder()
+                            .approved(true)
+                            .userId("researcherId")
+                    .build()))
+            .cohortId(3L)
+            .categories(Set.of(ProjectCategories.PREVENTION, ProjectCategories.DECISION_SUPPORT))
+            .build();
+    Mockito.when(userService.getUserById("researcherId", false))
+            .thenReturn(User.builder()
+                    .id("reasearcherId")
+                    .firstName("Ana")
+                    .lastName("Doe")
+                    .build());
+    Mockito.when(cohortRepository.findById(3L)).thenReturn(Optional.of(Cohort.builder()
+                    .name("cohort")
+                    .cohortGroup(CohortGroup.builder()
+                            .type(Type.AQL)
+                            .query(CohortAql.builder()
+                                    .name("cohort aql")
+                                    .build())
+                            .build())
+            .build()));
 
-    UserDetails approvedCoordinator =
-            UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
   }
 
-  @Test(expected = SystemException.class)
-  public void findById() {
-    when(cohortRepository.findById(2L))
-            .thenThrow(new SystemException(ProjectDocCreator.class, CAN_T_FIND_THE_COHORT_BY_ID,
-                            String.format(CAN_T_FIND_THE_COHORT_BY_ID, 2L)));
-    cohortRepository.findById(2L);
+  @Test
+  public void getDocBytesOfProject() throws IOException {
+    projectDocCreator.getDocBytesOfProject(projectDto, Locale.GERMAN);
+    Mockito.verify(messageSource, Mockito.times(1)).getMessage("status.published", null, Locale.GERMAN);
   }
 
 }

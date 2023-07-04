@@ -426,20 +426,14 @@ public class UserService {
   }
 
   private Comparator<User> getComparator(String field) {
-    switch (field) {
-      case FIRST_NAME:
-        return Comparator.comparing(u -> u.getFirstName().toUpperCase());
-      case LAST_NAME:
-        return Comparator.comparing(u -> u.getLastName().toUpperCase());
-      case ORGANIZATION_NAME:
-        return Comparator.comparing(user -> user.getOrganization() != null ? user.getOrganization().getName().toUpperCase() : StringUtils.EMPTY);
-      case REGISTRATION_DATE:
-        return Comparator.comparing(User::getCreatedTimestamp);
-      case MAIL:
-        return Comparator.comparing(u -> u.getEmail().toUpperCase());
-      default:
-        return Comparator.comparing(User::getCreatedTimestamp);
-    }
+    return switch (field) {
+      case FIRST_NAME -> Comparator.comparing(u -> u.getFirstName().toUpperCase());
+      case LAST_NAME -> Comparator.comparing(u -> u.getLastName().toUpperCase());
+      case ORGANIZATION_NAME ->
+              Comparator.comparing(user -> user.getOrganization() != null ? user.getOrganization().getName().toUpperCase() : StringUtils.EMPTY);
+      case MAIL -> Comparator.comparing(u -> u.getEmail().toUpperCase());
+      default -> Comparator.comparing(User::getCreatedTimestamp);
+    };
   }
 
   @Transactional

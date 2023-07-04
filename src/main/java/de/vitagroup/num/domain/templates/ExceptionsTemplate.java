@@ -42,7 +42,7 @@ public class ExceptionsTemplate {
     public final static String INVALID_COHORT_GROUP_AQL_MISSING = "Invalid cohort group. Aql missing.";
     public static final String INVALID_COHORT_GROUP_CHILDREN_MISSING = "The query is invalid. Please select at least one criterion.";
     public static final String INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS = "The query is invalid. The value of at least one criterion is missing.";
-    public final static String INVALID_COMMENTID_ID = "Invalid commentId id";
+    public final static String INVALID_COMMENT_ID = "Invalid commentId id";
     public final static String ORGANIZATION_NAME_MUST_BE_UNIQUE = "Organization name must be unique: %s";
     public final static String ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS = "Organization mail domain already exists: %s";
     public final static String ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY = "Organization mail domain cannot be null or empty";
@@ -142,9 +142,9 @@ public class ExceptionsTemplate {
     public final static String CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED = "Cannot check consent for data usage outside the European Union, oid not configured";
 
 
-    public static Map<String, ExceptionDto> errorMap = new HashMap<>();
+    public static final Map<String, ExceptionDto> errorMap = new HashMap<>();
 
-    public void populateExceptionMap() {
+    static {
         errorMap.put( TOKEN_IS_NOT_VALID_MSG, new ExceptionDto( 1, new ArrayList<>() ) );
         errorMap.put( RECORD_NOT_FOUND_MSG, new ExceptionDto( 2, new ArrayList<>() ) );
 
@@ -162,7 +162,7 @@ public class ExceptionsTemplate {
         errorMap.put( COHORT_NOT_FOUND, new ExceptionDto( 11, new ArrayList<>() ) );//1 parameter
         errorMap.put( COHORT_GROUP_CANNOT_BE_EMPTY, new ExceptionDto( 12, new ArrayList<>() ) );
         errorMap.put( INVALID_COHORT_GROUP_AQL_MISSING, new ExceptionDto( 13, new ArrayList<>() ) );
-        errorMap.put( INVALID_COMMENTID_ID, new ExceptionDto( 14, new ArrayList<>() ) );
+        errorMap.put(INVALID_COMMENT_ID, new ExceptionDto( 14, new ArrayList<>() ) );
         errorMap.put( ORGANIZATION_NAME_MUST_BE_UNIQUE, new ExceptionDto( 15, new ArrayList<>() ) );//1 parameter
         errorMap.put( ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS, new ExceptionDto( 16, new ArrayList<>() ) );//1 parameter
         errorMap.put( ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY, new ExceptionDto( 17, new ArrayList<>() ) );
@@ -286,5 +286,9 @@ public class ExceptionsTemplate {
 
         //Policy
         errorMap.put(NO_TEMPLATES_ATTACHED_TO_THE_PROJECT, new ExceptionDto( 96, new ArrayList<>() ) );
+    }
+
+    private ExceptionsTemplate() {
+
     }
 }

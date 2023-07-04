@@ -60,10 +60,10 @@ public class TemplateMapperTest {
 
     assertThat(dtos, notNullValue());
     assertThat(
-        dtos.stream().anyMatch(templateInfoDto -> templateInfoDto.getTemplateId() == "t1"),
+        dtos.stream().anyMatch(templateInfoDto -> "t1".equals(templateInfoDto.getTemplateId())),
         is(true));
     assertThat(
-        dtos.stream().anyMatch(templateInfoDto -> templateInfoDto.getTemplateId() == "t2"),
+        dtos.stream().anyMatch(templateInfoDto -> "t2".equals(templateInfoDto.getTemplateId())),
         is(true));
   }
 

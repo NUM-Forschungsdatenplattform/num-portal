@@ -2,12 +2,9 @@ package de.vitagroup.num.integrationtesting.tests;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
-import de.vitagroup.num.service.email.EmailService;
 import lombok.SneakyThrows;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
