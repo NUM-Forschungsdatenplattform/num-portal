@@ -98,13 +98,10 @@ public class AdminController extends CustomizedExceptionHandler {
   @PostMapping("user/{userId}/role")
   @Operation(description = "Updates the users roles to the given set.")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
-  public ResponseEntity<List<String>> updateRoles(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @PathVariable String userId,
-      @NotNull @RequestBody List<String> roles) {
+  public ResponseEntity<List<String>> updateRoles(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                  @NotNull @PathVariable String userId, @NotNull @RequestBody List<String> roles) {
 
-    List<String> updatedRoles = userService.setUserRoles(
-            userId, roles, principal.getSubject(), Roles.extractRoles(principal));
+    List<String> updatedRoles = userService.setUserRoles(userId, roles, principal.getSubject(), Roles.extractRoles(principal));
     userService.addUserToCache(userId);
     return ResponseEntity.ok(updatedRoles);
   }
@@ -163,5 +160,16 @@ public class AdminController extends CustomizedExceptionHandler {
     // filter[withRoles] true or false (optional)
     return ResponseEntity.ok(
             userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
+  }
+
+  @AuditLog
+  @PostMapping("user/{userId}/status")
+  @Operation(description = "Updates user's status for active flag (enabled field in keycloak representation).")
+  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
+  public ResponseEntity<String> updateUserDetails(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                  @NotNull @PathVariable String userId, @NotNull @RequestBody Boolean active) {
+    userService.updateUserActiveField(principal.getSubject(), userId, active, Roles.extractRoles(principal));
+    userService.addUserToCache(userId);
+    return ResponseEntity.ok(SUCCESS_REPLY);
   }
 }

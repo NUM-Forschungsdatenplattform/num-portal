@@ -66,6 +66,9 @@ public class User {
 
   private Map<String, Object> attributes;
 
+  // keycloak attribute for user's active field - if set to false user is not allowed to log in
+  private Boolean enabled;
+
   @JsonIgnore
   public boolean isNotApproved() {
     return !approved;

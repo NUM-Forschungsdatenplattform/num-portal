@@ -82,6 +82,8 @@ public class UserService {
 
   private static final String MAIL = "email";
 
+  private static final String ACTIVE = "enabled";
+
   @Transactional
   public void initializeUsersCache() {
     List<String> usersUUID = userDetailsService.getAllUsersUUID();
@@ -197,29 +199,8 @@ public class UserService {
    * @param userId    the user to update roles of
    * @param roleNames The list of roles of the user
    */
-  public List<String> setUserRoles(
-      String userId,
-      @NotNull List<String> roleNames,
-      String callerUserId,
-      List<String> callerRoles) {
-
-    UserDetails userToChange =
-        userDetailsService
-            .getUserDetailsById(userId)
-            .orElseThrow(() -> new SystemException(UserService.class, USER_NOT_FOUND,
-                    String.format(USER_NOT_FOUND, userId)));
-
-    UserDetails callerDetails = userDetailsService.checkIsUserApproved(callerUserId);
-
-    if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)
-        && !callerRoles.contains(Roles.SUPER_ADMIN)
-        && !callerDetails
-        .getOrganization()
-        .getId()
-        .equals(userToChange.getOrganization().getId())) {
-      throw new ForbiddenException(UserService.class, ORGANIZATION_ADMIN_CAN_ONLY_MANAGE_USERS_IN_THEIR_OWN_ORGANIZATION);
-    }
-
+  public List<String> setUserRoles(String userId, @NotNull List<String> roleNames, String callerUserId, List<String> callerRoles) {
+    validateUserRolesAndOrganization(callerUserId, userId, callerRoles);
     Role[] removeRoles;
     Role[] addRoles;
     try {
@@ -527,6 +508,7 @@ public class UserService {
       initializeUsersCache();
     }
   }
+
   private void deleteNotApprovedUser(UserDetails userDetails) {
   	String userId = userDetails.getUserId();
     try {
@@ -592,6 +574,35 @@ public class UserService {
 
     notificationService.send(collectUserNameUpdateNotification(userIdToChange, loggedInUserId));
     return getUserById(userIdToChange, true);
+  }
+
+  /**
+   *
+   * @param loggedInUserId
+   * @param userId
+   * @param active
+   * @param callerRoles
+   */
+  public void updateUserActiveField(@NotNull String loggedInUserId, @NotNull String userId, @NotNull Boolean active, List<String> callerRoles) {
+    validateUserRolesAndOrganization(loggedInUserId, userId, callerRoles);
+    Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
+    if (userRaw == null) {
+      throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
+    }
+    userRaw.put(ACTIVE, active);
+    keycloakFeign.updateUser(userId, userRaw);
+  }
+
+  private void validateUserRolesAndOrganization(String loggedInUserId, String userId, List<String> callerRoles) {
+    UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
+    UserDetails userToUpdate = userDetailsService.getUserDetailsById(userId).orElseThrow(()->
+            new SystemException(UserService.class, USER_NOT_FOUND,
+                    String.format(USER_NOT_FOUND, userId)));
+    if (Roles.isOrganizationAdmin(callerRoles)
+            && !Roles.isSuperAdmin(callerRoles)
+            && !belongToSameOrganization(loggedInUser, userToUpdate)) {
+      throw new ForbiddenException(UserService.class, ORGANIZATION_ADMIN_CAN_ONLY_MANAGE_USERS_IN_THEIR_OWN_ORGANIZATION);
+    }
   }
 
   /**
