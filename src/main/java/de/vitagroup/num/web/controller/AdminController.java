@@ -158,6 +158,7 @@ public class AdminController extends CustomizedExceptionHandler {
     // filter[approved] true, false (optional -> omitting it returns both)
     // filter[search] search input (optional)
     // filter[withRoles] true or false (optional)
+    // filter[enabled] true or false (optional)
     return ResponseEntity.ok(
             userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
   }

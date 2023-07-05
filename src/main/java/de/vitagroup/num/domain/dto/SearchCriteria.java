@@ -33,6 +33,8 @@ public class SearchCriteria {
 
     public static final String FILTER_BY_ROLES = "roles";
 
+    public static final String FILTER_BY_ACTIVE = "enabled";
+
     private Map<String, ?> filter;
 
     private String sort;
