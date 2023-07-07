@@ -129,6 +129,7 @@ public class UserServiceTest {
                         .id("4")
                         .organization(OrganizationDto.builder().id(1L).name("org 1").build())
                         .approved(true)
+                        .enabled(Boolean.TRUE)
                         .build();
 
         User user5 =
@@ -136,6 +137,7 @@ public class UserServiceTest {
                         .id("5")
                         .organization(OrganizationDto.builder().id(1L).name("org 1").build())
                         .approved(true)
+                        .enabled(Boolean.TRUE)
                         .build();
 
         User user6 =
@@ -143,6 +145,7 @@ public class UserServiceTest {
                         .id("6")
                         .organization(OrganizationDto.builder().id(1L).name("org 1").build())
                         .approved(true)
+                        .enabled(Boolean.TRUE)
                         .build();
 
         when(userDetailsService.checkIsUserApproved("4"))
@@ -423,6 +426,51 @@ public class UserServiceTest {
 
         assertThat(notificationSent.size(), is(1));
         assertThat(notificationSent.get(0).getClass(), is(UserNameUpdateNotification.class));
+    }
+
+    @Test
+    public void shouldAllowOrgAdminChangeActiveFlagSameOrgUser() {
+        userService.updateUserActiveField(
+                "4", "5", false, Collections.singletonList("ORGANIZATION_ADMIN"));
+        verify(keycloakFeign, times(1))
+                .updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
+        Map<String, Object> captured = mapArgumentCaptor.getValue();
+        assertEquals("false", captured.get("enabled").toString());
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void shouldNotAllowOrgAdminChangeActiveFlagOtherOrgUser() {
+        userService.updateUserActiveField("5", "7", false, Collections.singletonList("ORGANIZATION_ADMIN"));
+    }
+
+    @Test(expected = SystemException.class)
+    public void shouldHandleKeycloakUserNotFound() {
+        Mockito.when(keycloakFeign.getUserRaw("33")).thenReturn(null);
+        Mockito.when(userDetailsService.getUserDetailsById("33"))
+                .thenReturn(Optional.of(UserDetails.builder()
+                        .userId("33")
+                        .organization(
+                                Organization.builder().id(1l).name("org 1").domains(Set.of()).build())
+                        .approved(false)
+                        .build()));
+        userService.updateUserActiveField("4", "33", true, Collections.singletonList("ORGANIZATION_ADMIN"));
+    }
+    @Test
+    public void shouldAllowSuperAdminChangeActiveFlagUser() {
+        User user =
+                User.builder()
+                        .id("7")
+                        .organization(OrganizationDto.builder().id(2L).name("org 2").build())
+                        .approved(true)
+                        .enabled(Boolean.TRUE)
+                        .build();
+        Mockito.when(keycloakFeign.getUser("7")).thenReturn(user);
+        userService.updateUserActiveField(
+                "5", "7", true, Collections.singletonList("SUPER_ADMIN"));
+        verify(keycloakFeign, times(1))
+                .updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
+        Map<String, Object> captured = mapArgumentCaptor.getValue();
+        assertEquals("true", captured.get("enabled").toString());
     }
 
     @Test
