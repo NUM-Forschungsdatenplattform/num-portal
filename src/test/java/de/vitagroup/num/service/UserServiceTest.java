@@ -197,6 +197,14 @@ public class UserServiceTest {
                                                 Organization.builder().id(2L).name("org 2").domains(Set.of()).build())
                                         .approved(true)
                                         .build()));
+        User user7 =
+                User.builder()
+                        .id("7")
+                        .organization(OrganizationDto.builder().id(2L).name("org 2").build())
+                        .approved(true)
+                        .enabled(Boolean.TRUE)
+                        .build();
+        Mockito.when(keycloakFeign.getUser("7")).thenReturn(user7);
         when(userDetailsService.checkIsUserApproved("7"))
                 .thenReturn(
                         UserDetails.builder()
@@ -457,14 +465,6 @@ public class UserServiceTest {
     }
     @Test
     public void shouldAllowSuperAdminChangeActiveFlagUser() {
-        User user =
-                User.builder()
-                        .id("7")
-                        .organization(OrganizationDto.builder().id(2L).name("org 2").build())
-                        .approved(true)
-                        .enabled(Boolean.TRUE)
-                        .build();
-        Mockito.when(keycloakFeign.getUser("7")).thenReturn(user);
         userService.updateUserActiveField(
                 "5", "7", true, Collections.singletonList("SUPER_ADMIN"));
         verify(keycloakFeign, times(1))
