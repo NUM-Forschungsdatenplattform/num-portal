@@ -594,7 +594,8 @@ public class UserService {
    * @param active
    * @param callerRoles
    */
-  public void updateUserActiveField(@NotNull String loggedInUserId, @NotNull String userId, @NotNull Boolean active, List<String> callerRoles) {
+  @CachePut(cacheNames = USERS_CACHE, key = "#userId")
+  public User updateUserActiveField(@NotNull String loggedInUserId, @NotNull String userId, @NotNull Boolean active, List<String> callerRoles) {
     validateUserRolesAndOrganization(loggedInUserId, userId, callerRoles);
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
     if (userRaw == null) {
@@ -603,6 +604,7 @@ public class UserService {
     }
     userRaw.put(ACTIVE, active);
     keycloakFeign.updateUser(userId, userRaw);
+    return getUserById(userId, true);
   }
 
   private void validateUserRolesAndOrganization(String loggedInUserId, String userId, List<String> callerRoles) {

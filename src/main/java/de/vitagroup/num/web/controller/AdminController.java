@@ -170,7 +170,6 @@ public class AdminController extends CustomizedExceptionHandler {
   public ResponseEntity<String> updateUserDetails(@AuthenticationPrincipal @NotNull Jwt principal,
                                                   @NotNull @PathVariable String userId, @NotNull @RequestBody Boolean active) {
     userService.updateUserActiveField(principal.getSubject(), userId, active, Roles.extractRoles(principal));
-    userService.addUserToCache(userId);
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 }
