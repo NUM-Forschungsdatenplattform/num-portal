@@ -82,6 +82,8 @@ public class UserService {
 
   private static final String MAIL = "email";
 
+  private static final String ACTIVE = "enabled";
+
   @Transactional
   public void initializeUsersCache() {
     List<String> usersUUID = userDetailsService.getAllUsersUUID();
@@ -197,29 +199,8 @@ public class UserService {
    * @param userId    the user to update roles of
    * @param roleNames The list of roles of the user
    */
-  public List<String> setUserRoles(
-      String userId,
-      @NotNull List<String> roleNames,
-      String callerUserId,
-      List<String> callerRoles) {
-
-    UserDetails userToChange =
-        userDetailsService
-            .getUserDetailsById(userId)
-            .orElseThrow(() -> new SystemException(UserService.class, USER_NOT_FOUND,
-                    String.format(USER_NOT_FOUND, userId)));
-
-    UserDetails callerDetails = userDetailsService.checkIsUserApproved(callerUserId);
-
-    if (callerRoles.contains(Roles.ORGANIZATION_ADMIN)
-        && !callerRoles.contains(Roles.SUPER_ADMIN)
-        && !callerDetails
-        .getOrganization()
-        .getId()
-        .equals(userToChange.getOrganization().getId())) {
-      throw new ForbiddenException(UserService.class, ORGANIZATION_ADMIN_CAN_ONLY_MANAGE_USERS_IN_THEIR_OWN_ORGANIZATION);
-    }
-
+  public List<String> setUserRoles(String userId, @NotNull List<String> roleNames, String callerUserId, List<String> callerRoles) {
+    validateUserRolesAndOrganization(callerUserId, userId, callerRoles);
     Role[] removeRoles;
     Role[] addRoles;
     try {
@@ -342,14 +323,18 @@ public class UserService {
             searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY);
     boolean filterByRoles = searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_BY_ROLES);
     if (filterByRoles) {
-      requestedRoles = getRequestedRoles((String) searchCriteria.getFilter().get(SearchCriteria.FILTER_BY_ROLES));
+      requestedRoles = getRequestedRoles(retrieveSearchField(searchCriteria, SearchCriteria.FILTER_BY_ROLES));
     }
-    if (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles)) {
-      String searchValue = searchCriteria.getFilter() != null &&
-              searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_SEARCH_BY_KEY) ? (String) searchCriteria.getFilter().get(SearchCriteria.FILTER_SEARCH_BY_KEY) : null;
-      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles);
+    boolean filterByActiveFlag = searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(SearchCriteria.FILTER_BY_ACTIVE);
+    Optional<Boolean> activeFlag = Optional.empty();
+    if (filterByActiveFlag) {
+      activeFlag = Optional.of(Boolean.valueOf(retrieveSearchField(searchCriteria, SearchCriteria.FILTER_BY_ACTIVE)));
     }
-    if (CollectionUtils.isEmpty(usersUUID) && (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles))) {
+    if (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles) || filterByActiveFlag) {
+      String searchValue = retrieveSearchField(searchCriteria, SearchCriteria.FILTER_SEARCH_BY_KEY);
+      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles, activeFlag);
+    }
+    if (CollectionUtils.isEmpty(usersUUID) && (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles) || filterByActiveFlag)) {
       return Page.empty(pageable);
     }
     Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
@@ -383,6 +368,13 @@ public class UserService {
               .collect(Collectors.toList());
     }
     return new PageImpl<>(new ArrayList<>(filteredUsers), pageable, userDetailsPage.getTotalElements());
+  }
+
+  private <T> T retrieveSearchField(SearchCriteria searchCriteria, String fieldKey) {
+    if(searchCriteria.getFilter() != null && searchCriteria.getFilter().containsKey(fieldKey)) {
+      return (T) searchCriteria.getFilter().get(fieldKey);
+    }
+    return null;
   }
 
   private UserDetailsSpecification buildUserSpecification(UserDetails loggedInUser, List<String> callerRoles, SearchCriteria searchCriteria, Set<String> usersUUID) {
@@ -527,6 +519,7 @@ public class UserService {
       initializeUsersCache();
     }
   }
+
   private void deleteNotApprovedUser(UserDetails userDetails) {
   	String userId = userDetails.getUserId();
     try {
@@ -595,30 +588,67 @@ public class UserService {
   }
 
   /**
+   *
+   * @param loggedInUserId
+   * @param userId
+   * @param active
+   * @param callerRoles
+   */
+  @CachePut(cacheNames = USERS_CACHE, key = "#userId")
+  @Transactional
+  public User updateUserActiveField(@NotNull String loggedInUserId, @NotNull String userId, @NotNull Boolean active, List<String> callerRoles) {
+    validateUserRolesAndOrganization(loggedInUserId, userId, callerRoles);
+    Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
+    if (userRaw == null) {
+      log.error("Keycloak user {} was not found", userId);
+      throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
+    }
+    userRaw.put(ACTIVE, active);
+    keycloakFeign.updateUser(userId, userRaw);
+    return getUserById(userId, true);
+  }
+
+  private void validateUserRolesAndOrganization(String loggedInUserId, String userId, List<String> callerRoles) {
+    UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
+    UserDetails userToUpdate = userDetailsService.getUserDetailsById(userId).orElseThrow(()->
+            new SystemException(UserService.class, USER_NOT_FOUND,
+                    String.format(USER_NOT_FOUND, userId)));
+    if (Roles.isOrganizationAdmin(callerRoles)
+            && !Roles.isSuperAdmin(callerRoles)
+            && !belongToSameOrganization(loggedInUser, userToUpdate)) {
+      throw new ForbiddenException(UserService.class, ORGANIZATION_ADMIN_CAN_ONLY_MANAGE_USERS_IN_THEIR_OWN_ORGANIZATION);
+    }
+  }
+
+  /**
    * Retrieved a list of users UUID that match the search criteria
    * @param search A string contained in username, first or last name, or email
    * @return a Set of filteredUsers
    */
   public Set<String> findUsersUUID(String search) {
-    return filterKeycloakUsers(search, Collections.emptyList());
+    return filterKeycloakUsers(search, Collections.emptyList(), Optional.empty());
   }
 
-  private Set<String> filterKeycloakUsers(String search, List<String> roles) {
+  private Set<String> filterKeycloakUsers(String search, List<String> roles, Optional<Boolean> enabledFlag) {
     Set<String> userUUIDs = new HashSet<>();
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
-    if ((StringUtils.isNotEmpty(search) || CollectionUtils.isNotEmpty(roles)) && usersCache != null && usersCache.getNativeCache().size() != 0) {
+    if ((StringUtils.isNotEmpty(search) || CollectionUtils.isNotEmpty(roles) || enabledFlag.isPresent())
+            && usersCache != null && usersCache.getNativeCache().size() != 0) {
       ConcurrentMap<Object, Object> users = usersCache.getNativeCache();
       for (Map.Entry<Object, Object> entry : users.entrySet()) {
         if (entry.getValue() instanceof User user) {
+          boolean enabledFilter = enabledFlag.isEmpty() || enabledFlag.get().equals(user.getEnabled());
           if (StringUtils.isNotEmpty(search) && CollectionUtils.isNotEmpty(roles)) {
             if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
-                    CollectionUtils.containsAny(user.getRoles(), roles)) {
+                    CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
               userUUIDs.add((String) entry.getKey());
             }
           } else if (StringUtils.isNotEmpty(search) && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
-                  StringUtils.containsIgnoreCase(user.getEmail(), search))) {
+                  StringUtils.containsIgnoreCase(user.getEmail(), search)) && enabledFilter) {
             userUUIDs.add((String) entry.getKey());
-          } else if (CollectionUtils.isNotEmpty(roles) && CollectionUtils.containsAny(user.getRoles(), roles)) {
+          } else if (CollectionUtils.isNotEmpty(roles) && CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
+            userUUIDs.add((String) entry.getKey());
+          } else if (enabledFlag.isPresent() && enabledFilter) {
             userUUIDs.add((String) entry.getKey());
           }
         }
