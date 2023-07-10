@@ -595,6 +595,7 @@ public class UserService {
    * @param callerRoles
    */
   @CachePut(cacheNames = USERS_CACHE, key = "#userId")
+  @Transactional
   public User updateUserActiveField(@NotNull String loggedInUserId, @NotNull String userId, @NotNull Boolean active, List<String> callerRoles) {
     validateUserRolesAndOrganization(loggedInUserId, userId, callerRoles);
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
