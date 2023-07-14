@@ -458,7 +458,7 @@ public class UserServiceTest {
                 .thenReturn(Optional.of(UserDetails.builder()
                         .userId("33")
                         .organization(
-                                Organization.builder().id(1l).name("org 1").domains(Set.of()).build())
+                                Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                         .approved(false)
                         .build()));
         userService.updateUserActiveField("4", "33", true, Collections.singletonList("ORGANIZATION_ADMIN"));
@@ -659,7 +659,7 @@ public class UserServiceTest {
                 .sortBy("DESC")
                 .sort("invalid field")
                 .build();
-        userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
+        userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50), true);
         Mockito.verify(userDetailsService, Mockito.never()).getUsers(Mockito.any(), Mockito.any(UserDetailsSpecification.class));
     }
 
@@ -674,7 +674,7 @@ public class UserServiceTest {
                 .sort("asc")
                 .build();
         mockDataSearchUsers();
-        Page<User> response = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
+        Page<User> response = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50), true);
         Assert.assertTrue(response.isEmpty());
         Mockito.verify(userDetailsService, Mockito.never()).countUserDetails();
         Mockito.verify(userDetailsService, Mockito.never()).getUsers(Mockito.any(PageRequest.class), Mockito.any(UserDetailsSpecification.class));
@@ -692,7 +692,7 @@ public class UserServiceTest {
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable, true);
         Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
@@ -762,7 +762,7 @@ public class UserServiceTest {
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
                 .thenReturn(new PageImpl<>(List.of(userDetails)));
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        userService.searchUsers("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable);
+        userService.searchUsers("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable, true);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertNull(capturedInput.getApproved());
@@ -786,7 +786,7 @@ public class UserServiceTest {
                 .organization(Organization.builder().id(99L).build())
                 .build());
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, true);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
@@ -812,7 +812,7 @@ public class UserServiceTest {
                 .organization(Organization.builder().id(99L).build())
                 .build());
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, true);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
@@ -829,7 +829,7 @@ public class UserServiceTest {
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable, true);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         User firstUser = users.getContent().get(0);
         Assert.assertEquals("userId-two", firstUser.getId());
@@ -844,7 +844,7 @@ public class UserServiceTest {
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
+        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable, true);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0, 2)), argumentCaptor.capture());
         User firstUser = users.getContent().get(0);
         Assert.assertEquals("userId-two", firstUser.getId());

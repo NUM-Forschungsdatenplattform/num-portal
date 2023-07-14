@@ -54,8 +54,6 @@ import static java.util.Objects.isNull;
 public class UserService {
   private final UserDetailsRepository userDetailsRepository;
 
-  private static final int MAX_USER_COUNT = 100000;
-
   private final KeycloakFeign keycloakFeign;
 
   private final UserDetailsService userDetailsService;
@@ -312,7 +310,8 @@ public class UserService {
    * @return the users that match the search parameters and with optional roles if indicated
    */
   @Transactional
-  public Page<User> searchUsers(String loggedInUserId, List<String> callerRoles, SearchCriteria searchCriteria, Pageable pageable) {
+  public Page<User> searchUsers(String loggedInUserId, List<String> callerRoles, SearchCriteria searchCriteria,
+                                Pageable pageable, boolean isFilterByRolePresent) {
 
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
     validateSort(searchCriteria);
@@ -332,7 +331,7 @@ public class UserService {
     }
     if (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles) || filterByActiveFlag) {
       String searchValue = retrieveSearchField(searchCriteria, SearchCriteria.FILTER_SEARCH_BY_KEY);
-      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles, activeFlag);
+      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles, activeFlag, isFilterByRolePresent);
     }
     if (CollectionUtils.isEmpty(usersUUID) && (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles) || filterByActiveFlag)) {
       return Page.empty(pageable);
@@ -626,10 +625,10 @@ public class UserService {
    * @return a Set of filteredUsers
    */
   public Set<String> findUsersUUID(String search) {
-    return filterKeycloakUsers(search, Collections.emptyList(), Optional.empty());
+    return filterKeycloakUsers(search, Collections.emptyList(), Optional.empty(), true);
   }
 
-  private Set<String> filterKeycloakUsers(String search, List<String> roles, Optional<Boolean> enabledFlag) {
+  private Set<String> filterKeycloakUsers(String search, List<String> roles, Optional<Boolean> enabledFlag, boolean isFilterByRolePresent) {
     Set<String> userUUIDs = new HashSet<>();
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
     if ((StringUtils.isNotEmpty(search) || CollectionUtils.isNotEmpty(roles) || enabledFlag.isPresent())
@@ -639,9 +638,17 @@ public class UserService {
         if (entry.getValue() instanceof User user) {
           boolean enabledFilter = enabledFlag.isEmpty() || enabledFlag.get().equals(user.getEnabled());
           if (StringUtils.isNotEmpty(search) && CollectionUtils.isNotEmpty(roles)) {
-            if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
-                    CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
-              userUUIDs.add((String) entry.getKey());
+            if (isFilterByRolePresent) {
+              if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
+                      CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter)
+                userUUIDs.add((String) entry.getKey());
+            }
+            else {
+              if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) ||
+                      (CollectionUtils.containsAny(user.getRoles(), roles) || CollectionUtils.containsAny(user.getRoles(),
+                              user.getRoles().stream().filter(role -> role.contains(roles.get(0))).collect(Collectors.toList())))
+                              && enabledFilter)
+                userUUIDs.add((String) entry.getKey());
             }
           } else if (StringUtils.isNotEmpty(search) && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
                   StringUtils.containsIgnoreCase(user.getEmail(), search)) && enabledFilter) {

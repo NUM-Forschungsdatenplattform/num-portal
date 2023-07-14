@@ -32,6 +32,9 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Set;
 
+import static de.vitagroup.num.domain.dto.SearchCriteria.FILTER_BY_ROLES;
+import static de.vitagroup.num.domain.dto.SearchCriteria.FILTER_SEARCH_BY_KEY;
+
 @RestController
 @RequestMapping(value = "/admin/", produces = "application/json")
 @AllArgsConstructor
@@ -159,8 +162,14 @@ public class AdminController extends CustomizedExceptionHandler {
     // filter[search] search input (optional)
     // filter[withRoles] true or false (optional)
     // filter[enabled] true or false (optional)
+    boolean isFilterByRolePresent = false;
+    if(!criteria.getFilter().containsKey(FILTER_BY_ROLES) && criteria.getFilter().containsKey(FILTER_SEARCH_BY_KEY)){
+      criteria.getFilter().put(FILTER_BY_ROLES, criteria.getFilter().get(FILTER_SEARCH_BY_KEY).toString().toUpperCase());
+    } else {
+      isFilterByRolePresent = true;
+    }
     return ResponseEntity.ok(
-            userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
+            userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable, isFilterByRolePresent));
   }
 
   @AuditLog

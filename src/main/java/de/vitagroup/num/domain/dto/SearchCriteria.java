@@ -35,7 +35,7 @@ public class SearchCriteria {
 
     public static final String FILTER_BY_ACTIVE = "enabled";
 
-    private Map<String, ?> filter;
+    private Map<String, ? super String> filter;
 
     private String sort;
 
