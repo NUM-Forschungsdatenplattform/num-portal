@@ -191,7 +191,7 @@ public class AdminController extends CustomizedExceptionHandler {
   @AuditLog
   @PostMapping(path = "pseudo/test", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Operation(description = "Endpoint used for testing 3rd party pseudonyms")
-  @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
+  @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<StreamingResponseBody> testThirdPartyPseudonyms(@AuthenticationPrincipal @NotNull Jwt principal,
                                                                         @NotNull @RequestParam("file") MultipartFile csvFile) throws IOException {
     List<String> secondLevelPseudonyms = new ArrayList<>();
