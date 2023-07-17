@@ -640,7 +640,6 @@ public class UserService {
       for (Map.Entry<Object, Object> entry : users.entrySet()) {
         if (entry.getValue() instanceof User user) {
           boolean enabledFilter = enabledFlag.isEmpty() || enabledFlag.get().equals(user.getEnabled());
-          log.info("search key {}, enabledFilter {}, enableFlag  {} ", search, enabledFilter, enabledFlag);
           if (filterByNameEnabled && filterByRoleEnabled) {
             if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
                     CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
@@ -648,7 +647,6 @@ public class UserService {
             }
           } else if (filterByNameEnabled && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
                   StringUtils.containsIgnoreCase(user.getEmail(), search)) && enabledFilter) {
-            log.info("User {} matched search criteria", user);
             userUUIDs.add((String) entry.getKey());
           } else if (filterByRoleEnabled && CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
             userUUIDs.add((String) entry.getKey());
