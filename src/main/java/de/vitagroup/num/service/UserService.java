@@ -632,23 +632,27 @@ public class UserService {
   private Set<String> filterKeycloakUsers(String search, List<String> roles, Optional<Boolean> enabledFlag) {
     Set<String> userUUIDs = new HashSet<>();
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
-    if ((StringUtils.isNotEmpty(search) || CollectionUtils.isNotEmpty(roles) || enabledFlag.isPresent())
+    boolean filterByNameEnabled = StringUtils.isNotEmpty(search);
+    boolean filterByRoleEnabled = CollectionUtils.isNotEmpty(roles);
+    if ((filterByNameEnabled || filterByRoleEnabled || enabledFlag.isPresent())
             && usersCache != null && usersCache.getNativeCache().size() != 0) {
       ConcurrentMap<Object, Object> users = usersCache.getNativeCache();
       for (Map.Entry<Object, Object> entry : users.entrySet()) {
         if (entry.getValue() instanceof User user) {
           boolean enabledFilter = enabledFlag.isEmpty() || enabledFlag.get().equals(user.getEnabled());
-          if (StringUtils.isNotEmpty(search) && CollectionUtils.isNotEmpty(roles)) {
+          log.info("search key {}, enabledFilter {}, enableFlag  {} ", search, enabledFilter, enabledFlag);
+          if (filterByNameEnabled && filterByRoleEnabled) {
             if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
                     CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
               userUUIDs.add((String) entry.getKey());
             }
-          } else if (StringUtils.isNotEmpty(search) && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
+          } else if (filterByNameEnabled && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
                   StringUtils.containsIgnoreCase(user.getEmail(), search)) && enabledFilter) {
+            log.info("User {} matched search criteria", user);
             userUUIDs.add((String) entry.getKey());
-          } else if (CollectionUtils.isNotEmpty(roles) && CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
+          } else if (filterByRoleEnabled && CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
             userUUIDs.add((String) entry.getKey());
-          } else if (enabledFlag.isPresent() && enabledFilter) {
+          } else if (!filterByNameEnabled && !filterByRoleEnabled && enabledFlag.isPresent() && enabledFilter) {
             userUUIDs.add((String) entry.getKey());
           }
         }
