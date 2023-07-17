@@ -8,6 +8,7 @@ import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserNameDto;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
+import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
@@ -21,14 +22,26 @@ import org.springframework.boot.actuate.health.Status;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -47,6 +60,8 @@ public class AdminController extends CustomizedExceptionHandler {
   private final UserDetailsService userDetailsService;
 
   private final HealthEndpoint healthEndpoint;
+
+  private final Pseudonymity pseudonymity;
 
   @GetMapping("health")
   public ResponseEntity<Status> health() {
@@ -171,5 +186,41 @@ public class AdminController extends CustomizedExceptionHandler {
                                                   @NotNull @PathVariable String userId, @NotNull @RequestBody Boolean active) {
     userService.updateUserActiveField(principal.getSubject(), userId, active, Roles.extractRoles(principal));
     return ResponseEntity.ok(SUCCESS_REPLY);
+  }
+
+  @AuditLog
+  @PostMapping(path = "pseudo/test", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(description = "Endpoint used for testing 3rd party pseudonyms")
+  @PreAuthorize(Role.SUPER_ADMIN)
+  public ResponseEntity<StreamingResponseBody> testThirdPartyPseudonyms(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                                        @NotNull @RequestParam("file") MultipartFile csvFile) throws IOException {
+    List<String> secondLevelPseudonyms = new ArrayList<>();
+    String header = "original,pseudonym";
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(csvFile.getInputStream()))) {
+      String code;
+      while ((code = reader.readLine()) != null) {
+        secondLevelPseudonyms.add(code);
+      }
+    }
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE);
+    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" +
+                    String.format("codex_result_%s_%s",
+                            LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).format(DateTimeFormatter.ISO_LOCAL_DATE),
+                            csvFile.getOriginalFilename()));
+    StreamingResponseBody streamingResponseBody = outputStream -> {
+      BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
+      bufferedWriter.write(header);
+      bufferedWriter.newLine();
+      for (String code : secondLevelPseudonyms) {
+        List<String> pseudonymsResponse = pseudonymity.getPseudonyms(List.of(code), 1L);
+        String currentLine = code + ',' + pseudonymsResponse.get(0);
+        bufferedWriter.write(currentLine);
+        bufferedWriter.newLine();
+      }
+      bufferedWriter.flush();
+      bufferedWriter.close();
+    };
+    return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }
 }
