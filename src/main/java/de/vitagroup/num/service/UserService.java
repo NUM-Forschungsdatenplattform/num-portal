@@ -644,9 +644,7 @@ public class UserService {
   private Set<String> filterKeycloakUsers(String search, List<String> roles, Optional<Boolean> enabledFlag, boolean isFilterByRolePresent) {
     Set<String> userUUIDs = new HashSet<>();
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
-    boolean filterByNameEnabled = StringUtils.isNotEmpty(search);
-    boolean filterByRoleEnabled = CollectionUtils.isNotEmpty(roles);
-    if ((filterByNameEnabled || filterByRoleEnabled || enabledFlag.isPresent())
+    if ((StringUtils.isNotEmpty(search) || CollectionUtils.isNotEmpty(roles) || enabledFlag.isPresent())
             && usersCache != null && usersCache.getNativeCache().size() != 0) {
       ConcurrentMap<Object, Object> users = usersCache.getNativeCache();
       for (Map.Entry<Object, Object> entry : users.entrySet()) {
@@ -682,13 +680,16 @@ public class UserService {
         userUUIDs.add((String) entry.getKey());
     }
     else {
-      if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) ||
-              (nonNull(user.getRoles())
-                     && CollectionUtils.containsAny(user.getRoles(), roles)
-                      || nonNull(user.getRoles())
-                      && CollectionUtils.containsAny(user.getRoles(),
-                      user.getRoles().stream().filter(role -> role.contains(roles.get(0))).collect(Collectors.toList())))
-                      && enabledFilter)
+      boolean searchIntoUserFullNameOrEmail = StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search);
+      boolean searchIntoRoleName = (
+              (nonNull(user.getRoles()) && CollectionUtils.containsAny(user.getRoles(), roles)) ||
+              (nonNull(user.getRoles()) && CollectionUtils.containsAny(user.getRoles(),
+                 user.getRoles().stream()
+                      .filter(role -> role.contains(roles.get(0)))
+                      .collect(Collectors.toList()))
+              )
+      );
+      if ((searchIntoUserFullNameOrEmail || searchIntoRoleName) && enabledFilter)
         userUUIDs.add((String) entry.getKey());
     }
   }
