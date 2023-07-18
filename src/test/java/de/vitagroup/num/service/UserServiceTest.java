@@ -23,6 +23,7 @@ import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotificat
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import feign.FeignException;
 import feign.Request;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -828,6 +829,76 @@ public class UserServiceTest {
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
         User firstUser = userPage.getContent().get(0);
         Assert.assertEquals("John", firstUser.getFirstName());
+
+        ConcurrentMapCache usersCache = getConcurrentMapCache();
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
+        Page<User> userPage1 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, false);
+        Mockito.verify(userDetailsService, Mockito.times(2)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput1 = argumentCaptor.getValue();
+        Assert.assertEquals(99L, capturedInput1.getLoggedInUserOrganizationId().longValue());
+        User firstUser1 = userPage1.getContent().get(0);
+        Assert.assertEquals("John", firstUser1.getFirstName());
+    }
+
+    @NotNull
+    private static ConcurrentMapCache getConcurrentMapCache() {
+        ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
+        usersCache.put("userId-one", User.builder()
+                .id("userId-one")
+                .firstName("John")
+                .lastName("doe")
+                .email("john.doe@vitagroup.ag")
+                .createdTimestamp(System.currentTimeMillis())
+                .roles(Set.of(Roles.RESEARCHER, Roles.STUDY_COORDINATOR, Roles.CRITERIA_EDITOR))
+                .build());
+        usersCache.put("userId-two", User.builder()
+                .firstName("Ana")
+                .lastName("Doe")
+                .id("userId-two")
+                .email("ana-maria.doe@vitagroup.ag")
+                .createdTimestamp(System.currentTimeMillis())
+                .roles(Set.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR, Roles.CRITERIA_EDITOR))
+                .build());
+        return usersCache;
+    }
+
+    @Test
+    public void searchUsersWithPaginationByRoleAndMail() {
+        Pageable pageable = PageRequest.of(0, 50);
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
+        filter.put(SearchCriteria.FILTER_BY_ROLES, "RESEARCHER");
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "vitagroup");
+
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .filter(filter)
+                .sort("DESC")
+                .sortBy("firstName")
+                .build();
+        mockDataSearchUsers();
+        Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
+                .userId("user-55")
+                .organization(Organization.builder().id(99L).build())
+                .build());
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+
+        ConcurrentMapCache usersCache = getConcurrentMapCache();
+        Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
+        Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
+        Page<User> userPage1 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, false);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput1 = argumentCaptor.getValue();
+        Assert.assertEquals(99L, capturedInput1.getLoggedInUserOrganizationId().longValue());
+        User firstUser1 = userPage1.getContent().get(0);
+        Assert.assertEquals("John", firstUser1.getFirstName());
+
+        Page<User> userPage2 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, true);
+        Mockito.verify(userDetailsService, Mockito.times(2)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput2 = argumentCaptor.getValue();
+        Assert.assertEquals(99L, capturedInput2.getLoggedInUserOrganizationId().longValue());
+        User firstUser2 = userPage2.getContent().get(1);
+        Assert.assertEquals("Ana", firstUser2.getFirstName());
     }
 
     @Test
