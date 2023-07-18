@@ -458,7 +458,7 @@ public class UserServiceTest {
                 .thenReturn(Optional.of(UserDetails.builder()
                         .userId("33")
                         .organization(
-                                Organization.builder().id(1l).name("org 1").domains(Set.of()).build())
+                                Organization.builder().id(1L).name("org 1").domains(Set.of()).build())
                         .approved(false)
                         .build()));
         userService.updateUserActiveField("4", "33", true, Collections.singletonList("ORGANIZATION_ADMIN"));
@@ -807,6 +807,8 @@ public class UserServiceTest {
         Map<String, String> filter = new HashMap<>();
         filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
         filter.put(SearchCriteria.FILTER_BY_ROLES, "ORGANIZATION_ADMIN,RESEARCHER");
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "Joh");
+
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
                 .sort("DESC")
@@ -824,6 +826,70 @@ public class UserServiceTest {
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
         User firstUser = userPage.getContent().get(0);
         Assert.assertEquals("Mike", firstUser.getFirstName());
+
+        Page<User> userPage1 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(2)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput1 = argumentCaptor.getValue();
+        Assert.assertEquals(99L, capturedInput1.getLoggedInUserOrganizationId().longValue());
+        User firstUser1 = userPage1.getContent().get(0);
+        Assert.assertEquals("John", firstUser1.getFirstName());
+    }
+
+    @Test
+    public void searchUsersWithPaginationByRole() {
+        Pageable pageable = PageRequest.of(0, 50);
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "RESEARCH");
+
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .filter(filter)
+                .sort("DESC")
+                .sortBy("firstName")
+                .build();
+        mockDataSearchUsers();
+        Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
+                .userId("user-55")
+                .organization(Organization.builder().id(99L).build())
+                .build());
+        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        User firstUser = userPage.getContent().get(0);
+        Assert.assertEquals("John", firstUser.getFirstName());
+    }
+
+    @Test
+    public void searchUsersWithPaginationByRoleAndMail() {
+        Pageable pageable = PageRequest.of(0, 50);
+        Map<String, String> filter = new HashMap<>();
+        filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
+        filter.put(SearchCriteria.FILTER_BY_ROLES, "RESEARCHER");
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "vitagroup");
+
+        SearchCriteria searchCriteria = SearchCriteria.builder()
+                .filter(filter)
+                .sort("DESC")
+                .sortBy("firstName")
+                .build();
+        mockDataSearchUsers();
+        Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
+                .userId("user-55")
+                .organization(Organization.builder().id(99L).build())
+                .build());
+        ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+
+        Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
+        Page<User> userPage1 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput1 = argumentCaptor.getValue();
+        Assert.assertEquals(99L, capturedInput1.getLoggedInUserOrganizationId().longValue());
+        User firstUser1 = userPage1.getContent().get(0);
+        Assert.assertEquals("John", firstUser1.getFirstName());
+
+        Page<User> userPage2 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
+        Mockito.verify(userDetailsService, Mockito.times(2)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput2 = argumentCaptor.getValue();
+        Assert.assertEquals(99L, capturedInput2.getLoggedInUserOrganizationId().longValue());
+        User firstUser2 = userPage2.getContent().get(1);
+        Assert.assertEquals("Ana", firstUser2.getFirstName());
     }
 
     @Test
