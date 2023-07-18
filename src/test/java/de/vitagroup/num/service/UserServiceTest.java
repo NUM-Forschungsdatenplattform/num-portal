@@ -775,6 +775,8 @@ public class UserServiceTest {
         Map<String, String> filter = new HashMap<>();
         filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
         filter.put(SearchCriteria.FILTER_BY_ROLES, "ORGANIZATION_ADMIN,RESEARCHER");
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "Joh");
+
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
                 .sort("DESC")
@@ -792,6 +794,13 @@ public class UserServiceTest {
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
         User firstUser = userPage.getContent().get(0);
         Assert.assertEquals("John", firstUser.getFirstName());
+
+        Page<User> userPage1 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, false);
+        Mockito.verify(userDetailsService, Mockito.times(2)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
+        UserDetailsSpecification capturedInput1 = argumentCaptor.getValue();
+        Assert.assertEquals(99L, capturedInput1.getLoggedInUserOrganizationId().longValue());
+        User firstUser1 = userPage1.getContent().get(0);
+        Assert.assertEquals("John", firstUser1.getFirstName());
     }
 
     @Test
