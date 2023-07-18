@@ -635,34 +635,42 @@ public class UserService {
             && usersCache != null && usersCache.getNativeCache().size() != 0) {
       ConcurrentMap<Object, Object> users = usersCache.getNativeCache();
       for (Map.Entry<Object, Object> entry : users.entrySet()) {
-        if (entry.getValue() instanceof User user) {
-          boolean enabledFilter = enabledFlag.isEmpty() || enabledFlag.get().equals(user.getEnabled());
-          if (StringUtils.isNotEmpty(search) && CollectionUtils.isNotEmpty(roles)) {
-            if (isFilterByRolePresent) {
-              if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
-                      CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter)
-                userUUIDs.add((String) entry.getKey());
-            }
-            else {
-              if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) ||
-                      (CollectionUtils.containsAny(user.getRoles(), roles) || CollectionUtils.containsAny(user.getRoles(),
-                              user.getRoles().stream().filter(role -> role.contains(roles.get(0))).collect(Collectors.toList())))
-                              && enabledFilter)
-                userUUIDs.add((String) entry.getKey());
-            }
-          } else if (StringUtils.isNotEmpty(search) && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
-                  StringUtils.containsIgnoreCase(user.getEmail(), search)) && enabledFilter) {
-            userUUIDs.add((String) entry.getKey());
-          } else if (CollectionUtils.isNotEmpty(roles) && CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
-            userUUIDs.add((String) entry.getKey());
-          } else if (enabledFlag.isPresent() && enabledFilter) {
-            userUUIDs.add((String) entry.getKey());
-          }
-        }
+        filterUsers(search, roles, enabledFlag, isFilterByRolePresent, userUUIDs, entry);
       }
       return userUUIDs;
     }
     return Collections.emptySet();
+  }
+
+  private static void filterUsers(String search, List<String> roles, Optional<Boolean> enabledFlag, boolean isFilterByRolePresent, Set<String> userUUIDs, Map.Entry<Object, Object> entry) {
+    if (entry.getValue() instanceof User user) {
+      boolean enabledFilter = enabledFlag.isEmpty() || enabledFlag.get().equals(user.getEnabled());
+      if (StringUtils.isNotEmpty(search) && CollectionUtils.isNotEmpty(roles)) {
+        checkByRoleFilterPresence(search, roles, isFilterByRolePresent, userUUIDs, entry, user, enabledFilter);
+      } else if (StringUtils.isNotEmpty(search) && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
+              StringUtils.containsIgnoreCase(user.getEmail(), search)) && enabledFilter) {
+        userUUIDs.add((String) entry.getKey());
+      } else if (CollectionUtils.isNotEmpty(roles) && CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
+        userUUIDs.add((String) entry.getKey());
+      } else if (enabledFlag.isPresent() && enabledFilter) {
+        userUUIDs.add((String) entry.getKey());
+      }
+    }
+  }
+
+  private static void checkByRoleFilterPresence(String search, List<String> roles, boolean isFilterByRolePresent, Set<String> userUUIDs, Map.Entry<Object, Object> entry, User user, boolean enabledFilter) {
+    if (isFilterByRolePresent) {
+      if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
+              CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter)
+        userUUIDs.add((String) entry.getKey());
+    }
+    else {
+      if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) ||
+              (CollectionUtils.containsAny(user.getRoles(), roles) || CollectionUtils.containsAny(user.getRoles(),
+                      user.getRoles().stream().filter(role -> role.contains(roles.get(0))).collect(Collectors.toList())))
+                      && enabledFilter)
+        userUUIDs.add((String) entry.getKey());
+    }
   }
 
   private void updateName(String userId, UserNameDto userNameDto) {
