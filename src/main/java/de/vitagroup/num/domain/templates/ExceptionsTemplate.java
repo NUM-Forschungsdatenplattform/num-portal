@@ -104,6 +104,7 @@ public class ExceptionsTemplate {
     public final static String NOT_ALLOWED_TO_REMOVE_THAT_ROLE = "Not allowed to remove that role";
     public final static String NOT_ALLOWED_TO_SET_THAT_ROLE = "Not allowed to set that role";
     public final static String CAN_ONLY_CHANGE_OWN_NAME_ORG_ADMIN_NAMES_OF_THE_PEOPLE_IN_THE_ORGANIZATION_AND_SUPERUSER_ALL_NAMES = "Can only change own name, org admin names of the people in the organization and superuser all names.";
+    public final static String NOT_ALLOWED_TO_UPDATE_OWN_STATUS = "Not allowed to update own status";
 
     //EhrBaseService service
     public final static String NO_DATA_COLUMNS_IN_THE_QUERY_RESULT = "No data columns in the query result";
