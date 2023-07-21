@@ -656,16 +656,18 @@ public class UserService {
   }
 
   private static void filterUsers(String search, List<String> roles, Optional<Boolean> enabledFlag, boolean isFilterByRolePresent, Set<String> userUUIDs, Map.Entry<Object, Object> entry) {
+    boolean filterByNameEnabled = StringUtils.isNotEmpty(search);
+    boolean filterByRoleEnabled = CollectionUtils.isNotEmpty(roles);
     if (entry.getValue() instanceof User user) {
       boolean enabledFilter = enabledFlag.isEmpty() || enabledFlag.get().equals(user.getEnabled());
-      if (StringUtils.isNotEmpty(search) && CollectionUtils.isNotEmpty(roles)) {
+      if (filterByNameEnabled && filterByRoleEnabled) {
         checkByRoleFilterPresence(search, roles, isFilterByRolePresent, userUUIDs, entry, user, enabledFilter);
-      } else if (StringUtils.isNotEmpty(search) && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
+      } else if (filterByNameEnabled && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
               StringUtils.containsIgnoreCase(user.getEmail(), search)) && enabledFilter) {
         userUUIDs.add((String) entry.getKey());
-      } else if (CollectionUtils.isNotEmpty(roles) && CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
+      } else if (filterByRoleEnabled && CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
         userUUIDs.add((String) entry.getKey());
-      } else if (enabledFlag.isPresent() && enabledFilter) {
+      } else if (!filterByNameEnabled && !filterByRoleEnabled && enabledFlag.isPresent() && enabledFilter) {
         userUUIDs.add((String) entry.getKey());
       }
     }
@@ -678,13 +680,16 @@ public class UserService {
         userUUIDs.add((String) entry.getKey());
     }
     else {
-      if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) ||
-              (nonNull(user.getRoles())
-                     && CollectionUtils.containsAny(user.getRoles(), roles)
-                      || nonNull(user.getRoles())
-                      && CollectionUtils.containsAny(user.getRoles(),
-                      user.getRoles().stream().filter(role -> role.contains(roles.get(0))).collect(Collectors.toList())))
-                      && enabledFilter)
+      boolean searchIntoUserFullNameOrEmail = StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search);
+      boolean searchIntoRoleName = (
+              (nonNull(user.getRoles()) && CollectionUtils.containsAny(user.getRoles(), roles)) ||
+              (nonNull(user.getRoles()) && CollectionUtils.containsAny(user.getRoles(),
+                 user.getRoles().stream()
+                      .filter(role -> role.contains(roles.get(0)))
+                      .collect(Collectors.toList()))
+              )
+      );
+      if ((searchIntoUserFullNameOrEmail || searchIntoRoleName) && enabledFilter)
         userUUIDs.add((String) entry.getKey());
     }
   }
