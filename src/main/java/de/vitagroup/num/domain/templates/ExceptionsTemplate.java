@@ -48,6 +48,8 @@ public class ExceptionsTemplate {
     public final static String ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY = "Organization mail domain cannot be null or empty";
     public final static String INVALID_MAIL_DOMAIN = "Invalid mail domain: %s";
     public final static String ORGANIZATION_NOT_FOUND = "Organization not found: %s";
+
+    public static final String ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT = "The organization is not empty, can't delete it.";
     //ForbiddenException
     public final static String CANNOT_UPDATE_ORGANIZATION = "Cannot update organization: %s";
     public final static String CANNOT_ACCESS_THIS_RESOURCE = "Cannot access this resource";

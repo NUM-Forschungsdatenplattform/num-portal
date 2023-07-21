@@ -230,18 +230,34 @@ public class OrganizationService {
     return organizationRepository.save(organizationToEdit);
   }
 
-  private void validateMailDomains(Set<String> domains) {
-    domains.forEach(
-            domain -> {
-              if (StringUtils.isEmpty(domain)) {
-                throw new BadRequestException(OrganizationService.class, ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY);
-              }
+  @Transactional
+  public void deleteOrganization(Long organizationId, String loggedInUser) {
+    userDetailsService.checkIsUserApproved(loggedInUser);
+    organizationRepository
+            .findById(organizationId)
+            .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
+    long assignedUsers = userDetailsService.countUserDetailsByOrganization(organizationId);
+    if (assignedUsers != 0) {
+      log.error("Not allowed to delete organization {} because has user assigned", organizationId);
+      throw new BadRequestException(OrganizationService.class, ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT);
+    }
+    organizationRepository.deleteById(organizationId);
+  }
 
-              if (!Pattern.matches(DOMAIN_VALIDATION_REGEX, domain.toLowerCase())) {
-                throw new BadRequestException(OrganizationService.class, INVALID_MAIL_DOMAIN,
-                        String.format(INVALID_MAIL_DOMAIN, domain));
-              }
-            });
+  private void validateMailDomains(Set<String> domains) {
+    if(Objects.nonNull(domains)) {
+      domains.forEach(
+              domain -> {
+                if (StringUtils.isEmpty(domain)) {
+                  throw new BadRequestException(OrganizationService.class, ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY);
+                }
+
+                if (!Pattern.matches(DOMAIN_VALIDATION_REGEX, domain.toLowerCase())) {
+                  throw new BadRequestException(OrganizationService.class, INVALID_MAIL_DOMAIN,
+                          String.format(INVALID_MAIL_DOMAIN, domain));
+                }
+              });
+    }
   }
 
   private void updateOrganization(OrganizationDto dto, Organization organization) {
