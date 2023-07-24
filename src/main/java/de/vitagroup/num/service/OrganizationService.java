@@ -233,21 +233,21 @@ public class OrganizationService {
   @Transactional
   public void deleteOrganization(Long organizationId, String loggedInUser) {
     userDetailsService.checkIsUserApproved(loggedInUser);
-    organizationRepository
-            .findById(organizationId)
-            .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
+    if (organizationRepository.findById(organizationId).isEmpty()) {
+      throw new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId));
+    }
     long assignedUsers = userDetailsService.countUserDetailsByOrganization(organizationId);
     if (assignedUsers != 0) {
       log.error("Not allowed to delete organization {} because has user assigned", organizationId);
-      throw new BadRequestException(OrganizationService.class, ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT);
+      throw new BadRequestException(OrganizationService.class, String.format(ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT, organizationId));
     }
     organizationRepository.deleteById(organizationId);
   }
 
   public boolean isAllowedToBeDeleted(Long organizationId) {
-    organizationRepository
-            .findById(organizationId)
-            .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
+    if (organizationRepository.findById(organizationId).isEmpty()) {
+      throw new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId));
+    }
     long assignedUsers = userDetailsService.countUserDetailsByOrganization(organizationId);
     return assignedUsers == 0;
   }
