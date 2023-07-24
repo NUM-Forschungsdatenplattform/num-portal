@@ -287,6 +287,7 @@ public class ExceptionsTemplate {
 
         //Policy
         errorMap.put(NO_TEMPLATES_ATTACHED_TO_THE_PROJECT, new ExceptionDto( 96, new ArrayList<>() ) );
+        errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_STATUS, new ExceptionDto(97, new ArrayList<>()));
     }
 
     private ExceptionsTemplate() {
