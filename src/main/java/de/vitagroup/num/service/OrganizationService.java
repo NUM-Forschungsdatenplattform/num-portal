@@ -244,6 +244,14 @@ public class OrganizationService {
     organizationRepository.deleteById(organizationId);
   }
 
+  public boolean isAllowedToBeDeleted(Long organizationId) {
+    organizationRepository
+            .findById(organizationId)
+            .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
+    long assignedUsers = userDetailsService.countUserDetailsByOrganization(organizationId);
+    return assignedUsers == 0;
+  }
+
   private void validateMailDomains(Set<String> domains) {
     if(Objects.nonNull(domains)) {
       domains.forEach(

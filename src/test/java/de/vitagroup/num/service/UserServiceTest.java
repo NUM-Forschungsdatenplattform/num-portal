@@ -70,11 +70,8 @@ public class UserServiceTest {
     @Mock
     private CacheManager cacheManager;
 
-    @Spy
-    private final ModelMapper modelMapper = new ModelMapper();
-
-    @Spy
-    private final OrganizationMapper organizationMapper = new OrganizationMapper(modelMapper);
+    @Mock
+    private OrganizationMapper organizationMapper;
 
     @InjectMocks
     private UserService userService;
