@@ -610,6 +610,9 @@ public class UserService {
   @Transactional
   public User updateUserActiveField(@NotNull String loggedInUserId, @NotNull String userId, @NotNull Boolean active, List<String> callerRoles) {
     validateUserRolesAndOrganization(loggedInUserId, userId, callerRoles);
+    if (Objects.equals(loggedInUserId, userId)) {
+      throw new ForbiddenException(UserService.class, NOT_ALLOWED_TO_UPDATE_OWN_STATUS);
+    }
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
     if (userRaw == null) {
       log.error("Keycloak user {} was not found", userId);

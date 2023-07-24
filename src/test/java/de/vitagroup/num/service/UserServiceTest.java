@@ -470,6 +470,11 @@ public class UserServiceTest {
         assertEquals("true", captured.get("enabled").toString());
     }
 
+    @Test(expected = ForbiddenException.class)
+    public void shouldNotAllowToChangeOwnActiveFlag() {
+        userService.updateUserActiveField("5", "5", false, Collections.singletonList("SUPER_ADMIN"));
+    }
+
     @Test
     public void shouldDeleteUnapprovedUsersAfter30Days() {
         LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).plusDays(-31);
