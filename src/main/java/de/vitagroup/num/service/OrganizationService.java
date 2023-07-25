@@ -202,10 +202,9 @@ public class OrganizationService {
                       }
                     });
 
-    if (roles.contains(Roles.SUPER_ADMIN)) {
+    if (Roles.isSuperAdmin(roles)) {
       updateOrganization(organizationDto, organizationToEdit);
-
-    } else if (roles.contains(Roles.ORGANIZATION_ADMIN)) {
+    } else if (Roles.isOrganizationAdmin(roles)) {
       if (user.getOrganization().getId().equals(organizationId)) {
         updateOrganization(organizationDto, organizationToEdit);
       } else {
@@ -214,7 +213,6 @@ public class OrganizationService {
     } else {
       throw new ForbiddenException(OrganizationService.class, CANNOT_ACCESS_THIS_RESOURCE);
     }
-
     return organizationRepository.save(organizationToEdit);
   }
 
@@ -270,6 +268,9 @@ public class OrganizationService {
 
   private void updateOrganization(OrganizationDto dto, Organization organization) {
     organization.setName(dto.getName());
+    if (Objects.nonNull(dto.getActive())) {
+      organization.setActive(dto.getActive());
+    }
 
     Set<MailDomain> newDomains = new HashSet<>();
 
