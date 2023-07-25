@@ -137,13 +137,7 @@ public class OrganizationService {
   public Organization create(String loggedInUserId, OrganizationDto organizationDto) {
     userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    organizationRepository
-            .findByName(organizationDto.getName())
-            .ifPresent(
-                    d -> {
-                      throw new BadRequestException(Organization.class, ORGANIZATION_NAME_MUST_BE_UNIQUE,
-                              String.format(ORGANIZATION_NAME_MUST_BE_UNIQUE, organizationDto.getName()));
-                    });
+    validateUniqueOrganizationName(organizationDto.getName(), null);
     validateMailDomains(organizationDto.getMailDomains());
     organizationDto
             .getMailDomains()
@@ -157,7 +151,10 @@ public class OrganizationService {
                       }
                     });
 
-    Organization organization = Organization.builder().name(organizationDto.getName()).build();
+    Organization organization = Organization.builder()
+            .name(organizationDto.getName())
+            .active(Boolean.TRUE)
+            .build();
 
     organization.setDomains(
             organizationDto.getMailDomains().stream()
@@ -185,16 +182,7 @@ public class OrganizationService {
             organizationRepository
                     .findById(organizationId)
                     .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
-
-    organizationRepository
-            .findByName(organizationDto.getName())
-            .ifPresent(
-                    d -> {
-                      if (!d.getId().equals(organizationToEdit.getId())) {
-                        throw new BadRequestException(OrganizationService.class, ORGANIZATION_NAME_MUST_BE_UNIQUE,
-                                String.format(ORGANIZATION_NAME_MUST_BE_UNIQUE, organizationDto.getName()));
-                      }
-                    });
+    validateUniqueOrganizationName(organizationDto.getName(), organizationId);
     validateMailDomains(organizationDto.getMailDomains());
 
     organizationDto
@@ -266,6 +254,18 @@ public class OrganizationService {
                 }
               });
     }
+  }
+
+  private void validateUniqueOrganizationName(String name, Long organizationId) {
+    organizationRepository
+            .findByName(name)
+            .ifPresent(
+                    d -> {
+                      if (Objects.isNull(organizationId) || !d.getId().equals(organizationId)) {
+                        throw new BadRequestException(OrganizationService.class, ORGANIZATION_NAME_MUST_BE_UNIQUE,
+                                String.format(ORGANIZATION_NAME_MUST_BE_UNIQUE, name));
+                      }
+                    });
   }
 
   private void updateOrganization(OrganizationDto dto, Organization organization) {
