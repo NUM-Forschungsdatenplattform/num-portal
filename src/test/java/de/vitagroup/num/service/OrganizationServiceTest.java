@@ -256,7 +256,11 @@ public class OrganizationServiceTest {
   public void shouldSaveOrganization() {
     organizationService.update(
             3L,
-            OrganizationDto.builder().name("Good name").mailDomains(Set.of("*.example.com")).build(),
+            OrganizationDto.builder()
+                    .name("Good name")
+                    .mailDomains(Set.of("*.example.com"))
+                    .active(Boolean.FALSE)
+                    .build(),
             List.of(Roles.SUPER_ADMIN),
             "approvedUserId");
     verify(organizationRepository, times(1)).save(any());
