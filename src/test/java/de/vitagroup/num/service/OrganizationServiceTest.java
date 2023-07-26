@@ -279,6 +279,21 @@ public class OrganizationServiceTest {
     verify(organizationRepository, Mockito.never()).save(any());
   }
 
+  @Test(expected = ForbiddenException.class)
+  public void shouldHandleChangeOwnOrganizationStatus() {
+    when(organizationRepository.findById(33L))
+            .thenReturn(Optional.of(Organization.builder().id(33L).active(Boolean.TRUE).name("Organization name").build()));
+    organizationService.update(
+            33L,
+            OrganizationDto.builder()
+                    .name("New organization name")
+                    .active(Boolean.FALSE)
+                    .build(),
+            List.of(Roles.SUPER_ADMIN),
+            "approvedUserId");
+    verify(organizationRepository, Mockito.never()).save(any());
+  }
+
   @Test
   public void shouldGetAllOrganizationWithPagination() {
     Pageable pageable = PageRequest.of(0,50);
@@ -359,7 +374,7 @@ public class OrganizationServiceTest {
             UserDetails.builder()
                     .userId("approvedUserId")
                     .approved(true)
-                    .organization(Organization.builder().name("Organization A").build())
+                    .organization(Organization.builder().id(33L).name("Organization A").build())
                     .build();
 
     when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
@@ -377,7 +392,7 @@ public class OrganizationServiceTest {
     when(organizationRepository.findById(1L)).thenThrow(new ResourceNotFound(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, 1L)));
 
     when(organizationRepository.findById(3L))
-        .thenReturn(Optional.of(Organization.builder().id(3L).name("Existing").build()));
+        .thenReturn(Optional.of(Organization.builder().id(3L).active(Boolean.TRUE).name("Existing").build()));
 
     when(mailDomainRepository.findByName("vitagroup.ag"))
         .thenReturn(Optional.of(MailDomain.builder()

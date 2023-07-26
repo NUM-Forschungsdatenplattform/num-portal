@@ -50,6 +50,8 @@ public class ExceptionsTemplate {
     public final static String ORGANIZATION_NOT_FOUND = "Organization not found: %s";
 
     public static final String ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT = "The organization :%s is not empty, can't delete it.";
+
+    public static final String NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS = "Not allowed to update own's organization status";
     //ForbiddenException
     public final static String CANNOT_UPDATE_ORGANIZATION = "Cannot update organization: %s";
     public final static String CANNOT_ACCESS_THIS_RESOURCE = "Cannot access this resource";
@@ -291,6 +293,8 @@ public class ExceptionsTemplate {
         //Policy
         errorMap.put(NO_TEMPLATES_ATTACHED_TO_THE_PROJECT, new ExceptionDto( 96, new ArrayList<>() ) );
         errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_STATUS, new ExceptionDto(97, new ArrayList<>()));
+
+        errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, new ExceptionDto(99, new ArrayList<>()));
 
     }
 

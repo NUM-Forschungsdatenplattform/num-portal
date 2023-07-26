@@ -182,6 +182,7 @@ public class OrganizationService {
             organizationRepository
                     .findById(organizationId)
                     .orElseThrow(() -> new ResourceNotFound(OrganizationService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
+    validateStatusChange(organizationId, organizationDto.getActive(), organizationToEdit.getActive(), user);
     validateUniqueOrganizationName(organizationDto.getName(), organizationId);
     validateMailDomains(organizationDto.getMailDomains());
 
@@ -266,10 +267,26 @@ public class OrganizationService {
                     });
   }
 
+  private void validateStatusChange(Long organizationId, Boolean newStatus, Boolean oldStatus, UserDetails loggedInUser) {
+    if (statusChanged(oldStatus, newStatus)) {
+      if (loggedInUser.getOrganization().getId().equals(organizationId)) {
+        throw new ForbiddenException(OrganizationService.class, NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS);
+      }
+    }
+  }
+
+  private boolean statusChanged(Boolean oldStatus, Boolean newStatus) {
+    return Objects.nonNull(newStatus) && !newStatus.equals(oldStatus);
+  }
+
   private void updateOrganization(OrganizationDto dto, Organization organization) {
+    Boolean oldOrganizationStatus = organization.getActive();
     organization.setName(dto.getName());
     if (Objects.nonNull(dto.getActive())) {
       organization.setActive(dto.getActive());
+      if (statusChanged(oldOrganizationStatus, dto.getActive()) && Boolean.FALSE.equals(dto.getActive())) {
+        // TODO add implementation for deactivate all users from organization
+      }
     }
 
     Set<MailDomain> newDomains = new HashSet<>();
