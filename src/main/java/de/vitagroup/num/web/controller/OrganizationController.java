@@ -114,4 +114,13 @@ public class OrganizationController extends CustomizedExceptionHandler {
                 Roles.extractRoles(principal),
                 principal.getSubject())));
   }
+
+  @AuditLog
+  @Operation(description = "Delete the given organization if no users are assigned to this organization")
+  @DeleteMapping(value = "/{id}")
+  @PreAuthorize(Role.SUPER_ADMIN)
+  public void deleteOrganization(@AuthenticationPrincipal @NotNull Jwt principal,
+                                 @PathVariable("id") Long organizationId) {
+    organizationService.deleteOrganization(organizationId, principal.getSubject());
+  }
 }

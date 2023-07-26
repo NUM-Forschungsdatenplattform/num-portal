@@ -163,6 +163,10 @@ public class UserDetailsService {
     return userDetailsRepository.getAllUsersId();
   }
 
+  public Long countUserDetailsByOrganization(Long organizationId) {
+    return userDetailsRepository.countByOrganization(organizationId);
+  }
+
   private List<Notification> collectAccountApprovalNotification(
       String userId, String loggedInUserId) {
     List<Notification> notifications = new LinkedList<>();

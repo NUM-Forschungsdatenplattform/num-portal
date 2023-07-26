@@ -48,6 +48,8 @@ public class ExceptionsTemplate {
     public final static String ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY = "Organization mail domain cannot be null or empty";
     public final static String INVALID_MAIL_DOMAIN = "Invalid mail domain: %s";
     public final static String ORGANIZATION_NOT_FOUND = "Organization not found: %s";
+
+    public static final String ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT = "The organization :%s is not empty, can't delete it.";
     //ForbiddenException
     public final static String CANNOT_UPDATE_ORGANIZATION = "Cannot update organization: %s";
     public final static String CANNOT_ACCESS_THIS_RESOURCE = "Cannot access this resource";
@@ -232,6 +234,7 @@ public class ExceptionsTemplate {
         errorMap.put(COMMENT_NOT_FOUND, new ExceptionDto( 60, new ArrayList<>() ) );
         //OrganizationService
         errorMap.put(ORGANIZATION_NOT_FOUND, new ExceptionDto( 61, new ArrayList<>() ) );//1 parameter
+        errorMap.put(ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT, new ExceptionDto(98, new ArrayList<>()));
         //UserDetailsService
         errorMap.put(USER_NOT_FOUND, new ExceptionDto( 62, new ArrayList<>() ) );//1 parameter
         //UserService
@@ -288,6 +291,7 @@ public class ExceptionsTemplate {
         //Policy
         errorMap.put(NO_TEMPLATES_ATTACHED_TO_THE_PROJECT, new ExceptionDto( 96, new ArrayList<>() ) );
         errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_STATUS, new ExceptionDto(97, new ArrayList<>()));
+
     }
 
     private ExceptionsTemplate() {
