@@ -4,6 +4,8 @@ import de.vitagroup.num.domain.MailDomain;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import java.util.stream.Collectors;
+
+import de.vitagroup.num.service.OrganizationService;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
@@ -14,12 +16,15 @@ public class OrganizationMapper {
 
   private final ModelMapper modelMapper;
 
+  private final OrganizationService organizationService;
+
   public OrganizationDto convertToDto(Organization organization) {
     OrganizationDto organizationDto = modelMapper.map(organization, OrganizationDto.class);
     organizationDto.setMailDomains(
         organization.getDomains().stream()
             .map(MailDomain::getName)
             .collect(Collectors.toSet()));
+    organizationDto.setAllowedToBeDeleted(organizationService.isAllowedToBeDeleted(organization.getId()));
 
     return organizationDto;
   }

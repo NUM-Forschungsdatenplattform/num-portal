@@ -27,4 +27,7 @@ public class OrganizationDto {
 
   @Schema(description = "The list of mail domains attached to this organization")
   private Set<String> mailDomains;
+
+  @Schema(description = "Flag used to mark if organization can be deleted if no users assigned", accessMode = Schema.AccessMode.READ_ONLY)
+  private boolean allowedToBeDeleted;
 }
