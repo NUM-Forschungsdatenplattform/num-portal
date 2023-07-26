@@ -704,7 +704,8 @@ public class UserService {
   }
 
   private Set<Translation> getTranslated(EntityGroup entityGroup, Language language) {
-    ConcurrentMap<Long, Translation> cm = (ConcurrentMap<Long, Translation>) cacheManager.getCache(TRANSLATION_CACHE).getNativeCache();
+    ConcurrentMap<Long, Translation> cm = cacheManager.getCache(TRANSLATION_CACHE) != null ?
+            (ConcurrentMap<Long, Translation>) cacheManager.getCache(TRANSLATION_CACHE).getNativeCache() : null;
     Set<Translation> translationList = new HashSet<>();
     cm.forEach((aLong, translation) -> {
       if(translation.getLanguage().compareTo(language) == 0 && translation.getEntityGroup() == entityGroup/*EntityGroup.ROLE_NAME*/){
