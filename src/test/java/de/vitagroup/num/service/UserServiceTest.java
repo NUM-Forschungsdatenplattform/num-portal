@@ -1,9 +1,11 @@
 package de.vitagroup.num.service;
 
+import de.vitagroup.num.domain.EntityGroup;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.Translation;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.OrganizationDto;
@@ -45,6 +47,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
+import static de.vitagroup.num.service.UserService.TRANSLATION_CACHE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
@@ -769,6 +772,41 @@ public class UserServiceTest {
         Mockito.when(userDetailsService.countUserDetails()).thenReturn(4L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
                 .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo, user3, user4)));
+
+        initializeTranslationCache();
+    }
+
+    private void initializeTranslationCache() {
+        ConcurrentMapCache translationCache = new ConcurrentMapCache(TRANSLATION_CACHE, false);
+        translationCache.put(1L, Translation.builder()
+                .entityId(1L)
+                .entityGroup(EntityGroup.ROLE_NAME)
+                .property("RESEARCHER")
+                .language(Language.en)
+                .value("Researcher")
+                .build());
+        translationCache.put(2L, Translation.builder()
+                .entityId(2L)
+                .entityGroup(EntityGroup.ROLE_NAME)
+                .property("RESEARCHER")
+                .language(Language.de)
+                .value("Forscher")
+                .build());
+        translationCache.put(3L, Translation.builder()
+                .entityId(3L)
+                .entityGroup(EntityGroup.ROLE_NAME)
+                .property("PROJECT_APPROVER")
+                .language(Language.en)
+                .value("Project approver")
+                .build());
+        translationCache.put(4L, Translation.builder()
+                .entityId(4L)
+                .entityGroup(EntityGroup.ROLE_NAME)
+                .property("PROJECT_APPROVER")
+                .language(Language.de)
+                .value("Projektprüfer")
+                .build());
+        Mockito.when(cacheManager.getCache(TRANSLATION_CACHE)).thenReturn(translationCache);
     }
 
     @Test
@@ -796,6 +834,7 @@ public class UserServiceTest {
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
                 .thenReturn(new PageImpl<>(List.of(userDetails)));
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        initializeTranslationCache();
         userService.searchUsers("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable, Language.en);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();

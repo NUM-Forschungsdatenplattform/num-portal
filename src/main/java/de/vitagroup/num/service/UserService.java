@@ -107,10 +107,10 @@ public class UserService {
         }
       }
     }
-    initializeTranslation();
   }
 
-  private void initializeTranslation() {
+  @Transactional
+  public void initializeTranslation() {
     List<Long> translationIDs = translationRepository.getAllTranslationsId();
     ConcurrentMapCache translationsCache = (ConcurrentMapCache) cacheManager.getCache(TRANSLATION_CACHE);
     if (translationsCache != null) {
