@@ -273,11 +273,9 @@ public class OrganizationService {
   }
 
   private void validateStatusChange(Long organizationId, Boolean newStatus, Boolean oldStatus, UserDetails loggedInUser) {
-    if (statusChanged(oldStatus, newStatus)) {
-      if (loggedInUser.getOrganization().getId().equals(organizationId)) {
-        log.warn("User {} is not allowed to change status for own organization {}", loggedInUser.getUserId(), organizationId);
-        throw new ForbiddenException(OrganizationService.class, NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS);
-      }
+    if (statusChanged(oldStatus, newStatus) && loggedInUser.getOrganization().getId().equals(organizationId)) {
+      log.warn("User {} is not allowed to change status for own organization {}", loggedInUser.getUserId(), organizationId);
+      throw new ForbiddenException(OrganizationService.class, NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS);
     }
   }
 

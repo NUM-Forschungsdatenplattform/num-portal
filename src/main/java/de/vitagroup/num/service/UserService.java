@@ -617,6 +617,7 @@ public class UserService {
   }
 
   @CachePut(cacheNames = USERS_CACHE, key = "#userId")
+  @Transactional
   public User updateUserActiveField(@NotNull String userId, @NotNull Boolean active) {
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
     if (userRaw == null) {
