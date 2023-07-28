@@ -110,7 +110,7 @@ public class UserService {
   }
 
   @Transactional
-  public void initializeTranslation() {
+  public void initializeTranslationCache() {
     List<Long> translationIDs = translationRepository.getAllTranslationsId();
     ConcurrentMapCache translationsCache = (ConcurrentMapCache) cacheManager.getCache(TRANSLATION_CACHE);
     if (translationsCache != null) {
@@ -706,6 +706,9 @@ public class UserService {
   private Set<Translation> getTranslated(EntityGroup entityGroup, Language language) {
     ConcurrentMap<Long, Translation> cm = cacheManager.getCache(TRANSLATION_CACHE) != null ?
             (ConcurrentMap<Long, Translation>) cacheManager.getCache(TRANSLATION_CACHE).getNativeCache() : null;
+    if (isNull(cm)){
+      throw new ResourceNotFound(UserService.class, CACHE_IS_NOT_REACHABLE);
+    }
     Set<Translation> translationList = new HashSet<>();
     cm.forEach((aLong, translation) -> {
       if(translation.getLanguage().compareTo(language) == 0 && translation.getEntityGroup() == entityGroup/*EntityGroup.ROLE_NAME*/){

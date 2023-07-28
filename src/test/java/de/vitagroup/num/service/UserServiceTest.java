@@ -12,6 +12,7 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.repository.TranslationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
 import de.vitagroup.num.mapper.OrganizationMapper;
@@ -66,6 +67,9 @@ public class UserServiceTest {
 
     @Mock
     private UserDetailsRepository userDetailsRepository;
+
+    @Mock
+    private TranslationRepository translationRepository;
 
     @Mock
     private NotificationService notificationService;
@@ -780,6 +784,7 @@ public class UserServiceTest {
         ConcurrentMapCache translationCache = new ConcurrentMapCache(TRANSLATION_CACHE, false);
         translationCache.put(1L, Translation.builder()
                 .entityId(1L)
+                .id(1L)
                 .entityGroup(EntityGroup.ROLE_NAME)
                 .property("RESEARCHER")
                 .language(Language.en)
@@ -787,6 +792,7 @@ public class UserServiceTest {
                 .build());
         translationCache.put(2L, Translation.builder()
                 .entityId(2L)
+                .id(2L)
                 .entityGroup(EntityGroup.ROLE_NAME)
                 .property("RESEARCHER")
                 .language(Language.de)
@@ -794,6 +800,7 @@ public class UserServiceTest {
                 .build());
         translationCache.put(3L, Translation.builder()
                 .entityId(3L)
+                .id(3L)
                 .entityGroup(EntityGroup.ROLE_NAME)
                 .property("PROJECT_APPROVER")
                 .language(Language.en)
@@ -801,6 +808,7 @@ public class UserServiceTest {
                 .build());
         translationCache.put(4L, Translation.builder()
                 .entityId(4L)
+                .id(4L)
                 .entityGroup(EntityGroup.ROLE_NAME)
                 .property("PROJECT_APPROVER")
                 .language(Language.de)
@@ -1029,6 +1037,27 @@ public class UserServiceTest {
         userService.initializeUsersCache();
         Assert.assertEquals(2, usersCache.getNativeCache().size());
     }
+
+    @Test
+    public void initializeTranslationCacheTest() {
+        Optional<Translation> t = Optional.of( Translation.builder()
+                .id(1L)
+                .entityId(1L)
+                .entityGroup(EntityGroup.ROLE_NAME)
+                .property("RESEARCHER")
+                .language(Language.en)
+                .value("Researcher")
+                .build());
+
+        ConcurrentMapCache translationCache = new ConcurrentMapCache(TRANSLATION_CACHE, false);
+        when(translationRepository.getAllTranslationsId()).thenReturn(List.of(1L));
+        Mockito.when(cacheManager.getCache(TRANSLATION_CACHE)).thenReturn(translationCache);
+        when(translationRepository.findById(1L)).thenReturn(t);
+        when(translationRepository.findById(2L)).thenThrow(new ResourceNotFound(UserService.class, "Entity not found"));
+        userService.initializeTranslationCache();
+        Assert.assertEquals(1, translationCache.getNativeCache().size());
+    }
+
 
     @Test
     public void addUserToCacheTest() {
