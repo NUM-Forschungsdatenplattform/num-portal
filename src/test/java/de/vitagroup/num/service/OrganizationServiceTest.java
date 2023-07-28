@@ -22,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +45,9 @@ public class OrganizationServiceTest {
   @Mock private MailDomainRepository mailDomainRepository;
 
   @Mock private UserDetailsService userDetailsService;
+
+  @Mock
+  private ApplicationEventPublisher applicationEventPublisher;
 
   @InjectMocks private OrganizationService organizationService;
 
@@ -212,7 +216,7 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void shouldSuccessfullySaveOrganization() {
+  public void shouldSuccessfullyCreateOrganization() {
     organizationService.create(
             "approvedUserId",
             OrganizationDto.builder()
@@ -253,13 +257,13 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void shouldSaveOrganization() {
+  public void shouldUpdateOrganization() {
     organizationService.update(
             3L,
             OrganizationDto.builder()
                     .name("Good name")
                     .mailDomains(Set.of("*.example.com"))
-                    .active(Boolean.FALSE)
+                    .active(Boolean.TRUE)
                     .build(),
             List.of(Roles.SUPER_ADMIN),
             "approvedUserId");
@@ -281,8 +285,6 @@ public class OrganizationServiceTest {
 
   @Test(expected = ForbiddenException.class)
   public void shouldHandleChangeOwnOrganizationStatus() {
-    when(organizationRepository.findById(33L))
-            .thenReturn(Optional.of(Organization.builder().id(33L).active(Boolean.TRUE).name("Organization name").build()));
     organizationService.update(
             33L,
             OrganizationDto.builder()
@@ -290,6 +292,62 @@ public class OrganizationServiceTest {
                     .active(Boolean.FALSE)
                     .build(),
             List.of(Roles.SUPER_ADMIN),
+            "approvedUserId");
+    verify(organizationRepository, Mockito.never()).save(any());
+  }
+
+  @Test
+  public void shouldHandleChangeStatusOrganization() {
+    organizationService.update(
+            3L,
+            OrganizationDto.builder()
+                    .name("New good name")
+                    .mailDomains(Set.of("*.example.com"))
+                    .active(Boolean.FALSE)
+                    .build(),
+            List.of(Roles.SUPER_ADMIN),
+            "approvedUserId");
+    verify(organizationRepository, times(1)).save(any());
+  }
+
+  @Test
+  public void shouldUpdateOrganizationAsOrganizationAdmin() {
+    organizationService.update(
+            33L,
+            OrganizationDto.builder()
+                    .name("Other name")
+                    .mailDomains(Set.of("*.example.com"))
+                    .active(Boolean.TRUE)
+                    .build(),
+            List.of(Roles.ORGANIZATION_ADMIN),
+            "approvedUserId");
+    verify(organizationRepository, times(1)).save(any());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldHandleUpdateOtherOrganizationsAsOrganizationAdmin() {
+    organizationService.update(
+            3L,
+            OrganizationDto.builder()
+                    .name("Other name")
+                    .mailDomains(Set.of("*.example.com"))
+                    .active(Boolean.TRUE)
+                    .build(),
+            List.of(Roles.ORGANIZATION_ADMIN),
+            "approvedUserId");
+    verify(organizationRepository, Mockito.never()).save(any());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldHandleUpdateOrganizationWithWrongRole() {
+    organizationService.update(
+            3L,
+            OrganizationDto.builder()
+                    .name("Other name")
+                    .mailDomains(Set.of("*.example.com"))
+                    .active(Boolean.TRUE)
+                    .build(),
+            List.of(Roles.STUDY_APPROVER),
             "approvedUserId");
     verify(organizationRepository, Mockito.never()).save(any());
   }
@@ -393,6 +451,8 @@ public class OrganizationServiceTest {
 
     when(organizationRepository.findById(3L))
         .thenReturn(Optional.of(Organization.builder().id(3L).active(Boolean.TRUE).name("Existing").build()));
+    when(organizationRepository.findById(33L))
+            .thenReturn(Optional.of(Organization.builder().id(33L).active(Boolean.TRUE).name("Organization name").build()));
 
     when(mailDomainRepository.findByName("vitagroup.ag"))
         .thenReturn(Optional.of(MailDomain.builder()

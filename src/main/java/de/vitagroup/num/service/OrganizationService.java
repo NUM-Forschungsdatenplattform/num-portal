@@ -9,6 +9,7 @@ import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.specification.OrganizationSpecification;
+import de.vitagroup.num.events.DeactivateUserEvent;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
@@ -17,6 +18,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +41,8 @@ public class OrganizationService {
   private final MailDomainRepository mailDomainRepository;
 
   private final UserDetailsService userDetailsService;
+
+  private final ApplicationEventPublisher applicationEventPublisher;
 
   private static final String DOMAIN_SEPARATOR = "@";
 
@@ -270,6 +275,7 @@ public class OrganizationService {
   private void validateStatusChange(Long organizationId, Boolean newStatus, Boolean oldStatus, UserDetails loggedInUser) {
     if (statusChanged(oldStatus, newStatus)) {
       if (loggedInUser.getOrganization().getId().equals(organizationId)) {
+        log.warn("User {} is not allowed to change status for own organization {}", loggedInUser.getUserId(), organizationId);
         throw new ForbiddenException(OrganizationService.class, NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS);
       }
     }
@@ -285,7 +291,9 @@ public class OrganizationService {
     if (Objects.nonNull(dto.getActive())) {
       organization.setActive(dto.getActive());
       if (statusChanged(oldOrganizationStatus, dto.getActive()) && Boolean.FALSE.equals(dto.getActive())) {
-        // TODO add implementation for deactivate all users from organization
+          log.info("Active flag for organization {} was changed to {}, so trigger event to deactivate all users assigned to this organization", organization.getId(), dto.getActive());
+          DeactivateUserEvent deactivateUserEvent = new DeactivateUserEvent(this, organization.getId());
+          applicationEventPublisher.publishEvent(deactivateUserEvent);
       }
     }
 
