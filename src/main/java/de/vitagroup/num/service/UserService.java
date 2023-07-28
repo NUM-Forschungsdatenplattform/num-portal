@@ -623,7 +623,7 @@ public class UserService {
       log.error("Keycloak user {} was not found", userId);
       throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
     }
-    if (!userRaw.get(ACTIVE).equals(active)) {
+    if (!active.equals(userRaw.get(ACTIVE))) {
       // call keycloak rest API only if status changed
       log.info("User {} flag active was changed to {} ", userId, active);
       userRaw.put(ACTIVE, active);
