@@ -1053,7 +1053,6 @@ public class UserServiceTest {
         when(translationRepository.getAllTranslationsId()).thenReturn(List.of(1L));
         Mockito.when(cacheManager.getCache(TRANSLATION_CACHE)).thenReturn(translationCache);
         when(translationRepository.findById(1L)).thenReturn(t);
-        when(translationRepository.findById(2L)).thenThrow(new ResourceNotFound(UserService.class, "Entity not found"));
         userService.initializeTranslationCache();
         Assert.assertEquals(1, translationCache.getNativeCache().size());
     }
