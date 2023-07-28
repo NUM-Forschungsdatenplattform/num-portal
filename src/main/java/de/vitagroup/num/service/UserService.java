@@ -484,7 +484,7 @@ public class UserService {
     User admin = getUserById(loggedInUserId, false);
     allRoles.removeIf(r -> r.getName().startsWith(KEYCLOACK_DEFAULT_ROLES_PREFIX));
 
-    if (user != null && admin != null) {
+    if (user != null && admin != null && (rolesAdded.length > 0 || rolesRemoved.length > 0)) {
       RolesUpdateNotification notification =
           RolesUpdateNotification.builder()
               .recipientEmail(user.getEmail())
