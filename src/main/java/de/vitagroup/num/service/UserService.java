@@ -705,7 +705,7 @@ public class UserService {
 
   private Set<Translation> getTranslated(EntityGroup entityGroup, Language language) {
     ConcurrentMap<Long, Translation> cm = cacheManager.getCache(TRANSLATION_CACHE) != null ?
-            (ConcurrentMap<Long, Translation>) cacheManager.getCache(TRANSLATION_CACHE).getNativeCache() : null;
+            (ConcurrentMap<Long, Translation>) Objects.requireNonNull(cacheManager.getCache(TRANSLATION_CACHE)).getNativeCache() : null;
     if (isNull(cm)){
       throw new ResourceNotFound(UserService.class, CACHE_IS_NOT_REACHABLE);
     }
