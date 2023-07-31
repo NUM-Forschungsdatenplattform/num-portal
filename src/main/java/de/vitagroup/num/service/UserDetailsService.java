@@ -45,6 +45,7 @@ public class UserDetailsService {
   private static final String USER_ATTRIBUTE_DEPARTMENT = "department";
   private static final String USER_ATTRIBUTE_REQUESTED_ROLE = "requested-role";
   private static final String USER_ATTRIBUTE_ADDITIONAl_NOTES = "notes";
+  private static final String FULL_NAME_FORMAT = "%s %s";
 
 
   @Autowired
@@ -189,7 +190,7 @@ public class UserDetailsService {
               .recipientFirstName(user.getFirstName())
               .recipientLastName(user.getLastName())
               .adminEmail(admin.getEmail())
-              .adminFullName(String.format("%s %s", admin.getFirstName(), admin.getLastName()))
+              .adminFullName(String.format(FULL_NAME_FORMAT, admin.getFirstName(), admin.getLastName()))
               .userCurrentStatus(currentStatus)
               .build();
       notifications.add(statusChangedNotification);
@@ -212,7 +213,7 @@ public class UserDetailsService {
               .recipientFirstName(user.getFirstName())
               .recipientLastName(user.getLastName())
               .adminEmail(admin.getEmail())
-              .adminFullName(String.format("%s %s", admin.getFirstName(), admin.getLastName()))
+              .adminFullName(String.format(FULL_NAME_FORMAT, admin.getFirstName(), admin.getLastName()))
               .build();
 
       notifications.add(not);
@@ -237,7 +238,7 @@ public class UserDetailsService {
               .recipientFirstName(user.getFirstName())
               .recipientLastName(user.getLastName())
               .adminEmail(admin.getEmail())
-              .adminFullName(String.format("%s %s", admin.getFirstName(), admin.getLastName()))
+              .adminFullName(String.format(FULL_NAME_FORMAT, admin.getFirstName(), admin.getLastName()))
               .organization(organization)
               .formerOrganization(formerOrganization)
               .build();
