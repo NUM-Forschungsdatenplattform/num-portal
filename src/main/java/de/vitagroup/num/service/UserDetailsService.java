@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -165,6 +166,15 @@ public class UserDetailsService {
 
   public Long countUserDetailsByOrganization(Long organizationId) {
     return userDetailsRepository.countByOrganization(organizationId);
+  }
+
+  @Transactional
+  public void deactivateUsers(Long organizationId) {
+    List<UserDetails> users = userDetailsRepository.findByOrganizationId(organizationId);
+    for(UserDetails userDetails : users) {
+      log.info("Deactivate user {} ", userDetails.getUserId());
+      userService.updateUserActiveField(userDetails.getUserId(), Boolean.FALSE);
+    }
   }
 
   private List<Notification> collectAccountApprovalNotification(

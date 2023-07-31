@@ -94,6 +94,7 @@ public class OrganizationControllerIT extends IntegrationTest {
     OrganizationDto request = OrganizationDto.builder()
             .name("organization Test")
             .mailDomains(Collections.emptySet())
+            .active(Boolean.TRUE)
             .build();
     String organizationJson = mapper.writeValueAsString(request);
 
@@ -106,6 +107,7 @@ public class OrganizationControllerIT extends IntegrationTest {
                                     .content(organizationJson))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.name").value(request.getName()))
+                    .andExpect(jsonPath("$.active").value(Boolean.TRUE))
                     .andReturn();
 
     OrganizationDto dto = mapper.readValue(result.getResponse().getContentAsString(), OrganizationDto.class);
@@ -136,6 +138,7 @@ public class OrganizationControllerIT extends IntegrationTest {
                             .content(organizationJson))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value(request.getName()))
+            .andExpect(jsonPath("$.active").value(Boolean.TRUE))
             .andReturn();
 
     Optional<Organization> organization = organizationRepository.findByName("Organization TestDelete");
