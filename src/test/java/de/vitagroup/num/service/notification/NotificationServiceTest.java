@@ -6,6 +6,7 @@ import de.vitagroup.num.service.email.EmailService;
 import de.vitagroup.num.service.email.MessageSourceWrapper;
 import de.vitagroup.num.service.notification.dto.*;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
+import de.vitagroup.num.service.notification.dto.account.AccountStatusChangedNotification;
 import de.vitagroup.num.service.notification.dto.account.RolesUpdateNotification;
 import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotification;
 import org.junit.Before;
@@ -83,9 +84,18 @@ public class NotificationServiceTest {
                     .requestedRoles(List.of("Researcher"))
                     .department("some department")
                     .recipientEmail("recipient@vita.ag")
-                    .build()));
+                    .build(),
+            AccountStatusChangedNotification.builder()
+                    .recipientEmail("john.doe@vitagroup.ag")
+                    .recipientFirstName("John")
+                    .recipientLastName("Doe")
+                    .adminEmail("admin@vitagroup.ag")
+                    .adminFullName("Super Admin")
+                    .userCurrentStatus(true)
+                    .build()
+                ));
 
-    verify(emailService, times(7)).sendEmail(anyString(), anyString(), anyString());
+    verify(emailService, times(8)).sendEmail(anyString(), anyString(), anyString());
   }
 
   @Test
