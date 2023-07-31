@@ -15,6 +15,7 @@ import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.NewUserWithoutOrganizationNotification;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
+import de.vitagroup.num.service.notification.dto.account.AccountStatusChangedNotification;
 import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -169,12 +170,33 @@ public class UserDetailsService {
   }
 
   @Transactional
-  public void deactivateUsers(Long organizationId) {
+  public void deactivateUsers(String loggedInUserId, Long organizationId) {
     List<UserDetails> users = userDetailsRepository.findByOrganizationId(organizationId);
     for(UserDetails userDetails : users) {
       log.info("Deactivate user {} ", userDetails.getUserId());
-      userService.updateUserActiveField(userDetails.getUserId(), Boolean.FALSE);
+      userService.updateUserActiveField(loggedInUserId, userDetails.getUserId(), Boolean.FALSE);
     }
+  }
+
+  public void sendAccountStatusChangedNotification(String userId, String loggedInUserId, Boolean currentStatus) {
+    List<Notification> notifications = new LinkedList<>();
+    User user = userService.getUserById(userId, false);
+    User admin = userService.getUserById(loggedInUserId, false);
+
+    if (user != null && admin != null) {
+      AccountStatusChangedNotification statusChangedNotification = AccountStatusChangedNotification.builder()
+              .recipientEmail(user.getEmail())
+              .recipientFirstName(user.getFirstName())
+              .recipientLastName(user.getLastName())
+              .adminEmail(admin.getEmail())
+              .adminFullName(String.format("%s %s", admin.getFirstName(), admin.getLastName()))
+              .userCurrentStatus(currentStatus)
+              .build();
+      notifications.add(statusChangedNotification);
+    } else {
+      log.warn("Could not create account status changed email notification.");
+    }
+    notificationService.send(notifications);
   }
 
   private List<Notification> collectAccountApprovalNotification(

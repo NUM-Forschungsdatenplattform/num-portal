@@ -613,12 +613,12 @@ public class UserService {
     if (Objects.equals(loggedInUserId, userId)) {
       throw new ForbiddenException(UserService.class, NOT_ALLOWED_TO_UPDATE_OWN_STATUS);
     }
-    return updateUserActiveField(userId, active);
+    return updateUserActiveField(loggedInUserId, userId, active);
   }
 
   @CachePut(cacheNames = USERS_CACHE, key = "#userId")
   @Transactional
-  public User updateUserActiveField(@NotNull String userId, @NotNull Boolean active) {
+  public User updateUserActiveField(@NotNull String loggedInUserId, @NotNull String userId, @NotNull Boolean active) {
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
     if (userRaw == null) {
       log.error("Keycloak user {} was not found", userId);
@@ -629,6 +629,7 @@ public class UserService {
       log.info("User {} flag active was changed to {} ", userId, active);
       userRaw.put(ACTIVE, active);
       keycloakFeign.updateUser(userId, userRaw);
+      userDetailsService.sendAccountStatusChangedNotification(userId, loggedInUserId, active);
     }
     return getUserById(userId, true);
   }
