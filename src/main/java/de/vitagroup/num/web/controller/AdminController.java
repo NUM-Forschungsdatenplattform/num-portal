@@ -3,7 +3,6 @@ package de.vitagroup.num.web.controller;
 import ch.qos.logback.classic.Level;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserNameDto;
@@ -170,14 +169,13 @@ public class AdminController extends CustomizedExceptionHandler {
   @Operation(description = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
   public ResponseEntity<Page<User>> searchUsersWithPagination(@AuthenticationPrincipal @NotNull Jwt principal, @PageableDefault(size = 100) Pageable pageable,
-                                                              SearchCriteria criteria,
-                                                              @RequestParam(value = "language", defaultValue = "en") Language language) {
+                                                              SearchCriteria criteria) {
     // filter[approved] true, false (optional -> omitting it returns both)
     // filter[search] search input (optional)
     // filter[withRoles] true or false (optional)
     // filter[enabled] true or false (optional)
     return ResponseEntity.ok(
-            userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable, language));
+            userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
   }
 
   @AuditLog

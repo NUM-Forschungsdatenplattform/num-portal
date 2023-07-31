@@ -668,7 +668,7 @@ public class UserServiceTest {
                 .sortBy("DESC")
                 .sort("invalid field")
                 .build();
-        userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50), Language.en);
+        userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
         Mockito.verify(userDetailsService, Mockito.never()).getUsers(Mockito.any(), Mockito.any(UserDetailsSpecification.class));
     }
 
@@ -681,9 +681,10 @@ public class UserServiceTest {
                 .filter(filter)
                 .sortBy("email")
                 .sort("asc")
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
-        Page<User> response = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50), Language.en);
+        Page<User> response = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
         Assert.assertTrue(response.isEmpty());
         Mockito.verify(userDetailsService, Mockito.never()).countUserDetails();
         Mockito.verify(userDetailsService, Mockito.never()).getUsers(Mockito.any(PageRequest.class), Mockito.any(UserDetailsSpecification.class));
@@ -701,7 +702,7 @@ public class UserServiceTest {
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable, Language.en);
+        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
         Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,4)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
@@ -827,6 +828,7 @@ public class UserServiceTest {
                 .filter(filter)
                 .sortBy("lastName")
                 .sort("asc")
+                .language(Language.en)
                 .build();
         UserDetails userDetails = UserDetails.builder()
                 .userId("userId-two")
@@ -843,7 +845,7 @@ public class UserServiceTest {
                 .thenReturn(new PageImpl<>(List.of(userDetails)));
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
         initializeTranslationCache();
-        userService.searchUsers("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable, Language.en);
+        userService.searchUsers("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertNull(capturedInput.getApproved());
@@ -868,7 +870,7 @@ public class UserServiceTest {
                 .organization(Organization.builder().id(99L).build())
                 .build());
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, Language.en);
+        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,4)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
@@ -886,13 +888,14 @@ public class UserServiceTest {
                 .filter(filter)
                 .sort("DESC")
                 .sortBy("firstName")
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
                 .userId("user-55")
                 .organization(Organization.builder().id(99L).build())
                 .build());
-        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, Language.en);
+        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
         User firstUser = userPage.getContent().get(0);
         Assert.assertEquals("Mike", firstUser.getFirstName());
     }
@@ -909,6 +912,7 @@ public class UserServiceTest {
                 .filter(filter)
                 .sort("DESC")
                 .sortBy("firstName")
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
@@ -918,14 +922,14 @@ public class UserServiceTest {
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
 
         Mockito.when(userDetailsService.countUserDetails()).thenReturn(2L);
-        Page<User> userPage1 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, Language.en);
+        Page<User> userPage1 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput1 = argumentCaptor.getValue();
         Assert.assertEquals(99L, capturedInput1.getLoggedInUserOrganizationId().longValue());
         User firstUser1 = userPage1.getContent().get(0);
         Assert.assertEquals("Mike", firstUser1.getFirstName());
 
-        Page<User> userPage2 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, Language.en);
+        Page<User> userPage2 = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(2)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput2 = argumentCaptor.getValue();
         Assert.assertEquals(99L, capturedInput2.getLoggedInUserOrganizationId().longValue());
@@ -944,6 +948,7 @@ public class UserServiceTest {
                 .filter(filter)
                 .sort("ASC")
                 .sortBy("firstName")
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
@@ -951,7 +956,7 @@ public class UserServiceTest {
                 .organization(Organization.builder().id(99L).build())
                 .build());
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable, Language.en);
+        Page<User> userPage = userService.searchUsers("user-55", List.of(Roles.ORGANIZATION_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,4)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(99L, capturedInput.getLoggedInUserOrganizationId().longValue());
@@ -965,10 +970,11 @@ public class UserServiceTest {
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .sort("asc")
                 .sortBy("organization")
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable, Language.en);
+        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,4)), argumentCaptor.capture());
         User firstUser = users.getContent().get(0);
         Assert.assertEquals("userId-two", firstUser.getId());
@@ -983,7 +989,7 @@ public class UserServiceTest {
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable, Language.en);
+        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0, 4)), argumentCaptor.capture());
         User firstUser = users.getContent().get(0);
         Assert.assertEquals("userId-two", firstUser.getId());
@@ -999,11 +1005,12 @@ public class UserServiceTest {
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .sort("asc")
                 .sortBy("registrationDate")
+                .language(Language.en)
                 .filter(filter)
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable, Language.en);
+        Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0, 4)), argumentCaptor.capture());
         UserDetailsSpecification captureInput = argumentCaptor.getValue();
         Assert.assertEquals(1, captureInput.getUsersUUID().size());
@@ -1019,7 +1026,7 @@ public class UserServiceTest {
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
-        userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable, Language.en);
+        userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(pageable), argumentCaptor.capture());
         UserDetailsSpecification captureInput = argumentCaptor.getValue();
         Assert.assertEquals(2, captureInput.getUsersUUID().size());
@@ -1050,9 +1057,8 @@ public class UserServiceTest {
                 .build());
 
         ConcurrentMapCache translationCache = new ConcurrentMapCache(TRANSLATION_CACHE, false);
-        when(translationRepository.getAllTranslationsId()).thenReturn(List.of(1L));
         Mockito.when(cacheManager.getCache(TRANSLATION_CACHE)).thenReturn(translationCache);
-        when(translationRepository.findById(1L)).thenReturn(t);
+        when(translationRepository.findAll()).thenReturn(List.of(t.get()));
         userService.initializeTranslationCache();
         Assert.assertEquals(1, translationCache.getNativeCache().size());
     }

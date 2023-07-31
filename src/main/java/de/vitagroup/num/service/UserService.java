@@ -111,15 +111,13 @@ public class UserService {
 
   @Transactional
   public void initializeTranslationCache() {
-    List<Long> translationIDs = translationRepository.getAllTranslationsId();
     ConcurrentMapCache translationsCache = (ConcurrentMapCache) cacheManager.getCache(TRANSLATION_CACHE);
     if (translationsCache != null) {
-      for (Long id : translationIDs) {
+      for (Translation t : translationRepository.findAll()) {
         try {
-          Translation translation = translationRepository.findById(id).get();
-          translationsCache.put(id, translation);
+          translationsCache.put(t.getId(), t);
         } catch (ResourceNotFound fe) {
-          log.warn("skip cache translation {} because not found in db", id);
+          log.warn("skip cache translation {} because not found in db", t.getId());
         }
       }
     }
@@ -334,12 +332,11 @@ public class UserService {
    * @param searchCriteria filter[approved]  Indicates that the user has been approved by the admin,
    *                       filter[search]    A string contained in username, first or last name, or email
    *                       filter[withRoles] flag whether to add roles to the user structure, if present, or not
-   * @param language language of Role sent from FE
    * @return the users that match the search parameters and with optional roles if indicated
    */
   @Transactional
   public Page<User> searchUsers(String loggedInUserId, List<String> callerRoles, SearchCriteria searchCriteria,
-                                Pageable pageable, Language language) {
+                                Pageable pageable) {
     boolean isFilterByRolePresent = isFilterByRolePresent(searchCriteria);
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
     validateSort(searchCriteria);
@@ -359,7 +356,7 @@ public class UserService {
     }
     if (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles) || filterByActiveFlag) {
       String searchValue = retrieveSearchField(searchCriteria, SearchCriteria.FILTER_SEARCH_BY_KEY);
-      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles, activeFlag, isFilterByRolePresent, language);
+      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles, activeFlag, searchCriteria.getFilter().containsKey(FILTER_SEARCH_BY_KEY), searchCriteria.getLanguage());
     }
     if (CollectionUtils.isEmpty(usersUUID) && (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles) || filterByActiveFlag)) {
       return Page.empty(pageable);
@@ -724,8 +721,8 @@ public class UserService {
     List<String> rolesTranslated = translations.stream().filter(t->t.getValue().toUpperCase().contains(roles.get(0).toUpperCase()))
             .map(Translation::getProperty).toList();
     if (isFilterByRolePresent) {
-      if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
-              CollectionUtils.containsAny(user.getRoles(), rolesTranslated) && enabledFilter)
+      if (StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search) ||
+              nonNull(user.getRoles()) && CollectionUtils.containsAny(user.getRoles(), rolesTranslated) && enabledFilter)
         userUUIDs.add((String) entry.getKey());
     }
     else {
