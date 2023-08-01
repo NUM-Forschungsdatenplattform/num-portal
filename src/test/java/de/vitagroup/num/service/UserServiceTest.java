@@ -647,6 +647,7 @@ public class UserServiceTest {
     }
     @Test
     public void findUsersUUIDFromCacheTest() {
+        initializeTranslationCache();
         ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
         usersCache.putIfAbsent("user-one", User.builder()
                 .id("user-one")
@@ -1023,6 +1024,7 @@ public class UserServiceTest {
         filter.put(SearchCriteria.FILTER_BY_ACTIVE, "true");
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
