@@ -1,14 +1,18 @@
 package de.vitagroup.num.service;
 
+import de.vitagroup.num.domain.EntityGroup;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.Translation;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.repository.TranslationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
 import de.vitagroup.num.mapper.OrganizationMapper;
@@ -29,7 +33,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.modelmapper.ModelMapper;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.data.domain.Page;
@@ -45,6 +48,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
+import static de.vitagroup.num.service.UserService.TRANSLATION_CACHE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,6 +67,9 @@ public class UserServiceTest {
 
     @Mock
     private UserDetailsRepository userDetailsRepository;
+
+    @Mock
+    private TranslationRepository translationRepository;
 
     @Mock
     private NotificationService notificationService;
@@ -640,6 +647,7 @@ public class UserServiceTest {
     }
     @Test
     public void findUsersUUIDFromCacheTest() {
+        initializeTranslationCache();
         ConcurrentMapCache usersCache = new ConcurrentMapCache("users", false);
         usersCache.putIfAbsent("user-one", User.builder()
                 .id("user-one")
@@ -674,6 +682,7 @@ public class UserServiceTest {
                 .filter(filter)
                 .sortBy("email")
                 .sort("asc")
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         Page<User> response = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, PageRequest.of(0, 50));
@@ -769,6 +778,45 @@ public class UserServiceTest {
         Mockito.when(userDetailsService.countUserDetails()).thenReturn(4L);
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
                 .thenReturn(new PageImpl<>(Arrays.asList(userOne, userTwo, user3, user4)));
+
+        initializeTranslationCache();
+    }
+
+    private void initializeTranslationCache() {
+        ConcurrentMapCache translationCache = new ConcurrentMapCache(TRANSLATION_CACHE, false);
+        translationCache.put(1L, Translation.builder()
+                .entityId(1L)
+                .id(1L)
+                .entityGroup(EntityGroup.ROLE_NAME)
+                .property("RESEARCHER")
+                .language(Language.en)
+                .value("Researcher")
+                .build());
+        translationCache.put(2L, Translation.builder()
+                .entityId(2L)
+                .id(2L)
+                .entityGroup(EntityGroup.ROLE_NAME)
+                .property("RESEARCHER")
+                .language(Language.de)
+                .value("Forscher")
+                .build());
+        translationCache.put(3L, Translation.builder()
+                .entityId(3L)
+                .id(3L)
+                .entityGroup(EntityGroup.ROLE_NAME)
+                .property("PROJECT_APPROVER")
+                .language(Language.en)
+                .value("Project approver")
+                .build());
+        translationCache.put(4L, Translation.builder()
+                .entityId(4L)
+                .id(4L)
+                .entityGroup(EntityGroup.ROLE_NAME)
+                .property("PROJECT_APPROVER")
+                .language(Language.de)
+                .value("Projektprüfer")
+                .build());
+        Mockito.when(cacheManager.getCache(TRANSLATION_CACHE)).thenReturn(translationCache);
     }
 
     @Test
@@ -781,6 +829,7 @@ public class UserServiceTest {
                 .filter(filter)
                 .sortBy("lastName")
                 .sort("asc")
+                .language(Language.en)
                 .build();
         UserDetails userDetails = UserDetails.builder()
                 .userId("userId-two")
@@ -796,6 +845,7 @@ public class UserServiceTest {
         Mockito.when(userDetailsService.getUsers(Mockito.any(Pageable.class), Mockito.any(UserDetailsSpecification.class)))
                 .thenReturn(new PageImpl<>(List.of(userDetails)));
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
+        initializeTranslationCache();
         userService.searchUsers("4", List.of(Roles.STUDY_COORDINATOR), searchCriteria, pageable);
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,2)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
@@ -839,6 +889,7 @@ public class UserServiceTest {
                 .filter(filter)
                 .sort("DESC")
                 .sortBy("firstName")
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
@@ -862,6 +913,7 @@ public class UserServiceTest {
                 .filter(filter)
                 .sort("DESC")
                 .sortBy("firstName")
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
@@ -897,6 +949,7 @@ public class UserServiceTest {
                 .filter(filter)
                 .sort("ASC")
                 .sortBy("firstName")
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         Mockito.when(userDetailsService.checkIsUserApproved("user-55")).thenReturn(UserDetails.builder()
@@ -918,6 +971,7 @@ public class UserServiceTest {
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .sort("asc")
                 .sortBy("organization")
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
@@ -952,6 +1006,7 @@ public class UserServiceTest {
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .sort("asc")
                 .sortBy("registrationDate")
+                .language(Language.en)
                 .filter(filter)
                 .build();
         mockDataSearchUsers();
@@ -969,6 +1024,7 @@ public class UserServiceTest {
         filter.put(SearchCriteria.FILTER_BY_ACTIVE, "true");
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
+                .language(Language.en)
                 .build();
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
@@ -990,6 +1046,25 @@ public class UserServiceTest {
         userService.initializeUsersCache();
         Assert.assertEquals(2, usersCache.getNativeCache().size());
     }
+
+    @Test
+    public void initializeTranslationCacheTest() {
+        Optional<Translation> t = Optional.of( Translation.builder()
+                .id(1L)
+                .entityId(1L)
+                .entityGroup(EntityGroup.ROLE_NAME)
+                .property("RESEARCHER")
+                .language(Language.en)
+                .value("Researcher")
+                .build());
+
+        ConcurrentMapCache translationCache = new ConcurrentMapCache(TRANSLATION_CACHE, false);
+        Mockito.when(cacheManager.getCache(TRANSLATION_CACHE)).thenReturn(translationCache);
+        when(translationRepository.findAll()).thenReturn(List.of(t.get()));
+        userService.initializeTranslationCache();
+        Assert.assertEquals(1, translationCache.getNativeCache().size());
+    }
+
 
     @Test
     public void addUserToCacheTest() {

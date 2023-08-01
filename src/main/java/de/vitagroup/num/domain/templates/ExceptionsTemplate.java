@@ -145,6 +145,7 @@ public class ExceptionsTemplate {
     public final static String INVALID_AQL_QUERY = "Malformed query exception";
     public final static String ERROR_MESSAGE = "An error has occurred while calling ehrbase";
     public final static String CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED = "Cannot check consent for data usage outside the European Union, oid not configured";
+    public final static String CACHE_IS_NOT_REACHABLE = "Cache is not reachable";
 
 
     public static final Map<String, ExceptionDto> errorMap = new HashMap<>();
@@ -293,6 +294,7 @@ public class ExceptionsTemplate {
         //Policy
         errorMap.put(NO_TEMPLATES_ATTACHED_TO_THE_PROJECT, new ExceptionDto( 96, new ArrayList<>() ) );
         errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_STATUS, new ExceptionDto(97, new ArrayList<>()));
+        errorMap.put(CACHE_IS_NOT_REACHABLE, new ExceptionDto(98, new ArrayList<>()));
 
         errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, new ExceptionDto(99, new ArrayList<>()));
 

@@ -2,6 +2,7 @@ package de.vitagroup.num.domain;
 
 import de.vitagroup.num.domain.dto.Language;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Cache;
@@ -11,6 +12,7 @@ import javax.persistence.*;
 
 @Entity
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Cacheable
