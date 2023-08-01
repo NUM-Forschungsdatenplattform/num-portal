@@ -1,12 +1,16 @@
 package de.vitagroup.num.service;
 
+import de.vitagroup.num.domain.EntityGroup;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.Translation;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.repository.TranslationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
 import de.vitagroup.num.mapper.OrganizationMapper;
@@ -45,8 +49,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import static de.vitagroup.num.domain.dto.SearchCriteria.FILTER_BY_ROLES;
-import static de.vitagroup.num.domain.dto.SearchCriteria.FILTER_SEARCH_BY_KEY;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -66,6 +68,10 @@ public class UserService {
   private final NotificationService notificationService;
 
   private final CacheManager cacheManager;
+
+  private final TranslationRepository translationRepository;
+
+  public static final String TRANSLATION_CACHE = "translation";
 
   private static final String USERS_CACHE = "users";
 
@@ -96,6 +102,20 @@ public class UserService {
           usersCache.put(uuid, user);
         } catch (ResourceNotFound fe) {
           log.warn("skip cache user {} because not found in keycloak", uuid);
+        }
+      }
+    }
+  }
+
+  @Transactional
+  public void initializeTranslationCache() {
+    ConcurrentMapCache translationsCache = (ConcurrentMapCache) cacheManager.getCache(TRANSLATION_CACHE);
+    if (translationsCache != null) {
+      for (Translation t : translationRepository.findAll()) {
+        try {
+          translationsCache.put(t.getId(), t);
+        } catch (ResourceNotFound fe) {
+          log.warn("skip cache translation {} because not found in db", t.getId());
         }
       }
     }
@@ -308,14 +328,13 @@ public class UserService {
    * Retrieved a list of users that match the search criteria
    *
    * @param searchCriteria filter[approved]  Indicates that the user has been approved by the admin,
-   *                      filter[search]    A string contained in username, first or last name, or email
-   *                      filter[withRoles] flag whether to add roles to the user structure, if present, or not
+   *                       filter[search]    A string contained in username, first or last name, or email
+   *                       filter[withRoles] flag whether to add roles to the user structure, if present, or not
    * @return the users that match the search parameters and with optional roles if indicated
    */
   @Transactional
   public Page<User> searchUsers(String loggedInUserId, List<String> callerRoles, SearchCriteria searchCriteria,
                                 Pageable pageable) {
-    boolean isFilterByRolePresent = isFilterByRolePresent(searchCriteria);
     UserDetails loggedInUser = userDetailsService.checkIsUserApproved(loggedInUserId);
     validateSort(searchCriteria);
 
@@ -334,7 +353,7 @@ public class UserService {
     }
     if (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles) || filterByActiveFlag) {
       String searchValue = retrieveSearchField(searchCriteria, SearchCriteria.FILTER_SEARCH_BY_KEY);
-      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles, activeFlag, isFilterByRolePresent);
+      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles, activeFlag, searchCriteria.getLanguage());
     }
     if (CollectionUtils.isEmpty(usersUUID) && (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles) || filterByActiveFlag)) {
       return Page.empty(pageable);
@@ -370,16 +389,6 @@ public class UserService {
               .collect(Collectors.toList());
     }
     return new PageImpl<>(new ArrayList<>(filteredUsers), pageable, userDetailsPage.getTotalElements());
-  }
-
-  private static boolean isFilterByRolePresent(SearchCriteria searchCriteria) {
-    boolean isFilterByRolePresent = false;
-    if(nonNull(searchCriteria) && nonNull(searchCriteria.getFilter()) && !searchCriteria.getFilter().containsKey(FILTER_BY_ROLES) && searchCriteria.getFilter().containsKey(FILTER_SEARCH_BY_KEY)){
-      searchCriteria.getFilter().put(FILTER_BY_ROLES, searchCriteria.getFilter().get(FILTER_SEARCH_BY_KEY).toString().toUpperCase());
-    } else {
-      isFilterByRolePresent = true;
-    }
-    return isFilterByRolePresent;
   }
 
   private <T> T retrieveSearchField(SearchCriteria searchCriteria, String fieldKey) {
@@ -652,32 +661,42 @@ public class UserService {
    * @return a Set of filteredUsers
    */
   public Set<String> findUsersUUID(String search) {
-    return filterKeycloakUsers(search, Collections.emptyList(), Optional.empty(), true);
+    return filterKeycloakUsers(search, Collections.emptyList(), Optional.empty(), Language.en);
   }
 
-  private Set<String> filterKeycloakUsers(String search, List<String> roles, Optional<Boolean> enabledFlag, boolean isFilterByRolePresent) {
+  private Set<String> filterKeycloakUsers(String search, List<String> roles, Optional<Boolean> enabledFlag, Language language) {
     Set<String> userUUIDs = new HashSet<>();
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
     if ((StringUtils.isNotEmpty(search) || CollectionUtils.isNotEmpty(roles) || enabledFlag.isPresent())
             && usersCache != null && usersCache.getNativeCache().size() != 0) {
       ConcurrentMap<Object, Object> users = usersCache.getNativeCache();
       for (Map.Entry<Object, Object> entry : users.entrySet()) {
-        filterUsers(search, roles, enabledFlag, isFilterByRolePresent, userUUIDs, entry);
+        filterUsers(search, roles, enabledFlag, userUUIDs, entry, language);
       }
       return userUUIDs;
     }
     return Collections.emptySet();
   }
 
-  private static void filterUsers(String search, List<String> roles, Optional<Boolean> enabledFlag, boolean isFilterByRolePresent, Set<String> userUUIDs, Map.Entry<Object, Object> entry) {
+  private void filterUsers(String search, List<String> roles, Optional<Boolean> enabledFlag,
+                           Set<String> userUUIDs, Map.Entry<Object, Object> entry, Language language) {
     boolean filterByNameEnabled = StringUtils.isNotEmpty(search);
     boolean filterByRoleEnabled = CollectionUtils.isNotEmpty(roles);
+    Set<Translation> translations = getTranslated(EntityGroup.ROLE_NAME, language);
+    List<String> rolesTranslated = search !=null ?
+            translations.stream().filter(t->t.getValue().toUpperCase().contains(search.toUpperCase()))
+            .map(Translation::getProperty).toList(): new ArrayList<>();
+
     if (entry.getValue() instanceof User user) {
       boolean enabledFilter = enabledFlag.isEmpty() || enabledFlag.get().equals(user.getEnabled());
       if (filterByNameEnabled && filterByRoleEnabled) {
-        checkByRoleFilterPresence(search, roles, isFilterByRolePresent, userUUIDs, entry, user, enabledFilter);
+        if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)
+                || CollectionUtils.containsAny(user.getRoles(), rolesTranslated)) &&
+                nonNull(user.getRoles()) && CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter)
+          userUUIDs.add((String) entry.getKey());
       } else if (filterByNameEnabled && (StringUtils.containsIgnoreCase(user.getFullName(), search) ||
-              StringUtils.containsIgnoreCase(user.getEmail(), search)) && enabledFilter) {
+              StringUtils.containsIgnoreCase(user.getEmail(), search) || nonNull(user.getRoles()) && CollectionUtils.containsAny(user.getRoles(), rolesTranslated))
+              && enabledFilter) {
         userUUIDs.add((String) entry.getKey());
       } else if (filterByRoleEnabled && CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter) {
         userUUIDs.add((String) entry.getKey());
@@ -687,25 +706,19 @@ public class UserService {
     }
   }
 
-  private static void checkByRoleFilterPresence(String search, List<String> roles, boolean isFilterByRolePresent, Set<String> userUUIDs, Map.Entry<Object, Object> entry, User user, boolean enabledFilter) {
-    if (isFilterByRolePresent) {
-      if ((StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search)) &&
-              CollectionUtils.containsAny(user.getRoles(), roles) && enabledFilter)
-        userUUIDs.add((String) entry.getKey());
+  private Set<Translation> getTranslated(EntityGroup entityGroup, Language language) {
+    ConcurrentMap<Long, Translation> cm = cacheManager.getCache(TRANSLATION_CACHE) != null ?
+            (ConcurrentMap<Long, Translation>) Objects.requireNonNull(cacheManager.getCache(TRANSLATION_CACHE)).getNativeCache() : null;
+    if (isNull(cm)){
+      throw new ResourceNotFound(UserService.class, CACHE_IS_NOT_REACHABLE);
     }
-    else {
-      boolean searchIntoUserFullNameOrEmail = StringUtils.containsIgnoreCase(user.getFullName(), search) || StringUtils.containsIgnoreCase(user.getEmail(), search);
-      boolean searchIntoRoleName = (
-              (nonNull(user.getRoles()) && CollectionUtils.containsAny(user.getRoles(), roles)) ||
-              (nonNull(user.getRoles()) && CollectionUtils.containsAny(user.getRoles(),
-                 user.getRoles().stream()
-                      .filter(role -> role.contains(roles.get(0)))
-                      .collect(Collectors.toList()))
-              )
-      );
-      if ((searchIntoUserFullNameOrEmail || searchIntoRoleName) && enabledFilter)
-        userUUIDs.add((String) entry.getKey());
-    }
+    Set<Translation> translationList = new HashSet<>();
+    cm.forEach((aLong, translation) -> {
+      if(nonNull(language) && translation.getLanguage().compareTo(language) == 0 && translation.getEntityGroup() == entityGroup){
+        translationList.add(translation);
+      }
+    });
+    return translationList;
   }
 
   private void updateName(String userId, UserNameDto userNameDto) {
