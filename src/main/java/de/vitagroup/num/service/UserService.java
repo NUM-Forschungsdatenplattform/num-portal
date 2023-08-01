@@ -49,7 +49,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import static de.vitagroup.num.domain.dto.SearchCriteria.FILTER_SEARCH_BY_KEY;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -354,7 +353,7 @@ public class UserService {
     }
     if (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles) || filterByActiveFlag) {
       String searchValue = retrieveSearchField(searchCriteria, SearchCriteria.FILTER_SEARCH_BY_KEY);
-      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles, activeFlag, searchCriteria.getFilter().containsKey(FILTER_SEARCH_BY_KEY), searchCriteria.getLanguage());
+      usersUUID = this.filterKeycloakUsers(searchValue, requestedRoles, activeFlag, searchCriteria.getLanguage());
     }
     if (CollectionUtils.isEmpty(usersUUID) && (searchCriteriaProvided || CollectionUtils.isNotEmpty(requestedRoles) || filterByActiveFlag)) {
       return Page.empty(pageable);
@@ -661,25 +660,24 @@ public class UserService {
    * @return a Set of filteredUsers
    */
   public Set<String> findUsersUUID(String search) {
-    return filterKeycloakUsers(search, Collections.emptyList(), Optional.empty(), true, Language.en);
+    return filterKeycloakUsers(search, Collections.emptyList(), Optional.empty(), Language.en);
   }
 
-  private Set<String> filterKeycloakUsers(String search, List<String> roles, Optional<Boolean> enabledFlag,
-                                          boolean isFilterByRolePresent, Language language) {
+  private Set<String> filterKeycloakUsers(String search, List<String> roles, Optional<Boolean> enabledFlag, Language language) {
     Set<String> userUUIDs = new HashSet<>();
     ConcurrentMapCache usersCache = (ConcurrentMapCache) cacheManager.getCache(USERS_CACHE);
     if ((StringUtils.isNotEmpty(search) || CollectionUtils.isNotEmpty(roles) || enabledFlag.isPresent())
             && usersCache != null && usersCache.getNativeCache().size() != 0) {
       ConcurrentMap<Object, Object> users = usersCache.getNativeCache();
       for (Map.Entry<Object, Object> entry : users.entrySet()) {
-        filterUsers(search, roles, enabledFlag, isFilterByRolePresent, userUUIDs, entry, language);
+        filterUsers(search, roles, enabledFlag, userUUIDs, entry, language);
       }
       return userUUIDs;
     }
     return Collections.emptySet();
   }
 
-  private void filterUsers(String search, List<String> roles, Optional<Boolean> enabledFlag, boolean isFilterByRolePresent,
+  private void filterUsers(String search, List<String> roles, Optional<Boolean> enabledFlag,
                            Set<String> userUUIDs, Map.Entry<Object, Object> entry, Language language) {
     boolean filterByNameEnabled = StringUtils.isNotEmpty(search);
     boolean filterByRoleEnabled = CollectionUtils.isNotEmpty(roles);
@@ -715,7 +713,7 @@ public class UserService {
     }
     Set<Translation> translationList = new HashSet<>();
     cm.forEach((aLong, translation) -> {
-      if(nonNull(language) && translation.getLanguage().compareTo(language) == 0 && translation.getEntityGroup() == entityGroup/*EntityGroup.ROLE_NAME*/){
+      if(nonNull(language) && translation.getLanguage().compareTo(language) == 0 && translation.getEntityGroup() == entityGroup){
         translationList.add(translation);
       }
     });
