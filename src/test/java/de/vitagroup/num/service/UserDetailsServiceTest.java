@@ -230,4 +230,23 @@ public class UserDetailsServiceTest {
       Assert.assertEquals(ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED, fe.getMessage());
     }
   }
+
+  @Test
+  public void deactivateUsersTest() {
+    Organization organization = Organization.builder().id(1L).active(Boolean.TRUE).name("TEST Organization").build();
+    UserDetails userOne = UserDetails.builder()
+            .userId("user-one")
+            .approved(Boolean.TRUE)
+            .organization(organization)
+            .build();
+    UserDetails usertwo = UserDetails.builder()
+            .userId("user-two")
+            .approved(Boolean.TRUE)
+            .organization(organization)
+            .build();
+    Mockito.when(userDetailsRepository.findByOrganizationId(1L)).thenReturn(List.of(userOne, usertwo));
+    userDetailsService.deactivateUsers(1L);
+    Mockito.verify(userService, Mockito.times(1)).updateUserActiveField(Mockito.eq("user-one"), Mockito.eq(Boolean.FALSE));
+    Mockito.verify(userService, Mockito.times(1)).updateUserActiveField(Mockito.eq("user-two"), Mockito.eq(Boolean.FALSE));
+  }
 }

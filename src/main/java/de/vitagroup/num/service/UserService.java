@@ -638,13 +638,23 @@ public class UserService {
     if (Objects.equals(loggedInUserId, userId)) {
       throw new ForbiddenException(UserService.class, NOT_ALLOWED_TO_UPDATE_OWN_STATUS);
     }
+    return updateUserActiveField(userId, active);
+  }
+
+  @CachePut(cacheNames = USERS_CACHE, key = "#userId")
+  @Transactional
+  public User updateUserActiveField(@NotNull String userId, @NotNull Boolean active) {
     Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
     if (userRaw == null) {
       log.error("Keycloak user {} was not found", userId);
       throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
     }
-    userRaw.put(ACTIVE, active);
-    keycloakFeign.updateUser(userId, userRaw);
+    if (!active.equals(userRaw.get(ACTIVE))) {
+      // call keycloak rest API only if status changed
+      log.info("User {} flag active was changed to {} ", userId, active);
+      userRaw.put(ACTIVE, active);
+      keycloakFeign.updateUser(userId, userRaw);
+    }
     return getUserById(userId, true);
   }
 
