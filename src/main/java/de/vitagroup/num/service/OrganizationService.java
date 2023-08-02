@@ -18,7 +18,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -68,12 +67,13 @@ public class OrganizationService {
   }
 
   /**
-   * Retrieves a list of all existing email domains
+   * Retrieves a list of all existing email domains that belong to active organizations
    *
    * @return
    */
-  public List<String> getAllMailDomains() {
-    return mailDomainRepository.findAll().stream()
+  public List<String> getMailDomainsByActiveOrganizations() {
+    log.info("Load all mail domains from active organizations");
+    return mailDomainRepository.findAllByActiveOrganization().stream()
             .map(MailDomain::getName)
             .collect(Collectors.toList());
   }
