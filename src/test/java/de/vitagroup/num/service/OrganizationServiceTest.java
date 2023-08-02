@@ -426,6 +426,12 @@ public class OrganizationServiceTest {
     Assert.assertTrue(result);
   }
 
+  @Test
+  public void getMailDomainsByActiveOrganizationsTest() {
+    organizationService.getMailDomainsByActiveOrganizations();
+    Mockito.verify(mailDomainRepository, Mockito.times(1)).findAllByActiveOrganization();
+  }
+
   @Before
   public void setup() {
     UserDetails approvedUser =

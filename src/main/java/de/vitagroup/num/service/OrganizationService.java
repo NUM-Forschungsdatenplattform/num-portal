@@ -67,7 +67,7 @@ public class OrganizationService {
   }
 
   /**
-   * Retrieves a list of all existing email domains
+   * Retrieves a list of all existing email domains that belong to active organizations
    *
    * @return
    */

@@ -40,7 +40,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
   @AuditLog
   @GetMapping("/domains")
   @Operation(description = "Retrieves a list of all active existing organization email domains")
-  public ResponseEntity<List<String>> getAllMailDomains() {
+  public ResponseEntity<List<String>> getAllMailDomainsForActiveOrganizations() {
     return ResponseEntity.ok(organizationService.getMailDomainsByActiveOrganizations());
   }
 

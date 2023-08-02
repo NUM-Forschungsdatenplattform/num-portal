@@ -15,7 +15,7 @@ public interface MailDomainRepository extends JpaRepository<MailDomain, Long> {
 
   @Query("SELECT md FROM MailDomain md " +
           "INNER JOIN md.organization org " +
-          " WHERE org.active = true")
+          "WHERE org.active = true")
   List<MailDomain> findAllByActiveOrganization();
 
 }
