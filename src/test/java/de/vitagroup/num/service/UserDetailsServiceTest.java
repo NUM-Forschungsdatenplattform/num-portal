@@ -16,6 +16,7 @@ import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
+import de.vitagroup.num.service.notification.dto.account.AccountStatusChangedNotification;
 import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
 import de.vitagroup.num.web.feign.KeycloakFeign;
 import org.junit.Assert;
@@ -245,8 +246,35 @@ public class UserDetailsServiceTest {
             .organization(organization)
             .build();
     Mockito.when(userDetailsRepository.findByOrganizationId(1L)).thenReturn(List.of(userOne, usertwo));
-    userDetailsService.deactivateUsers(1L);
-    Mockito.verify(userService, Mockito.times(1)).updateUserActiveField(Mockito.eq("user-one"), Mockito.eq(Boolean.FALSE));
-    Mockito.verify(userService, Mockito.times(1)).updateUserActiveField(Mockito.eq("user-two"), Mockito.eq(Boolean.FALSE));
+    userDetailsService.deactivateUsers("loggedInUserId",1L);
+    Mockito.verify(userService, Mockito.times(1)).updateUserActiveField(Mockito.eq("loggedInUserId"), Mockito.eq("user-one"), Mockito.eq(Boolean.FALSE));
+    Mockito.verify(userService, Mockito.times(1)).updateUserActiveField(Mockito.eq("loggedInUserId"), Mockito.eq("user-two"), Mockito.eq(Boolean.FALSE));
+  }
+
+  @Test
+  public void sendAccountStatusChangedNotificationsTest() {
+    User user =
+            User.builder()
+                    .id("someUserId")
+                    .firstName("John")
+                    .lastName("Doe")
+                    .email("john.doe@vitagroup.ag")
+                    .approved(true)
+                    .build();
+    User loggedInUser =
+            User.builder()
+                    .id("loggedInUser")
+                    .firstName("Admin")
+                    .lastName("Doe")
+                    .email("admin.doe@vitagroup.ag")
+                    .approved(true)
+                    .build();
+    when(userService.getUserById("someUserId", false)).thenReturn(user);
+    when(userService.getUserById("loggedInUser", false)).thenReturn(loggedInUser);
+    userDetailsService.sendAccountStatusChangedNotification("someUserId", "loggedInUser", Boolean.FALSE);
+    verify(notificationService, times(1)).send(notificationCaptor.capture());
+    List<Notification> notificationSent = notificationCaptor.getValue();
+    assertThat(notificationSent.size(), is(1));
+    assertThat(notificationSent.get(0).getClass(), is(AccountStatusChangedNotification.class));
   }
 }

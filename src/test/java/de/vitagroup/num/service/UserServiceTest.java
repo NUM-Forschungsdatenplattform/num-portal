@@ -448,6 +448,7 @@ public class UserServiceTest {
                 .updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
         Map<String, Object> captured = mapArgumentCaptor.getValue();
         assertEquals("false", captured.get("enabled").toString());
+        verify(userDetailsService, times(1)).sendAccountStatusChangedNotification("5", "4", false);
     }
 
     @Test(expected = ForbiddenException.class)
@@ -475,6 +476,7 @@ public class UserServiceTest {
                 .updateUser(stringArgumentCaptor.capture(), mapArgumentCaptor.capture());
         Map<String, Object> captured = mapArgumentCaptor.getValue();
         assertEquals("true", captured.get("enabled").toString());
+        verify(userDetailsService, times(1)).sendAccountStatusChangedNotification("7", "5", true);
     }
 
     @Test(expected = ForbiddenException.class)

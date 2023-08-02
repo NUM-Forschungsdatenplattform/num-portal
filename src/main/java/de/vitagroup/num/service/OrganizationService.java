@@ -209,10 +209,10 @@ public class OrganizationService {
                     });
 
     if (Roles.isSuperAdmin(roles)) {
-      updateOrganization(organizationDto, organizationToEdit);
+      updateOrganization(organizationDto, organizationToEdit, loggedInUserId);
     } else if (Roles.isOrganizationAdmin(roles)) {
       if (user.getOrganization().getId().equals(organizationId)) {
-        updateOrganization(organizationDto, organizationToEdit);
+        updateOrganization(organizationDto, organizationToEdit, loggedInUserId);
       } else {
         throw new ForbiddenException(OrganizationService.class, CANNOT_UPDATE_ORGANIZATION, String.format(CANNOT_UPDATE_ORGANIZATION, organizationId));
       }
@@ -283,14 +283,14 @@ public class OrganizationService {
     return Objects.nonNull(newStatus) && !newStatus.equals(oldStatus);
   }
 
-  private void updateOrganization(OrganizationDto dto, Organization organization) {
+  private void updateOrganization(OrganizationDto dto, Organization organization, String loggedInUserId) {
     Boolean oldOrganizationStatus = organization.getActive();
     organization.setName(dto.getName());
     if (Objects.nonNull(dto.getActive())) {
       organization.setActive(dto.getActive());
       if (statusChanged(oldOrganizationStatus, dto.getActive()) && Boolean.FALSE.equals(dto.getActive())) {
           log.info("Active flag for organization {} was changed to {}, so trigger event to deactivate all users assigned to this organization", organization.getId(), dto.getActive());
-          DeactivateUserEvent deactivateUserEvent = new DeactivateUserEvent(this, organization.getId());
+          DeactivateUserEvent deactivateUserEvent = new DeactivateUserEvent(this, organization.getId(), loggedInUserId);
           applicationEventPublisher.publishEvent(deactivateUserEvent);
       }
     }

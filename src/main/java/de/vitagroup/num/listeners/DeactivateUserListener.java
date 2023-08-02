@@ -19,6 +19,6 @@ public class DeactivateUserListener implements ApplicationListener<DeactivateUse
     @Override
     public void onApplicationEvent(DeactivateUserEvent event) {
         log.info("Deactivate users for organization {} was triggered", event.getOrganizationId());
-        userDetailsService.deactivateUsers(event.getOrganizationId());
+        userDetailsService.deactivateUsers(event.getLoggedInUserId(), event.getOrganizationId());
     }
 }
