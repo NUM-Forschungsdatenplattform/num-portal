@@ -371,11 +371,7 @@ public class OrganizationService {
 
   private Optional<Sort> validateAndGetSort(SearchCriteria searchCriteria) {
     if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
-      List<String> sortBy = new ArrayList<>();
-      sortBy.add("name");
-      sortBy.add("active");
-
-      if (!CollectionUtils.containsAny(sortBy, List.of(searchCriteria.getSortBy())) ) {
+      if (!"name".equals(searchCriteria.getSortBy())) {
         throw new BadRequestException(OrganizationService.class, String.format("Invalid %s sortBy field for organization", searchCriteria.getSortBy()));
       }
       return Optional.of(Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
