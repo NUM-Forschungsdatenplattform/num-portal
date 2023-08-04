@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
@@ -370,7 +371,11 @@ public class OrganizationService {
 
   private Optional<Sort> validateAndGetSort(SearchCriteria searchCriteria) {
     if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
-      if (!"name".equals(searchCriteria.getSortBy())) {
+      List<String> sortBy = new ArrayList<>();
+      sortBy.add("name");
+      sortBy.add("active");
+
+      if (!CollectionUtils.containsAny(sortBy, List.of(searchCriteria.getSortBy())) ) {
         throw new BadRequestException(OrganizationService.class, String.format("Invalid %s sortBy field for organization", searchCriteria.getSortBy()));
       }
       return Optional.of(Sort.by(Sort.Direction.valueOf(searchCriteria.getSort().toUpperCase()),
