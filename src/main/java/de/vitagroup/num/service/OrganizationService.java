@@ -283,8 +283,13 @@ public class OrganizationService {
     return Objects.nonNull(newStatus) && !newStatus.equals(oldStatus);
   }
 
+  private boolean nameChanged(String oldName, String newName) {
+    return Objects.nonNull(newName) && !newName.equals(oldName);
+  }
+
   private void updateOrganization(OrganizationDto dto, Organization organization, String loggedInUserId) {
     Boolean oldOrganizationStatus = organization.getActive();
+    String oldOrganizationName = organization.getName();
     organization.setName(dto.getName());
     if (Objects.nonNull(dto.getActive())) {
       organization.setActive(dto.getActive());
@@ -319,6 +324,9 @@ public class OrganizationService {
       organization.getDomains().addAll(newDomains);
     } else {
       organization.setDomains(newDomains);
+    }
+    if (nameChanged(oldOrganizationName, organization.getName())) {
+      userDetailsService.updateUsersInCache(organization.getId());
     }
   }
 
