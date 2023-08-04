@@ -112,11 +112,7 @@ public class UserService {
     ConcurrentMapCache translationsCache = (ConcurrentMapCache) cacheManager.getCache(TRANSLATION_CACHE);
     if (translationsCache != null) {
       for (Translation t : translationRepository.findAll()) {
-        try {
-          translationsCache.put(t.getId(), t);
-        } catch (ResourceNotFound fe) {
-          log.warn("skip cache translation {} because not found in db", t.getId());
-        }
+        translationsCache.put(t.getId(), t);
       }
     }
   }
