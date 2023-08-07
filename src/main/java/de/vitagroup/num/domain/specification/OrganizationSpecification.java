@@ -39,6 +39,13 @@ public class OrganizationSpecification implements Specification<Organization> {
                             WILDCARD_PERCENTAGE_SIGN + entry.toUpperCase() + WILDCARD_PERCENTAGE_SIGN));
                 }
             }
+            if (filter.containsKey(SearchCriteria.FILTER_BY_ACTIVE_ORGANIZATION)) {
+                String entry = (String) filter.get(SearchCriteria.FILTER_BY_ACTIVE_ORGANIZATION);
+                if (StringUtils.isNotEmpty(entry)) {
+                    predicates.add(criteriaBuilder.equal(root.get("active"),
+                            Boolean.valueOf(entry)));
+                }
+            }
             return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         }
         return null;
