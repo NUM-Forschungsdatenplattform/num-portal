@@ -179,6 +179,13 @@ public class UserDetailsService {
     }
   }
 
+  public void updateUsersInCache(Long organizationId) {
+    List<String> userIds = userDetailsRepository.findUserIdsByOrganizationIds(organizationId);
+    for (String userId : userIds) {
+      userService.addUserToCache(userId);
+    }
+  }
+
   public void sendAccountStatusChangedNotification(String userId, String loggedInUserId, Boolean currentStatus) {
     List<Notification> notifications = new LinkedList<>();
     User user = userService.getUserById(userId, false);

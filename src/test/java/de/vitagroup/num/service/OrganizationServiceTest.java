@@ -268,6 +268,7 @@ public class OrganizationServiceTest {
             List.of(Roles.SUPER_ADMIN),
             "approvedUserId");
     verify(organizationRepository, times(1)).save(any());
+    verify(userDetailsService, times(1)).updateUsersInCache(Mockito.eq(3L));
   }
 
   @Test(expected = BadRequestException.class)

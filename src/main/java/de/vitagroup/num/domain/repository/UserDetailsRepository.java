@@ -25,4 +25,7 @@ public interface UserDetailsRepository extends JpaRepository<UserDetails, String
 
   @Query("SELECT ud FROM UserDetails ud WHERE ud.organization.id =:organizationId")
   List<UserDetails> findByOrganizationId(@Param("organizationId") Long organizationId);
+
+  @Query("SELECT ud.userId FROM UserDetails ud WHERE ud.organization.id =:organizationId")
+  List<String> findUserIdsByOrganizationIds(@Param("organizationId") Long organizationId);
 }

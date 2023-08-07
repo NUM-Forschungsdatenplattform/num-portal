@@ -277,4 +277,12 @@ public class UserDetailsServiceTest {
     assertThat(notificationSent.size(), is(1));
     assertThat(notificationSent.get(0).getClass(), is(AccountStatusChangedNotification.class));
   }
+
+  @Test
+  public void updateUsersInCacheTest() {
+    List<String> userIds = List.of("id-1", "id-2", "id-3");
+    Mockito.when(userDetailsRepository.findUserIdsByOrganizationIds(Mockito.eq(33L))).thenReturn(userIds);
+    userDetailsService.updateUsersInCache(33L);
+    verify(userService, times(3)).addUserToCache(Mockito.anyString());
+  }
 }
