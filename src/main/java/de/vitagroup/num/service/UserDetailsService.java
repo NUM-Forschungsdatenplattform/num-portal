@@ -106,6 +106,12 @@ public class UserDetailsService {
             .findById(organizationId)
             .orElseThrow(() -> new ResourceNotFound(UserDetailsService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
 
+    if(!organization.getActive()){
+      String logMessage = String.format(CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION, organization.getName());
+      log.warn(logMessage);
+      throw new ForbiddenException(OrganizationService.class, CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION, logMessage);
+    }
+
     String formerOrganizationName =
         userDetails.getOrganization() != null ? userDetails.getOrganization().getName() : "-";
 
