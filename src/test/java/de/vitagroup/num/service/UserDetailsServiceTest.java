@@ -102,7 +102,7 @@ public class UserDetailsServiceTest {
         .thenReturn(Optional.of(UserDetails.builder().userId("2").approved(true).build()));
 
     when(organizationRepository.findById(3L))
-        .thenReturn(Optional.of(Organization.builder().id(3L).name("Organization A").build()));
+        .thenReturn(Optional.of(Organization.builder().id(3L).name("Organization A").active(Boolean.TRUE).build()));
 
     when(userService.getUserById("1", false)).thenReturn(User.builder().id("1").build());
     when(userService.getUserById("2", false)).thenReturn(User.builder().id("2").build());
