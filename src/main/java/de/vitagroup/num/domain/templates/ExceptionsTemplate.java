@@ -55,6 +55,7 @@ public class ExceptionsTemplate {
     //ForbiddenException
     public final static String CANNOT_UPDATE_ORGANIZATION = "Cannot update organization: %s";
     public final static String CANNOT_ACCESS_THIS_RESOURCE = "Cannot access this resource";
+    public final static String CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION = "Cannot assign user to deactivated organization: %s";
 
     //Project service
     public final static String RESEARCHER_NOT_FOUND = "Researcher not found.";
@@ -297,6 +298,7 @@ public class ExceptionsTemplate {
         errorMap.put(CACHE_IS_NOT_REACHABLE, new ExceptionDto(98, new ArrayList<>()));
 
         errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, new ExceptionDto(99, new ArrayList<>()));
+        errorMap.put(CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION, new ExceptionDto(100, new ArrayList<>()));//1 parameter
 
     }
 

@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -96,18 +97,7 @@ public class UserDetailsServiceTest {
 
   @Test
   public void shouldSendNotificationWhenSettingOrganization() {
-    when(userDetailsRepository.findByUserId("1"))
-        .thenReturn(Optional.of(UserDetails.builder().userId("1").approved(true).build()));
-    when(userDetailsRepository.findByUserId("2"))
-        .thenReturn(Optional.of(UserDetails.builder().userId("2").approved(true).build()));
-
-    when(organizationRepository.findById(3L))
-        .thenReturn(Optional.of(Organization.builder().id(3L).name("Organization A").build()));
-
-    when(userService.getUserById("1", false)).thenReturn(User.builder().id("1").build());
-    when(userService.getUserById("2", false)).thenReturn(User.builder().id("2").build());
-
-    userDetailsService.setOrganization("1", "2", 3L);
+    initializeSetOrganization(Boolean.TRUE);
 
     verify(userDetailsRepository, times(1)).save(any());
     verify(notificationService, times(1)).send(notificationCaptor.capture());
@@ -115,6 +105,26 @@ public class UserDetailsServiceTest {
 
     assertThat(notificationSent.size(), is(1));
     assertThat(notificationSent.get(0).getClass(), is(OrganizationUpdateNotification.class));
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void organizationIsNotActive() {
+    initializeSetOrganization(Boolean.FALSE);
+  }
+
+  private void initializeSetOrganization(Boolean flag) {
+    when(userDetailsRepository.findByUserId("1"))
+            .thenReturn(Optional.of(UserDetails.builder().userId("1").approved(true).build()));
+    when(userDetailsRepository.findByUserId("2"))
+            .thenReturn(Optional.of(UserDetails.builder().userId("2").approved(true).build()));
+
+    when(organizationRepository.findById(3L))
+            .thenReturn(Optional.of(Organization.builder().id(3L).name("Organization A").active(flag).build()));
+
+    when(userService.getUserById("1", false)).thenReturn(User.builder().id("1").build());
+    when(userService.getUserById("2", false)).thenReturn(User.builder().id("2").build());
+
+    userDetailsService.setOrganization("1", "2", 3L);
   }
 
   @Test
