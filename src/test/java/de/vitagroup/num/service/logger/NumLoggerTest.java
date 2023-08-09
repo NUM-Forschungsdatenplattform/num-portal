@@ -73,5 +73,7 @@ public class NumLoggerTest {
     private Method testMethod() throws NoSuchMethodException {
         return getClass().getDeclaredMethod("someTestMethod");
     }
+    private void someTestMethod() {
+    }
 
 }
