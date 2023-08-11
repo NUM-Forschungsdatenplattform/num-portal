@@ -282,6 +282,14 @@ public class AqlService {
     return aqlRepository.existsById(aqlId);
   }
 
+  public boolean aqlCategoryIsAllowedToBeDeleted(Long categoryId) {
+    if (aqlCategoryRepository.findById(categoryId).isEmpty()) {
+      throw new ResourceNotFound(AqlService.class, CATEGORY_WITH_ID_DOES_NOT_EXIST, String.format(CATEGORY_WITH_ID_DOES_NOT_EXIST, categoryId));
+    }
+    long assignedAqls = aqlRepository.countByCategoryId(categoryId);
+    return assignedAqls == 0;
+  }
+
   private void validateQuery(String query) {
     QueryValidationResponse response =
         aqlEditorAqlService.validateAql(Result.builder().q(query).build());

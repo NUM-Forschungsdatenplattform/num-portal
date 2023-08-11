@@ -18,4 +18,7 @@ public interface AqlRepository extends JpaRepository<Aql, Long>, JpaSpecificatio
   List<Aql> findByCategoryId(Long id);
 
   boolean existsById(Long id);
+
+  @Query("SELECT COUNT(aq) FROM Aql aq WHERE aq.category.id =:categoryId")
+  long countByCategoryId(@Param("categoryId") Long categoryId);
 }
