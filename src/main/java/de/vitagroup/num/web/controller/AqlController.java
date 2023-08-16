@@ -173,7 +173,11 @@ public class AqlController extends CustomizedExceptionHandler {
   public ResponseEntity<Page<AqlCategoryDto>> getAqlCategories(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
     Page<AqlCategory> searchResult = aqlService.getAqlCategories(pageable, searchCriteria);
     List<AqlCategoryDto> content = searchResult.getContent().stream()
-            .map(category -> modelMapper.map(category, AqlCategoryDto.class))
+            .map(category -> {
+              AqlCategoryDto categoryDto = modelMapper.map(category, AqlCategoryDto.class);
+              categoryDto.setAllowedToBeDeleted(aqlService.aqlCategoryIsAllowedToBeDeleted(category.getId()));
+              return categoryDto;
+            })
             .collect(Collectors.toList());
     return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
