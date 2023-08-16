@@ -33,7 +33,7 @@ public class PseudonimytyCodexPSNTest {
     private final static String CSV_COMMA_DELIMITER = ",";
 
     // comment ignore if a new bunch of codes should be tested
-    //@Ignore
+    @Ignore
     @Test
     public void testCodexPsn() throws IOException {
         List<String> secondLevelPseudonyms = new ArrayList<>();
