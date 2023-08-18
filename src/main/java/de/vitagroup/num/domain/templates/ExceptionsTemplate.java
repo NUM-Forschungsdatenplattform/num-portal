@@ -42,15 +42,20 @@ public class ExceptionsTemplate {
     public final static String INVALID_COHORT_GROUP_AQL_MISSING = "Invalid cohort group. Aql missing.";
     public static final String INVALID_COHORT_GROUP_CHILDREN_MISSING = "The query is invalid. Please select at least one criterion.";
     public static final String INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS = "The query is invalid. The value of at least one criterion is missing.";
-    public final static String INVALID_COMMENTID_ID = "Invalid commentId id";
+    public final static String INVALID_COMMENT_ID = "Invalid commentId id";
     public final static String ORGANIZATION_NAME_MUST_BE_UNIQUE = "Organization name must be unique: %s";
     public final static String ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS = "Organization mail domain already exists: %s";
     public final static String ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY = "Organization mail domain cannot be null or empty";
     public final static String INVALID_MAIL_DOMAIN = "Invalid mail domain: %s";
     public final static String ORGANIZATION_NOT_FOUND = "Organization not found: %s";
+
+    public static final String ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT = "The organization :%s is not empty, can't delete it.";
+
+    public static final String NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS = "Not allowed to update own's organization status";
     //ForbiddenException
     public final static String CANNOT_UPDATE_ORGANIZATION = "Cannot update organization: %s";
     public final static String CANNOT_ACCESS_THIS_RESOURCE = "Cannot access this resource";
+    public final static String CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION = "Cannot assign user to deactivated organization: %s";
 
     //Project service
     public final static String RESEARCHER_NOT_FOUND = "Researcher not found.";
@@ -104,6 +109,7 @@ public class ExceptionsTemplate {
     public final static String NOT_ALLOWED_TO_REMOVE_THAT_ROLE = "Not allowed to remove that role";
     public final static String NOT_ALLOWED_TO_SET_THAT_ROLE = "Not allowed to set that role";
     public final static String CAN_ONLY_CHANGE_OWN_NAME_ORG_ADMIN_NAMES_OF_THE_PEOPLE_IN_THE_ORGANIZATION_AND_SUPERUSER_ALL_NAMES = "Can only change own name, org admin names of the people in the organization and superuser all names.";
+    public static final String NOT_ALLOWED_TO_UPDATE_OWN_STATUS = "Not allowed to update own status";
 
     //EhrBaseService service
     public final static String NO_DATA_COLUMNS_IN_THE_QUERY_RESULT = "No data columns in the query result";
@@ -140,11 +146,12 @@ public class ExceptionsTemplate {
     public final static String INVALID_AQL_QUERY = "Malformed query exception";
     public final static String ERROR_MESSAGE = "An error has occurred while calling ehrbase";
     public final static String CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED = "Cannot check consent for data usage outside the European Union, oid not configured";
+    public final static String CACHE_IS_NOT_REACHABLE = "Cache is not reachable";
 
 
-    public static Map<String, ExceptionDto> errorMap = new HashMap<>();
+    public static final Map<String, ExceptionDto> errorMap = new HashMap<>();
 
-    public void populateExceptionMap() {
+    static {
         errorMap.put( TOKEN_IS_NOT_VALID_MSG, new ExceptionDto( 1, new ArrayList<>() ) );
         errorMap.put( RECORD_NOT_FOUND_MSG, new ExceptionDto( 2, new ArrayList<>() ) );
 
@@ -162,7 +169,7 @@ public class ExceptionsTemplate {
         errorMap.put( COHORT_NOT_FOUND, new ExceptionDto( 11, new ArrayList<>() ) );//1 parameter
         errorMap.put( COHORT_GROUP_CANNOT_BE_EMPTY, new ExceptionDto( 12, new ArrayList<>() ) );
         errorMap.put( INVALID_COHORT_GROUP_AQL_MISSING, new ExceptionDto( 13, new ArrayList<>() ) );
-        errorMap.put( INVALID_COMMENTID_ID, new ExceptionDto( 14, new ArrayList<>() ) );
+        errorMap.put(INVALID_COMMENT_ID, new ExceptionDto( 14, new ArrayList<>() ) );
         errorMap.put( ORGANIZATION_NAME_MUST_BE_UNIQUE, new ExceptionDto( 15, new ArrayList<>() ) );//1 parameter
         errorMap.put( ORGANIZATION_MAIL_DOMAIN_ALREADY_EXISTS, new ExceptionDto( 16, new ArrayList<>() ) );//1 parameter
         errorMap.put( ORGANIZATION_MAIL_DOMAIN_CANNOT_BE_NULL_OR_EMPTY, new ExceptionDto( 17, new ArrayList<>() ) );
@@ -231,6 +238,7 @@ public class ExceptionsTemplate {
         errorMap.put(COMMENT_NOT_FOUND, new ExceptionDto( 60, new ArrayList<>() ) );
         //OrganizationService
         errorMap.put(ORGANIZATION_NOT_FOUND, new ExceptionDto( 61, new ArrayList<>() ) );//1 parameter
+        errorMap.put(ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT, new ExceptionDto(98, new ArrayList<>()));
         //UserDetailsService
         errorMap.put(USER_NOT_FOUND, new ExceptionDto( 62, new ArrayList<>() ) );//1 parameter
         //UserService
@@ -286,5 +294,15 @@ public class ExceptionsTemplate {
 
         //Policy
         errorMap.put(NO_TEMPLATES_ATTACHED_TO_THE_PROJECT, new ExceptionDto( 96, new ArrayList<>() ) );
+        errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_STATUS, new ExceptionDto(97, new ArrayList<>()));
+        errorMap.put(CACHE_IS_NOT_REACHABLE, new ExceptionDto(98, new ArrayList<>()));
+
+        errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, new ExceptionDto(99, new ArrayList<>()));
+        errorMap.put(CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION, new ExceptionDto(100, new ArrayList<>()));//1 parameter
+
+    }
+
+    private ExceptionsTemplate() {
+
     }
 }

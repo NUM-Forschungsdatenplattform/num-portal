@@ -36,7 +36,7 @@ public class WithMockNumUserSecurityContextFactory
             .claim("username", numUser.username())
             .header("dummy", "dummy")
             .build();
-    Set<GrantedAuthority> authorities = Arrays.stream(numUser.roles()).map(r -> "ROLE_" + r).map(r -> new SimpleGrantedAuthority(r)).collect(Collectors.toSet());
+    Set<GrantedAuthority> authorities = Arrays.stream(numUser.roles()).map(r -> "ROLE_" + r).map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
 
     context.setAuthentication( new JwtAuthenticationToken(jwt, authorities));
 

@@ -32,7 +32,7 @@ public class ProjectSpecificationTest {
         Mockito.when(root.get("status")).thenReturn(statusPath);
         ProjectSpecification ps = ProjectSpecification
                 .builder()
-                .roles(Arrays.asList(Roles.STUDY_COORDINATOR))
+                .roles(List.of(Roles.STUDY_COORDINATOR))
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(3L)
                 .build();
@@ -51,7 +51,7 @@ public class ProjectSpecificationTest {
         filter.put("type", SearchFilter.ORGANIZATION.name());
         ProjectSpecification ps = ProjectSpecification.builder()
                 .filter(filter)
-                .roles(Arrays.asList(Roles.STUDY_APPROVER))
+                .roles(List.of(Roles.STUDY_APPROVER))
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(3L)
                 .build();
@@ -77,7 +77,7 @@ public class ProjectSpecificationTest {
         Mockito.when(coordinator.get("userId").in(usersUUID)).thenReturn(Mockito.mock(Predicate.class));
         ProjectSpecification ps = ProjectSpecification.builder()
                 .filter(filter)
-                .roles(Arrays.asList(Roles.RESEARCHER))
+                .roles(List.of(Roles.RESEARCHER))
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(3L)
                 .ownersUUID(usersUUID)
@@ -98,7 +98,7 @@ public class ProjectSpecificationTest {
         filter.put("type", SearchFilter.OWNED.name());
         ProjectSpecification ps = ProjectSpecification
                 .builder()
-                .roles(Arrays.asList(Roles.STUDY_COORDINATOR))
+                .roles(List.of(Roles.STUDY_COORDINATOR))
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(3L)
                 .filter(filter)
@@ -119,7 +119,7 @@ public class ProjectSpecificationTest {
         filter.put("type", SearchFilter.ARCHIVED.name());
         ProjectSpecification ps = ProjectSpecification
                 .builder()
-                .roles(Arrays.asList(Roles.STUDY_APPROVER))
+                .roles(List.of(Roles.STUDY_APPROVER))
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(3L)
                 .filter(filter)
@@ -138,7 +138,7 @@ public class ProjectSpecificationTest {
         filter.put("type", SearchFilter.ALL.name());
         ProjectSpecification ps = ProjectSpecification
                 .builder()
-                .roles(Arrays.asList(Roles.STUDY_APPROVER))
+                .roles(List.of(Roles.STUDY_APPROVER))
                 .loggedInUserId("userId")
                 .loggedInUserOrganizationId(5L)
                 .filter(filter)

@@ -39,8 +39,6 @@ public class CohortMapperTest {
 
   private final String Q1 = "SELECT A1 ... FROM E1... WHERE ...";
   private final String Q2 = "SELECT A2 ... FROM E1... WHERE ...";
-  private final String NAME1 = "AQL query name 1";
-  private final String NAME2 = "AQL query name 2";
 
   @Before
   public void setup() {
@@ -49,6 +47,8 @@ public class CohortMapperTest {
 
   @Test
   public void shouldCorrectlyConvertCohortToCohortDto() {
+    final String NAME1 = "AQL query name 1";
+    final String NAME2 = "AQL query name 2";
     CohortAql cohortAql1 = CohortAql.builder().id(1L).name(NAME1).query(Q1).build();
     CohortAql cohortAql2 = CohortAql.builder().id(2L).name(NAME2).query(Q2).build();
 

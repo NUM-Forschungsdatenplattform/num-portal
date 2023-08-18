@@ -3,22 +3,25 @@ package de.vitagroup.num.service;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_DELETE_COMMENT;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COMMENT_EDIT_FOR_COMMENT_WITH_ID_IS_NOT_ALLOWED_COMMENT_HAS_DIFFERENT_AUTHOR;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COMMENT_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_COMMENTID_ID;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_COMMENT_ID;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_DOES_NOT_EXIST;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
+import de.vitagroup.num.domain.Project;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.dao.EmptyResultDataAccessException;
 
@@ -47,6 +50,9 @@ public class CommentServiceTest {
 
   private Comment comment;
 
+  private UserDetails approvedCoordinator;
+
+
   @Before
   public void setup() {
     comment = new Comment();
@@ -54,7 +60,7 @@ public class CommentServiceTest {
     comment.setCreateDate(OffsetDateTime.now());
     comment.setId(1L);
 
-    UserDetails approvedCoordinator =
+    approvedCoordinator =
             UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
 
     when(commentRepository.findById(3L))
@@ -64,7 +70,18 @@ public class CommentServiceTest {
                                     .id(3L)
                                     .author(approvedCoordinator)
                                     .build()));
-
+    Mockito.when(userDetailsService.checkIsUserApproved("approvedUserId"))
+            .thenReturn(UserDetails.builder()
+                    .userId("approvedUserId")
+                    .approved(true)
+                    .build());
+    Mockito.when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
+            .thenReturn(approvedCoordinator);
+    when(projectService.getProjectById("approvedUserId", 99L))
+            .thenReturn(Optional.of(Project.builder()
+                            .id(99L)
+                            .name("project 99")
+                    .build()));
   }
 
   @Test(expected = ResourceNotFound.class)
@@ -137,8 +154,45 @@ public class CommentServiceTest {
     when(projectService.exists(1L))
             .thenReturn(true);
     when(commentService.deleteComment(3L, 1L, "approvedCoordinatorId"))
-            .thenThrow(new BadRequestException(EmptyResultDataAccessException.class, INVALID_COMMENTID_ID, String.format("%s: %s", INVALID_COMMENTID_ID, 3L)));
+            .thenThrow(new BadRequestException(EmptyResultDataAccessException.class, INVALID_COMMENT_ID, String.format("%s: %s", INVALID_COMMENT_ID, 3L)));
     commentService.deleteComment(3L, 1L, "approvedCoordinatorId");
   }
 
+  @Test(expected = BadRequestException.class)
+  public void deleteCommentAlreadyDeleted() {
+    when(projectService.exists(1L)).thenReturn(true);
+    Comment toDelete = Comment.builder()
+            .text("new comment content")
+            .build();
+    toDelete.setAuthor(approvedCoordinator);
+    Mockito.when(commentRepository.findById(3L)).thenReturn(Optional.of(toDelete));
+    Mockito.doThrow(new EmptyResultDataAccessException(String.format("No %s entity with id %s exists!", Comment.class, 3L), 1)).when(commentRepository).deleteById(3L);
+    commentService.deleteComment(3L, 1L, "approvedCoordinatorId");
+  }
+
+  @Test
+  public void shouldGetCommentsForExistingProject() {
+    when(projectService.exists(9L)).thenReturn(true);
+    commentService.getComments(9L, "approvedUserId");
+    verify(commentRepository, Mockito.times(1)).findByProjectId(9L);
+  }
+
+  @Test
+  public void shouldCreateCommentForExistingProject() {
+    Comment model = Comment.builder()
+            .text("some dummy comment")
+            .build();
+    commentService.createComment(model, 99L, "approvedUserId");
+    Mockito.verify(commentRepository, Mockito.times(1)).save(model);
+  }
+  @Test
+  public void shouldUpdateComment() {
+    Comment toEdit = Comment.builder()
+            .text("new comment content")
+            .build();
+    when(projectService.exists(99L)).thenReturn(true);
+    commentService.updateComment(toEdit, 3L, "approvedCoordinatorId", 99L);
+    Mockito.verify(commentRepository, Mockito.times(1)).findById(3L);
+    Mockito.verify(commentRepository, Mockito.times(1)).save(Mockito.any(Comment.class));
+  }
 }

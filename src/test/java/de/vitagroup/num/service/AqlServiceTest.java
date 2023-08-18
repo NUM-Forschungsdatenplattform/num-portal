@@ -7,7 +7,6 @@ import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
 import de.vitagroup.num.domain.dto.Language;
-import de.vitagroup.num.domain.dto.SearchFilter;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
 import de.vitagroup.num.domain.repository.AqlCategoryRepository;
@@ -117,7 +116,7 @@ public class AqlServiceTest {
     translations.put("en", "aql category name en");
     translations.put("de", "aql category name test de");
     when(aqlCategoryRepository.findById(3L)).thenReturn(Optional.of(AqlCategory.builder()
-            .id(3l)
+            .id(3L)
             .name(translations)
             .build()));
 
@@ -303,7 +302,7 @@ public class AqlServiceTest {
 
   @Test(expected = BadRequestException.class)
   public void deleteCategoryByIdBadRequestException() {
-    when(aqlRepository.findByCategoryId(null)).thenReturn(Arrays.asList(new Aql()));
+    when(aqlRepository.findByCategoryId(null)).thenReturn(List.of(new Aql()));
     aqlService.deleteCategoryById("approvedUserId",null);
   }
 
@@ -423,7 +422,7 @@ public class AqlServiceTest {
 
   @Test
   public void getAqlCategoriesWithPaginationTest() {
-    Pageable pageable = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));;
+    Pageable pageable = PageRequest.of(0,30).withSort(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
     aqlService.getAqlCategories(pageable, new SearchCriteria());
     verify(aqlCategoryRepository, times(1)).findAllCategories(Mockito.eq(pageable));
   }
@@ -613,6 +612,17 @@ public class AqlServiceTest {
             .build();
     aqlService.getVisibleAqls("approvedUserId", PageRequest.of(0,50), searchCriteria);
     verify(aqlRepository, never());
+  }
+
+  @Test
+  public void aqlCategoryIsAllowedToBeDeletedTest() {
+    boolean result = aqlService.aqlCategoryIsAllowedToBeDeleted(3L);
+    Assert.assertTrue(result);
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void shouldHandleNotExistingCategoryWhenIsAllowedToBeDeleted() {
+    aqlService.aqlCategoryIsAllowedToBeDeleted(33L);
   }
 
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {

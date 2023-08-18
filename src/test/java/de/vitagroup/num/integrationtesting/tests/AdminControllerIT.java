@@ -1,13 +1,11 @@
 package de.vitagroup.num.integrationtesting.tests;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
-import de.vitagroup.num.service.email.EmailService;
 import lombok.SneakyThrows;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,6 +25,8 @@ public class AdminControllerIT extends IntegrationTest {
   private static final String USER_ID = "b59e5edb-3121-4e0a-8ccb-af6798207a79";
 
   private static final String USER_ID_TO_BE_APPROVED = "b59e5edb-3121-4e0a-8ccb-af6798207a73";
+  @Autowired
+  private ObjectMapper mapper;
 
   @Test
   @WithMockNumUser(
@@ -62,5 +62,25 @@ public class AdminControllerIT extends IntegrationTest {
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {SUPER_ADMIN})
+  public void shouldUpdateUserStatusSuccessfully() {
+    stubFor(
+            WireMock.get("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73")
+                    .willReturn(okJson(
+                            "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a73\",\"username\": \"new-user\", \"firstname\":\"John\", \"email\": \"john.doe@vitagroup.ag\", \"enabled\": \"true\"}")));
+    stubFor(WireMock.put("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73").willReturn(okJson("[]")));
+    stubFor(WireMock.get("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73/role-mappings/realm")
+            .willReturn(okJson("[{\"id\":\"12345-2f04-1156-8f34-12345\",\"name\":\"RESEARCHER\",\"composite\":false,\"clientRole\":false,\"containerId\":\"Num\"}]")));
+    mockMvc
+            .perform(
+                    post(String.format("%s/%s/%s", ADMIN_PATH, USER_ID_TO_BE_APPROVED, "status"))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(mapper.writeValueAsString(Boolean.FALSE))
+            ).andExpect(status().isOk());
   }
 }

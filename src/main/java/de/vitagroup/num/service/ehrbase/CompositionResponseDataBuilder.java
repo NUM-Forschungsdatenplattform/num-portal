@@ -39,13 +39,7 @@ public class CompositionResponseDataBuilder {
           aggregatedResultsMap.put(k, new ArrayList<>());
 
           flatCompositionsList.forEach(
-              map -> {
-                if (map.containsKey(k)) {
-                  aggregatedResultsMap.get(k).add(map.get(k));
-                } else {
-                  aggregatedResultsMap.get(k).add(null);
-                }
-              });
+              map -> aggregatedResultsMap.get(k).add(map.getOrDefault(k, null)));
           createColumn(columns, k);
         });
 

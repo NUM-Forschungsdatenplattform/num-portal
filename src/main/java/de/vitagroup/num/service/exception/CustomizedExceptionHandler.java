@@ -6,26 +6,15 @@ import org.ehrbase.client.exception.WrongStatusCodeException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PASS_NOT_MATCHING;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RECORD_ALREADY_EXISTS;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.RECORD_NOT_FOUND_MSG;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.TOKEN_IS_NOT_VALID_MSG;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USERNAME_NOT_FOUND_OR_NO_LONGER_ACTIVE;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_UNAUTHORISED_EXCEPTION;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.errorMap;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 import static java.util.Objects.nonNull;
 
 @Slf4j
@@ -59,7 +48,7 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorDetails errorDetails = ErrorDetails
                 .builder()
                 .messageId( errorMap.get( USER_UNAUTHORISED_EXCEPTION ).getId() )
-                .argumentsList( Arrays.asList( exception.getUserId() ) )
+                .argumentsList( List.of( exception.getUserId() ) )
                 .message( exception.getMessage() )
                 .details( errors )
                 .build();

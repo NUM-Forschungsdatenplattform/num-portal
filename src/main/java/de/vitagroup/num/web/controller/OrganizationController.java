@@ -39,9 +39,9 @@ public class OrganizationController extends CustomizedExceptionHandler {
 
   @AuditLog
   @GetMapping("/domains")
-  @Operation(description = "Retrieves a list of all existing organization email domains")
-  public ResponseEntity<List<String>> getAllMailDomains() {
-    return ResponseEntity.ok(organizationService.getAllMailDomains());
+  @Operation(description = "Retrieves a list of all active existing organization email domains")
+  public ResponseEntity<List<String>> getAllMailDomainsForActiveOrganizations() {
+    return ResponseEntity.ok(organizationService.getMailDomainsByActiveOrganizations());
   }
 
   @AuditLog
@@ -113,5 +113,14 @@ public class OrganizationController extends CustomizedExceptionHandler {
                 organizationDto,
                 Roles.extractRoles(principal),
                 principal.getSubject())));
+  }
+
+  @AuditLog
+  @Operation(description = "Delete the given organization if no users are assigned to this organization")
+  @DeleteMapping(value = "/{id}")
+  @PreAuthorize(Role.SUPER_ADMIN)
+  public void deleteOrganization(@AuthenticationPrincipal @NotNull Jwt principal,
+                                 @PathVariable("id") Long organizationId) {
+    organizationService.deleteOrganization(organizationId, principal.getSubject());
   }
 }

@@ -41,9 +41,7 @@ public class NumLogger {
       return false;
     }
     try {
-
-      logApiOperations(
-          joinPoint, (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+      logApiOperations(joinPoint, (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     } catch (Exception e) {
       log.error("Cannot log audit log {}", e);
     }
@@ -76,18 +74,13 @@ public class NumLogger {
     Method method = methodSignature.getMethod();
     RequestMapping requestMapping = (RequestMapping) clazz.getAnnotation(RequestMapping.class);
 
-    switch (requestMethod.name()) {
-      case POST:
-        return getPostUrl(method, requestMapping);
-      case GET:
-        return getGetUrl(method, requestMapping);
-      case PUT:
-        return getPutUrl(method, requestMapping);
-      case DELETE:
-        return getDeleteUrl(method, requestMapping);
-      default:
-        return StringUtils.EMPTY;
-    }
+    return switch (requestMethod.name()) {
+      case POST -> getPostUrl(method, requestMapping);
+      case GET -> getGetUrl(method, requestMapping);
+      case PUT -> getPutUrl(method, requestMapping);
+      case DELETE -> getDeleteUrl(method, requestMapping);
+      default -> StringUtils.EMPTY;
+    };
   }
 
   private String getPayload(JoinPoint joinPoint) {

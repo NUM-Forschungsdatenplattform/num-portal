@@ -1,0 +1,35 @@
+server:
+  port: 8090
+spring:
+  application:
+    name: num-portal
+privacy:
+  minHits: 0
+  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
+  pseudonomityChunksSize: 5
+
+fttp:
+  #url: https://basic-test-fttp-w.num.med.uni-greifswald.de/ttp-fhir/fhir/dispatcher/$requestPsnWorkflow
+  url: https://basic-fttp-w.num.med.uni-greifswald.de/ttp-fhir/fhir/dispatcher/$requestPsnWorkflow
+  certificatePath: /certificates/vitagroupstore.p12
+  #certificateKey: fttp123
+  certificateKey: yf8AAPDawM!DyzYw_nJQuCqf_4i.Z6
+  useBasicAuth: true
+#  username: karlea
+#  password: test123#
+  username: vitagroup-debug
+  password: Gy#nnVK2NpkB4Zv%Htpj
+
+requestpsnworkflow:
+  params:
+    study: num
+    source: codex
+    target: extern_
+    #apikey: iCZdh7ZWuf8ms)vvBgU-IaLi4
+    apikey: 2jnnHW.(M6wLk-EKErPp42.Ex
+    event: num.get_extern_psn
+
+ehrbase:
+  rest-api-url: http://localhost:8099/ehrbase/
+  username: ehrbase-user
+  password: SuperSecretPassword

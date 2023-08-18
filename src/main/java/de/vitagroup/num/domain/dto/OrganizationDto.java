@@ -17,7 +17,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class OrganizationDto {
 
-  @Schema(description = "The organization id", example = "1")
+  @Schema(description = "The organization id", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
   private Long id;
 
   @Schema(description = "The name of the organization")
@@ -27,4 +27,10 @@ public class OrganizationDto {
 
   @Schema(description = "The list of mail domains attached to this organization")
   private Set<String> mailDomains;
+
+  @Schema(description = "Flag used to mark if organization can be deleted if no users assigned", accessMode = Schema.AccessMode.READ_ONLY)
+  private boolean allowedToBeDeleted;
+
+  @Schema(description = "Flag used to mark if an organization is active or not")
+  private Boolean active;
 }

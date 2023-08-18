@@ -1,15 +1,5 @@
 package de.vitagroup.num.service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_MAIL_DOMAIN;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 import de.vitagroup.num.domain.MailDomain;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
@@ -18,32 +8,34 @@ import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.MailDomainRepository;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
-import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.domain.specification.OrganizationSpecification;
+import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.service.exception.SystemException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
+
+import java.util.*;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OrganizationServiceTest {
@@ -53,6 +45,9 @@ public class OrganizationServiceTest {
   @Mock private MailDomainRepository mailDomainRepository;
 
   @Mock private UserDetailsService userDetailsService;
+
+  @Mock
+  private ApplicationEventPublisher applicationEventPublisher;
 
   @InjectMocks private OrganizationService organizationService;
 
@@ -221,7 +216,7 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void shouldSuccessfullySaveOrganization() {
+  public void shouldSuccessfullyCreateOrganization() {
     organizationService.create(
             "approvedUserId",
             OrganizationDto.builder()
@@ -262,13 +257,18 @@ public class OrganizationServiceTest {
   }
 
   @Test
-  public void shouldSaveOrganization() {
+  public void shouldUpdateOrganization() {
     organizationService.update(
             3L,
-            OrganizationDto.builder().name("Good name").mailDomains(Set.of("*.example.com")).build(),
+            OrganizationDto.builder()
+                    .name("Good name")
+                    .mailDomains(Set.of("*.example.com"))
+                    .active(Boolean.TRUE)
+                    .build(),
             List.of(Roles.SUPER_ADMIN),
             "approvedUserId");
     verify(organizationRepository, times(1)).save(any());
+    verify(userDetailsService, times(1)).updateUsersInCache(Mockito.eq(3L));
   }
 
   @Test(expected = BadRequestException.class)
@@ -277,11 +277,80 @@ public class OrganizationServiceTest {
             3L,
             OrganizationDto.builder()
                     .name("Good name")
-                    .mailDomains(Set.of("some mail domain name", "vitagroup.ag, other organization"))
+                    .mailDomains(Set.of("some mail domain name", "vitagroup.ag"))
+                    .build(),
+            List.of(Roles.SUPER_ADMIN),
+            "approvedUserId");
+    verify(organizationRepository, Mockito.never()).save(any());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldHandleChangeOwnOrganizationStatus() {
+    organizationService.update(
+            33L,
+            OrganizationDto.builder()
+                    .name("New organization name")
+                    .active(Boolean.FALSE)
+                    .build(),
+            List.of(Roles.SUPER_ADMIN),
+            "approvedUserId");
+    verify(organizationRepository, Mockito.never()).save(any());
+  }
+
+  @Test
+  public void shouldHandleChangeStatusOrganization() {
+    organizationService.update(
+            3L,
+            OrganizationDto.builder()
+                    .name("New good name")
+                    .mailDomains(Set.of("*.example.com"))
+                    .active(Boolean.FALSE)
                     .build(),
             List.of(Roles.SUPER_ADMIN),
             "approvedUserId");
     verify(organizationRepository, times(1)).save(any());
+  }
+
+  @Test
+  public void shouldUpdateOrganizationAsOrganizationAdmin() {
+    organizationService.update(
+            33L,
+            OrganizationDto.builder()
+                    .name("Other name")
+                    .mailDomains(Set.of("*.example.com"))
+                    .active(Boolean.TRUE)
+                    .build(),
+            List.of(Roles.ORGANIZATION_ADMIN),
+            "approvedUserId");
+    verify(organizationRepository, times(1)).save(any());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldHandleUpdateOtherOrganizationsAsOrganizationAdmin() {
+    organizationService.update(
+            3L,
+            OrganizationDto.builder()
+                    .name("Other name")
+                    .mailDomains(Set.of("*.example.com"))
+                    .active(Boolean.TRUE)
+                    .build(),
+            List.of(Roles.ORGANIZATION_ADMIN),
+            "approvedUserId");
+    verify(organizationRepository, Mockito.never()).save(any());
+  }
+
+  @Test(expected = ForbiddenException.class)
+  public void shouldHandleUpdateOrganizationWithWrongRole() {
+    organizationService.update(
+            3L,
+            OrganizationDto.builder()
+                    .name("Other name")
+                    .mailDomains(Set.of("*.example.com"))
+                    .active(Boolean.TRUE)
+                    .build(),
+            List.of(Roles.STUDY_APPROVER),
+            "approvedUserId");
+    verify(organizationRepository, Mockito.never()).save(any());
   }
 
   @Test
@@ -331,6 +400,38 @@ public class OrganizationServiceTest {
     organizationService.getAllOrganizations(List.of(Roles.SUPER_ADMIN), "approvedUserId", searchCriteria, pageable);
     verify(organizationRepository, never());
   }
+  @Test(expected = ResourceNotFound.class)
+  public void shouldHandleOrganizationNotFoundWhenDelete() {
+    organizationService.deleteOrganization(99L, "approvedUserId");
+    Mockito.verify(userDetailsService, never());
+    Mockito.verify(organizationRepository, Mockito.never()).deleteById(99L);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleUsersAssignedWhenDelete() {
+    Mockito.when(userDetailsService.countUserDetailsByOrganization(3L)).thenReturn(22L);
+    organizationService.deleteOrganization(3L, "approvedUserId");
+    Mockito.verify(organizationRepository, Mockito.never()).deleteById(3L);
+  }
+
+  @Test
+  public void shouldDeleteOrganization() {
+    organizationService.deleteOrganization(3L, "approvedUserId");
+    Mockito.verify(organizationRepository, Mockito.times(1)).deleteById(Mockito.eq(3L));
+    Mockito.verify(userDetailsService, Mockito.times(1)).countUserDetailsByOrganization(Mockito.eq(3L));
+  }
+
+  @Test
+  public void isAllowedToBeDeletedTest() {
+    boolean result = organizationService.isAllowedToBeDeleted(3L);
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void getMailDomainsByActiveOrganizationsTest() {
+    organizationService.getMailDomainsByActiveOrganizations();
+    Mockito.verify(mailDomainRepository, Mockito.times(1)).findAllByActiveOrganization();
+  }
 
   @Before
   public void setup() {
@@ -338,7 +439,7 @@ public class OrganizationServiceTest {
             UserDetails.builder()
                     .userId("approvedUserId")
                     .approved(true)
-                    .organization(Organization.builder().name("Organization A").build())
+                    .organization(Organization.builder().id(33L).name("Organization A").build())
                     .build();
 
     when(userDetailsService.checkIsUserApproved("approvedUserId")).thenReturn(approvedUser);
@@ -356,10 +457,15 @@ public class OrganizationServiceTest {
     when(organizationRepository.findById(1L)).thenThrow(new ResourceNotFound(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, 1L)));
 
     when(organizationRepository.findById(3L))
-        .thenReturn(Optional.of(Organization.builder().id(3L).name("Existing").build()));
+        .thenReturn(Optional.of(Organization.builder().id(3L).active(Boolean.TRUE).name("Existing").build()));
+    when(organizationRepository.findById(33L))
+            .thenReturn(Optional.of(Organization.builder().id(33L).active(Boolean.TRUE).name("Organization name").build()));
 
     when(mailDomainRepository.findByName("vitagroup.ag"))
-        .thenReturn(Optional.of(MailDomain.builder().name("vitagroup.ag").build()));
+        .thenReturn(Optional.of(MailDomain.builder()
+                .name("vitagroup.ag")
+                        .organization(Organization.builder().id(33L).build())
+                .build()));
   }
 
   private List<MailDomain> createMailDomainsList() {

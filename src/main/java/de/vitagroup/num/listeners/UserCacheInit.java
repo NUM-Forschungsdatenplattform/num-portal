@@ -19,5 +19,6 @@ public class UserCacheInit implements ApplicationListener<ApplicationReadyEvent>
         log.info("---- start load existing users into cache ----- ");
         userService.initializeUsersCache();
         log.info("---- end load existing users into cache ----- ");
+        userService.initializeTranslationCache();
     }
 }

@@ -45,11 +45,7 @@ public class CohortValidator implements ConstraintValidator<ValidCohort, CohortG
     }
 
     // NOT operator is unary - group cannot have more than one child
-    if ((cohortGroup.getOperator().equals(Operator.NOT) && cohortGroup.getChildren().size() > 1)) {
-      return true;
-    }
-
-    return false;
+    return cohortGroup.getOperator().equals(Operator.NOT) && cohortGroup.getChildren().size() > 1;
   }
 
   private boolean isInvalidAql(CohortGroupDto cohortGroup) {

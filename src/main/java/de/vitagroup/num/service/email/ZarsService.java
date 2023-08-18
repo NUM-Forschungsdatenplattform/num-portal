@@ -77,7 +77,10 @@ public class ZarsService {
       return StringUtils.EMPTY;
     }
     var writer = new StringWriter();
-    try (CSVPrinter printer = CSVFormat.EXCEL.withHeader(zarsHeaders).print(writer)) {
+    try (CSVPrinter printer = CSVFormat.EXCEL.builder()
+            .setHeader(zarsHeaders)
+            .build()
+            .print(writer)) {
 
       printer.printRecord(generateProjectRow(zarsInfoDto));
       printer.flush();

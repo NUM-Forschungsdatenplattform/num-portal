@@ -4,28 +4,19 @@ import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
+import de.vitagroup.num.service.exception.ForbiddenException;
+import de.vitagroup.num.service.exception.ResourceNotFound;
+import de.vitagroup.num.service.exception.SystemException;
 import de.vitagroup.num.service.notification.NotificationService;
 import de.vitagroup.num.service.notification.dto.NewUserNotification;
 import de.vitagroup.num.service.notification.dto.NewUserWithoutOrganizationNotification;
 import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
+import de.vitagroup.num.service.notification.dto.account.AccountStatusChangedNotification;
 import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
-
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
-
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
-import de.vitagroup.num.service.exception.SystemException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +25,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ORGANIZATION_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
+import javax.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
+import static java.util.Objects.nonNull;
 
 @Slf4j
 @Service
@@ -51,6 +46,7 @@ public class UserDetailsService {
   private static final String USER_ATTRIBUTE_DEPARTMENT = "department";
   private static final String USER_ATTRIBUTE_REQUESTED_ROLE = "requested-role";
   private static final String USER_ATTRIBUTE_ADDITIONAl_NOTES = "notes";
+  private static final String FULL_NAME_FORMAT = "%s %s";
 
 
   @Autowired
@@ -110,6 +106,12 @@ public class UserDetailsService {
         organizationRepository
             .findById(organizationId)
             .orElseThrow(() -> new ResourceNotFound(UserDetailsService.class, ORGANIZATION_NOT_FOUND, String.format(ORGANIZATION_NOT_FOUND, organizationId)));
+
+    if(nonNull(organization.getActive()) && (!organization.getActive())){
+      String logMessage = String.format(CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION, organization.getName());
+      log.warn(logMessage);
+      throw new ForbiddenException(OrganizationService.class, CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION, logMessage);
+    }
 
     String formerOrganizationName =
         userDetails.getOrganization() != null ? userDetails.getOrganization().getName() : "-";
@@ -171,6 +173,47 @@ public class UserDetailsService {
     return userDetailsRepository.getAllUsersId();
   }
 
+  public Long countUserDetailsByOrganization(Long organizationId) {
+    return userDetailsRepository.countByOrganization(organizationId);
+  }
+
+  @Transactional
+  public void deactivateUsers(String loggedInUserId, Long organizationId) {
+    List<UserDetails> users = userDetailsRepository.findByOrganizationId(organizationId);
+    for(UserDetails userDetails : users) {
+      log.info("Deactivate user {} ", userDetails.getUserId());
+      userService.updateUserActiveField(loggedInUserId, userDetails.getUserId(), Boolean.FALSE);
+    }
+  }
+
+  public void updateUsersInCache(Long organizationId) {
+    List<String> userIds = userDetailsRepository.findUserIdsByOrganizationIds(organizationId);
+    for (String userId : userIds) {
+      userService.addUserToCache(userId);
+    }
+  }
+
+  public void sendAccountStatusChangedNotification(String userId, String loggedInUserId, Boolean currentStatus) {
+    List<Notification> notifications = new LinkedList<>();
+    User user = userService.getUserById(userId, false);
+    User admin = userService.getUserById(loggedInUserId, false);
+
+    if (user != null && admin != null) {
+      AccountStatusChangedNotification statusChangedNotification = AccountStatusChangedNotification.builder()
+              .recipientEmail(user.getEmail())
+              .recipientFirstName(user.getFirstName())
+              .recipientLastName(user.getLastName())
+              .adminEmail(admin.getEmail())
+              .adminFullName(String.format(FULL_NAME_FORMAT, admin.getFirstName(), admin.getLastName()))
+              .userCurrentStatus(currentStatus)
+              .build();
+      notifications.add(statusChangedNotification);
+    } else {
+      log.warn("Could not create account status changed email notification.");
+    }
+    notificationService.send(notifications);
+  }
+
   private List<Notification> collectAccountApprovalNotification(
       String userId, String loggedInUserId) {
     List<Notification> notifications = new LinkedList<>();
@@ -184,7 +227,7 @@ public class UserDetailsService {
               .recipientFirstName(user.getFirstName())
               .recipientLastName(user.getLastName())
               .adminEmail(admin.getEmail())
-              .adminFullName(String.format("%s %s", admin.getFirstName(), admin.getLastName()))
+              .adminFullName(String.format(FULL_NAME_FORMAT, admin.getFirstName(), admin.getLastName()))
               .build();
 
       notifications.add(not);
@@ -209,7 +252,7 @@ public class UserDetailsService {
               .recipientFirstName(user.getFirstName())
               .recipientLastName(user.getLastName())
               .adminEmail(admin.getEmail())
-              .adminFullName(String.format("%s %s", admin.getFirstName(), admin.getLastName()))
+              .adminFullName(String.format(FULL_NAME_FORMAT, admin.getFirstName(), admin.getLastName()))
               .organization(organization)
               .formerOrganization(formerOrganization)
               .build();
