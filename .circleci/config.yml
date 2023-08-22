@@ -234,5 +234,5 @@ commands:
 
 
 orbs:
-  sonarcloud: sonarsource/sonarcloud@1.0.2  
+  sonarcloud: sonarsource/sonarcloud@2.0.0
   jq: circleci/jq@2.2.0
