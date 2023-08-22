@@ -40,7 +40,7 @@ public class PseudonimytyCodexPSNTest {
         String header = "original,pseudonym";
         try (BufferedReader reader =
                      new BufferedReader(new InputStreamReader(IOUtils.toBufferedInputStream(getClass()
-                             .getResourceAsStream("/codex-test-psns/codex_psns_test_system.csv"))))) {
+                             .getResourceAsStream("/codex-test-psns/codex_psns_prod_system.csv"))))) {
             String code;
             while ((code = reader.readLine()) != null) {
                 secondLevelPseudonyms.add(code);
@@ -48,7 +48,7 @@ public class PseudonimytyCodexPSNTest {
         }
         Long projectId = 1L;
         FileWriter fileWriter = new FileWriter("src/test/resources/codex-test-psns" + File.separator +
-                String.format("codex_result_%d_%s%s", projectId,
+                String.format("prod_codex_result_%d_%s%s", projectId,
                         LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).format(DateTimeFormatter.ISO_LOCAL_DATE),
                         CSV_FILE_ENDING));
         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);

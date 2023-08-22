@@ -2,6 +2,7 @@ package de.vitagroup.num.integrationtesting.tests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import de.vitagroup.num.domain.dto.AqlCategoryDto;
 import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
@@ -15,6 +16,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 import static de.vitagroup.num.domain.Roles.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -339,4 +342,38 @@ public class AqlControllerIT extends IntegrationTest {
     assertThat((String)dto.getOptions().get("female"),containsString("Female"));
     assertThat((String)dto.getOptions().get("male"),containsString("Male"));
   }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {CRITERIA_EDITOR})
+  public void shouldSaveAndDeleteAqlCategorySuccessfully() {
+
+    Map<String, String> name = new HashMap<>();
+    name.put("en", "aql category name en");
+    name.put("de", "aql category name test de");
+    AqlCategoryDto aqlCategoryDto = AqlCategoryDto.builder()
+            .name(name)
+            .build();
+    String aqlCatJson = mapper.writeValueAsString(aqlCategoryDto);
+
+    MvcResult result =
+            mockMvc
+                    .perform(
+                            post(AQL_PATH + "/category")
+                                    .with(csrf())
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(aqlCatJson))
+                    .andExpect(status().isOk())
+                    .andReturn();
+
+    AqlCategoryDto dto = mapper.readValue(result.getResponse().getContentAsString(), AqlCategoryDto.class);
+
+    mockMvc
+            .perform(
+                    delete(String.format("%s/%s", AQL_PATH + "/category", dto.getId()))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+  }
+
 }

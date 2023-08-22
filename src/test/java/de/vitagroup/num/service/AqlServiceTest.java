@@ -614,6 +614,17 @@ public class AqlServiceTest {
     verify(aqlRepository, never());
   }
 
+  @Test
+  public void aqlCategoryIsAllowedToBeDeletedTest() {
+    boolean result = aqlService.aqlCategoryIsAllowedToBeDeleted(3L);
+    Assert.assertTrue(result);
+  }
+
+  @Test(expected = ResourceNotFound.class)
+  public void shouldHandleNotExistingCategoryWhenIsAllowedToBeDeleted() {
+    aqlService.aqlCategoryIsAllowedToBeDeleted(33L);
+  }
+
   private Aql createAql(OffsetDateTime createdAndModifiedDate) {
     return Aql.builder()
         .id(10L)
