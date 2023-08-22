@@ -149,7 +149,7 @@ jobs:
           when: on_fail      
   tag-version:
     docker:
-      - image: circleci/openjdk:stretch
+      - image: cimg/openjdk:17.0.8
     steps:
       - checkout
       - configure-git-for-ci-bot
@@ -176,7 +176,7 @@ jobs:
 
   build_and_deploy:
     docker:
-      - image: cimg/openjdk:17.0.6
+      - image: cimg/openjdk:17.0.8
         auth:
           username: $DOCKER_USER
           password: $DOCKER_HUB_PASSWORD
@@ -185,7 +185,7 @@ jobs:
       - configure-git-for-ci-bot
       - cache-out-maven-dependencies
       - setup_remote_docker:
-          version: 20.10.17
+          version: 20.10.23
       - run:
           name: Build and tag image and push
           command: |
