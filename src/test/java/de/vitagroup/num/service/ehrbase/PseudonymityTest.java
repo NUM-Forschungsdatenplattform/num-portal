@@ -25,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -105,6 +106,7 @@ public class PseudonymityTest {
         when(fhirContext.newXmlParser()).thenReturn(xmlParser);
         when(privacyProperties.getPseudonymitySecret()).thenReturn("testSecret123");
         when(privacyProperties.getPseudonomityChunksSize()).thenReturn(5);
+        ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", true);
     }
 
     private Parameters mockErrorParameters() {

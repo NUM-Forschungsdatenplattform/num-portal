@@ -86,3 +86,6 @@ requestpsnworkflow:
     target: ${PSNWORKFLOW_TARGET}
     apikey: ${PSNWORKFLOW_API_KEY}
     event: ${PSNWORKFLOW_EVENT}
+
+pseudonymity:
+  fake3rdPartyPseudonymEnabled: ${FAKE_3RD_PARTY_PSEUDONYM_ENABLED}

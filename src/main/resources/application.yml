@@ -158,6 +158,9 @@ requestpsnworkflow:
     apikey: iCZdh7ZWuf8ms)vvBgU-IaLi4
     event: num.get_extern_psn
 
+pseudonymity:
+  fake3rdPartyPseudonymEnabled: false
+
 user-service:
   delete-users-cron: 0 0 5 * * *
 

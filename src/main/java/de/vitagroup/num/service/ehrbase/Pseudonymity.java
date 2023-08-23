@@ -5,7 +5,7 @@ import de.vitagroup.num.properties.FttpProperties;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.properties.PseudonymsPsnWorkflowProperties;
 import de.vitagroup.num.service.exception.ResourceNotFound;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections.CollectionUtils;
@@ -20,6 +20,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Parameters;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class Pseudonymity {
 
   private static final String ORIGINAL = "original";
@@ -49,6 +50,9 @@ public class Pseudonymity {
   private final FhirContext fhirContext;
   private final PseudonymsPsnWorkflowProperties pseudonymsPsnWorkflowProperties;
   private final PrivacyProperties privacyProperties;
+
+  @Value("${pseudonymity.fake3rdPartyPseudonymEnabled:false}")
+  private boolean fake3rdPartyPseudonymEnabled;
 
   public List<String> getPseudonyms(List<String> secondLevelPseudonyms, Long projectId) {
 
@@ -75,19 +79,24 @@ public class Pseudonymity {
       if (!params.getParameters("error").isEmpty()) {
         log.warn("Could not retrieve pseudonyms for secondLevelPseudonyms {} ", parameters.getParameters(ORIGINAL));
         // this might be removed when API on Greisfwald side is ready and working for any kind of id
-        return generateNumThirdLevelPseudonym(secondLevelPseudonyms, projectId);
-        //throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+        if (Boolean.TRUE.equals(fake3rdPartyPseudonymEnabled)) {
+          return generateNumThirdLevelPseudonym(secondLevelPseudonyms, projectId);
+        } else {
+          throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+        }
       }
       Map<String, Parameters.ParametersParameterComponent> paramsData = groupPseudonyms(params);
-      return secondLevelPseudonyms.stream().map(original -> {
-        var result = findPseudonymForOriginal(paramsData, original, projectId);
-        return result.orElse(generateNumThirdLevelPseudonym(original, projectId));
-      }).collect(Collectors.toList());
+      return secondLevelPseudonyms.stream()
+              .map(original -> findPseudonymForOriginal(paramsData, original, projectId).get())
+              .collect(Collectors.toList());
     } else {
-      // something did not work on Greisfwald side, so generate fake 3rd party pseudonyms
-      // this might be removed when API on Greisfwald side is ready and working for any kind of id
-      return generateNumThirdLevelPseudonym(secondLevelPseudonyms, projectId);
-      //throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+      if (Boolean.TRUE.equals(fake3rdPartyPseudonymEnabled)) {
+        // something did not work on Greisfwald side, so generate fake 3rd party pseudonyms
+        // this might be removed when API on Greisfwald side is ready and working for any kind of id
+        return generateNumThirdLevelPseudonym(secondLevelPseudonyms, projectId);
+      } else {
+        throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+      }
     }
   }
 
@@ -145,10 +154,22 @@ public class Pseudonymity {
     if (Pattern.matches(EXTERNAL_REF_ID_REGEX_GREIFSWALD_COMPLIANT, original) && parameters.containsKey(original)) {
       var param = parameters.get(original);
       String pseudonym = getPartValue(PSEUDONYM, param);
-      return StringUtils.isNotEmpty(pseudonym) ? Optional.of(pseudonym) : Optional.of(generateNumThirdLevelPseudonym(original, projectId));
+      if (StringUtils.isNotEmpty(pseudonym)) {
+        return Optional.of(pseudonym);
+      } else {
+        if (Boolean.TRUE.equals(fake3rdPartyPseudonymEnabled)) {
+          return Optional.of(generateNumThirdLevelPseudonym(original, projectId));
+        } else {
+          throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+        }
+      }
+    } else {
+      if (Boolean.TRUE.equals(fake3rdPartyPseudonymEnabled)) {
+        return Optional.of(generateNumThirdLevelPseudonym(original, projectId));
+      } else {
+        throw new ResourceNotFound(Pseudonymity.class, PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE);
+      }
     }
-    log.debug("For id {} was generated fake 3rd level pseudonym", original);
-    return Optional.of(generateNumThirdLevelPseudonym(original, projectId));
   }
 
   private List<String> generateNumThirdLevelPseudonym(List<String> secondLevelPseudonyms, Long projectId) {
@@ -158,6 +179,7 @@ public class Pseudonymity {
   }
 
   private String generateNumThirdLevelPseudonym(String original, Long projectId) {
+    log.debug("For id {} was generated fake 3rd level pseudonym", original);
     return new DigestUtils(DIGEST_ALGORITHM)
             .digestAsHex(original + projectId + privacyProperties.getPseudonymitySecret());
   }
