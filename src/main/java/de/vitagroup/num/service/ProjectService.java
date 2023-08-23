@@ -1129,7 +1129,7 @@ public class ProjectService {
             throw new ForbiddenException(ProjectService.class, DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY);
         }
 
-        if (!project.isProjectResearcher(userId) && project.hasEmptyOrDifferentOwner(userId)) {
+        if (!project.isProjectResearcher(userId)) {
             throw new ForbiddenException(ProjectService.class, CANNOT_ACCESS_THIS_PROJECT);
         }
 
