@@ -138,6 +138,7 @@ privacy:
 num:
   url: https://dev.num-codex.de/home
   locale: en
+  systemStatusUrl: https://health.num-codex.de/
 
 consent:
   allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
@@ -253,6 +254,7 @@ zars:
 num:
   url: http://localhost:8180
   locale: en
+  systemStatusUrl: https://health.num-codex.de/
 
 user-service:
   delete-users-cron: 0 0 5 * * *
