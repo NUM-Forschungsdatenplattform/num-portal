@@ -79,8 +79,14 @@ public class PseudonymityTest {
     }
 
     @Test
-    public void getPseudonymsInvalidFromat() {
+    public void getPseudonymsInvalidFormat() {
         ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", true);
+        pseudonymity.getPseudonyms(Arrays.asList("123"), 100L);
+    }
+
+    @Test(expected = ResourceNotFound.class)
+    public void getPseudonymsInvalidFormatAndExpectNotFound() {
+        ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", false);
         pseudonymity.getPseudonyms(Arrays.asList("123"), 100L);
     }
 
