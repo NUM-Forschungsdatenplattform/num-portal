@@ -66,17 +66,23 @@ public class PseudonymityTest {
 
     private IParser xmlParser;
 
-  @Test
-  public void getPseudonyms() throws IOException {
-      ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", true);
-      when(xmlParser.encodeResourceToString(Mockito.any(Parameters.class))).thenReturn(REQUEST_BODY);
-      when(response.getStatusLine()).thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"));
-      StringEntity entity = new StringEntity(RESPONSE_BODY, ContentType.parse("application/fhir+xml;charset=utf-8"));
-      when(response.getEntity()).thenReturn(entity);
-      when(xmlParser.parseResource(Mockito.any(), Mockito.any(String.class))).thenReturn(mockOkParameters());
-      when(closeableHttpClient.execute(Mockito.any(HttpPost.class))).thenReturn(response);
-      pseudonymity.getPseudonyms(Arrays.asList("codex_WX6QAM", "codex_ABCDE1", "123"), 100L);
-  }
+    @Test
+    public void getPseudonyms() throws IOException {
+        ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", true);
+        when(xmlParser.encodeResourceToString(Mockito.any(Parameters.class))).thenReturn(REQUEST_BODY);
+        when(response.getStatusLine()).thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"));
+        StringEntity entity = new StringEntity(RESPONSE_BODY, ContentType.parse("application/fhir+xml;charset=utf-8"));
+        when(response.getEntity()).thenReturn(entity);
+        when(xmlParser.parseResource(Mockito.any(), Mockito.any(String.class))).thenReturn(mockOkParameters());
+        when(closeableHttpClient.execute(Mockito.any(HttpPost.class))).thenReturn(response);
+        pseudonymity.getPseudonyms(Arrays.asList("codex_WX6QAM", "codex_ABCDE1", "123"), 100L);
+    }
+
+    @Test
+    public void getPseudonymsInvalidFromat() {
+        ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", true);
+        pseudonymity.getPseudonyms(Arrays.asList("123"), 100L);
+    }
 
     @Test(expected = ResourceNotFound.class)
     public void getPseudonymsNotFound() throws IOException {
@@ -122,10 +128,10 @@ public class PseudonymityTest {
     }
 
     private Parameters mockErrorParameters() {
-      Parameters parameters = new Parameters();
-      parameters.addParameter("error", "NULL");
-      parameters.addParameter("error-code", "exception");
-      return parameters;
+        Parameters parameters = new Parameters();
+        parameters.addParameter("error", "NULL");
+        parameters.addParameter("error-code", "exception");
+        return parameters;
     }
 
     private Parameters mockOkParameters() {
@@ -144,7 +150,7 @@ public class PseudonymityTest {
         return parameters;
     }
 
-    private Parameters.ParametersParameterComponent mockParamComponent(String name, String value){
+    private Parameters.ParametersParameterComponent mockParamComponent(String name, String value) {
         Parameters.ParametersParameterComponent component = new Parameters.ParametersParameterComponent(new StringType(name));
         Identifier identifier = new Identifier();
         identifier.setSystem("some system");
