@@ -56,7 +56,7 @@ public class PseudonymityTest {
 
   private static final String REQUEST_BODY = "<Parameters xmlns=\"http://hl7.org/fhir\"><parameter><name value=\"study\"/><valueString value=\"num\"/></parameter><parameter><name value=\"source\"/><valueString value=\"codex\"/></parameter><parameter><name value=\"target\"/><valueString value=\"extern_0\"/></parameter><parameter><name value=\"apikey\"/><valueString value=\"iCZdh7ZWuf8ms)vvBgU-IaLi4\"/></parameter><parameter><name value=\"event\"/><valueString value=\"num.get_extern_psn\"/></parameter><parameter><name value=\"original\"/><valueString value=\"codex_WX6QAM\"/></parameter></Parameters>";
 
-  private static final String RESPONSE_BODY = "<Parameters xmlns=\"http://hl7.org/fhir\"><parameter><name value=\"pseudonym\"/><part><name value=\"original\"/><valueIdentifier><system value=\"https://ths-greifswald.de/dispatcher\"/><value value=\"codex_NC2PG0\"/></valueIdentifier></part><part><name value=\"target\"/><valueIdentifier><system value=\"https://ths-greifswald.de/dispatcher\"/><value value=\"extern_0\"/></valueIdentifier></part><part><name value=\"pseudonym\"/><valueIdentifier><system value=\"https://ths-greifswald.de/dispatcher\"/><value value=\"extern_0_E2F4D9\"/></valueIdentifier></part></parameter></Parameters>";
+  private static final String RESPONSE_BODY = "<Parameters xmlns=\"http://hl7.org/fhir\"><parameter><name value=\"pseudonym\"/><part><name value=\"original\"/><valueIdentifier><system value=\"https://ths-greifswald.de/dispatcher\"/><value value=\"codex_WX6QAM\"/></valueIdentifier></part><part><name value=\"target\"/><valueIdentifier><system value=\"https://ths-greifswald.de/dispatcher\"/><value value=\"extern_0\"/></valueIdentifier></part><part><name value=\"pseudonym\"/><valueIdentifier><system value=\"https://ths-greifswald.de/dispatcher\"/><value value=\"extern_0_E2F4D9\"/></valueIdentifier></part></parameter></Parameters>";
 
     private static final String RESPONSE_BODY_WITH_ERROR = "<Parameters xmlns=\"http://hl7.org/fhir\"><parameter><name value=\"error\"/><part><name value=\"all\"/><valueString value=\"NULL\"/></part><part><name value=\"error-code\"/><valueCoding><system value=\"https://www.hl7.org/fhir/valueset-issue-type.html\"/><code value=\"exception\"/><display value=\"Exception\"/></valueCoding></part></parameter></Parameters>";
 
@@ -75,12 +75,22 @@ public class PseudonymityTest {
       when(response.getEntity()).thenReturn(entity);
       when(xmlParser.parseResource(Mockito.any(), Mockito.any(String.class))).thenReturn(mockOkParameters());
       when(closeableHttpClient.execute(Mockito.any(HttpPost.class))).thenReturn(response);
-      pseudonymity.getPseudonyms(Arrays.asList("codex_WX6QAM", "123"), 100L);
+      pseudonymity.getPseudonyms(Arrays.asList("codex_WX6QAM", "codex_ABCDE1", "123"), 100L);
   }
 
     @Test(expected = ResourceNotFound.class)
     public void getPseudonymsNotFound() throws IOException {
         ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", false);
+        setupTestForResponseWithError();
+    }
+
+    @Test
+    public void getPseudonymsWithErrorAndWorkAroundEnabled() throws IOException {
+        ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", true);
+        setupTestForResponseWithError();
+    }
+
+    private void setupTestForResponseWithError() throws IOException {
         when(xmlParser.encodeResourceToString(Mockito.any(Parameters.class))).thenReturn(REQUEST_BODY);
         when(response.getStatusLine()).thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"));
         StringEntity entity = new StringEntity(RESPONSE_BODY_WITH_ERROR, ContentType.parse("application/fhir+xml;charset=utf-8"));
@@ -126,7 +136,11 @@ public class PseudonymityTest {
         Parameters.ParametersParameterComponent pseudo = mockParamComponent("pseudonym", "extern_0_E2F4D9");
         parametersParameterComponent.addPart(pseudo);
 
-        parameters.addParameter(parametersParameterComponent);
+        Parameters.ParametersParameterComponent parametersParameterComponent2 = new Parameters.ParametersParameterComponent(new StringType("pseudonym"));
+        Parameters.ParametersParameterComponent original2 = mockParamComponent("original", "codex_ABCDE1");
+        parametersParameterComponent2.addPart(original2);
+
+        parameters.addParameter(parametersParameterComponent2);
         return parameters;
     }
 
