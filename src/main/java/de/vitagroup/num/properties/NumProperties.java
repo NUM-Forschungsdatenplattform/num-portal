@@ -11,4 +11,5 @@ public class NumProperties {
 
   private String locale;
   private String url;
+  private String systemStatusUrl;
 }

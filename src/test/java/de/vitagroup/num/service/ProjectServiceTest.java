@@ -252,18 +252,18 @@ public class ProjectServiceTest {
 
   @Test(expected = BadRequestException.class)
   public void retrieveDataBadRequestExceptionWrongCohort() {
-    projectService.retrieveData("query", 6L, "ownerCoordinatorId", Boolean.TRUE);
+    projectService.retrieveData("query", 6L, "researcher2", Boolean.TRUE);
   }
 
   @Test(expected = BadRequestException.class)
   public void retrieveDataBadRequestExceptionWrongTemplates() {
-    projectService.retrieveData("query", 7L, "ownerCoordinatorId", Boolean.TRUE);
+    projectService.retrieveData("query", 7L, "researcher2", Boolean.TRUE);
   }
 
   @Test(expected = PrivacyException.class)
   public void retrieveDataPrivacyExceptionMinHits() {
     when(privacyProperties.getMinHits()).thenReturn(10);
-    projectService.retrieveData("query", 8L, "ownerCoordinatorId", Boolean.TRUE);
+    projectService.retrieveData("query", 8L, "researcher2", Boolean.TRUE);
   }
 
   @Test(expected = SystemException.class)
@@ -1621,15 +1621,20 @@ public class ProjectServiceTest {
     when(userDetailsService.getUserDetailsById("researcher1"))
         .thenReturn(
             Optional.of(UserDetails.builder().userId("researcher1").approved(true).build()));
-
-    when(userService.getUserById("researcher2", false))
-        .thenReturn(
-            User.builder()
-                .id("researcher2")
-                .firstName("f2")
-                .lastName("l2")
-                .email("em2@vitagroup.ag")
-                .build());
+    UserDetails ownerCoordinator  = UserDetails.builder()
+            .userId("ownerCoordinatorId")
+            .approved(true).build();
+    User researcher2 = User.builder()
+            .id("researcher2")
+            .firstName("f2")
+            .lastName("l2")
+            .email("em2@vitagroup.ag")
+            .build();
+      UserDetails researcher = UserDetails.builder()
+              .userId("researcher2")
+              .approved(true)
+              .build();
+    when(userService.getUserById("researcher2", false)).thenReturn(researcher2);
 
     when(userService.getUserById("researcher1", false))
         .thenReturn(
@@ -1722,7 +1727,8 @@ public class ProjectServiceTest {
                             Project.builder()
                                     .id(6L)
                                     .status(PUBLISHED)
-                                    .coordinator(new UserDetails("ownerCoordinatorId", null, true))
+                                    .coordinator(ownerCoordinator)
+                                    .researchers(List.of(researcher))
                                     .build()));
 
     when(projectRepository.findById(7L))
@@ -1732,7 +1738,8 @@ public class ProjectServiceTest {
                                     .id(7L)
                                     .cohort(Cohort.builder().id(5L).build())
                                     .status(PUBLISHED)
-                                    .coordinator(new UserDetails("ownerCoordinatorId", null, true))
+                                    .coordinator(ownerCoordinator)
+                                    .researchers(List.of(researcher))
                                     .build()));
 
     Map<String, String> map = new HashMap<>();
@@ -1745,7 +1752,8 @@ public class ProjectServiceTest {
                                     .cohort(Cohort.builder().id(8L).build())
                                     .status(PUBLISHED)
                                     .templates(map)
-                                    .coordinator(new UserDetails("ownerCoordinatorId", null, true))
+                                    .coordinator(ownerCoordinator)
+                                    .researchers(List.of(researcher))
                                     .build()));
 
       when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));

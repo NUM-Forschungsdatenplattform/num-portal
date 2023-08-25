@@ -1,11 +1,14 @@
 package de.vitagroup.num.web.controller;
 
 import ch.qos.logback.classic.Level;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.repository.MapConverter;
+import de.vitagroup.num.properties.NumProperties;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
@@ -42,6 +45,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -62,6 +66,21 @@ public class AdminController extends CustomizedExceptionHandler {
   private final HealthEndpoint healthEndpoint;
 
   private final Pseudonymity pseudonymity;
+
+  private final NumProperties numProperties;
+
+  private ObjectMapper mapper;
+
+  @GetMapping("status-url")
+  public ResponseEntity<String> getSystemStatusUrl(){
+    MapConverter mapConverter = new MapConverter(mapper);
+    java.util.Map<String, Object> map = new HashMap<>();
+    map.put("systemStatusUrl", numProperties.getSystemStatusUrl());
+
+    String json = mapConverter.convertToDatabaseColumn(map);
+
+    return ResponseEntity.ok(json);
+  }
 
   @GetMapping("health")
   public ResponseEntity<Status> health() {
