@@ -68,6 +68,7 @@ public class PseudonymityTest {
 
   @Test
   public void getPseudonyms() throws IOException {
+      ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", true);
       when(xmlParser.encodeResourceToString(Mockito.any(Parameters.class))).thenReturn(REQUEST_BODY);
       when(response.getStatusLine()).thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"));
       StringEntity entity = new StringEntity(RESPONSE_BODY, ContentType.parse("application/fhir+xml;charset=utf-8"));
@@ -77,19 +78,21 @@ public class PseudonymityTest {
       pseudonymity.getPseudonyms(Arrays.asList("codex_WX6QAM", "123"), 100L);
   }
 
-    //@Test(expected = ResourceNotFound.class)
+    @Test(expected = ResourceNotFound.class)
     public void getPseudonymsNotFound() throws IOException {
+        ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", false);
         when(xmlParser.encodeResourceToString(Mockito.any(Parameters.class))).thenReturn(REQUEST_BODY);
         when(response.getStatusLine()).thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"));
         StringEntity entity = new StringEntity(RESPONSE_BODY_WITH_ERROR, ContentType.parse("application/fhir+xml;charset=utf-8"));
         when(response.getEntity()).thenReturn(entity);
         when(xmlParser.parseResource(Mockito.any(), Mockito.any(String.class))).thenReturn(mockErrorParameters());
         when(closeableHttpClient.execute(Mockito.any(HttpPost.class))).thenReturn(response);
-        pseudonymity.getPseudonyms(List.of("codex-AB1234"), 100L);
+        pseudonymity.getPseudonyms(List.of("codex_AB1234"), 100L);
     }
 
     @Test(expected = ResourceNotFound.class)
     public void getPseudonymsMissingParamsBadRequest() throws IOException {
+        ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", false);
         when(xmlParser.encodeResourceToString(Mockito.any(Parameters.class))).thenReturn(REQUEST_BODY);
         when(response.getStatusLine()).thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST, "Missing params"));
         StringEntity entity = new StringEntity(RESPONSE_BODY_BAD_REQUEST_ERROR, ContentType.parse("application/fhir+xml;charset=utf-8"));
@@ -106,7 +109,6 @@ public class PseudonymityTest {
         when(fhirContext.newXmlParser()).thenReturn(xmlParser);
         when(privacyProperties.getPseudonymitySecret()).thenReturn("testSecret123");
         when(privacyProperties.getPseudonomityChunksSize()).thenReturn(5);
-        ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", true);
     }
 
     private Parameters mockErrorParameters() {
