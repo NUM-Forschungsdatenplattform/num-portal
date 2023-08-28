@@ -13,7 +13,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static de.vitagroup.num.domain.Roles.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class AdminControllerIT extends IntegrationTest {
@@ -82,5 +84,18 @@ public class AdminControllerIT extends IntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(mapper.writeValueAsString(Boolean.FALSE))
             ).andExpect(status().isOk());
+  }
+
+  @Test
+  public void shouldGetExternalUrlsSuccessfully() throws Exception {
+    mockMvc
+            .perform(
+                    get("/admin/external-urls")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.systemStatusUrl").value("health-url"))
+            .andExpect(jsonPath("$.userManualUrl.DE").value("user-manual-de"))
+            .andExpect(jsonPath("$.userManualUrl.EN").value("user-manual-en"));
   }
 }

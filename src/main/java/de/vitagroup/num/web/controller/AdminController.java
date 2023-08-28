@@ -44,10 +44,7 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 @RequestMapping(value = "/admin/", produces = "application/json")
@@ -69,17 +66,12 @@ public class AdminController extends CustomizedExceptionHandler {
 
   private final NumProperties numProperties;
 
-  private ObjectMapper mapper;
-
-  @GetMapping("status-url")
-  public ResponseEntity<String> getSystemStatusUrl(){
-    MapConverter mapConverter = new MapConverter(mapper);
+  @GetMapping(value = "external-urls", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Map<String, Object>> getSystemStatusUrl(){
     java.util.Map<String, Object> map = new HashMap<>();
     map.put("systemStatusUrl", numProperties.getSystemStatusUrl());
-
-    String json = mapConverter.convertToDatabaseColumn(map);
-
-    return ResponseEntity.ok(json);
+    map.put("userManualUrl", numProperties.getUserManualUrl());
+    return ResponseEntity.ok(map);
   }
 
   @GetMapping("health")

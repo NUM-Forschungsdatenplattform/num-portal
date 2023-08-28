@@ -116,3 +116,10 @@ requestpsnworkflow:
     event: num.get_extern_psn
 consent:
   allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
+
+num:
+  systemStatusUrl: 'health-url'
+  userManualUrl:
+    DE: 'user-manual-de'
+    EN: 'user-manual-en'
+

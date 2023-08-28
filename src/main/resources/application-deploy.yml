@@ -68,6 +68,9 @@ num:
   url: ${NUM_URL}
   locale: ${NUM_LOCALE}
   systemStatusUrl: ${STATUS_URL}
+  userManualUrl:
+    DE: ${USER_MANUAL_URL_DE}
+    EN: ${USER_MANUAL_URL_EN}
 
 consent:
   allow-usage-outside-eu-oid: ${ALLOW_USAGE_OUTSIDE_EU_OID}
