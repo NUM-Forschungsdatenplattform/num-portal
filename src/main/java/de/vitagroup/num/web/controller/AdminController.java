@@ -67,7 +67,8 @@ public class AdminController extends CustomizedExceptionHandler {
   private final NumProperties numProperties;
 
   @GetMapping(value = "external-urls", produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Map<String, Object>> getSystemStatusUrl(){
+  @Operation(description = "Returns value for health status endpoint URL and user manual URL")
+  public ResponseEntity<Map<String, Object>> getExternalUrls(){
     java.util.Map<String, Object> map = new HashMap<>();
     map.put("systemStatusUrl", numProperties.getSystemStatusUrl());
     map.put("userManualUrl", numProperties.getUserManualUrl());
