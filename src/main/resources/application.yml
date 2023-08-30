@@ -139,6 +139,9 @@ num:
   url: https://dev.num-codex.de/home
   locale: en
   systemStatusUrl: https://health.num-codex.de/
+  userManualUrl:
+     DE: 'https://num-portal-webapp.readthedocs.io/de/latest/'
+     EN: 'https://num-portal-webapp.readthedocs.io/en/latest/'
 
 consent:
   allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
