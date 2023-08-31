@@ -55,7 +55,6 @@ public class Pseudonymity {
   private boolean fake3rdPartyPseudonymEnabled;
 
   public List<String> getPseudonyms(List<String> secondLevelPseudonyms, Long projectId) {
-
     List<String> result = new LinkedList<>();
     // I guess Greisfwald restricted the number of original params per request
     List<List<String>> chunks = ListUtils.partition(secondLevelPseudonyms, privacyProperties.getPseudonomityChunksSize());

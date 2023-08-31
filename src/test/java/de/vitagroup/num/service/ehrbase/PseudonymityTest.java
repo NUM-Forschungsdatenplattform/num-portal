@@ -69,6 +69,16 @@ public class PseudonymityTest {
     @Test
     public void getPseudonyms() throws IOException {
         ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", true);
+        setupTestDataWithMissingPseudonym();
+    }
+
+    @Test(expected = ResourceNotFound.class)
+    public void getPseudonymsAndExpectNotFoundWhenMissingPseudonym() throws IOException {
+        ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", false);
+        setupTestDataWithMissingPseudonym();
+    }
+
+    private void setupTestDataWithMissingPseudonym() throws IOException {
         when(xmlParser.encodeResourceToString(Mockito.any(Parameters.class))).thenReturn(REQUEST_BODY);
         when(response.getStatusLine()).thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"));
         StringEntity entity = new StringEntity(RESPONSE_BODY, ContentType.parse("application/fhir+xml;charset=utf-8"));
@@ -152,6 +162,7 @@ public class PseudonymityTest {
         Parameters.ParametersParameterComponent original2 = mockParamComponent("original", "codex_ABCDE1");
         parametersParameterComponent2.addPart(original2);
 
+        parameters.addParameter(parametersParameterComponent);
         parameters.addParameter(parametersParameterComponent2);
         return parameters;
     }
