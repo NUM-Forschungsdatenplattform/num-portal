@@ -101,9 +101,16 @@ public class AdminControllerIT extends IntegrationTest {
 
   @Test
   public void shouldGetServicesStatusSuccessfully() throws Exception {
+    testingWithEachParameter("/admin/services-status");//PREPROD
+    testingWithEachParameter("/admin/services-status?setup=PROD");
+    testingWithEachParameter("/admin/services-status?setup=STAGING");
+    testingWithEachParameter("/admin/services-status?setup=DEV");
+  }
+
+  private void testingWithEachParameter(String url) throws Exception {
     mockMvc
             .perform(
-                    get("/admin/services-status")
+                    get(url)
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())

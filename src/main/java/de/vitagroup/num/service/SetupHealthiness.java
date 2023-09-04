@@ -51,6 +51,7 @@ public class SetupHealthiness {
     }
 
     private String checkUrl(String preprodClass, String environment, String setupTypeURL) {
+        String error;
         try{
             URL url = new URL(setupTypeURL);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -64,10 +65,11 @@ public class SetupHealthiness {
                         preprodClass, environment, setupTypeURL);
             }
         }catch (IOException io) {
-            log.error(String.format(EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT,
-                            preprodClass, environment, setupTypeURL));
+            error = String.format(EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT,
+                    preprodClass, environment, setupTypeURL) + " " + io.getMessage();
+            log.error(error);
         }
-        return Strings.EMPTY;
+        return error;
     }
 
 }

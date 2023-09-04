@@ -83,9 +83,9 @@ public class AdminController extends CustomizedExceptionHandler {
           final @RequestParam(value = "setup", defaultValue = "PREPROD") SetupType setup){
     Map<String, String> map = healthiness.checkHealth(setup);
     if(map.values().stream().filter(s -> s.length() > 0).findFirst().isEmpty()) {
-      return ResponseEntity.ok(healthiness.checkHealth(setup));
+      return ResponseEntity.ok(map);
     } else {
-      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(healthiness.checkHealth(setup));
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(map);
     }
   }
 
