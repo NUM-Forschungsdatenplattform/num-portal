@@ -98,4 +98,19 @@ public class AdminControllerIT extends IntegrationTest {
             .andExpect(jsonPath("$.userManualUrl.DE").value("user-manual-de"))
             .andExpect(jsonPath("$.userManualUrl.EN").value("user-manual-en"));
   }
+
+  @Test
+  public void shouldGetServicesStatusSuccessfully() throws Exception {
+    mockMvc
+            .perform(
+                    get("/admin/services-status")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("NUM").value(""))
+            .andExpect(jsonPath("EHRBASE").value(""))
+            .andExpect(jsonPath("FHIR_BRIDGE").value(""))
+            .andExpect(jsonPath("FE").value(""))
+            .andExpect(jsonPath("KEYCLOAK").value(""));
+  }
 }
