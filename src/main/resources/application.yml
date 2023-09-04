@@ -16,7 +16,7 @@ spring:
     user: postgres
     password: postgres
   jpa:
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: none
     properties:
@@ -106,11 +106,15 @@ feign:
         connectTimeout: 1000
         readTimeout: 1200
         loggerLevel: FULL
+      keycloak:
+        loggerLevel: BASIC
 
 logging:
   level:
     de.vitasystems: trace
-    org.springframework.web: trace
+    org.springframework.web: info
+    # enable keycloak feign logging
+    de.vitagroup.num.web.feign.KeycloakFeign: DEBUG
 
 atna:
   enabled: false
