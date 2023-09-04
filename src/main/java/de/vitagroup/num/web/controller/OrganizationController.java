@@ -87,7 +87,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(new PageImpl<>(content, pageable, organizationPage.getTotalElements()));
   }
 
-  @AuditLog
+  @AuditLog(description = "Create organization")
   @PostMapping()
   @Operation(description = "Creates an organization")
   @PreAuthorize(Role.SUPER_ADMIN)
@@ -98,7 +98,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
         mapper.convertToDto(organizationService.create(principal.getSubject(), organizationDto)));
   }
 
-  @AuditLog
+  @AuditLog(description = "Update organization")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates an organization")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -115,7 +115,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
                 principal.getSubject())));
   }
 
-  @AuditLog
+  @AuditLog(description = "Delete organization")
   @Operation(description = "Delete the given organization if no users are assigned to this organization")
   @DeleteMapping(value = "/{id}")
   @PreAuthorize(Role.SUPER_ADMIN)

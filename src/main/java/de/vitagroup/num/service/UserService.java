@@ -91,6 +91,8 @@ public class UserService {
 
   private static final String ACTIVE = "enabled";
 
+  private static final String LOG_KEYCLOAK_DELETE_USER = "Keycloak call to delete user {}";
+
   @Transactional
   public void initializeUsersCache() {
     List<String> usersUUID = userDetailsService.getAllUsersUUID();
@@ -256,10 +258,12 @@ public class UserService {
       }
 
       if (removeRoles.length > 0) {
+        log.debug("Keycloak call to remove user's {} roles", userId);
         keycloakFeign.removeRoles(userId, removeRoles);
       }
 
       if (addRoles.length > 0) {
+        log.debug("Keycloak call to add roles to user {} ", userId);
         keycloakFeign.addRoles(userId, addRoles);
       }
 
@@ -512,6 +516,7 @@ public class UserService {
     try {
       User user = keycloakFeign.getUser(userId);
       if (user != null && BooleanUtils.isFalse(user.getEmailVerified())) {
+        log.debug(LOG_KEYCLOAK_DELETE_USER, userId);
         keycloakFeign.deleteUser(userId);
       } else {
         throw new BadRequestException(UserService.class, CANNOT_DELETE_ENABLED_USER);
@@ -558,9 +563,10 @@ public class UserService {
           boolean shouldDelete = LocalDateTime.from(createdAtDate.toInstant().atZone(ZoneId.of("UTC"))).
                   plusDays(30).isBefore(LocalDateTime.now());
           if (shouldDelete) {
+            log.debug(LOG_KEYCLOAK_DELETE_USER, userId);
             keycloakFeign.deleteUser(userId);
             userDetailsService.deleteUserDetails(userId);
-            log.warn("- deleteUnapprovedUsersAfter30Days - userID: {} isApproved: {} deletedUser: {}", userId, userDetails.isApproved(), userDetails);
+            log.info("- deleteUnapprovedUsersAfter30Days - userID: {} isApproved: {} deletedUser: {}", userId, userDetails.isApproved(), userDetails);
           }
         }
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
@@ -595,6 +601,7 @@ public class UserService {
         || (Roles.isOrganizationAdmin(roles)
         && belongToSameOrganization(loggedInUser, userToChange))) {
       updateName(userIdToChange, userName);
+      log.info("User's {} name was changed by {}", userIdToChange, loggedInUserId);
     } else {
       throw new ForbiddenException(UserService.class,
               CAN_ONLY_CHANGE_OWN_NAME_ORG_ADMIN_NAMES_OF_THE_PEOPLE_IN_THE_ORGANIZATION_AND_SUPERUSER_ALL_NAMES);
@@ -631,8 +638,9 @@ public class UserService {
     }
     if (!active.equals(userRaw.get(ACTIVE))) {
       // call keycloak rest API only if status changed
-      log.info("User {} flag active was changed to {} ", userId, active);
+      log.info("User {} flag active was changed to {} by loggedInUser {} ", userId, active, loggedInUserId);
       userRaw.put(ACTIVE, active);
+      log.debug("Keycloak call to update user's {} 'enabled' field", userId);
       keycloakFeign.updateUser(userId, userRaw);
       userDetailsService.sendAccountStatusChangedNotification(userId, loggedInUserId, active);
     }
@@ -724,6 +732,7 @@ public class UserService {
     }
     userRaw.put(FIRST_NAME, userNameDto.getFirstName());
     userRaw.put(LAST_NAME, userNameDto.getLastName());
+    log.debug("Keycloak call to update user's name {} ", userId);
     keycloakFeign.updateUser(userId, userRaw);
   }
 

@@ -1,8 +1,5 @@
 package de.vitagroup.num.service.logger;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.time.OffsetDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
@@ -15,12 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.time.OffsetDateTime;
 
 @Slf4j
 @Aspect
@@ -34,21 +30,21 @@ public class NumLogger {
   private static final String DELETE = "DELETE";
   private static final String GET = "GET";
 
-  @Before("@annotation(AuditLog)")
-  public boolean logMethodCall(JoinPoint joinPoint) {
+  @Before("@annotation(auditLog)")
+  public boolean logMethodCall(JoinPoint joinPoint, AuditLog auditLog) {
 
     if (SecurityContextHolder.getContext().getAuthentication() == null) {
       return false;
     }
     try {
-      logApiOperations(joinPoint, (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+      logApiOperations(joinPoint, (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), auditLog);
     } catch (Exception e) {
       log.error("Cannot log audit log {}", e);
     }
     return true;
   }
 
-  private void logApiOperations(JoinPoint joinPoint, Jwt principal) {
+  private void logApiOperations(JoinPoint joinPoint, Jwt principal, AuditLog auditLog) {
     RequestMethod requestMethod = getRequestMethod(joinPoint);
     if (requestMethod == null) {
       return;
@@ -60,9 +56,10 @@ public class NumLogger {
     Logger logger = LoggerFactory.getLogger(clazz);
     logger.info(
         String.format(
-            "%s %s { userId: %s, %s: %s, payload: {%s}}",
+            "%s %s {%s loggedInUserId: %s, %s: %s, payload: {%s}}",
             LOG_TYPE,
             OffsetDateTime.now(),
+            StringUtils.isNotEmpty(auditLog.description()) ? " operation: " + auditLog.description() + "," : "",
             principal.getSubject(),
             requestMethod,
             url,
