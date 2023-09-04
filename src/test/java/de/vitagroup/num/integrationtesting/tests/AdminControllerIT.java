@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
@@ -100,24 +101,38 @@ public class AdminControllerIT extends IntegrationTest {
   }
 
   @Test
-  public void shouldGetServicesStatusSuccessfully() throws Exception {
-    testingWithEachParameter("/admin/services-status");//PREPROD
-    testingWithEachParameter("/admin/services-status?setup=PROD");
-    testingWithEachParameter("/admin/services-status?setup=STAGING");
-    testingWithEachParameter("/admin/services-status?setup=DEV");
+  public void shouldGetServicesStatus() throws Exception {
+    testSuccess("/admin/services-status", status().isOk());//PREPROD
+    testSuccess("/admin/services-status?setup=PROD", status().isOk());
+    testFail("/admin/services-status?setup=STAGING", status().isServiceUnavailable());
+    testFail("/admin/services-status?setup=DEV", status().isServiceUnavailable());
   }
 
-  private void testingWithEachParameter(String url) throws Exception {
+  private void testSuccess(String url, ResultMatcher status) throws Exception {
     mockMvc
             .perform(
                     get(url)
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
+            .andExpect(status)
             .andExpect(jsonPath("NUM").value(""))
             .andExpect(jsonPath("EHRBASE").value(""))
             .andExpect(jsonPath("FHIR_BRIDGE").value(""))
             .andExpect(jsonPath("FE").value(""))
             .andExpect(jsonPath("KEYCLOAK").value(""));
+  }
+
+  private void testFail(String url, ResultMatcher status) throws Exception {
+    mockMvc
+            .perform(
+                    get(url)
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status)
+            .andExpect(jsonPath("NUM").isNotEmpty())
+            .andExpect(jsonPath("EHRBASE").isNotEmpty())
+            .andExpect(jsonPath("FHIR_BRIDGE").isNotEmpty())
+            .andExpect(jsonPath("FE").isNotEmpty())
+            .andExpect(jsonPath("KEYCLOAK").isNotEmpty());
   }
 }
