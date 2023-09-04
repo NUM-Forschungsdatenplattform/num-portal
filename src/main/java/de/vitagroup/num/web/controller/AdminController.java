@@ -1,14 +1,14 @@
 package de.vitagroup.num.web.controller;
 
 import ch.qos.logback.classic.Level;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.SetupType;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserNameDto;
-import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.properties.NumProperties;
+import de.vitagroup.num.service.SetupHealthiness;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
@@ -66,6 +66,8 @@ public class AdminController extends CustomizedExceptionHandler {
 
   private final NumProperties numProperties;
 
+  private final SetupHealthiness healthiness;
+
   @GetMapping(value = "external-urls", produces = MediaType.APPLICATION_JSON_VALUE)
   @Operation(description = "Returns value for health status endpoint URL and user manual URL")
   public ResponseEntity<Map<String, Object>> getExternalUrls(){
@@ -73,6 +75,18 @@ public class AdminController extends CustomizedExceptionHandler {
     map.put("systemStatusUrl", numProperties.getSystemStatusUrl());
     map.put("userManualUrl", numProperties.getUserManualUrl());
     return ResponseEntity.ok(map);
+  }
+
+  @GetMapping(value = "services-status", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(description = "Returns value for healths of different microservices")
+  public ResponseEntity<Map<String, String>> getServicesStatus(
+          final @RequestParam(value = "setup", defaultValue = "PREPROD") SetupType setup){
+    Map<String, String> map = healthiness.checkHealth(setup);
+    if(map.values().stream().filter(s -> s.length() > 0).findFirst().isEmpty()) {
+      return ResponseEntity.ok(map);
+    } else {
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(map);
+    }
   }
 
   @GetMapping("health")
