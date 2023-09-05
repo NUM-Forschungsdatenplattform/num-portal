@@ -53,7 +53,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohort));
   }
 
-  @AuditLog
+  @AuditLog(description = "Create cohort")
   @PostMapping
   @Operation(description = "Stores a cohort")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
@@ -64,7 +64,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
-  @AuditLog
+  @AuditLog(description = "Update cohort")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates a cohort")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
@@ -76,8 +76,8 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
-  @AuditLog
-  @PostMapping("size")
+  @AuditLog(description = "Read cohort size")
+  @PostMapping("/size")
   @Operation(description = "Retrieves the cohort group size without saving")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
   public ResponseEntity<Long> getCohortGroupSize(
@@ -96,7 +96,7 @@ public class CohortController extends CustomizedExceptionHandler {
   }
 
   @AuditLog
-  @PostMapping("size/template")
+  @PostMapping("/size/template")
   @Operation(description = "Retrieves the size of the templates")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
   public ResponseEntity<Map<String, Integer>> getSizePerTemplates(
@@ -117,8 +117,8 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(sizePerTemplate);
   }
 
-  @AuditLog
-  @PostMapping("size/distribution")
+  @AuditLog(description = "Read cohort group size with age distribution and patients number per hospital")
+  @PostMapping("/size/distribution")
   @Operation(
       description =
           "Retrieves the cohort group size without saving, provides also age distribution and patient numbers per hospital")

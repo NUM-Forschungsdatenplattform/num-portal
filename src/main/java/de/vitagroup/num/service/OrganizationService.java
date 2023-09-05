@@ -17,7 +17,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
@@ -295,7 +294,7 @@ public class OrganizationService {
     if (Objects.nonNull(dto.getActive())) {
       organization.setActive(dto.getActive());
       if (statusChanged(oldOrganizationStatus, dto.getActive()) && Boolean.FALSE.equals(dto.getActive())) {
-          log.info("Active flag for organization {} was changed to {}, so trigger event to deactivate all users assigned to this organization", organization.getId(), dto.getActive());
+          log.info("Organization {} was deactivated by {}, so trigger event to deactivate all users assigned to this organization", organization.getId(), loggedInUserId);
           DeactivateUserEvent deactivateUserEvent = new DeactivateUserEvent(this, organization.getId(), loggedInUserId);
           applicationEventPublisher.publishEvent(deactivateUserEvent);
       }

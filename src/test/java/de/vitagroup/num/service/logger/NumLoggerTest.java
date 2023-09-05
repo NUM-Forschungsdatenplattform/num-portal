@@ -31,6 +31,9 @@ public class NumLoggerTest {
     @Mock
     private JoinPoint joinPoint;
 
+    @Mock
+    private AuditLog auditLog;
+
     @Test(expected = Exception.class)
     public void logMethodCallException() {
         SecurityContext context = SecurityContextHolder.createEmptyContext();
@@ -38,15 +41,15 @@ public class NumLoggerTest {
                 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"));
         SecurityContextHolder.setContext(context);
         String exception = "Cannot log audit log class java.lang.String cannot be cast to class org.springframework.security.oauth2.jwt.Jwt (java.lang.String is in module java.base of loader 'bootstrap'; org.springframework.security.oauth2.jwt.Jwt is in unnamed module of loader 'app')";
-        when(numLogger.logMethodCall(joinPoint))
+        when(numLogger.logMethodCall(joinPoint, auditLog))
                 .thenThrow(new Exception(exception));
-        assertTrue(numLogger.logMethodCall(joinPoint));
+        assertTrue(numLogger.logMethodCall(joinPoint, auditLog));
     }
 
     @Test
     public void logMethodCallAuthentication() {
         SecurityContextHolder.getContext().setAuthentication(null);
-        boolean result = numLogger.logMethodCall(joinPoint);
+        boolean result = numLogger.logMethodCall(joinPoint, auditLog);
         assertFalse(result);
     }
 
@@ -66,7 +69,7 @@ public class NumLoggerTest {
         MethodSignature signature = Mockito.mock(MethodSignature.class);
         Mockito.when(joinPoint.getSignature()).thenReturn(signature);
         Mockito.when(signature.getMethod()).thenReturn(testMethod());
-        boolean result = numLogger.logMethodCall(joinPoint);
+        boolean result = numLogger.logMethodCall(joinPoint, auditLog);
         assertTrue(result);
         Mockito.verify(joinPoint, Mockito.times(1)).getSignature();
     }
