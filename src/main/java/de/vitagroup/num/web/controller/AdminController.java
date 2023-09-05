@@ -1,13 +1,13 @@
 package de.vitagroup.num.web.controller;
 
 import ch.qos.logback.classic.Level;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import ch.qos.logback.classic.Logger;
+import de.vitagroup.num.NumPortalApplication;
 import de.vitagroup.num.domain.Roles;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserNameDto;
-import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.properties.NumProperties;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
@@ -15,6 +15,7 @@ import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
+import de.vitagroup.num.web.feign.KeycloakFeign;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -92,9 +93,15 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @PostMapping("/log-level/{logLevel}")
   public ResponseEntity<Level> setLogLevel(@NotNull @PathVariable String logLevel) {
-    ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-    rootLogger.setLevel(Level.valueOf(logLevel));//Default log level is DEBUG. If {logLevel} == Wrong Status
-    return ResponseEntity.ok(rootLogger.getLevel());
+    ch.qos.logback.classic.Logger numLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(NumPortalApplication.class.getPackageName());
+    Level level = Level.valueOf(logLevel);
+    numLogger.setLevel(level);//Default log level is DEBUG. If {logLevel} == Wrong Status
+    if (Level.DEBUG.equals(level) || Level.INFO.equals(level)) {
+      // when DEBUG, logging is enabled for keycloak client
+      Logger keycloakClient = (Logger) LoggerFactory.getLogger(KeycloakFeign.class.getName());
+      keycloakClient.setLevel(numLogger.getLevel());
+    }
+    return ResponseEntity.ok(numLogger.getLevel());
   }
 
   @AuditLog(description = "Delete user")

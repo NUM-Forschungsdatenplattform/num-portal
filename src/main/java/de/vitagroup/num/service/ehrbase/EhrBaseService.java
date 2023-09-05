@@ -32,6 +32,7 @@ import org.ehrbase.client.aql.query.Query;
 import org.ehrbase.client.aql.record.Record;
 import org.ehrbase.client.exception.ClientException;
 import org.ehrbase.client.exception.WrongStatusCodeException;
+import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestAqlEndpoint;
 import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestClient;
 import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
 import org.ehrbase.response.openehr.QueryResponseData;
@@ -85,7 +86,7 @@ public class EhrBaseService {
   }
 
   public Set<String> retrieveEligiblePatientIds(String query) {
-
+    log.debug("EhrBase retrieve ehr ids for query: {} ", query);
     AqlDto dto = new AqlToDtoParser().parse(query);
     SelectFieldDto selectStatementDto = new SelectFieldDto();
     selectStatementDto.setAqlPath(EhrFields.EHR_ID().getPath());
@@ -130,6 +131,7 @@ public class EhrBaseService {
         log.error("Error parsing query while logging", e);
       }
 
+      log.debug("EhrBase call to execute raw query: {}", query);
       QueryResponseData response = restClient.aqlEndpoint().executeRaw(query);
       return flattenIfCompositionPresent(response, projectId);
 
@@ -148,6 +150,7 @@ public class EhrBaseService {
     NativeQuery<Record> query = Query.buildNativeQuery(queryString);
 
     try {
+      log.debug("EhrBase call to execute raw query: {}", queryString);
       return restClient.aqlEndpoint().executeRaw(query);
     } catch (WrongStatusCodeException e) {
       log.error(INVALID_AQL_QUERY, e);
@@ -174,6 +177,7 @@ public class EhrBaseService {
   }
 
   public List<TemplateMetaDataDto> getAllTemplatesMetadata() {
+    log.debug("EhrBase call to retrieve all templates ");
     TemplatesResponseData templateResponseData = restClient.templateEndpoint().findAllTemplates();
     return templateResponseData.get();
   }
