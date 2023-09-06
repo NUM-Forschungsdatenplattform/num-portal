@@ -103,13 +103,13 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @GetMapping("/log-level")
   public ResponseEntity<Level> getLogLevel() {
-    ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-    return ResponseEntity.ok(rootLogger.getLevel());
+    Logger numLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(NumPortalApplication.class.getPackageName());
+    return ResponseEntity.ok(numLogger.getLevel());
   }
 
   @PostMapping("/log-level/{logLevel}")
   public ResponseEntity<Level> setLogLevel(@NotNull @PathVariable String logLevel) {
-    ch.qos.logback.classic.Logger numLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(NumPortalApplication.class.getPackageName());
+    Logger numLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(NumPortalApplication.class.getPackageName());
     Level level = Level.valueOf(logLevel);
     numLogger.setLevel(level);//Default log level is DEBUG. If {logLevel} == Wrong Status
     if (Level.DEBUG.equals(level) || Level.INFO.equals(level)) {
