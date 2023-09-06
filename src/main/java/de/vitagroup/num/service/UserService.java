@@ -450,7 +450,7 @@ public class UserService {
       users.forEach(this::addUserDetails);
       return users;
     } catch (FeignException fe) {
-      log.error(LOG_KEYCLOAK_ERROR, fe.getLocalizedMessage(), fe.status());
+      log.error(LOG_KEYCLOAK_ERROR, fe.getMessage(), fe.status());
       throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER,
               String.format(AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER, fe.getMessage()));
     }
@@ -575,7 +575,7 @@ public class UserService {
       throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER,
               String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
-      log.warn("User not found in keycloak: {}", userId);
+      log.error(LOG_KEYCLOAK_ERROR_GET_USER, userId, e.getMessage(), e.status());
       throw new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, userId));
     }
   }
