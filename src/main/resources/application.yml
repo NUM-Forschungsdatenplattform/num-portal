@@ -111,10 +111,10 @@ feign:
 
 logging:
   level:
-    de.vitasystems: trace
     org.springframework.web: info
-    # enable keycloak feign logging
-    de.vitagroup.num.web.feign.KeycloakFeign: DEBUG
+    # DEBUG enables keycloak feign logging
+    de.vitagroup.num.web.feign.KeycloakFeign: INFO
+    de.vitagroup.num: INFO
 
 atna:
   enabled: false
