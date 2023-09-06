@@ -18,7 +18,6 @@ import de.vitagroup.num.service.notification.dto.Notification;
 import de.vitagroup.num.service.notification.dto.account.AccountApprovalNotification;
 import de.vitagroup.num.service.notification.dto.account.AccountStatusChangedNotification;
 import de.vitagroup.num.service.notification.dto.account.OrganizationUpdateNotification;
-import de.vitagroup.num.web.feign.KeycloakFeign;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -41,8 +39,6 @@ import static org.mockito.Mockito.*;
 public class UserDetailsServiceTest {
 
   @Mock private UserDetailsRepository userDetailsRepository;
-
-  @Mock private KeycloakFeign keycloakFeign;
 
   @Mock private UserService userService;
 
