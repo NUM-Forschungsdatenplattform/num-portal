@@ -85,7 +85,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project.get()));
   }
 
-  @AuditLog
+  @AuditLog(description = "Create project")
   @PostMapping()
   @Operation(
       description = "Creates a project; the logged in user is assigned as coordinator of the project")
@@ -101,10 +101,9 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
-  @AuditLog
+  @AuditLog(description = "Update project")
   @PutMapping(value = "/{id}")
-  @Operation(
-      description =
+  @Operation(description =
           "Updates a project; the logged in user is assigned as coordinator of the project at creation time")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
   public ResponseEntity<ProjectDto> updateProject(
@@ -119,7 +118,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
-  @AuditLog
+  @AuditLog(description = "Retrieve/download project data")
   @PostMapping("/{projectId}/execute")
   @Operation(description = "Executes the aql")
   @PreAuthorize(Role.RESEARCHER)
@@ -200,7 +199,7 @@ public class ProjectController extends CustomizedExceptionHandler {
             .collect(Collectors.toList()));
   }
 
-  @AuditLog
+  @AuditLog(description = "Add comment")
   @PostMapping("/{projectId}/comment")
   @Operation(description = "Adds a comment to a particular project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -246,7 +245,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     commentService.deleteComment(commentId, projectId, principal.getSubject());
   }
 
-  @AuditLog
+  @AuditLog(description = "Delete project")
   @DeleteMapping("/{id}")
   @Operation(description = "Deletes a project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)

@@ -83,9 +83,9 @@ public class AdminController extends CustomizedExceptionHandler {
           final @RequestParam(value = "setup", defaultValue = "PREPROD") SetupType setup){
     Map<String, String> map = healthiness.checkHealth(setup);
     if(map.values().stream().filter(s -> s.length() > 0).findFirst().isEmpty()) {
-      return ResponseEntity.ok(healthiness.checkHealth(setup));
+      return ResponseEntity.ok(map);
     } else {
-      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(healthiness.checkHealth(setup));
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(map);
     }
   }
 
@@ -111,7 +111,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(rootLogger.getLevel());
   }
 
-  @AuditLog
+  @AuditLog(description = "Delete user")
   @DeleteMapping("user/{userId}")
   @PreAuthorize(Role.SUPER_ADMIN)
   public void deleteUser(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable String userId) {
@@ -135,7 +135,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(userService.getUserRoles(userId, principal.getSubject()));
   }
 
-  @AuditLog
+  @AuditLog(description = "Update user's roles")
   @PostMapping("user/{userId}/role")
   @Operation(description = "Updates the users roles to the given set.")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -147,7 +147,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(updatedRoles);
   }
 
-  @AuditLog
+  @AuditLog(description = "Update user's organization")
   @PostMapping("user/{userId}/organization")
   @Operation(description = "Sets the user's organization")
   @PreAuthorize(Role.SUPER_ADMIN)
@@ -170,7 +170,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @AuditLog
+  @AuditLog(description = "Update user's name")
   @PostMapping("user/{userId}/name")
   @Operation(description = "Changes user name")
   public ResponseEntity<String> changeUserName(
@@ -180,7 +180,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @AuditLog
+  @AuditLog(description = "Approve user")
   @PostMapping("user/{userId}/approve")
   @Operation(description = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -204,7 +204,7 @@ public class AdminController extends CustomizedExceptionHandler {
             userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
   }
 
-  @AuditLog
+  @AuditLog(description = "Update user's active field")
   @PostMapping("user/{userId}/status")
   @Operation(description = "Updates user's status for active flag (enabled field in keycloak representation).")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)

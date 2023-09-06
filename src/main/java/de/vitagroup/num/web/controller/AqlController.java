@@ -51,7 +51,7 @@ public class AqlController extends CustomizedExceptionHandler {
         mapper.convertToDto(aqlService.getAqlById(id, principal.getSubject())));
   }
 
-  @AuditLog
+  @AuditLog(description = "Create AQL criteria")
   @PostMapping()
   @Operation(description = "Creates an aql; the logged in user is assigned as owner of the aql.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
@@ -62,7 +62,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
-  @AuditLog
+  @AuditLog(description = "Update AQL criteria")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates an aql; the logged in user is assigned as owner of the aql at creation time")
   @PreAuthorize(Role.CRITERIA_EDITOR)
@@ -75,7 +75,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
-  @AuditLog
+  @AuditLog(description = "Delete AQL criteria")
   @DeleteMapping("/{id}")
   @Operation(description = "Delete AQL criteria")
   @PreAuthorize(Role.CRITERIA_EDITOR_OR_SUPER_ADMIN)
@@ -119,7 +119,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(aqlService.getAqlSize(aql, principal.getSubject()));
   }
 
-  @AuditLog
+  @AuditLog(description = "Create AQL category")
   @PostMapping(value = "/category")
   @Operation(description = "Creates a category. If there is an id in the DTO, it is ignored.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
@@ -130,7 +130,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
 
-  @AuditLog
+  @AuditLog(description = "Update AQL category")
   @PutMapping(value = "/category/{id}")
   @Operation(description = "Updates a category. If present, the id in the DTO is ignored.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
@@ -145,7 +145,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
 
-  @AuditLog
+  @AuditLog(description = "Delete AQL category")
   @DeleteMapping(value = "/category/{id}")
   @Operation(description = "Delete a category")
   @PreAuthorize(Role.CRITERIA_EDITOR)
