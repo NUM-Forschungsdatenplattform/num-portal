@@ -147,6 +147,7 @@ public class ExceptionsTemplate {
     public final static String ERROR_MESSAGE = "An error has occurred while calling ehrbase";
     public final static String CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED = "Cannot check consent for data usage outside the European Union, oid not configured";
     public final static String CACHE_IS_NOT_REACHABLE = "Cache is not reachable";
+    public final static String EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT = "Exception happened in %s class for %s environment. Link %s is not accessible";//3 parameters
 
 
     public static final Map<String, ExceptionDto> errorMap = new HashMap<>();
@@ -299,6 +300,7 @@ public class ExceptionsTemplate {
 
         errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, new ExceptionDto(99, new ArrayList<>()));
         errorMap.put(CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION, new ExceptionDto(100, new ArrayList<>()));//1 parameter
+        errorMap.put(EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT, new ExceptionDto(101, new ArrayList<>()));//3 parameter
 
     }
 
