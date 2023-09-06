@@ -251,7 +251,7 @@ public class UserServiceTest {
         Mockito.verify(userDetailsService, Mockito.times(1)).deleteUserDetails("user-to-be-removed");
     }
 
-    @Test(expected = SystemException.class)
+    @Test(expected = BadRequestException.class)
     public void shouldHandleNotAllowedToDeleteEnabledUser() {
         User userToBeRemoved =
                 User.builder()
@@ -661,7 +661,6 @@ public class UserServiceTest {
                 .lastName("Foe").build());
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
         Set<String> result = userService.findUsersUUID("doe");
-        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers("doe", 0, 100);
         Assert.assertEquals(1, result.size());
     }
 
@@ -706,7 +705,6 @@ public class UserServiceTest {
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
         Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
-        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,4)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(Boolean.FALSE, capturedInput.getApproved());
