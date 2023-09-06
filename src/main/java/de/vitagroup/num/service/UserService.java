@@ -795,11 +795,11 @@ public class UserService {
     try {
       return keycloakFeign.getUser(userId);
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      log.error(LOG_KEYCLOAK_ERROR_GET_USER, userId, e.getMessage(), e.status());
+      log.error(LOG_KEYCLOAK_ERROR, e.getMessage(), e.status());
       throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER,
               String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
-      log.error("Keycloak - user {} not found. Message: {} , status: {}", userId, e.getMessage(), e.status());
+      log.error(LOG_KEYCLOAK_ERROR_GET_USER, userId, e.getMessage(), e.status());
       throw new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, userId));
     }
   }
