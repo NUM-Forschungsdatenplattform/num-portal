@@ -48,19 +48,18 @@ public class SetupHealthiness {
             default:
                 throw new IllegalStateException("Unexpected value: " + setup);
         }
+        map.put("CHECK_FOR_ANNOUNCEMENTS", checkForAnnouncements());
         return map;
     }
 
-    public String checkForAnnouncements() {
-        String message;
+    private String checkForAnnouncements() {
+        String message = Strings.EMPTY;
         String URL = "https://health.num-codex.de/";
         HtmlContent htmlContent = new HtmlContent();
         try {
             htmlContent.init();
             String pageContent = htmlContent.pageContent(URL);
-            if(pageContent.contains( "No current announcements" )){
-                message = "No current announcements";
-            } else {
+            if(!pageContent.contains( "No current announcements" )){
                 message = String.format("Check the %s page for the new announcements", URL);
             }
         } catch (Exception e) {
