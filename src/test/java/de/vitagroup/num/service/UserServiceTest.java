@@ -291,6 +291,12 @@ public class UserServiceTest {
     }
 
     @Test(expected = SystemException.class)
+    public void shouldHandleFeignExceptionWhenGetByRoleTest() {
+        Mockito.when(keycloakFeign.getByRole("dummy-role")).thenThrow(FeignException.BadRequest.class);
+        userService.getByRole("dummy-role");
+    }
+
+    @Test(expected = SystemException.class)
     public void shouldHandleGetUserBadRequest() {
         userService.getUserById("1", true);
     }
