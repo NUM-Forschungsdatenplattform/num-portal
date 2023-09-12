@@ -1,6 +1,7 @@
 package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.SetupType;
+import de.vitagroup.num.service.html.HtmlContent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,24 @@ public class SetupHealthiness {
             default:
                 throw new IllegalStateException("Unexpected value: " + setup);
         }
+        map.put("CHECK_FOR_ANNOUNCEMENTS", checkForAnnouncements());
         return map;
+    }
+
+    private String checkForAnnouncements() {
+        String message = Strings.EMPTY;
+        String URL = "https://health.num-codex.de/";
+        HtmlContent htmlContent = new HtmlContent();
+        try {
+            htmlContent.init();
+            String pageContent = htmlContent.pageContent(URL);
+            if(!pageContent.contains( "No current announcements" )){
+                message = String.format("Check the %s page for the new announcements", URL);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return message;
     }
 
     private String checkUrl(String preprodClass, String environment, String setupTypeURL) {
