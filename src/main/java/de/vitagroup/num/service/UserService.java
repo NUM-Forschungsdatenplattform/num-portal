@@ -283,11 +283,11 @@ public class UserService {
     try {
       return keycloakFeign.getRolesOfUser(userId);
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      log.error("Keycloak - failed to get user's {} roles. Message {}, status {}", userId, e.getLocalizedMessage(), e.status());
+      log.error("Keycloak - failed to get user's {} roles. Message {}, status {}", userId, e.getMessage(), e.status());
       throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER,
               String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
-      log.error(LOG_KEYCLOAK_ERROR_RESOURCE_NOT_FOUND, e.getLocalizedMessage(), e.status());
+      log.error(LOG_KEYCLOAK_ERROR_RESOURCE_NOT_FOUND, e.getMessage(), e.status());
       throw new ResourceNotFound(UserService.class, NO_ROLES_FOUND);
     }
   }
