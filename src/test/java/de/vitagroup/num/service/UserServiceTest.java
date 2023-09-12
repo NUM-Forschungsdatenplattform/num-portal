@@ -3,15 +3,11 @@ package de.vitagroup.num.service;
 import de.vitagroup.num.domain.EntityGroup;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.Translation;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.Translation;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.Language;
-import de.vitagroup.num.domain.dto.OrganizationDto;
-import de.vitagroup.num.domain.dto.SearchCriteria;
-import de.vitagroup.num.domain.dto.SearchFilter;
-import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.TranslationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
@@ -612,6 +608,13 @@ public class UserServiceTest {
         assertEquals("John", captured.get("firstName"));
         assertEquals("Doe", captured.get("lastName"));
         assertEquals("5", stringArgumentCaptor.getValue());
+    }
+
+    @Test(expected = SystemException.class)
+    public void shouldHandleFeignExceptionWhenChangeName() {
+        Mockito.doThrow(FeignException.InternalServerError.class).when(keycloakFeign).updateUser(Mockito.eq("5"), Mockito.anyMap());
+        userService.changeUserName("5", new UserNameDto("John", "Doe"), "5", Collections.emptyList());
+        Mockito.verify(notificationService, Mockito.never());
     }
 
     @Test
