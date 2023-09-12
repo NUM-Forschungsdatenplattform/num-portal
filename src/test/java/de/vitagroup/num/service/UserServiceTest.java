@@ -338,6 +338,16 @@ public class UserServiceTest {
                 Collections.singletonList(Roles.SUPER_ADMIN));
     }
 
+    @Test(expected = SystemException.class)
+    public void shouldHandleFeignExceptionWhenSetRoles() {
+        Mockito.doThrow(FeignException.InternalServerError.class).when(keycloakFeign).addRoles(Mockito.eq("4"), Mockito.any());
+        userService.setUserRoles(
+                "4",
+                Arrays.asList(Roles.RESEARCHER, Roles.STUDY_APPROVER),
+                "4",
+                Collections.singletonList(Roles.SUPER_ADMIN));
+    }
+
     @Test
     public void getUserRolesTestOK() {
         userService.getUserRoles("6", "4");
