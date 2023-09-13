@@ -297,6 +297,7 @@ public class AqlService {
         aqlEditorAqlService.validateAql(Result.builder().q(query).build());
     if (!response.isValid()) {
       try {
+        log.error("AQL validation for query '{}' failed: {}", query, response.getMessage());
         throw new BadRequestException(QueryValidationResponse.class, COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE,
                 String.format(COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE, mapper.writeValueAsString(response)));
       } catch (JsonProcessingException e) {
