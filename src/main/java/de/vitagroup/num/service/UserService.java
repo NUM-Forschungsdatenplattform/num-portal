@@ -93,6 +93,12 @@ public class UserService {
 
   private static final String LOG_KEYCLOAK_DELETE_USER = "Keycloak call to delete user {}";
 
+  private static final String LOG_KEYCLOAK_ERROR_GET_USER = "Keycloak - could not retrieve user {}. Message: {}, status: {}";
+
+  private static final String LOG_KEYCLOAK_ERROR_RESOURCE_NOT_FOUND = "Keycloak - resource not found. Message: {}, status: {}";
+
+  private static final String LOG_KEYCLOAK_ERROR = "Keycloak - error occurred. Message: {}, status: {}";
+
   @Transactional
   public void initializeUsersCache() {
     List<String> usersUUID = userDetailsService.getAllUsersUUID();
@@ -182,23 +188,13 @@ public class UserService {
    */
   @Transactional
   public User getUserById(String userId, Boolean withRole) {
-    try {
-      User user = keycloakFeign.getUser(userId);
+      User user = getUser(userId);
 
       if (BooleanUtils.isTrue(withRole)) {
         addRoles(user);
       }
-
       addUserDetails(user);
       return user;
-
-    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER,
-              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
-    } catch (FeignException.NotFound e) {
-      log.warn("User not found in keycloak: {}", userId);
-      throw new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, userId));
-    }
   }
 
   /**
@@ -268,13 +264,15 @@ public class UserService {
       }
 
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
+      log.error(LOG_KEYCLOAK_ERROR, e.getMessage(), e.status());
       throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER,
               String.format(AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
+      log.error(LOG_KEYCLOAK_ERROR_RESOURCE_NOT_FOUND, e.getMessage(), e.status());
       throw new ResourceNotFound(UserService.class, ROLE_OR_USER_NOT_FOUND);
     }
 
-    Set<Role> current = keycloakFeign.getRolesOfUser(userId);
+    Set<Role> current = getUserRoles(userId);
 
     notificationService.send(
         collectRolesUpdateNotification(userId, callerUserId, addRoles, removeRoles, current));
@@ -285,22 +283,17 @@ public class UserService {
     try {
       return keycloakFeign.getRolesOfUser(userId);
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
+      log.error("Keycloak - failed to get user's {} roles. Message {}, status {}", userId, e.getMessage(), e.status());
       throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER,
               String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
+      log.error(LOG_KEYCLOAK_ERROR_RESOURCE_NOT_FOUND, e.getMessage(), e.status());
       throw new ResourceNotFound(UserService.class, NO_ROLES_FOUND);
     }
   }
 
   private Set<String> getUserRoleNames(String userId) {
-    try {
-      return keycloakFeign.getRolesOfUser(userId).stream().map(Role::getName).collect(Collectors.toSet());
-    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
-      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER,
-              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USER_ROLES_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
-    } catch (FeignException.NotFound e) {
-      throw new ResourceNotFound(UserService.class, NO_ROLES_FOUND);
-    }
+      return getUserRoles(userId).stream().map(Role::getName).collect(Collectors.toSet());
   }
 
   private void addUserDetails(User user) {
@@ -451,10 +444,16 @@ public class UserService {
 
   @Transactional
   public Set<User> getByRole(String role) {
-    Set<User> users = keycloakFeign.getByRole(role);
-    users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
-    users.forEach(this::addUserDetails);
-    return users;
+    try {
+      Set<User> users = keycloakFeign.getByRole(role);
+      users.removeIf(u -> userDetailsService.getUserDetailsById(u.getId()).isEmpty());
+      users.forEach(this::addUserDetails);
+      return users;
+    } catch (FeignException fe) {
+      log.error(LOG_KEYCLOAK_ERROR, fe.getMessage(), fe.status());
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER, fe.getMessage()));
+    }
   }
 
   private List<Notification> collectUserNameUpdateNotification(
@@ -512,18 +511,20 @@ public class UserService {
 
     return notifications;
   }
+
   private void deleteNotVerifiedUser(String userId) {
-    try {
-      User user = keycloakFeign.getUser(userId);
-      if (user != null && BooleanUtils.isFalse(user.getEmailVerified())) {
-        log.debug(LOG_KEYCLOAK_DELETE_USER, userId);
+    User user = keycloakFeign.getUser(userId);
+    if (user != null && BooleanUtils.isFalse(user.getEmailVerified())) {
+      log.debug(LOG_KEYCLOAK_DELETE_USER, userId);
+      try {
         keycloakFeign.deleteUser(userId);
-      } else {
-        throw new BadRequestException(UserService.class, CANNOT_DELETE_ENABLED_USER);
+      } catch (FeignException e) {
+        log.error(LOG_KEYCLOAK_ERROR, e.getMessage(), e.status());
+        throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER,
+                String.format(AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
       }
-    } catch (Exception e) {
-      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER,
-              String.format(AN_ERROR_HAS_OCCURRED_WHILE_DELETING_USER_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
+    } else {
+      throw new BadRequestException(UserService.class, CANNOT_DELETE_ENABLED_USER);
     }
   }
 
@@ -570,10 +571,11 @@ public class UserService {
           }
         }
     } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
+      log.error(LOG_KEYCLOAK_ERROR, e.getMessage(), e.status());
       throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER,
               String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
     } catch (FeignException.NotFound e) {
-      log.warn("User not found in keycloak: {}", userId);
+      log.error(LOG_KEYCLOAK_ERROR_GET_USER, userId, e.getMessage(), e.status());
       throw new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, userId));
     }
   }
@@ -631,11 +633,7 @@ public class UserService {
   @CachePut(cacheNames = USERS_CACHE, key = "#userId")
   @Transactional
   public User updateUserActiveField(@NotNull String loggedInUserId, @NotNull String userId, @NotNull Boolean active) {
-    Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
-    if (userRaw == null) {
-      log.error("Keycloak user {} was not found", userId);
-      throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
-    }
+    Map<String, Object> userRaw = getUserRaw(userId);
     if (!active.equals(userRaw.get(ACTIVE))) {
       // call keycloak rest API only if status changed
       log.info("User {} flag active was changed to {} by loggedInUser {} ", userId, active, loggedInUserId);
@@ -726,14 +724,18 @@ public class UserService {
   }
 
   private void updateName(String userId, UserNameDto userNameDto) {
-    Map<String, Object> userRaw = keycloakFeign.getUserRaw(userId);
-    if (userRaw == null) {
-      throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
-    }
+    Map<String, Object> userRaw = getUserRaw(userId);
     userRaw.put(FIRST_NAME, userNameDto.getFirstName());
     userRaw.put(LAST_NAME, userNameDto.getLastName());
     log.debug("Keycloak call to update user's name {} ", userId);
-    keycloakFeign.updateUser(userId, userRaw);
+    try {
+      keycloakFeign.updateUser(userId, userRaw);
+    } catch (FeignException fe) {
+      log.error(LOG_KEYCLOAK_ERROR, fe.getMessage(), fe.status());
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_PLEASE_TRY_AGAIN_LATER, fe.getMessage()));
+    }
+
   }
 
   private boolean belongToSameOrganization(UserDetails user1, UserDetails user2) {
@@ -774,5 +776,31 @@ public class UserService {
   private List<String> getRequestedRoles(String roles) {
     return Arrays.stream(roles.split(","))
             .collect(Collectors.toList());
+  }
+
+  private Map<String, Object> getUserRaw(@NotNull String userId) {
+    try {
+      Map<String, Object> userRaw =  keycloakFeign.getUserRaw(userId);
+      if (Objects.isNull(userRaw)) {
+        throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
+      }
+      return userRaw;
+    } catch (FeignException fe) {
+      log.error(LOG_KEYCLOAK_ERROR_GET_USER, userId, fe.getMessage(), fe.status());
+      throw new SystemException(UserService.class, FETCHING_USER_FROM_KEYCLOAK_FAILED);
+    }
+  }
+
+  private User getUser(String userId) {
+    try {
+      return keycloakFeign.getUser(userId);
+    } catch (FeignException.BadRequest | FeignException.InternalServerError e) {
+      log.error(LOG_KEYCLOAK_ERROR, e.getMessage(), e.status());
+      throw new SystemException(UserService.class, AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_RETRIEVE_USERS_PLEASE_TRY_AGAIN_LATER, e.getMessage()));
+    } catch (FeignException.NotFound e) {
+      log.error(LOG_KEYCLOAK_ERROR_GET_USER, userId, e.getMessage(), e.status());
+      throw new ResourceNotFound(UserService.class, USER_NOT_FOUND, String.format(USER_NOT_FOUND, userId));
+    }
   }
 }

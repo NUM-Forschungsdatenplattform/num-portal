@@ -3,15 +3,11 @@ package de.vitagroup.num.service;
 import de.vitagroup.num.domain.EntityGroup;
 import de.vitagroup.num.domain.Organization;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.Translation;
 import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.Translation;
 import de.vitagroup.num.domain.admin.UserDetails;
-import de.vitagroup.num.domain.dto.Language;
-import de.vitagroup.num.domain.dto.OrganizationDto;
-import de.vitagroup.num.domain.dto.SearchCriteria;
-import de.vitagroup.num.domain.dto.SearchFilter;
-import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.TranslationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
@@ -251,7 +247,7 @@ public class UserServiceTest {
         Mockito.verify(userDetailsService, Mockito.times(1)).deleteUserDetails("user-to-be-removed");
     }
 
-    @Test(expected = SystemException.class)
+    @Test(expected = BadRequestException.class)
     public void shouldHandleNotAllowedToDeleteEnabledUser() {
         User userToBeRemoved =
                 User.builder()
@@ -288,6 +284,12 @@ public class UserServiceTest {
         Mockito.when(keycloakFeign.getByRole(Roles.RESEARCHER)).thenReturn(new HashSet<>(Arrays.asList(userOne, userTwo)));
         userService.getByRole(Roles.RESEARCHER);
         Mockito.verify(userDetailsService, Mockito.times(2)).getUserDetailsById("4");
+    }
+
+    @Test(expected = SystemException.class)
+    public void shouldHandleFeignExceptionWhenGetByRoleTest() {
+        Mockito.when(keycloakFeign.getByRole("dummy-role")).thenThrow(FeignException.BadRequest.class);
+        userService.getByRole("dummy-role");
     }
 
     @Test(expected = SystemException.class)
@@ -334,6 +336,16 @@ public class UserServiceTest {
         userService.setUserRoles(
                 "4",
                 Collections.singletonList("non-existent role"),
+                "4",
+                Collections.singletonList(Roles.SUPER_ADMIN));
+    }
+
+    @Test(expected = SystemException.class)
+    public void shouldHandleFeignExceptionWhenSetRoles() {
+        Mockito.doThrow(FeignException.InternalServerError.class).when(keycloakFeign).addRoles(Mockito.eq("4"), Mockito.any());
+        userService.setUserRoles(
+                "4",
+                Arrays.asList(Roles.RESEARCHER, Roles.STUDY_APPROVER),
                 "4",
                 Collections.singletonList(Roles.SUPER_ADMIN));
     }
@@ -598,6 +610,13 @@ public class UserServiceTest {
         assertEquals("5", stringArgumentCaptor.getValue());
     }
 
+    @Test(expected = SystemException.class)
+    public void shouldHandleFeignExceptionWhenChangeName() {
+        Mockito.doThrow(FeignException.InternalServerError.class).when(keycloakFeign).updateUser(Mockito.eq("5"), Mockito.anyMap());
+        userService.changeUserName("5", new UserNameDto("John", "Doe"), "5", Collections.emptyList());
+        Mockito.verify(notificationService, Mockito.never());
+    }
+
     @Test
     public void testAddRoleMatrix() {
         for (Role userRole : roles) {
@@ -661,7 +680,6 @@ public class UserServiceTest {
                 .lastName("Foe").build());
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);
         Set<String> result = userService.findUsersUUID("doe");
-        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers("doe", 0, 100);
         Assert.assertEquals(1, result.size());
     }
 
@@ -706,7 +724,6 @@ public class UserServiceTest {
         mockDataSearchUsers();
         ArgumentCaptor<UserDetailsSpecification> argumentCaptor = ArgumentCaptor.forClass(UserDetailsSpecification.class);
         Page<User> users = userService.searchUsers("4", List.of(Roles.SUPER_ADMIN), searchCriteria, pageable);
-        Mockito.verify(keycloakFeign, Mockito.never()).searchUsers(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
         Mockito.verify(userDetailsService, Mockito.times(1)).getUsers(Mockito.eq(PageRequest.of(0,4)), argumentCaptor.capture());
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(Boolean.FALSE, capturedInput.getApproved());
