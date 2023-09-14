@@ -67,6 +67,10 @@ zars:
 num:
   url: ${NUM_URL}
   locale: ${NUM_LOCALE}
+  systemStatusUrl: ${STATUS_URL}
+  userManualUrl:
+    DE: ${USER_MANUAL_URL_DE}
+    EN: ${USER_MANUAL_URL_EN}
 
 consent:
   allow-usage-outside-eu-oid: ${ALLOW_USAGE_OUTSIDE_EU_OID}
@@ -86,3 +90,6 @@ requestpsnworkflow:
     target: ${PSNWORKFLOW_TARGET}
     apikey: ${PSNWORKFLOW_API_KEY}
     event: ${PSNWORKFLOW_EVENT}
+
+pseudonymity:
+  fake3rdPartyPseudonymEnabled: ${FAKE_3RD_PARTY_PSEUDONYM_ENABLED}

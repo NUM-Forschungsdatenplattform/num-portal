@@ -82,6 +82,7 @@ public class UserDetailsService {
           .resolveOrganization(emailAddress)
           .ifPresent(newUserDetails::setOrganization);
       UserDetails saved = userDetailsRepository.save(newUserDetails);
+      log.info("Create user details on first login for user {}", userId);
 
       if (saved.getOrganization() != null) {
         notificationService.send(collectOrganizationAdminNotifications(userId));
@@ -144,7 +145,7 @@ public class UserDetailsService {
     UserDetails saved = userDetailsRepository.save(userDetails);
 
     notificationService.send(collectAccountApprovalNotification(userId, loggedInUserId));
-
+    log.info("User {} was approved by {}", userId, loggedInUserId);
     return saved;
   }
 

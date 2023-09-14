@@ -4,6 +4,7 @@ import de.vitagroup.num.domain.admin.Role;
 import de.vitagroup.num.domain.admin.User;
 import java.util.Map;
 import java.util.Set;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "keycloak", url = "${userstore.url}")
 public interface KeycloakFeign {
@@ -33,19 +33,6 @@ public interface KeycloakFeign {
 
   @GetMapping("/roles")
   Set<Role> getRoles();
-
-  @GetMapping("/users")
-  Set<User> searchUsers(@RequestParam(required = false) String search, @RequestParam int max);
-
-  /**
-   *
-   * @param search A String contained in username, first or last name, or email
-   * @param first Pagination offset
-   * @param max Maximum results size
-   * @return
-   */
-  @GetMapping("/users")
-  Set<User> searchUsers(@RequestParam(required = false) String search, @RequestParam int first, @RequestParam int max);
 
   @GetMapping("/roles/{roleName}/users")
   Set<User> getByRole(@PathVariable String roleName);

@@ -213,6 +213,7 @@ public class AqlService {
 
     if ((aql.isPublicAql() && (roles.contains(Roles.CRITERIA_EDITOR) || roles.contains(Roles.SUPER_ADMIN)))
         || (!aql.hasEmptyOrDifferentOwner(loggedInUserId) && roles.contains(Roles.CRITERIA_EDITOR))) {
+      log.info("Aql criteria {} was deleted by user {}", id, loggedInUserId);
       deleteAql(id);
     } else {
       throw new ForbiddenException(AqlService.class, CANNOT_DELETE_AQL, String.format(CANNOT_DELETE_AQL, id));
@@ -271,6 +272,7 @@ public class AqlService {
     if (aqlRepository.findByCategoryId(id).isEmpty()) {
       if (aqlCategoryRepository.existsById(id)) {
         aqlCategoryRepository.deleteById(id);
+        log.info("Aql criteria category {} was deleted by {}", id, loggedInUserId);
       } else {
         throw new ResourceNotFound(AqlService.class, CATEGORY_WITH_ID_DOES_NOT_EXIST, String.format(CATEGORY_WITH_ID_DOES_NOT_EXIST, id));
       }

@@ -22,7 +22,7 @@ public class ProfileController extends CustomizedExceptionHandler {
 
   private final UserService userService;
 
-  @AuditLog
+  @AuditLog(description = "Read current logged in user's profile")
   @GetMapping()
   @Operation(description = "Retrieves the user profile information")
   public ResponseEntity<User> getUserProfile(@AuthenticationPrincipal @NotNull Jwt principal) {

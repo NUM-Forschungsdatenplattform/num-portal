@@ -1,17 +1,23 @@
 package de.vitagroup.num.web.controller;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import de.vitagroup.num.NumPortalApplication;
 import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.SetupType;
 import de.vitagroup.num.domain.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserNameDto;
+import de.vitagroup.num.properties.NumProperties;
+import de.vitagroup.num.service.SetupHealthiness;
 import de.vitagroup.num.service.UserDetailsService;
 import de.vitagroup.num.service.UserService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
+import de.vitagroup.num.web.feign.KeycloakFeign;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,9 +47,7 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 @RequestMapping(value = "/admin/", produces = "application/json")
@@ -63,6 +67,31 @@ public class AdminController extends CustomizedExceptionHandler {
 
   private final Pseudonymity pseudonymity;
 
+  private final NumProperties numProperties;
+
+  private final SetupHealthiness healthiness;
+
+  @GetMapping(value = "external-urls", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(description = "Returns value for health status endpoint URL and user manual URL")
+  public ResponseEntity<Map<String, Object>> getExternalUrls(){
+    java.util.Map<String, Object> map = new HashMap<>();
+    map.put("systemStatusUrl", numProperties.getSystemStatusUrl());
+    map.put("userManualUrl", numProperties.getUserManualUrl());
+    return ResponseEntity.ok(map);
+  }
+
+  @GetMapping(value = "services-status", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(description = "Returns value for healths of different microservices")
+  public ResponseEntity<Map<String, String>> getServicesStatus(
+          final @RequestParam(value = "setup", defaultValue = "PREPROD") SetupType setup){
+    Map<String, String> map = healthiness.checkHealth(setup);
+    if(map.values().stream().filter(s -> s.length() > 0).findFirst().isEmpty()) {
+      return ResponseEntity.ok(map);
+    } else {
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(map);
+    }
+  }
+
   @GetMapping("health")
   public ResponseEntity<Status> health() {
     if (healthEndpoint.health().getStatus() == Status.UP) {
@@ -74,18 +103,24 @@ public class AdminController extends CustomizedExceptionHandler {
 
   @GetMapping("/log-level")
   public ResponseEntity<Level> getLogLevel() {
-    ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-    return ResponseEntity.ok(rootLogger.getLevel());
+    Logger numLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(NumPortalApplication.class.getPackageName());
+    return ResponseEntity.ok(numLogger.getLevel());
   }
 
   @PostMapping("/log-level/{logLevel}")
   public ResponseEntity<Level> setLogLevel(@NotNull @PathVariable String logLevel) {
-    ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-    rootLogger.setLevel(Level.valueOf(logLevel));//Default log level is DEBUG. If {logLevel} == Wrong Status
-    return ResponseEntity.ok(rootLogger.getLevel());
+    Logger numLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(NumPortalApplication.class.getPackageName());
+    Level level = Level.valueOf(logLevel);
+    numLogger.setLevel(level);//Default log level is DEBUG. If {logLevel} == Wrong Status
+    if (Level.DEBUG.equals(level) || Level.INFO.equals(level)) {
+      // when DEBUG, logging is enabled for keycloak client
+      Logger keycloakClient = (Logger) LoggerFactory.getLogger(KeycloakFeign.class.getName());
+      keycloakClient.setLevel(numLogger.getLevel());
+    }
+    return ResponseEntity.ok(numLogger.getLevel());
   }
 
-  @AuditLog
+  @AuditLog(description = "Delete user")
   @DeleteMapping("user/{userId}")
   @PreAuthorize(Role.SUPER_ADMIN)
   public void deleteUser(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable String userId) {
@@ -109,7 +144,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(userService.getUserRoles(userId, principal.getSubject()));
   }
 
-  @AuditLog
+  @AuditLog(description = "Update user's roles")
   @PostMapping("user/{userId}/role")
   @Operation(description = "Updates the users roles to the given set.")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -121,7 +156,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(updatedRoles);
   }
 
-  @AuditLog
+  @AuditLog(description = "Update user's organization")
   @PostMapping("user/{userId}/organization")
   @Operation(description = "Sets the user's organization")
   @PreAuthorize(Role.SUPER_ADMIN)
@@ -144,7 +179,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @AuditLog
+  @AuditLog(description = "Update user's name")
   @PostMapping("user/{userId}/name")
   @Operation(description = "Changes user name")
   public ResponseEntity<String> changeUserName(
@@ -154,7 +189,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @AuditLog
+  @AuditLog(description = "Approve user")
   @PostMapping("user/{userId}/approve")
   @Operation(description = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -178,7 +213,7 @@ public class AdminController extends CustomizedExceptionHandler {
             userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
   }
 
-  @AuditLog
+  @AuditLog(description = "Update user's active field")
   @PostMapping("user/{userId}/status")
   @Operation(description = "Updates user's status for active flag (enabled field in keycloak representation).")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)

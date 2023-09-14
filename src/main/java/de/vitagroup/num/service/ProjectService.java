@@ -136,6 +136,7 @@ public class ProjectService {
 
         if (project.isDeletable()) {
             projectRepository.deleteById(projectId);
+            log.info("Project {} was deleted by {}", projectId, userId);
         } else {
             throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT_INVALID_STATUS,
                     String.format(CANNOT_DELETE_PROJECT_INVALID_STATUS, projectId, project.getStatus()));
@@ -195,7 +196,7 @@ public class ProjectService {
     public String retrieveData(String query, Long projectId, String userId, Boolean defaultConfiguration) {
         userDetailsService.checkIsUserApproved(userId);
         Project project = validateAndRetrieveProject(projectId, userId);
-
+        log.info("Retrieve research data for project: {} by: user {}", projectId, userId);
         List<QueryResponseData> responseData;
         if (BooleanUtils.isTrue(defaultConfiguration)) {
             responseData =
@@ -1129,7 +1130,7 @@ public class ProjectService {
             throw new ForbiddenException(ProjectService.class, DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY);
         }
 
-        if (!project.isProjectResearcher(userId) && project.hasEmptyOrDifferentOwner(userId)) {
+        if (!project.isProjectResearcher(userId)) {
             throw new ForbiddenException(ProjectService.class, CANNOT_ACCESS_THIS_PROJECT);
         }
 
