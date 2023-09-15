@@ -97,6 +97,7 @@ public class CohortService {
             .build();
 
     project.setCohort(cohort);
+    log.info("Cohort created by user {}", userId);
     return cohortRepository.save(cohort);
   }
 
@@ -190,6 +191,7 @@ public class CohortService {
     cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()));
     cohortToEdit.setDescription(cohortDto.getDescription());
     cohortToEdit.setName(cohortDto.getName());
+    log.info("User {} updated cohort {}", userId, cohortId);
     return cohortRepository.save(cohortToEdit);
   }
 

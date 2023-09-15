@@ -1,11 +1,5 @@
 package de.vitagroup.num.service.ehrbase;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ERROR_MESSAGE;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL_QUERY;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_DATA_COLUMNS_IN_THE_QUERY_RESULT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,6 +39,8 @@ import org.springframework.stereotype.Service;
  * Service using the EhrBaseSDK to talk to the EhrBaseAPI
  */
 import lombok.extern.slf4j.Slf4j;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 @Service
@@ -100,10 +96,10 @@ public class EhrBaseService {
       List<Record> results = restClient.aqlEndpoint().execute(pair.getLeft());
       return results.stream().map(result -> result.value(0).toString()).collect(Collectors.toSet());
     } catch (WrongStatusCodeException e) {
-      log.error(INVALID_AQL_QUERY, e);
+      log.error(INVALID_AQL_QUERY, e.getMessage(), e);
       throw new WrongStatusCodeException("EhrBaseService.class", 93, 1);
     } catch (ClientException e) {
-      log.error(ERROR_MESSAGE, e);
+      log.error(ERROR_MESSAGE, e.getMessage(), e);
       throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
               String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
     }
@@ -136,10 +132,10 @@ public class EhrBaseService {
       return flattenIfCompositionPresent(response, projectId);
 
     } catch (WrongStatusCodeException e) {
-      log.error(ERROR_MESSAGE, e);
+      log.error(INVALID_AQL_QUERY, e.getMessage(), e);
       throw new WrongStatusCodeException("EhrBaseService.class", 94, 1);
     } catch (ClientException e) {
-      log.error(ERROR_MESSAGE, e);
+      log.error(ERROR_MESSAGE, e.getMessage(), e);
       throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
               String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
     }
@@ -153,10 +149,10 @@ public class EhrBaseService {
       log.debug("EhrBase call to execute raw query: {}", queryString);
       return restClient.aqlEndpoint().executeRaw(query);
     } catch (WrongStatusCodeException e) {
-      log.error(INVALID_AQL_QUERY, e);
+      log.error(INVALID_AQL_QUERY, e.getMessage(), e);
       throw new WrongStatusCodeException("EhrBaseService.class", 93, 2);
     } catch (ClientException e) {
-      log.error(ERROR_MESSAGE, e);
+      log.error(ERROR_MESSAGE, e.getMessage(), e);
       throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
               String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
     }
@@ -178,12 +174,17 @@ public class EhrBaseService {
 
   public List<TemplateMetaDataDto> getAllTemplatesMetadata() {
     log.debug("EhrBase call to retrieve all templates ");
-    TemplatesResponseData templateResponseData = restClient.templateEndpoint().findAllTemplates();
-    return templateResponseData.get();
+    try {
+      TemplatesResponseData templateResponseData = restClient.templateEndpoint().findAllTemplates();
+      return templateResponseData.get();
+    } catch (ClientException e) {
+      log.error(ERROR_MESSAGE, e.getMessage(), e);
+      throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_GET_TEMPLATES,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_GET_TEMPLATES, e.getMessage()));
+    }
   }
 
-  public List<QueryResponseData> flattenIfCompositionPresent(
-      QueryResponseData responseData, Long projectId) {
+  private List<QueryResponseData> flattenIfCompositionPresent(QueryResponseData responseData, Long projectId) {
     List<String> ehrStatusIds = getAndRemoveEhrStatusColumn(responseData);
     List<QueryResponseData> listOfResponseData = flattenCompositions(responseData);
     if (projectId != null) {

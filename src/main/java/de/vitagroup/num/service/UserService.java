@@ -148,6 +148,7 @@ public class UserService {
                 String.format(CANNOT_DELETE_APPROVED_USER, userId));
       }
     }
+    log.info("Logged in user {} deleted user with id {} ", loggedInUserId, userId);
   }
 
   @Transactional

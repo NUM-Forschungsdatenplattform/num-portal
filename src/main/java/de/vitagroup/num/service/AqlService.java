@@ -199,7 +199,7 @@ public class AqlService {
     aqlToEdit.setModifiedDate(OffsetDateTime.now());
     aqlToEdit.setQuery(aql.getQuery());
     aqlToEdit.setPublicAql(aql.isPublicAql());
-
+    log.info("User {} updated aql criteria with id {}", loggedInUserId, aqlId);
     return aqlRepository.save(aqlToEdit);
   }
 
