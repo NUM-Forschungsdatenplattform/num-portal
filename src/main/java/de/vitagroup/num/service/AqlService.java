@@ -234,6 +234,7 @@ public class AqlService {
     }
 
     if (ehrIds.size() < privacyProperties.getMinHits()) {
+      log.warn(TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
       throw new PrivacyException(AqlService.class, TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds.size();
