@@ -113,9 +113,9 @@ public class ExceptionsTemplate {
 
     //EhrBaseService service
     public final static String NO_DATA_COLUMNS_IN_THE_QUERY_RESULT = "No data columns in the query result";
-    public final static String AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL = "An error has occurred, cannot execute aql: %s";
-    public final static String AN_ERROR_HAS_OCCURRED_CANNOT_GET_TEMPLATES = "An error has occurred, cannot retrieve templates: %s";
-    public final static String QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN = "query result doesn't contain ehr_status column";
+    public static final String AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL = "An error has occurred, cannot execute aql: %s";
+    public static final String AN_ERROR_HAS_OCCURRED_CANNOT_GET_TEMPLATES = "An error has occurred, cannot retrieve templates: %s";
+    public static final String QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN = "query result doesn't contain ehr_status column";
 
     //PrivacyException
     public final static String TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS = "Too few matches, results withheld for privacy reasons.";
@@ -145,7 +145,7 @@ public class ExceptionsTemplate {
     public final static String RELATIVE_COMPLEMENT_REQUIRES_TWO_VALID_SETS = "Relative complement requires two valid sets";
 
     public final static String INVALID_AQL_QUERY = "EhrBase - Malformed query exception: {}";
-    public final static String ERROR_MESSAGE = "EhrBase - An error has occurred while calling EhrBase: {} ";
+    public static final String ERROR_MESSAGE = "EhrBase - An error has occurred while calling EhrBase: {} ";
     public final static String CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED = "Cannot check consent for data usage outside the European Union, oid not configured";
     public final static String CACHE_IS_NOT_REACHABLE = "Cache is not reachable";
     public final static String EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT = "Exception happened in %s class for %s environment. Link %s is not accessible";//3 parameters
