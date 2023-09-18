@@ -221,6 +221,7 @@ public class ProjectService {
         Set<String> ehrIds = cohortService.executeCohort(cohort, false);
 
         if (ehrIds.size() < privacyProperties.getMinHits()) {
+            log.warn(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
             throw new PrivacyException(ProjectService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
         }
 

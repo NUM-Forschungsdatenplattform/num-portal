@@ -199,7 +199,7 @@ public class AqlService {
     aqlToEdit.setModifiedDate(OffsetDateTime.now());
     aqlToEdit.setQuery(aql.getQuery());
     aqlToEdit.setPublicAql(aql.isPublicAql());
-
+    log.info("User {} updated aql criteria with id {}", loggedInUserId, aqlId);
     return aqlRepository.save(aqlToEdit);
   }
 
@@ -234,6 +234,7 @@ public class AqlService {
     }
 
     if (ehrIds.size() < privacyProperties.getMinHits()) {
+      log.warn(TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
       throw new PrivacyException(AqlService.class, TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds.size();
@@ -297,6 +298,7 @@ public class AqlService {
         aqlEditorAqlService.validateAql(Result.builder().q(query).build());
     if (!response.isValid()) {
       try {
+        log.error("AQL validation for query '{}' failed: {}", query, response.getMessage());
         throw new BadRequestException(QueryValidationResponse.class, COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE,
                 String.format(COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE, mapper.writeValueAsString(response)));
       } catch (JsonProcessingException e) {
