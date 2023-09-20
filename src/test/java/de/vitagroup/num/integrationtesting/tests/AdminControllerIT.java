@@ -108,6 +108,26 @@ public class AdminControllerIT extends IntegrationTest {
     testFail("/admin/services-status?setup=DEV", status().isServiceUnavailable());
   }
 
+  @Test
+  public void shouldGetAnnouncement() throws Exception{
+    stubFor(
+            WireMock.get("/admin/services-status")
+                    .willReturn(okJson(
+                            "{\"NUM\":\"\",\"FHIR_BRIDGE\":\"\",\"KEYCLOAK\":\"\",\"CHECK_FOR_ANNOUNCEMENTS\":\"Please visit health.num-codex.de page for announcement. Date/Time - [13:30]  Description - [Testing]\",\"EHRBASE\":\"\",\"FE\":\"\"}")));
+    mockMvc
+            .perform(
+                    get("/admin/services-status")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("NUM").value(""))
+            .andExpect(jsonPath("EHRBASE").value(""))
+            .andExpect(jsonPath("FHIR_BRIDGE").value(""))
+            .andExpect(jsonPath("CHECK_FOR_ANNOUNCEMENTS").value("Please visit health.num-codex.de page for announcement. Date/Time - [13:30]  Description - [Testing]"))
+            .andExpect(jsonPath("FE").value(""))
+            .andExpect(jsonPath("KEYCLOAK").value(""));
+  }
+
   private void testSuccess(String url, ResultMatcher status) throws Exception {
     mockMvc
             .perform(
