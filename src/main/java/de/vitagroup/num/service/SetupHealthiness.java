@@ -53,11 +53,10 @@ public class SetupHealthiness {
             default:
                 throw new IllegalStateException("Unexpected value: " + setup);
         }
-        map.put("CHECK_FOR_ANNOUNCEMENTS", checkForAnnouncements());
         return map;
     }
 
-    private String checkForAnnouncements() {
+    public String checkForAnnouncements() {
         String message = Strings.EMPTY;
         String URL = "https://health.num-codex.de/";
         HtmlContent htmlContent = new HtmlContent();

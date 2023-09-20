@@ -58,6 +58,7 @@ public class AdminController extends CustomizedExceptionHandler {
 
   private static final String SUCCESS_REPLY = "Success";
   private static final String EMAIL_CLAIM = "email";
+  private static final String CHECK_FOR_ANNOUNCEMENTS = "CHECK_FOR_ANNOUNCEMENTS";
 
   private final UserService userService;
 
@@ -86,8 +87,10 @@ public class AdminController extends CustomizedExceptionHandler {
           final @RequestParam(value = "setup", defaultValue = "PREPROD") SetupType setup){
     Map<String, String> map = healthiness.checkHealth(setup);
     if(map.values().stream().filter(s -> s.length() > 0).findFirst().isEmpty()) {
+      map.put(CHECK_FOR_ANNOUNCEMENTS, healthiness.checkForAnnouncements());
       return ResponseEntity.ok(map);
     } else {
+      map.put(CHECK_FOR_ANNOUNCEMENTS, healthiness.checkForAnnouncements());
       return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(map);
     }
   }
