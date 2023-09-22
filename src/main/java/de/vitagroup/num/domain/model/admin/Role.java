@@ -1,4 +1,4 @@
-package de.vitagroup.num.domain.admin;
+package de.vitagroup.num.domain.model.admin;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

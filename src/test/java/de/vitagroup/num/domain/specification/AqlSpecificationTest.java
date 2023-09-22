@@ -1,6 +1,6 @@
 package de.vitagroup.num.domain.specification;
 
-import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import org.junit.Test;

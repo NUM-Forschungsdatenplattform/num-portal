@@ -13,9 +13,9 @@ import java.util.List;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
-import de.vitagroup.num.domain.Comment;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Comment;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.repository.CommentRepository;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ForbiddenException;

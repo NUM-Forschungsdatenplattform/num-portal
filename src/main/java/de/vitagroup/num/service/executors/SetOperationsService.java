@@ -1,6 +1,6 @@
 package de.vitagroup.num.service.executors;
 
-import de.vitagroup.num.domain.Operator;
+import de.vitagroup.num.domain.model.Operator;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package de.vitagroup.num.domain;
+package de.vitagroup.num.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;

@@ -1,4 +1,4 @@
-package de.vitagroup.num.domain;
+package de.vitagroup.num.domain.model;
 
 import de.vitagroup.num.domain.dto.Language;
 import lombok.AllArgsConstructor;

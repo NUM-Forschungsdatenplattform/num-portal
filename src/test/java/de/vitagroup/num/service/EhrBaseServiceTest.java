@@ -1,7 +1,7 @@
 package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.service.ehrbase.CompositionResponseDataBuilder;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;

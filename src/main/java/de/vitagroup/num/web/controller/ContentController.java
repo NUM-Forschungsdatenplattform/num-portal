@@ -1,6 +1,6 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.domain.dto.CardDto;
 import de.vitagroup.num.domain.dto.MetricsDto;
 import de.vitagroup.num.domain.dto.NavigationItemDto;

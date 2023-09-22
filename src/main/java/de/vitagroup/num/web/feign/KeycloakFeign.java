@@ -1,7 +1,7 @@
 package de.vitagroup.num.web.feign;
 
-import de.vitagroup.num.domain.admin.Role;
-import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.model.admin.Role;
+import de.vitagroup.num.domain.model.admin.User;
 import java.util.Map;
 import java.util.Set;
 

@@ -1,4 +1,4 @@
-package de.vitagroup.num.domain;
+package de.vitagroup.num.domain.model;
 
 import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.domain.validation.ValidTranslatedString;

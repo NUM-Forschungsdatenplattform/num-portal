@@ -1,14 +1,14 @@
-package de.vitagroup.num.domain;
+package de.vitagroup.num.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import java.io.Serializable;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,16 +19,18 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "content")
-public class Content implements Serializable {
+@Table(name="maildomain")
+public class MailDomain implements Serializable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Enumerated(value = EnumType.STRING)
-  @NotNull
-  private ContentType type;
+  private String name;
 
-  private String content;
+  @ManyToOne
+  @JsonBackReference
+  @JoinColumn(name="organization_id")
+  private Organization organization;
+
 }

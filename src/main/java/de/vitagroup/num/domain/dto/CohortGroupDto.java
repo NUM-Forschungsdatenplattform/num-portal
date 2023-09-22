@@ -1,8 +1,8 @@
 package de.vitagroup.num.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.vitagroup.num.domain.Operator;
-import de.vitagroup.num.domain.Type;
+import de.vitagroup.num.domain.model.Operator;
+import de.vitagroup.num.domain.model.Type;
 import de.vitagroup.num.domain.repository.AqlConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

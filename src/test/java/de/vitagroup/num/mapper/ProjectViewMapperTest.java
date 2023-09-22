@@ -1,8 +1,8 @@
 package de.vitagroup.num.mapper;
 
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.ProjectStatus;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.ProjectViewTO;
 import de.vitagroup.num.service.UserService;
 import org.junit.Assert;

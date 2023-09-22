@@ -1,8 +1,8 @@
-package de.vitagroup.num.domain;
+package de.vitagroup.num.domain.model;
 
-import static de.vitagroup.num.domain.Roles.STUDY_APPROVER;
-import static de.vitagroup.num.domain.Roles.STUDY_COORDINATOR;
-import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
+import static de.vitagroup.num.domain.model.Roles.STUDY_APPROVER;
+import static de.vitagroup.num.domain.model.Roles.STUDY_COORDINATOR;
+import static de.vitagroup.num.domain.model.Roles.SUPER_ADMIN;
 
 import java.util.Arrays;
 import java.util.List;

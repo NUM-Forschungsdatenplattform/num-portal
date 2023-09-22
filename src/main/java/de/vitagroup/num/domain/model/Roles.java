@@ -1,4 +1,4 @@
-package de.vitagroup.num.domain;
+package de.vitagroup.num.domain.model;
 
 import com.google.common.collect.Lists;
 import org.springframework.security.oauth2.jwt.Jwt;

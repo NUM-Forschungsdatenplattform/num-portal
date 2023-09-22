@@ -1,6 +1,6 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.SetupType;
+import de.vitagroup.num.domain.model.SetupType;
 import de.vitagroup.num.service.html.HtmlContent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;

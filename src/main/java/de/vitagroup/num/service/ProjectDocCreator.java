@@ -1,10 +1,10 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.CohortGroup;
-import de.vitagroup.num.domain.ProjectCategories;
-import de.vitagroup.num.domain.Type;
-import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.model.Cohort;
+import de.vitagroup.num.domain.model.CohortGroup;
+import de.vitagroup.num.domain.model.ProjectCategories;
+import de.vitagroup.num.domain.model.Type;
+import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;

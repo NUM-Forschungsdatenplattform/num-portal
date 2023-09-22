@@ -1,4 +1,4 @@
-package de.vitagroup.num.domain;
+package de.vitagroup.num.domain.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

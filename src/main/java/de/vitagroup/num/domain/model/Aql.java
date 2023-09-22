@@ -1,7 +1,7 @@
-package de.vitagroup.num.domain;
+package de.vitagroup.num.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
 import javax.persistence.Entity;

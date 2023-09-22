@@ -1,4 +1,4 @@
-package de.vitagroup.num.domain;
+package de.vitagroup.num.domain.model;
 
 public enum EntityGroup {
     PROJECT_STATUS,

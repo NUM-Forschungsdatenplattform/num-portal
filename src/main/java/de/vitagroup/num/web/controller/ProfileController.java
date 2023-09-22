@@ -1,6 +1,6 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.service.UserService;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
 import de.vitagroup.num.service.logger.AuditLog;

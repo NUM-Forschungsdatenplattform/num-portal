@@ -1,12 +1,12 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.EntityGroup;
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.Translation;
-import de.vitagroup.num.domain.admin.Role;
-import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.EntityGroup;
+import de.vitagroup.num.domain.model.Organization;
+import de.vitagroup.num.domain.model.Roles;
+import de.vitagroup.num.domain.model.Translation;
+import de.vitagroup.num.domain.model.admin.Role;
+import de.vitagroup.num.domain.model.admin.User;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.repository.TranslationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
@@ -406,7 +406,7 @@ public class UserServiceTest {
         user.setCreatedTimestamp(6234234234L);
         user.setId("4");
         when(keycloakFeign.getUser("4")).thenReturn(user);
-        de.vitagroup.num.domain.admin.User userReturn = userService.getUserById("4", true);
+        User userReturn = userService.getUserById("4", true);
         assertThat(userReturn.getCreatedTimestamp(), is(6234234234L));
         verify(keycloakFeign, times(1)).getRolesOfUser("4");
         verify(keycloakFeign, never()).addRoles(anyString(), any(Role[].class));
@@ -414,7 +414,7 @@ public class UserServiceTest {
     @Test
     public void shouldHandleMissingOwner() {
         when(keycloakFeign.getUser("missingUserId")).thenThrow(new FeignException.NotFound("", Request.create(Request.HttpMethod.GET, "", new HashMap<>(), null, Charset.defaultCharset(), null), null, null));
-        de.vitagroup.num.domain.admin.User userReturn = userService.getOwner("missingUserId");
+        User userReturn = userService.getOwner("missingUserId");
 
         assertNull(userReturn);
         verify(keycloakFeign, times(1)).getUser("missingUserId");

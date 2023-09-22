@@ -1,9 +1,9 @@
 package de.vitagroup.num.domain.repository;
 
-import de.vitagroup.num.domain.EntityGroup;
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.EntityGroup;
+import de.vitagroup.num.domain.model.Organization;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;

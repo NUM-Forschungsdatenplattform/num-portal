@@ -1,6 +1,6 @@
 package de.vitagroup.num.service.notification.dto;
 
-import de.vitagroup.num.domain.ProjectStatus;
+import de.vitagroup.num.domain.model.ProjectStatus;
 import de.vitagroup.num.service.email.MessageSourceWrapper;
 import java.time.Year;
 import lombok.Builder;

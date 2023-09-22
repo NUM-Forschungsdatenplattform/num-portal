@@ -1,7 +1,7 @@
 package de.vitagroup.num.mapper;
 
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.dto.ProjectViewTO;
 import de.vitagroup.num.service.UserService;
 import lombok.AllArgsConstructor;

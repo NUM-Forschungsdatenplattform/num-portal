@@ -1,6 +1,6 @@
 package de.vitagroup.num.service.notification.dto.account;
 
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.service.email.MessageSourceWrapper;
 import de.vitagroup.num.service.notification.dto.Notification;
 import lombok.Builder;

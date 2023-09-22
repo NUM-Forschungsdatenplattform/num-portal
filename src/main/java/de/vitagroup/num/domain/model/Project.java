@@ -1,9 +1,9 @@
-package de.vitagroup.num.domain;
+package de.vitagroup.num.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.repository.CategorySetConverter;
 import de.vitagroup.num.domain.repository.MapConverter;
 import de.vitagroup.num.domain.repository.StringSetConverter;

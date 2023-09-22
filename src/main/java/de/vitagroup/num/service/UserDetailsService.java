@@ -1,9 +1,9 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Organization;
+import de.vitagroup.num.domain.model.Roles;
+import de.vitagroup.num.domain.model.admin.User;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.domain.specification.UserDetailsSpecification;
@@ -35,6 +35,7 @@ import static java.util.Objects.nonNull;
 
 @Slf4j
 @Service
+//@org.springframework.transaction.annotation.Transactional(value = "numTransactionManager")
 public class UserDetailsService {
 
   private UserDetailsRepository userDetailsRepository;

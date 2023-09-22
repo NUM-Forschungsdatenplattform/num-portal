@@ -1,5 +1,6 @@
 package de.vitagroup.num.domain;
 
+import de.vitagroup.num.domain.model.Roles;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.security.oauth2.jwt.Jwt;

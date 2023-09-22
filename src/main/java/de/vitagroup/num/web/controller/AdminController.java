@@ -3,9 +3,9 @@ package de.vitagroup.num.web.controller;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import de.vitagroup.num.NumPortalApplication;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.SetupType;
-import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.model.Roles;
+import de.vitagroup.num.domain.model.SetupType;
+import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserNameDto;
@@ -139,7 +139,7 @@ public class AdminController extends CustomizedExceptionHandler {
   @GetMapping("user/{userId}/role")
   @Operation(description = "Retrieves the roles of the given user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
-  public ResponseEntity<Set<de.vitagroup.num.domain.admin.Role>> getRolesOfUser(
+  public ResponseEntity<Set<de.vitagroup.num.domain.model.admin.Role>> getRolesOfUser(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserRoles(userId, principal.getSubject()));
   }

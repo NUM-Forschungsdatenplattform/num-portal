@@ -1,13 +1,11 @@
-package de.vitagroup.num.domain.admin;
+package de.vitagroup.num.domain.model.admin;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import de.vitagroup.num.domain.Organization;
+import de.vitagroup.num.domain.model.Organization;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
