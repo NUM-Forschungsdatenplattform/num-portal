@@ -7,12 +7,20 @@ spring:
     hikari:
       data-source-properties:
         stringtype: unspecified
-    url: ${DB_URL}
-    driver-class-name: org.postgresql.Driver
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    numportal:
+      url: ${DB_URL}
+      driver-class-name: org.postgresql.Driver
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
+    numportal-attachment:
+      url: jdbc:postgresql://localhost:5432/num-attachment?currentSchema=num
+      driver-class-name: org.postgresql.Driver
+      username: num-attachment
+      password: num-attachment
   flyway:
-    enabled: true
+    enabled: false
+    numportal:
+      locations: classpath:db/migration/num-portal
   jpa:
     show-sql: false
     hibernate:

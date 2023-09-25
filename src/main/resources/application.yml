@@ -5,6 +5,7 @@ spring:
     name: num-portal
   datasource:
     hikari:
+      # properties used for aqlcategory json type
       data-source-properties:
         stringtype: unspecified
     numportal:
@@ -157,6 +158,8 @@ num:
   userManualUrl:
      DE: 'https://num-portal-webapp.readthedocs.io/de/latest/'
      EN: 'https://num-portal-webapp.readthedocs.io/en/latest/'
+  # if true a second database is configured for attachments - check configs for numportal-attachment
+  enableAttachmentDatabase: false
 
 consent:
   allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
