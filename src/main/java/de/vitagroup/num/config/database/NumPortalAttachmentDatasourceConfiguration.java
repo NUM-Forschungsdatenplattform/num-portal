@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy;
 import org.hibernate.cfg.AvailableSettings;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -21,13 +22,17 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import javax.sql.DataSource;
 import java.util.Objects;
 
-@ConditionalOnProperty(name = "num.enableAttachmentDatabase", havingValue = "true")
+@ConditionalOnProperty(prefix = "num", name = "enableAttachmentDatabase", havingValue = "true")
 @Configuration
 @EnableJpaRepositories(basePackages = "de.vitagroup.num.attachment",
         entityManagerFactoryRef = "attachmentEntityManagerFactory",
         transactionManagerRef = "attachmentTransactionManager")
 @EnableTransactionManagement
 public class NumPortalAttachmentDatasourceConfiguration {
+
+    @Value("${spring.jpa.show-sql}")
+    private boolean showSql;
+
 
     @Bean(name = "numAttachmentProperties")
     @ConfigurationProperties(prefix = "spring.datasource.numportal-attachment")
@@ -52,6 +57,7 @@ public class NumPortalAttachmentDatasourceConfiguration {
         localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.PHYSICAL_NAMING_STRATEGY, new CamelCaseToUnderscoresNamingStrategy());
         HibernateJpaVendorAdapter hibernateJpaVendorAdapter = new HibernateJpaVendorAdapter();
         hibernateJpaVendorAdapter.setGenerateDdl(false);
+        hibernateJpaVendorAdapter.setShowSql(showSql);
 
         localContainerEntityManagerFactoryBean.setJpaVendorAdapter(hibernateJpaVendorAdapter);
         return localContainerEntityManagerFactoryBean;

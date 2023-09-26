@@ -6,13 +6,14 @@ public class NumPostgresqlContainer extends PostgreSQLContainer<NumPostgresqlCon
   private static final String IMAGE_VERSION = "postgres:12.14";
   private static NumPostgresqlContainer container;
 
-  private NumPostgresqlContainer() {
+  private NumPostgresqlContainer(String databaseName) {
     super(IMAGE_VERSION);
+    this.withDatabaseName(databaseName);
   }
 
-  public static NumPostgresqlContainer getInstance() {
+  public static NumPostgresqlContainer getInstance(String databaseName) {
     if (container == null) {
-      container = new NumPostgresqlContainer();
+      container = new NumPostgresqlContainer(databaseName);
     }
     return container;
   }

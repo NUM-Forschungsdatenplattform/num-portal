@@ -100,6 +100,8 @@ num:
   url: http://localhost:8180
   locale: en
   systemStatusUrl: https://health.num-codex.de/
+  # if true a second database is configured for attachments - check configs for numportal-attachment
+  enableAttachmentDatabase: true
 
 user-service:
   delete-users-cron: 0 0 5 * * *
