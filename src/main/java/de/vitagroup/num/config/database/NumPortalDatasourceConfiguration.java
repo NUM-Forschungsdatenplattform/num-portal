@@ -60,8 +60,7 @@ public class NumPortalDatasourceConfiguration {
         hikariConfig.setUsername(dataSourceProperties.getUsername());
         hikariConfig.setPassword(dataSourceProperties.getPassword());
         hikariConfig.getDataSourceProperties().putAll(hikaryProps);
-        DataSource numDataSource = new HikariDataSource(hikariConfig);
-        return numDataSource;
+        return new HikariDataSource(hikariConfig);
     }
 
     @Primary
