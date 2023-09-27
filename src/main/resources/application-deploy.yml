@@ -79,7 +79,7 @@ num:
     DE: ${USER_MANUAL_URL_DE}
     EN: ${USER_MANUAL_URL_EN}
     # if true a second database is configured for attachments - check configs for numportal-attachment
-  enableAttachmentDatabase: ${CONNECT_TO_ATTACHMENT_DATABASE}
+  enableAttachmentDatabase: ${ENABLE_CONNECTION_TO_ATTACHMENT_DATABASE}
 
 consent:
   allow-usage-outside-eu-oid: ${ALLOW_USAGE_OUTSIDE_EU_OID}
