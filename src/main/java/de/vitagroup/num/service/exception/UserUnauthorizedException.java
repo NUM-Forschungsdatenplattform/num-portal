@@ -1,6 +1,6 @@
 package de.vitagroup.num.service.exception;
 
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;

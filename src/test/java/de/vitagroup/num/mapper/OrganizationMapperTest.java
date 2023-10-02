@@ -1,7 +1,7 @@
 package de.vitagroup.num.mapper;
 
-import de.vitagroup.num.domain.MailDomain;
-import de.vitagroup.num.domain.Organization;
+import de.vitagroup.num.domain.model.MailDomain;
+import de.vitagroup.num.domain.model.Organization;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.service.OrganizationService;
 import org.junit.Assert;

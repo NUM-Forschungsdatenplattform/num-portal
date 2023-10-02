@@ -1,9 +1,9 @@
 package de.vitagroup.num.service.executors;
 
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.CohortAql;
-import de.vitagroup.num.domain.CohortGroup;
-import de.vitagroup.num.domain.Type;
+import de.vitagroup.num.domain.model.Cohort;
+import de.vitagroup.num.domain.model.CohortAql;
+import de.vitagroup.num.domain.model.CohortGroup;
+import de.vitagroup.num.domain.model.Type;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

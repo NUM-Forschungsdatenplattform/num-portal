@@ -1,6 +1,6 @@
 package de.vitagroup.num.domain.repository;
 
-import de.vitagroup.num.domain.MailDomain;
+import de.vitagroup.num.domain.model.MailDomain;
 
 import java.util.List;
 import java.util.Optional;

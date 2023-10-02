@@ -1,6 +1,6 @@
 package de.vitagroup.num.domain.repository;
 
-import de.vitagroup.num.domain.Organization;
+import de.vitagroup.num.domain.model.Organization;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

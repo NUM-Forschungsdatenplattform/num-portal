@@ -2,11 +2,11 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.domain.AqlCategory;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Aql;
+import de.vitagroup.num.domain.model.AqlCategory;
+import de.vitagroup.num.domain.model.Roles;
+import de.vitagroup.num.domain.model.admin.User;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;

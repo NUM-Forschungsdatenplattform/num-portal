@@ -6,13 +6,13 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.ProjectCategories;
-import de.vitagroup.num.domain.ProjectStatus;
+import de.vitagroup.num.domain.model.ProjectCategories;
+import de.vitagroup.num.domain.model.ProjectStatus;
 import de.vitagroup.num.domain.dto.ZarsInfoDto;
 import de.vitagroup.num.service.email.EmailService;
 import de.vitagroup.num.service.email.ZarsProperties;
 import de.vitagroup.num.service.email.ZarsService;
-import java.io.IOException;
+
 import java.time.LocalDate;
 import java.util.Set;
 import org.junit.Before;

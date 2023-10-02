@@ -1,8 +1,8 @@
 package de.vitagroup.num.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.vitagroup.num.domain.ProjectStatus;
-import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.model.ProjectStatus;
+import de.vitagroup.num.domain.model.admin.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

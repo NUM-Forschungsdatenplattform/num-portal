@@ -1,10 +1,10 @@
 package de.vitagroup.num.mapper;
 
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
-import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Cohort;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.ProjectStatus;
+import de.vitagroup.num.domain.model.admin.User;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.service.UserService;

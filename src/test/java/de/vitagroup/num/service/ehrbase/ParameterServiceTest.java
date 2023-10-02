@@ -1,7 +1,6 @@
 package de.vitagroup.num.service.ehrbase;
 
-import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.service.UserDetailsService;
 import org.ehrbase.response.openehr.QueryResponseData;

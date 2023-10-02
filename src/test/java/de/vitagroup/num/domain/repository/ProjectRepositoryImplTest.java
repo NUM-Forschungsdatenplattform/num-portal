@@ -1,7 +1,7 @@
 package de.vitagroup.num.domain.repository;
 
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import org.junit.Test;
@@ -16,7 +16,6 @@ import org.springframework.data.domain.Sort;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 

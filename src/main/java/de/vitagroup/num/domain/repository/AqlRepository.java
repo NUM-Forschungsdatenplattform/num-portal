@@ -1,6 +1,6 @@
 package de.vitagroup.num.domain.repository;
 
-import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.model.Aql;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

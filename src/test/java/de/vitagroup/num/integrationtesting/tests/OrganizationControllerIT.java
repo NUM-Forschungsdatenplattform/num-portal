@@ -1,8 +1,8 @@
 package de.vitagroup.num.integrationtesting.tests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Organization;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.repository.OrganizationRepository;
 import de.vitagroup.num.domain.repository.UserDetailsRepository;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static de.vitagroup.num.domain.Roles.SUPER_ADMIN;
+import static de.vitagroup.num.domain.model.Roles.SUPER_ADMIN;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;

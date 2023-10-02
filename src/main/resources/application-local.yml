@@ -1,0 +1,107 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    hikari:
+      data-source-properties:
+        stringtype: unspecified
+    numportal:
+      url: jdbc:postgresql://localhost:5432/numportal?currentSchema=num
+      driver-class-name: org.postgresql.Driver
+      username: postgres
+      password: postgres
+    numportal-attachment:
+      url: jdbc:postgresql://localhost:5432/num-attachment?currentSchema=num
+      driver-class-name: org.postgresql.Driver
+      username: num-attachment
+      password: num-attachment
+  # migration done via configuration class
+  flyway:
+    enabled: false
+  jpa:
+    show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/certs
+      client:
+        registration:
+          userStoreClient:
+            authorization-grant-type: client_credentials
+            client-id: num-portal
+            client-secret: 89dddc8f-0f25-4faf-a58d-6cda681f6ed3
+        provider:
+          userStoreClient:
+            token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
+  mvc:
+    log-request-details: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: numportalwebapp@gmail.com
+    password: notPassword
+    from: numportalwebapp@gmail.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+            required: true
+
+swagger:
+  oauth2:
+    token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/auth
+    client-name: numPortalWebapp
+    client-secret: numPortalWebapp
+
+userstore:
+  url: ${keycloak.url}/auth/admin/realms/crr
+
+keycloak:
+  #url: http://localhost:8180
+  url: https://keycloak.dev.num-codex.de
+
+feign:
+  client:
+    config:
+      numPortal:
+        connectTimeout: 1000
+        readTimeout: 1200
+        loggerLevel: FULL
+
+logging:
+  level:
+    de.vitagroup.num: DEBUG
+
+ehrbase:
+  rest-api-url: http://localhost:8080/ehrbase/
+  username: ehrbase-user
+  password: SuperSecretPassword
+
+privacy:
+  minHits: 1
+  pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
+  pseudonomityChunksSize: 20
+
+atna:
+  enabled: false
+  host: localhost
+  port: 514
+
+zars:
+  enabled: false
+  email: foo@foo.bar
+
+num:
+  url: http://localhost:8180
+  locale: en
+  systemStatusUrl: https://health.num-codex.de/
+  # if true a second database is configured for attachments - check configs for numportal-attachment
+  enableAttachmentDatabase: true
+
+user-service:
+  delete-users-cron: 0 0 5 * * *

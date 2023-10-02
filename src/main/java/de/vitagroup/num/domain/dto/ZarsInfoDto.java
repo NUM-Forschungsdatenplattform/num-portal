@@ -1,7 +1,7 @@
 package de.vitagroup.num.domain.dto;
 
-import de.vitagroup.num.domain.ProjectCategories;
-import de.vitagroup.num.domain.ProjectStatus;
+import de.vitagroup.num.domain.model.ProjectCategories;
+import de.vitagroup.num.domain.model.ProjectStatus;
 import java.time.LocalDate;
 import java.util.Set;
 import lombok.Data;

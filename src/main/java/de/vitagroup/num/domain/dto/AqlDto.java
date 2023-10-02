@@ -1,6 +1,6 @@
 package de.vitagroup.num.domain.dto;
 
-import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.model.admin.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,8 +1,8 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.domain.AqlCategory;
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.model.Aql;
+import de.vitagroup.num.domain.model.AqlCategory;
+import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.mapper.AqlMapper;
 import de.vitagroup.num.service.AqlService;

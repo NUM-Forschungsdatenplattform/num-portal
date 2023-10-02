@@ -2,7 +2,7 @@ package de.vitagroup.num.domain.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.CohortAql;
+import de.vitagroup.num.domain.model.CohortAql;
 import javax.persistence.AttributeConverter;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

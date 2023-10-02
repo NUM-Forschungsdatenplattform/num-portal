@@ -1,7 +1,7 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.model.Cohort;
+import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.CohortSizeDto;
