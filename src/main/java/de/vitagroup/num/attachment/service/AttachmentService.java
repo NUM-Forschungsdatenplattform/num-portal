@@ -1,7 +1,6 @@
 package de.vitagroup.num.attachment.service;
 
-import de.vitagroup.num.attachment.domain.dto.AttachmentDto;
-import de.vitagroup.num.attachment.domain.repository.AttachmentRepositoryJpa;
+import de.vitagroup.num.attachment.AttachmentRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,8 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 @ConditionalOnProperty(prefix = "num", name = "enableAttachmentDatabase", havingValue = "true")
 public class AttachmentService {
 
-    private final AttachmentRepositoryJpa attachmentRepository;
+    private final AttachmentRepository attachmentRepository;
 
-    public void uploadAttachment(AttachmentDto attachmentDto) {
-    }
 }
