@@ -1,6 +1,6 @@
 package de.vitagroup.num.service.notification;
 
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.properties.NumProperties;
 import de.vitagroup.num.service.email.EmailService;
 import de.vitagroup.num.service.email.MessageSourceWrapper;

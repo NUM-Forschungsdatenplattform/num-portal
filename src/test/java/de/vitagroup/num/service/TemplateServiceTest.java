@@ -22,7 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.TemplateMetadataDto;
 import de.vitagroup.num.mapper.TemplateMapper;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;

@@ -1,9 +1,9 @@
 package de.vitagroup.num.domain.specification;
 
-import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.domain.AqlCategory;
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Aql;
+import de.vitagroup.num.domain.model.AqlCategory;
+import de.vitagroup.num.domain.model.Organization;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;

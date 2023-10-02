@@ -1,9 +1,9 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.CohortGroup;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
+import de.vitagroup.num.domain.model.Cohort;
+import de.vitagroup.num.domain.model.CohortGroup;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.ProjectStatus;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.CohortSizeDto;

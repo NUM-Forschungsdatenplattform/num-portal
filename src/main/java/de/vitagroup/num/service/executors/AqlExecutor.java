@@ -1,6 +1,6 @@
 package de.vitagroup.num.service.executors;
 
-import de.vitagroup.num.domain.CohortAql;
+import de.vitagroup.num.domain.model.CohortAql;
 import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.policy.EuropeanConsentPolicy;

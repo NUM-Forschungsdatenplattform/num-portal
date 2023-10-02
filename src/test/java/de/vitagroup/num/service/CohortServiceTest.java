@@ -1,8 +1,8 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.*;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
+import de.vitagroup.num.domain.model.*;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.templates.ExceptionsTemplate;

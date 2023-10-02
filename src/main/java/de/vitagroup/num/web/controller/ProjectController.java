@@ -1,9 +1,9 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.Comment;
-import de.vitagroup.num.domain.ExportType;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.model.Comment;
+import de.vitagroup.num.domain.model.ExportType;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.mapper.CommentMapper;
 import de.vitagroup.num.mapper.ProjectMapper;

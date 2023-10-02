@@ -41,7 +41,7 @@ public abstract class IntegrationTest {
   private static final String EHR_BASE_URL = "/ehrbase/rest/openehr/v1/definition/template/adl1.4/";
 
   @ClassRule
-  public static PostgreSQLContainer postgreSQLContainer = NumPostgresqlContainer.getInstance();
+  public static PostgreSQLContainer postgreSQLContainer = NumPostgresqlContainer.getInstance("numportal");
 
   @Autowired public MockMvc mockMvc;
   @Rule public WireMockRule wireMockRule = new WireMockRule(8099);

@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +26,6 @@ import org.ehrbase.client.aql.query.Query;
 import org.ehrbase.client.aql.record.Record;
 import org.ehrbase.client.exception.ClientException;
 import org.ehrbase.client.exception.WrongStatusCodeException;
-import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestAqlEndpoint;
 import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestClient;
 import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
 import org.ehrbase.response.openehr.QueryResponseData;

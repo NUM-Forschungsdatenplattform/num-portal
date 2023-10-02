@@ -2,7 +2,7 @@ package de.vitagroup.num.service.atna;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.model.Project;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;

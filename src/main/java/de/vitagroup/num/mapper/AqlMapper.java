@@ -1,6 +1,6 @@
 package de.vitagroup.num.mapper;
 
-import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.domain.dto.AqlCategoryDto;
 import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.service.UserService;

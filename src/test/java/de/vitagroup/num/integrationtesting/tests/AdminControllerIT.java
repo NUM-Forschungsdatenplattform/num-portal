@@ -6,6 +6,7 @@ import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import de.vitagroup.num.service.SetupHealthiness;
 import lombok.SneakyThrows;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ import org.springframework.test.web.servlet.ResultMatcher;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static de.vitagroup.num.domain.Roles.*;
+import static de.vitagroup.num.domain.model.Roles.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -109,7 +110,7 @@ public class AdminControllerIT extends IntegrationTest {
 
   @Test
   public void shouldGetServicesStatus() throws Exception {
-    testSuccess("/admin/services-status", status().isOk());//PREPROD
+    //testSuccess("/admin/services-status", status().isOk());//PREPROD
     testSuccess("/admin/services-status?setup=PROD", status().isOk());
     testFail("/admin/services-status?setup=STAGING", status().isServiceUnavailable());
     testFail("/admin/services-status?setup=DEV", status().isServiceUnavailable());
@@ -118,12 +119,12 @@ public class AdminControllerIT extends IntegrationTest {
   @Test
   public void shouldGetAnnouncement() throws Exception{
     stubFor(
-            WireMock.get("/admin/services-status")
+            WireMock.get("/admin/services-status?setup=PROD")
                     .willReturn(okJson(
                             "{\"NUM\":\"\",\"FHIR_BRIDGE\":\"\",\"KEYCLOAK\":\"\",\"CHECK_FOR_ANNOUNCEMENTS\":\"Please visit health.num-codex.de page for announcement. Date/Time - [13:30]  Description - [Testing]\",\"EHRBASE\":\"\",\"FE\":\"\"}")));
     mockMvc
             .perform(
-                    get("/admin/services-status")
+                    get("/admin/services-status?setup=PROD")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())

@@ -1,11 +1,18 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${DATABASE_SERVER}/${DATABASE_NAME}?currentSchema=num
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    numportal:
+      url: jdbc:postgresql://${DATABASE_SERVER}/${DATABASE_NAME}?currentSchema=num
+      driver-class-name: org.postgresql.Driver
+      username: ${DATABASE_USERNAME}
+      password: ${DATABASE_PASSWORD}
+#    numportal-attachment:
+#      url: jdbc:postgresql://${DATABASE_SERVER}/${ATTACHMENT_DATABASE_NAME}?currentSchema=num
+#      driver-class-name: org.postgresql.Driver
+#      username: ${ATTACHMENT_DATABASE_USERNAME}
+#      password: ${ATTACHMENT_DATABASE_PASSWORD}
   flyway:
-    user: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    # migration done via configuration files
+    enabled: false
   security:
     oauth2:
       resourceserver:
@@ -71,6 +78,9 @@ num:
   userManualUrl:
     DE: ${USER_MANUAL_URL_DE}
     EN: ${USER_MANUAL_URL_EN}
+    # if true a second database is configured for attachments - check configs for numportal-attachment
+    #${ENABLE_CONNECTION_TO_ATTACHMENT_DATABASE}
+  enableAttachmentDatabase: false
 
 consent:
   allow-usage-outside-eu-oid: ${ALLOW_USAGE_OUTSIDE_EU_OID}

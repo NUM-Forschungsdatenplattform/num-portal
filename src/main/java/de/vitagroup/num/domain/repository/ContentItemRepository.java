@@ -1,7 +1,7 @@
 package de.vitagroup.num.domain.repository;
 
-import de.vitagroup.num.domain.Content;
-import de.vitagroup.num.domain.ContentType;
+import de.vitagroup.num.domain.model.Content;
+import de.vitagroup.num.domain.model.ContentType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

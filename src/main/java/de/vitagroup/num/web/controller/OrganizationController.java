@@ -1,7 +1,7 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.Roles;
+import de.vitagroup.num.domain.model.Organization;
+import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.mapper.OrganizationMapper;

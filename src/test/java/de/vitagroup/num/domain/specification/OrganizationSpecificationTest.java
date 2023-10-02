@@ -1,6 +1,6 @@
 package de.vitagroup.num.domain.specification;
 
-import de.vitagroup.num.domain.Organization;
+import de.vitagroup.num.domain.model.Organization;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

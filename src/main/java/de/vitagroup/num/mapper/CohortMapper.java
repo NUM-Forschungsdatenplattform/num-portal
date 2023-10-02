@@ -1,8 +1,8 @@
 package de.vitagroup.num.mapper;
 
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.CohortGroup;
-import de.vitagroup.num.domain.Type;
+import de.vitagroup.num.domain.model.Cohort;
+import de.vitagroup.num.domain.model.CohortGroup;
+import de.vitagroup.num.domain.model.Type;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import java.util.stream.Collectors;

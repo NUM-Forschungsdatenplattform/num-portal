@@ -4,7 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 
-import de.vitagroup.num.domain.Operator;
+import de.vitagroup.num.domain.model.Operator;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
 import org.apache.commons.collections4.SetUtils;
 import org.junit.Test;

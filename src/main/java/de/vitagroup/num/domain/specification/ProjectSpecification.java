@@ -1,10 +1,10 @@
 package de.vitagroup.num.domain.specification;
 
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Organization;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.ProjectStatus;
+import de.vitagroup.num.domain.model.Roles;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
 import lombok.Getter;

@@ -1,8 +1,8 @@
 package de.vitagroup.num.service.executors;
 
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.CohortGroup;
-import de.vitagroup.num.domain.Type;
+import de.vitagroup.num.domain.model.Cohort;
+import de.vitagroup.num.domain.model.CohortGroup;
+import de.vitagroup.num.domain.model.Type;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
 import java.util.List;

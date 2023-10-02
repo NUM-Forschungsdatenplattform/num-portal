@@ -3,10 +3,11 @@ package de.vitagroup.num.domain.validation;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.dto.CohortAqlDto;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
+import de.vitagroup.num.domain.model.Operator;
+import de.vitagroup.num.domain.model.Type;
 import org.junit.Before;
 import org.junit.Test;
 
