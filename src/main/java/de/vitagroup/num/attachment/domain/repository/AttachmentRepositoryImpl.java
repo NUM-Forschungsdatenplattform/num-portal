@@ -8,6 +8,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +26,15 @@ public class AttachmentRepositoryImpl implements AttachmentRepository {
 
     @Override
     public void saveAttachment(AttachmentDto model) {
-
+        Attachment entity = Attachment.builder()
+                .name(model.getName())
+                .description(model.getDescription())
+                .authorId(model.getAuthorId())
+                .uploadDate(OffsetDateTime.now())
+                .type(model.getType())
+                .content(model.getContent())
+                .build();
+        attachmentRepositoryJpa.save(entity);
     }
 
     @Override
