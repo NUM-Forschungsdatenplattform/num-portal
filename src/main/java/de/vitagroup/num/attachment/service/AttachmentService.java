@@ -14,6 +14,4 @@ import org.springframework.transaction.annotation.Transactional;
 @ConditionalOnProperty(prefix = "num", name = "enableAttachmentDatabase", havingValue = "true")
 public class AttachmentService {
 
-    private final AttachmentRepository attachmentRepository;
-
 }
