@@ -35,4 +35,10 @@ public class Attachment implements Serializable {
     private String authorId;
 
 
+    public Attachment(Long id, String name, String description, OffsetDateTime uploadDate) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.uploadDate = uploadDate;
+    }
 }
