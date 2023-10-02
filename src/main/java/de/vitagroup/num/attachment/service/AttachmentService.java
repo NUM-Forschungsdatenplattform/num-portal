@@ -1,6 +1,5 @@
 package de.vitagroup.num.attachment.service;
 
-import de.vitagroup.num.attachment.AttachmentRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
