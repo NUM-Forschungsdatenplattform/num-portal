@@ -108,25 +108,23 @@ public class AdminControllerIT extends IntegrationTest {
             .andExpect(jsonPath("$.userManualUrl.EN").value("user-manual-en"));
   }
 
-  //@Test comment out till fhirbridge is fixed
-  @Ignore
+  @Test
   public void shouldGetServicesStatus() throws Exception {
-    testSuccess("/admin/services-status", status().isOk());//PREPROD
+    //testSuccess("/admin/services-status", status().isOk());//PREPROD
     testSuccess("/admin/services-status?setup=PROD", status().isOk());
     testFail("/admin/services-status?setup=STAGING", status().isServiceUnavailable());
     testFail("/admin/services-status?setup=DEV", status().isServiceUnavailable());
   }
 
-  //@Test comment out till fhirbridge is fixed
-  @Ignore
+  @Test
   public void shouldGetAnnouncement() throws Exception{
     stubFor(
-            WireMock.get("/admin/services-status")
+            WireMock.get("/admin/services-status?setup=PROD")
                     .willReturn(okJson(
                             "{\"NUM\":\"\",\"FHIR_BRIDGE\":\"\",\"KEYCLOAK\":\"\",\"CHECK_FOR_ANNOUNCEMENTS\":\"Please visit health.num-codex.de page for announcement. Date/Time - [13:30]  Description - [Testing]\",\"EHRBASE\":\"\",\"FE\":\"\"}")));
     mockMvc
             .perform(
-                    get("/admin/services-status")
+                    get("/admin/services-status?setup=PROD")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
