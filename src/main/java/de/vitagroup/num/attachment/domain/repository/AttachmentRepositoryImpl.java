@@ -19,6 +19,7 @@ import java.util.Optional;
 public class AttachmentRepositoryImpl implements AttachmentRepository {
 
     private final AttachmentRepositoryJpa attachmentRepositoryJpa;
+
     @Override
     public List<Attachment> getAttachments() {
         return attachmentRepositoryJpa.getAttachments();
@@ -35,7 +36,7 @@ public class AttachmentRepositoryImpl implements AttachmentRepository {
                 .content(model.getContent())
                 .build();
         entity = attachmentRepositoryJpa.save(entity);
-        log.info("New attachment with id {} and name {} saved by {} ",entity.getId(), entity.getName(), entity.getAuthorId());
+        log.info("New attachment with id {} and name {} saved by {} ", entity.getId(), entity.getName(), entity.getAuthorId());
     }
 
     @Override
