@@ -29,4 +29,6 @@ public class AttachmentDto {
 
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private OffsetDateTime uploadDate;
+
+    private String authorId;
 }

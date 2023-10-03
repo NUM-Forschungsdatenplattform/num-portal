@@ -34,7 +34,8 @@ public class AttachmentRepositoryImpl implements AttachmentRepository {
                 .type(model.getType())
                 .content(model.getContent())
                 .build();
-        attachmentRepositoryJpa.save(entity);
+        entity = attachmentRepositoryJpa.save(entity);
+        log.info("New attachment with id {} and name {} saved by {} ",entity.getId(), entity.getName(), entity.getAuthorId());
     }
 
     @Override
