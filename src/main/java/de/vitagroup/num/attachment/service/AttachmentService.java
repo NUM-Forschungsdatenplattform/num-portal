@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional("attachmentTransactionManager")
@@ -51,11 +52,14 @@ public class AttachmentService {
     }
 
     public void deleteById(Long id, String loggedInUserId) {
-        attachmentRepository
-                .findById(id)
-                .orElseThrow(() -> new ResourceNotFound(AttachmentService.class, ExceptionsTemplate.ATTACHMENT_NOT_FOUND,
-                        String.format(ExceptionsTemplate.ATTACHMENT_NOT_FOUND, id)));
-        attachmentRepository.deleteAttachment(id);
-        log.info("Attachment {} was deleted by user {}", id, loggedInUserId);
+        Optional<Attachment> attachment = attachmentRepository.findById(id);
+        if (attachment.isPresent()) {
+            attachmentRepository.deleteAttachment(id);
+            log.info("Attachment {} was deleted by user {}", id, loggedInUserId);
+        } else {
+            log.error("Could not delete attachment {} because was not found", id);
+            throw new ResourceNotFound(AttachmentService.class, ExceptionsTemplate.ATTACHMENT_NOT_FOUND,
+                    String.format(ExceptionsTemplate.ATTACHMENT_NOT_FOUND, id));
+        }
     }
 }
