@@ -10,6 +10,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AttachmentRepositoryTest {
@@ -22,6 +23,8 @@ public class AttachmentRepositoryTest {
 
     @Test
     public void getAttachmentsTest() {
+        Mockito.when(attachmentRepositoryJpa.getAttachments())
+                .thenReturn(List.of(new Attachment(3L, "dummy name", "dummy description", OffsetDateTime.now())));
         attachmentRepository.getAttachments();
         Mockito.verify(attachmentRepositoryJpa, Mockito.times(1)).getAttachments();
     }
