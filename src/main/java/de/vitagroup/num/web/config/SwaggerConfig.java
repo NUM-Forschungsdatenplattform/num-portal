@@ -68,6 +68,11 @@ public class SwaggerConfig {
   }
 
   @Bean
+  public GroupedOpenApi attachmentApi() {
+    return getDocket("Attachment", "/attachment/**", NUM_PACKAGES_TO_SCAN);
+  }
+
+  @Bean
   public OpenAPI customOpenAPI() {
     OAuthFlow oAuthFlow = new OAuthFlow()
             .tokenUrl(swaggerProperties.getTokenUri())
