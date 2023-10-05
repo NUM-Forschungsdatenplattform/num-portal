@@ -50,8 +50,8 @@ public class ExceptionsTemplate {
     public final static String ORGANIZATION_NOT_FOUND = "Organization not found: %s";
 
     public static final String ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT = "The organization :%s is not empty, can't delete it.";
-
     public static final String NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS = "Not allowed to update own's organization status";
+    public static final String ATTACHMENT_NOT_FOUND = "Attachment with id %s not found";
     //ForbiddenException
     public final static String CANNOT_UPDATE_ORGANIZATION = "Cannot update organization: %s";
     public final static String CANNOT_ACCESS_THIS_RESOURCE = "Cannot access this resource";
@@ -306,6 +306,7 @@ public class ExceptionsTemplate {
         errorMap.put(EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT, new ExceptionDto(101, new ArrayList<>()));//3 parameter
         errorMap.put(EXCEPTION_IN_PARSING_PAGE, new ExceptionDto(102, new ArrayList<>()));
         errorMap.put(ANNOUNCEMENT_IN_PLACE, new ExceptionDto(103, new ArrayList<>()));//2 parameters
+        errorMap.put( ATTACHMENT_NOT_FOUND, new ExceptionDto( 104, new ArrayList<>() ) );//1 parameter
 
     }
 
