@@ -13,7 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +28,8 @@ import java.util.Optional;
 public class AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
+
+    private final ClamAVService clamAVService;
 
     public List<Attachment> listAttachments() {
         return attachmentRepository.getAttachments();
@@ -40,6 +45,9 @@ public class AttachmentService {
     public void saveAttachment(MultipartFile file, String description, String loggedInUserId) throws IOException {
         if (file.isEmpty()) {
             throw new BadRequestException(AttachmentService.class, "Invalid file. Missing content");
+        }
+        try(InputStream fileContent = new ByteArrayInputStream(file.getBytes())) {
+            clamAVService.scan(fileContent);
         }
         AttachmentDto model = AttachmentDto.builder()
                 .name(file.getOriginalFilename())
