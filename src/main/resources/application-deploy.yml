@@ -6,7 +6,7 @@ spring:
       username: ${DATABASE_USERNAME}
       password: ${DATABASE_PASSWORD}
     numportal-attachment:
-      url: jdbc:postgresql://${DATABASE_SERVER}/${ATTACHMENT_DATABASE_NAME}?currentSchema=num
+      url: jdbc:postgresql://${ATTACHMENT_DATABASE_SERVER}/${ATTACHMENT_DATABASE_NAME}?currentSchema=num
       driver-class-name: org.postgresql.Driver
       username: ${ATTACHMENT_DATABASE_USERNAME}
       password: ${ATTACHMENT_DATABASE_PASSWORD}
