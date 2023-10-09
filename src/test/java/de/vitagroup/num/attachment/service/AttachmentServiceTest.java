@@ -3,7 +3,9 @@ package de.vitagroup.num.attachment.service;
 import de.vitagroup.num.attachment.AttachmentRepository;
 import de.vitagroup.num.attachment.domain.dto.AttachmentDto;
 import de.vitagroup.num.attachment.domain.model.Attachment;
+import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,6 +19,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Optional;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DOCUMENT_TYPE_MISMATCH;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_FILE_MISSING_CONTENT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PDF_FILE_SIZE_EXCEEDED;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AttachmentServiceTest {
@@ -72,5 +78,38 @@ public class AttachmentServiceTest {
         MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "content".getBytes());
         attachmentService.saveAttachment(mockFile, null, "author-id");
         Mockito.verify(attachmentRepository, Mockito.times(1)).saveAttachment(Mockito.any(AttachmentDto.class));
+    }
+
+    @Test
+    public void checkEmptyFileError() throws IOException {
+        ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 10485760);
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "".getBytes());
+        try {
+            attachmentService.saveAttachment(mockFile, null, "author-id");
+        }catch (BadRequestException fe) {
+            Assert.assertEquals(INVALID_FILE_MISSING_CONTENT, fe.getMessage());
+        }
+    }
+
+    @Test
+    public void checkDocumentTypeMismatchException() throws IOException {
+        ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 10485760);
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile", "application/pdf", "content".getBytes());
+        try {
+            attachmentService.saveAttachment(mockFile, null, "author-id");
+        }catch (BadRequestException fe) {
+            Assert.assertEquals(DOCUMENT_TYPE_MISMATCH, fe.getMessage());
+        }
+    }
+
+    @Test
+    public void pdfFileExceededException() throws IOException {
+        ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 1);
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "content".getBytes());
+        try {
+            attachmentService.saveAttachment(mockFile, null, "author-id");
+        }catch (BadRequestException fe) {
+            Assert.assertEquals(String.format(PDF_FILE_SIZE_EXCEEDED, 0, 0), fe.getMessage());
+        }
     }
 }
