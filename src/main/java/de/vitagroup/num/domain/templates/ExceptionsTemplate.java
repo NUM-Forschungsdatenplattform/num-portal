@@ -152,6 +152,11 @@ public class ExceptionsTemplate {
     public final static String EXCEPTION_IN_PARSING_PAGE = "health.num-codex.de page was modified and regex expressions needs to be checked.";
     public final static String ANNOUNCEMENT_IN_PLACE = "Please visit health.num-codex.de page for announcement. Date/Time - [%s]  Description - [%s]";
 
+    //document
+    public final static String DOCUMENT_TYPE_MISMATCH = "Document type mismatch. Only PDF type is allowed to be uploaded.";
+    public final static String INVALID_FILE_MISSING_CONTENT = "Invalid file. Missing content";
+    public final static String PDF_FILE_SIZE_EXCEEDED = "PDF File Size Exceeded. Default size is [%s] MB. Current file size is [%s]+ MB.";
+
     public static final Map<String, ExceptionDto> errorMap = new HashMap<>();
 
     static {
@@ -306,7 +311,12 @@ public class ExceptionsTemplate {
         errorMap.put(EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT, new ExceptionDto(101, new ArrayList<>()));//3 parameter
         errorMap.put(EXCEPTION_IN_PARSING_PAGE, new ExceptionDto(102, new ArrayList<>()));
         errorMap.put(ANNOUNCEMENT_IN_PLACE, new ExceptionDto(103, new ArrayList<>()));//2 parameters
-        errorMap.put( ATTACHMENT_NOT_FOUND, new ExceptionDto( 104, new ArrayList<>() ) );//1 parameter
+        errorMap.put(ATTACHMENT_NOT_FOUND, new ExceptionDto( 104, new ArrayList<>() ) );//1 parameter
+
+        //Document
+        errorMap.put(DOCUMENT_TYPE_MISMATCH, new ExceptionDto( 105, new ArrayList<>() ) );
+        errorMap.put(INVALID_FILE_MISSING_CONTENT, new ExceptionDto( 106, new ArrayList<>() ) );
+        errorMap.put(PDF_FILE_SIZE_EXCEEDED, new ExceptionDto( 107, new ArrayList<>() ) );//2 parameters
 
     }
 
