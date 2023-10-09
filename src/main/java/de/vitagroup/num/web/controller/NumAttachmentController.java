@@ -47,7 +47,7 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
 
     @AuditLog(description = "Retrieves a list of existing attachments")
     @Operation(description = "Retrieves a list of existing attachments")
-    @GetMapping
+    @GetMapping("/all")
     @PreAuthorize(Role.SUPER_ADMIN)
     public ResponseEntity<List<AttachmentDto>> listAttachments() {
         return ResponseEntity.ok(attachmentService.listAttachments().stream()
