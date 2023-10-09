@@ -75,7 +75,7 @@ public class AttachmentServiceTest {
     @Test
     public void saveAttachmentTest() throws IOException {
         ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 10485760);
-        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "content".getBytes());
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "%PDF-1.5content".getBytes());
         attachmentService.saveAttachment(mockFile, null, "author-id");
         Mockito.verify(attachmentRepository, Mockito.times(1)).saveAttachment(Mockito.any(AttachmentDto.class));
     }
@@ -94,7 +94,7 @@ public class AttachmentServiceTest {
     @Test
     public void checkDocumentTypeMismatchException() throws IOException {
         ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 10485760);
-        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile", "application/pdf", "content".getBytes());
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile", "application/pdf", "%PDF-1.5 content".getBytes());
         try {
             attachmentService.saveAttachment(mockFile, null, "author-id");
         }catch (BadRequestException fe) {
@@ -105,7 +105,7 @@ public class AttachmentServiceTest {
     @Test
     public void pdfFileExceededException() throws IOException {
         ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 1);
-        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "content".getBytes());
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "%PDF-1.5".getBytes());
         try {
             attachmentService.saveAttachment(mockFile, null, "author-id");
         }catch (BadRequestException fe) {
