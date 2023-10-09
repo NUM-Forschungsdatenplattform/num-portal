@@ -13,7 +13,7 @@ spring:
       data-source-properties:
         stringtype: unspecified
     numportal:
-      url: jdbc:postgresql://localhost:5432/num?currentSchema=num
+      url: jdbc:postgresql://localhost:5432/numportal?currentSchema=num
       driver-class-name: org.postgresql.Driver
       username: postgres
       password: postgres
@@ -25,8 +25,8 @@ spring:
   # migration done via configuration class
   flyway:
     enabled: false
-#    user: postgres
-#    password: postgres
+    #    user: postgres
+    #    password: postgres
     numportal:
       locations: classpath:db/migration/num-portal
     numportal-attachment:
@@ -160,10 +160,10 @@ num:
   locale: en
   systemStatusUrl: https://health.num-codex.de/
   userManualUrl:
-     DE: 'https://num-portal-webapp.readthedocs.io/de/latest/'
-     EN: 'https://num-portal-webapp.readthedocs.io/en/latest/'
+    DE: 'https://num-portal-webapp.readthedocs.io/de/latest/'
+    EN: 'https://num-portal-webapp.readthedocs.io/en/latest/'
   # if true a second database is configured for attachments - check configs for numportal-attachment
-  enableAttachmentDatabase: true
+  enableAttachmentDatabase: false
   # default PDF file size is 10 MB. 1024*1024*10
   pdfFileSize: 10485760
 
