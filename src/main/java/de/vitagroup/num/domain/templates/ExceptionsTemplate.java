@@ -155,7 +155,7 @@ public class ExceptionsTemplate {
     //document
     public final static String DOCUMENT_TYPE_MISMATCH = "Document type mismatch. Only PDF type is allowed to be uploaded.";
     public final static String INVALID_FILE_MISSING_CONTENT = "Invalid file. Missing content";
-    public final static String PDF_FILE_SIZE_EXCEEDED = "PDF File Size Exceeded. Default size is [%s] MB. Current file size is [%s]+ MB.";
+    public final static String PDF_FILE_SIZE_EXCEEDED = "PDF File Size Exceeded. Maximum file size is [%s] MB. Current file size is [%s]+ MB.";
 
     public static final Map<String, ExceptionDto> errorMap = new HashMap<>();
 
