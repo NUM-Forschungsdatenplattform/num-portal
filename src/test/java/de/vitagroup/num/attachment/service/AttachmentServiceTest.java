@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -67,6 +68,7 @@ public class AttachmentServiceTest {
 
     @Test
     public void saveAttachmentTest() throws IOException {
+        ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 10485760);
         MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "content".getBytes());
         attachmentService.saveAttachment(mockFile, null, "author-id");
         Mockito.verify(attachmentRepository, Mockito.times(1)).saveAttachment(Mockito.any(AttachmentDto.class));
