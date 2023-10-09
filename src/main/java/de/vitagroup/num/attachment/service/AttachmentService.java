@@ -59,17 +59,34 @@ public class AttachmentService {
         attachmentRepository.saveAttachment(model);
     }
 
-    private void validate(MultipartFile file) {
+    private void validate(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
             throw new BadRequestException(AttachmentService.class, INVALID_FILE_MISSING_CONTENT);
         }
-        if (!Objects.requireNonNull(file.getOriginalFilename()).toLowerCase().endsWith(".pdf")){
+        if (!Objects.requireNonNull(file.getOriginalFilename()).toLowerCase().endsWith(".pdf") || !checkIsPDFContent(file.getBytes())){
             throw new BadRequestException(NumAttachmentController.class, DOCUMENT_TYPE_MISMATCH);
         }
         if (file.getSize() > pdfFileSize){
             throw new BadRequestException(NumAttachmentController.class,
                     String.format(PDF_FILE_SIZE_EXCEEDED, pdfFileSize/1048576, file.getSize()/1048576));
         }
+    }
+
+    private boolean checkIsPDFContent(byte[] data) {
+        if(data.length < 5) {
+            return false;
+        }
+
+        //%PDF-
+        if(!((data[0] == 0x25) &&(data[1] == 0x50)&&(data[2] == 0x44)&&(data[3] == 0x46)&&(data[4] == 0x2D))){
+            return false;
+        }
+
+        // version is 1.<PDF version>
+        if(!(data[5]==0x31 && data[6]==0x2E )){
+            return false;
+        }
+        return true;
     }
 
     public void deleteById(Long id, String loggedInUserId) {
