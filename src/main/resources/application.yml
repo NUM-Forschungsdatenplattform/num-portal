@@ -170,8 +170,8 @@ num:
 clamAV:
   host: localhost
   port: 3310
-  timeout: 3000
-  ping-timeout: 2000
+  read-timeout: 35000
+  connection-timeout: 2000
 
 consent:
   allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37

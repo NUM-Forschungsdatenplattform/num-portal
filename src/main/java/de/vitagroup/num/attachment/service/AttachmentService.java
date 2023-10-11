@@ -23,9 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DOCUMENT_TYPE_MISMATCH;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_FILE_MISSING_CONTENT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PDF_FILE_SIZE_EXCEEDED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Service
 @Transactional("attachmentTransactionManager")
@@ -38,8 +36,7 @@ public class AttachmentService {
 
     @Value("${num.pdfFileSize:10485760}")
     private long pdfFileSize;
-    private final ClamAVService clamAVService;
-
+    private final FileScanService fileScanService;
 
     public List<Attachment> listAttachments() {
         return attachmentRepository.getAttachments();
@@ -53,10 +50,8 @@ public class AttachmentService {
     }
 
     public void saveAttachment(MultipartFile file, String description, String loggedInUserId) throws IOException {
+
         validate(file);
-        try(InputStream fileContent = new ByteArrayInputStream(file.getBytes())) {
-            clamAVService.scan(fileContent);
-        }
         AttachmentDto model = AttachmentDto.builder()
                 .name(file.getOriginalFilename())
                 .description(description)
@@ -69,9 +64,13 @@ public class AttachmentService {
 
     private void validate(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
+            log.error("File content is missing for uploaded file {}", file.getOriginalFilename());
             throw new BadRequestException(AttachmentService.class, INVALID_FILE_MISSING_CONTENT);
         }
+        fileScanService.virusScan(file);
+
         if (!Objects.requireNonNull(file.getOriginalFilename()).toLowerCase().endsWith(".pdf") || !checkIsPDFContent(file.getBytes())){
+            log.error("Invalid document type received for {}", file.getOriginalFilename());
             throw new BadRequestException(NumAttachmentController.class, DOCUMENT_TYPE_MISMATCH);
         }
         if (file.getSize() > pdfFileSize){

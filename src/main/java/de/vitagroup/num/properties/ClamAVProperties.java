@@ -29,8 +29,8 @@ public class ClamAVProperties {
      */
     private int port;
 
-    private int timeout;
+    private int readTimeout;
 
-    private int pingTimeout;
+    private int connectionTimeout;
 
 }
