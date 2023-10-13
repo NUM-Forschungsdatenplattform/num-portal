@@ -2,8 +2,10 @@ package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.model.SetupType;
 import de.vitagroup.num.service.html.HtmlContent;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -21,7 +23,16 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.EXCEPTION_IN_
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SetupHealthiness {
+
+    private final HtmlContent htmlContent;
+
+    @Value("${num.systemStatusUrl}")
+    private String systemStatusUrl;
+
+    @Value("${num.statusCakeUrl}")
+    private String statusCakeUrl;
 
     public Map<String, String> checkHealth(SetupType setup){
         Map<String, String> map = new HashMap<>();
@@ -58,11 +69,8 @@ public class SetupHealthiness {
 
     public String checkForAnnouncements() {
         String message = Strings.EMPTY;
-        String URL = "https://health.num-codex.de/";
-        HtmlContent htmlContent = new HtmlContent();
         try {
-            htmlContent.init();
-            String pageContent = htmlContent.pageContent(URL);
+            String pageContent = htmlContent.pageContent(systemStatusUrl);
             String publicID = getPublicID(pageContent);
             if(publicID.isEmpty()){
                 return message;
@@ -83,7 +91,7 @@ public class SetupHealthiness {
                 return String.format(ANNOUNCEMENT_IN_PLACE, timeOfAnnouncement, descriptionOfAnnouncement);
             }
             if(!dynamicContent.contains( "No current announcements" )){
-                message = String.format("Check the %s page for the new announcements", URL);
+                message = String.format("Check the %s page for the new announcements", systemStatusUrl);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -109,7 +117,7 @@ public class SetupHealthiness {
     }
 
     private String getDynamicPageContent(String publicID, HtmlContent htmlContent) throws IOException, URISyntaxException {
-        String newURL = "https://app.statuscake.com/Workfloor/PublicReportHandler.php?PublicID=" + publicID;
+        String newURL = statusCakeUrl + publicID;
         return htmlContent.pageContent(newURL);
     }
 
