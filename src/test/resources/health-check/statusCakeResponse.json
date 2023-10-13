@@ -1,0 +1,101 @@
+{
+  "Twitter": "",
+  "ShowAd": false,
+  "Facebook": "",
+  "BG": "rgb(245, 245, 245)",
+  "HeadBG": "rgb(248, 248, 248)",
+  "BlockHead": "rgb(100, 100, 100)",
+  "Announce": "<hr \/><p><a href=\"https:\/\/num-codex.de\/legal\/imprint\">Imprint<\/a><\/p><p><a href=\"https:\/\/num-codex.de\/legal\/data-protection\">Data Protection<\/a><\/p>",
+  "Client": "105620",
+  "Skin": "",
+  "Orbs": 1,
+  "Title": "NUM Codex Status",
+  "LogoImage": "https:\/\/app.statuscake.com\/Uploads\/Logos\/9304102.png",
+  "Dates": ["Oct 07", "Oct 08", "Oct 09", "Oct 10", "Oct 11", "Oct 12", "Oct 13"],
+  "TestData": [{
+    "TestID": "6670021",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Pre-Prod - Backend",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 100, 100, 100, 100]
+  }, {
+    "TestID": "6921168",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Pre-Prod - DSF FHIR",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 100, 100, 100, 100]
+  }, {
+    "TestID": "6744350",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Pre-Prod - Ehrbase",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 99.29, 100, 100, 100]
+  }, {
+    "TestID": "6750399",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Pre-Prod - FHIR-Bridge",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 100, 100, 100, 100]
+  }, {
+    "TestID": "5892740",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Pre-Prod - Frontend",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 100, 100, 100, 100]
+  }, {
+    "TestID": "6783127",
+    "CheckRate": "300",
+    "Name": "CODEX NUM PreProd - Keycloak",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 100, 100, 100, 100]
+  }, {
+    "TestID": "6761875",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Prod - Backend",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 100, 100, 100, 100]
+  }, {
+    "TestID": "6657055",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Prod - DSF FHIR",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 100, 100, 100, 100]
+  }, {
+    "TestID": "6748871",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Prod - Ehrbase",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 100, 100, 100, 100]
+  }, {
+    "TestID": "6750495",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Prod - FHIR-Bridge",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 99.3, 100, 100, 100]
+  }, {
+    "TestID": "6139213",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Prod - Frontend",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 100, 100, 100, 100]
+  }, {
+    "TestID": "6657053",
+    "CheckRate": "300",
+    "Name": "CODEX NUM Prod - Keycloak",
+    "TestType": "HTTP",
+    "Status": "Up",
+    "Uptime": [100, 100, 100, 100, 100, 100, 100]
+  }
+  ]
+}
