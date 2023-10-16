@@ -5,8 +5,8 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import de.vitagroup.num.service.SetupHealthiness;
 import lombok.SneakyThrows;
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +14,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import java.nio.charset.StandardCharsets;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static de.vitagroup.num.domain.model.Roles.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -103,13 +104,21 @@ public class AdminControllerIT extends IntegrationTest {
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.systemStatusUrl").value("health-url"))
+            .andExpect(jsonPath("$.systemStatusUrl").value("http://localhost:8099/health-url"))
             .andExpect(jsonPath("$.userManualUrl.DE").value("user-manual-de"))
             .andExpect(jsonPath("$.userManualUrl.EN").value("user-manual-en"));
   }
 
   @Test
   public void shouldGetServicesStatus() throws Exception {
+    stubFor(
+            WireMock.get("/health-url")
+                    .willReturn(okTextXml(IOUtils.toString(getClass().getResourceAsStream("/health-check/NUM-Codex-Status.html"),
+                            StandardCharsets.UTF_8))));
+    stubFor(
+            WireMock.get("/statusCake?PublicID=Lmw50IEZ6s")
+                    .willReturn(okTextXml(IOUtils.toString(getClass().getResourceAsStream("/health-check/statusCakeResponse.json"),
+                            StandardCharsets.UTF_8))));
     //testSuccess("/admin/services-status", status().isOk());//PREPROD
     testSuccess("/admin/services-status?setup=PROD", status().isOk());
     testFail("/admin/services-status?setup=STAGING", status().isServiceUnavailable());
@@ -117,11 +126,15 @@ public class AdminControllerIT extends IntegrationTest {
   }
 
   @Test
-  public void shouldGetAnnouncement() throws Exception{
+  public void shouldGetAnnouncement() throws Exception {
     stubFor(
-            WireMock.get("/admin/services-status?setup=PROD")
-                    .willReturn(okJson(
-                            "{\"NUM\":\"\",\"FHIR_BRIDGE\":\"\",\"KEYCLOAK\":\"\",\"CHECK_FOR_ANNOUNCEMENTS\":\"Please visit health.num-codex.de page for announcement. Date/Time - [13:30]  Description - [Testing]\",\"EHRBASE\":\"\",\"FE\":\"\"}")));
+            WireMock.get("/health-url")
+                    .willReturn(okTextXml(IOUtils.toString(getClass().getResourceAsStream("/health-check/NUM-Codex-Status.html"),
+                            StandardCharsets.UTF_8))));
+    stubFor(
+            WireMock.get("/statusCake?PublicID=Lmw50IEZ6s")
+                    .willReturn(okTextXml(IOUtils.toString(getClass().getResourceAsStream("/health-check/statusCakeResponseWithAnnouncements.json"),
+                            StandardCharsets.UTF_8))));
     mockMvc
             .perform(
                     get("/admin/services-status?setup=PROD")
