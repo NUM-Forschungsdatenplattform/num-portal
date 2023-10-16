@@ -1,5 +1,7 @@
 package de.vitagroup.num.attachment.service;
 
+import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.SystemException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -29,6 +31,32 @@ public class FileScanServiceTest {
         Mockito.when(clamAVService.ping()).thenReturn(true);
         Mockito.when(clamAVService.scan(Mockito.any(InputStream.class))).thenReturn(scanResponse);
         Mockito.when(clamAVService.isScannedFileSafe(Mockito.eq(scanResponse))).thenReturn(true);
+        fileScanService.virusScan(mockFile);
+    }
+
+    @Test(expected = SystemException.class)
+    public void virusScanExceptionWhenPingTest() {
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "fileContent".getBytes());
+        Mockito.when(clamAVService.ping()).thenReturn(false);
+        fileScanService.virusScan(mockFile);
+        Mockito.verify(clamAVService, Mockito.never()).scan(Mockito.any(InputStream.class));
+        Mockito.verify(clamAVService, Mockito.never()).isScannedFileSafe(Mockito.any(String.class));
+    }
+
+    @Test(expected = SystemException.class)
+    public void virusScanExceptionWhileScanningTest() {
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "fileContent".getBytes());
+        Mockito.when(clamAVService.ping()).thenReturn(true);
+        Mockito.when(clamAVService.scan(Mockito.any(InputStream.class))).thenAnswer((t)-> {throw new IOException();});
+        fileScanService.virusScan(mockFile);
+        Mockito.verify(clamAVService, Mockito.never()).isScannedFileSafe(Mockito.any(String.class));
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void virusScanMalwareFoundExceptionTest() {
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "fileContent".getBytes());
+        Mockito.when(clamAVService.ping()).thenReturn(true);
+        Mockito.when(clamAVService.scan(Mockito.any(InputStream.class))).thenReturn("file:ERROR");
         fileScanService.virusScan(mockFile);
     }
 }
