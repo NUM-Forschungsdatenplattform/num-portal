@@ -1,10 +1,12 @@
 package de.vitagroup.num.integrationtesting.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.GenericContainer;
 
 /**
  * test container for clamav service
  */
+@Slf4j
 public class ClamAVContainer extends GenericContainer<ClamAVContainer>{
     private static final String IMAGE_VERSION = "clamav/clamav:1.2";
     private static ClamAVContainer container;
@@ -23,6 +25,7 @@ public class ClamAVContainer extends GenericContainer<ClamAVContainer>{
 
     @Override
     public void start() {
+        log.info("----- START ClamAVContainer called ----");
         super.start();
     }
 }

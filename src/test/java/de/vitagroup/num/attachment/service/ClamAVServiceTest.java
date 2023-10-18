@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 public class ClamAVServiceTest {
 
     @ClassRule
-    public static ClamAVContainer clamAVContainer = ClamAVContainer.getInstance();
+    public static final ClamAVContainer clamAVContainer = ClamAVContainer.getInstance();
 
     @Mock
     private ClamAVProperties clamAVProperties;
