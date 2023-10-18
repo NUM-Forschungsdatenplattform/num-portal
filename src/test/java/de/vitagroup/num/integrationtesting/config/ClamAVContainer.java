@@ -1,5 +1,6 @@
 package de.vitagroup.num.integrationtesting.config;
 
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.GenericContainer;
 
@@ -18,7 +19,8 @@ public class ClamAVContainer extends GenericContainer<ClamAVContainer>{
     public static ClamAVContainer getInstance() {
         if (container == null) {
             container = new ClamAVContainer(IMAGE_VERSION)
-                    .withExposedPorts(3310);
+                    .withExposedPorts(3310)
+                    .withAccessToHost(true);
         }
         return container;
     }
@@ -27,5 +29,11 @@ public class ClamAVContainer extends GenericContainer<ClamAVContainer>{
     public void start() {
         log.info("----- START ClamAVContainer called ----");
         super.start();
+    }
+
+    @Override
+    protected void containerIsStarted(InspectContainerResponse containerInfo) {
+        super.containerIsStarted(containerInfo);
+        log.info("ClamAVContainer started {} ", containerInfo);
     }
 }

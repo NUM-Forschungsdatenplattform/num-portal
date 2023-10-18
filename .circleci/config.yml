@@ -40,6 +40,7 @@ jobs:
   test:
     machine:
       image: ubuntu-2204:2022.10.2
+    resource_class: large
     steps:
       - checkout
       - cache-out-maven-dependencies

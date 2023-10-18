@@ -31,7 +31,7 @@ public class ClamAVServiceTest {
     @Before
     public void setup() {
         Mockito.when(clamAVProperties.getHost()).thenReturn(clamAVContainer.getHost());
-        Mockito.when(clamAVProperties.getPort()).thenReturn(3310);
+        Mockito.when(clamAVProperties.getPort()).thenReturn(clamAVContainer.getMappedPort(3310));
         Mockito.when(clamAVProperties.getConnectionTimeout()).thenReturn(2000);
         Mockito.when(clamAVProperties.getReadTimeout()).thenReturn(15000);
     }
