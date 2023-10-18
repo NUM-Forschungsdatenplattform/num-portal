@@ -1,5 +1,6 @@
 package de.vitagroup.num.attachment.service;
 
+import de.vitagroup.num.domain.templates.ExceptionsTemplate;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
 import lombok.AllArgsConstructor;
@@ -28,13 +29,13 @@ public class FileScanService {
                 }
             } catch (IOException e) {
                 log.error("Error occurred when scanning file {} ", file.getOriginalFilename(), e);
-                throw new SystemException(FileScanService.class, "Could not scan file " + file.getOriginalFilename(),
-                        "Could not scan file " + file.getOriginalFilename());
+                throw new SystemException(FileScanService.class, ExceptionsTemplate.CLAMAV_SCAN_FAILED,
+                        String.format(ExceptionsTemplate.CLAMAV_SCAN_FAILED, file.getOriginalFilename()));
             }
         } else {
             log.error("ClamAV service did not respond to ping request");
-            throw new SystemException(FileScanService.class, "Could not ping ClamAV service",
-                    "Could not ping ClamAV service");
+            throw new SystemException(FileScanService.class, ExceptionsTemplate.CLAMAV_PING_FAILED,
+                    ExceptionsTemplate.CLAMAV_PING_FAILED);
         }
         log.info("End scanning file {}", file.getOriginalFilename());
     }
