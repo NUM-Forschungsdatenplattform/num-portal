@@ -30,6 +30,9 @@ public class AttachmentServiceTest {
     @Mock
     private AttachmentRepository attachmentRepository;
 
+    @Mock
+    private FileScanService fileScanService;
+
     @InjectMocks
     private AttachmentService attachmentService;
 

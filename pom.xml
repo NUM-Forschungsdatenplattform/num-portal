@@ -38,7 +38,7 @@
     <postgresql.version>42.6.0</postgresql.version>
     <hapi.version>5.6.5</hapi.version>
     <wiremock-standalone.version>3.0.0-beta-7</wiremock-standalone.version>
-    <testcontainers.version>1.18.3</testcontainers.version>
+    <testcontainers.version>1.19.1</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
     <spring-security.version>5.8.6</spring-security.version>
     <spring.cloud-version>2021.0.8</spring.cloud-version>

@@ -157,6 +157,9 @@ public class ExceptionsTemplate {
     public final static String INVALID_FILE_MISSING_CONTENT = "Invalid file. Missing content";
     public final static String PDF_FILE_SIZE_EXCEEDED = "PDF File Size Exceeded. Maximum file size is [%s] MB. Current file size is [%s]+ MB.";
 
+    public static final String CLAMAV_PING_FAILED = "Could not ping ClamAV service";
+    public static final String CLAMAV_SCAN_FAILED = "Could not scan file %s";
+
     public static final Map<String, ExceptionDto> errorMap = new HashMap<>();
 
     static {
@@ -317,6 +320,9 @@ public class ExceptionsTemplate {
         errorMap.put(DOCUMENT_TYPE_MISMATCH, new ExceptionDto( 105, new ArrayList<>() ) );
         errorMap.put(INVALID_FILE_MISSING_CONTENT, new ExceptionDto( 106, new ArrayList<>() ) );
         errorMap.put(PDF_FILE_SIZE_EXCEEDED, new ExceptionDto( 107, new ArrayList<>() ) );//2 parameters
+
+        errorMap.put(CLAMAV_PING_FAILED, new ExceptionDto( 108, new ArrayList<>() ) );
+        errorMap.put(CLAMAV_SCAN_FAILED, new ExceptionDto( 109, new ArrayList<>() ) );//1 parameter
 
     }
 

@@ -102,3 +102,7 @@ requestpsnworkflow:
 
 pseudonymity:
   fake3rdPartyPseudonymEnabled: ${FAKE_3RD_PARTY_PSEUDONYM_ENABLED}
+
+clamAV:
+  host: ${CLAMAV_HOST}
+  port: ${CLAMAV_PORT}

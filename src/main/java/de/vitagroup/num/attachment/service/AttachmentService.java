@@ -15,14 +15,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DOCUMENT_TYPE_MISMATCH;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_FILE_MISSING_CONTENT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PDF_FILE_SIZE_EXCEEDED;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Service
 @Transactional("attachmentTransactionManager")
@@ -36,6 +37,10 @@ public class AttachmentService {
     @Value("${num.pdfFileSize:10485760}")
     private long pdfFileSize;
 
+    @Value("${num.fileVirusScanEnabled}")
+    private boolean fileVirusScanEnabled;
+    private final FileScanService fileScanService;
+
     public List<Attachment> listAttachments() {
         return attachmentRepository.getAttachments();
     }
@@ -48,6 +53,7 @@ public class AttachmentService {
     }
 
     public void saveAttachment(MultipartFile file, String description, String loggedInUserId) throws IOException {
+
         validate(file);
         AttachmentDto model = AttachmentDto.builder()
                 .name(file.getOriginalFilename())
@@ -61,9 +67,17 @@ public class AttachmentService {
 
     private void validate(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
+            log.error("File content is missing for uploaded file {}", file.getOriginalFilename());
             throw new BadRequestException(AttachmentService.class, INVALID_FILE_MISSING_CONTENT);
         }
+        if (Boolean.TRUE.equals(fileVirusScanEnabled)) {
+            fileScanService.virusScan(file);
+        } else {
+            log.warn("File scan for virus/malware is not enabled");
+        }
+
         if (!Objects.requireNonNull(file.getOriginalFilename()).toLowerCase().endsWith(".pdf") || !checkIsPDFContent(file.getBytes())){
+            log.error("Invalid document type received for {}", file.getOriginalFilename());
             throw new BadRequestException(NumAttachmentController.class, DOCUMENT_TYPE_MISMATCH);
         }
         if (file.getSize() > pdfFileSize){
