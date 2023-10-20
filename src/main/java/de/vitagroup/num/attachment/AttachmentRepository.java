@@ -15,4 +15,6 @@ public interface AttachmentRepository {
     void deleteAttachment(Long id);
 
     Optional<Attachment> findById(Long id);
+
+    List<Attachment> findAttachmentsByProjectId(Long projectId);
 }
