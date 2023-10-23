@@ -114,4 +114,7 @@ public class AttachmentService {
                     String.format(ExceptionsTemplate.ATTACHMENT_NOT_FOUND, id));
         }
     }
+    public void updateStatusChangeCounter(Long projectId) {
+        attachmentRepository.updateReviewCounterByProjectId(projectId);
+    }
 }

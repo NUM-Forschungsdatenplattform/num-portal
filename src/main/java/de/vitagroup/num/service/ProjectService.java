@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.attachment.service.AttachmentService;
 import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
@@ -119,6 +120,8 @@ public class ProjectService {
     private final ProjectDocCreator projectDocCreator;
 
     private final ProjectMapper projectMapper;
+
+    private final AttachmentService attachmentService;
 
 
     @Transactional
@@ -552,9 +555,17 @@ public class ProjectService {
                         savedProject.getResearchers(),
                         user.getUserId());
 
+        if (ProjectStatus.REVIEWING.equals(projectToEdit.getStatus())) {
+            attachmentService.updateStatusChangeCounter(projectToEdit.getId());
+        }
+
         notificationService.send(notifications);
 
         return savedProject;
+    }
+
+    private void deleteAttachments(ProjectDto projectDto, List<String> roles, UserDetails user, Project projectToEdit) {
+
     }
 
     private Project updateProjectAllFields(
