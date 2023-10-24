@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.attachment.service.AttachmentService;
 import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
@@ -135,6 +136,9 @@ public class ProjectServiceTest {
 
   @Mock
   private TemplateService templateService;
+
+  @Mock
+  private AttachmentService attachmentService;
 
   @Spy private ResponseFilter responseFilter;
 
