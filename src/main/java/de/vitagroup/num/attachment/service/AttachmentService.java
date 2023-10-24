@@ -5,6 +5,7 @@ import de.vitagroup.num.attachment.domain.dto.AttachmentDto;
 import de.vitagroup.num.attachment.domain.model.Attachment;
 import de.vitagroup.num.domain.templates.ExceptionsTemplate;
 import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.web.controller.NumAttachmentController;
 import lombok.RequiredArgsConstructor;
@@ -15,18 +16,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Service
-@Transactional("attachmentTransactionManager")
+@Transactional(value = "attachmentTransactionManager")
 @RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty(prefix = "num", name = "enableAttachmentDatabase", havingValue = "true")
@@ -61,6 +60,7 @@ public class AttachmentService {
                 .authorId(loggedInUserId)
                 .type(file.getContentType())
                 .content(file.getBytes())
+                .projectId(96L)
                 .build();
         attachmentRepository.saveAttachment(model);
     }
@@ -114,7 +114,26 @@ public class AttachmentService {
                     String.format(ExceptionsTemplate.ATTACHMENT_NOT_FOUND, id));
         }
     }
+    @Transactional(rollbackFor = ForbiddenException.class)
     public void updateStatusChangeCounter(Long projectId) {
+        log.info("Update counter for project's {} attachments ", projectId);
         attachmentRepository.updateReviewCounterByProjectId(projectId);
+    }
+
+    public void deleteAttachments(Set<Long> attachmentsId, Long projectId, String loggedInUser, Boolean userIsApprover) {
+        for(Long attachmentId : attachmentsId) {
+            Optional<Attachment> attachment = attachmentRepository.findByIdAndProjectId(attachmentId, projectId);
+            if(attachment.isEmpty()) {
+                throw new ResourceNotFound(AttachmentService.class, "Attachment not found", String.format("Attachment not found: %s", attachmentId));
+            }
+            Attachment currentAttachment = attachment.get();
+            if  (Boolean.FALSE.equals(userIsApprover) && currentAttachment.getReviewCounter() > 1) {
+                log.error("Not allowed to delete attachment with id {} and name {} because it was at least once in review {}", attachmentId, currentAttachment.getName(), currentAttachment.getReviewCounter());
+                throw new ForbiddenException(AttachmentService.class, CANNOT_DELETE_ATTACHMENT_INVALID_REVIEW_STATUS_COUNTER,
+                        String.format(CANNOT_DELETE_ATTACHMENT_INVALID_REVIEW_STATUS_COUNTER, currentAttachment.getId()));
+            }
+            attachmentRepository.deleteAttachment(attachmentId);
+        }
+        log.info("Attachments with id {} from project {} deleted by user {} ", attachmentsId, projectId, loggedInUser);
     }
 }

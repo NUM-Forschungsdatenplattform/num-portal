@@ -63,5 +63,9 @@ public class Roles {
     return roles.contains(Roles.STUDY_COORDINATOR);
   }
 
+  public static boolean isProjectApprover(List<String> roles) {
+    return roles.contains(Roles.STUDY_APPROVER);
+  }
+
 
 }
