@@ -34,6 +34,12 @@ public class Attachment implements Serializable {
     @Column(name = "author_id")
     private String authorId;
 
+    @Column(name = "review_counter", nullable = false, columnDefinition = "INTEGER DEFAULT 0")
+    private int reviewCounter;
+
+    @Column(name = "project_id", nullable = false, columnDefinition = "BIGINT DEFAULT 0")
+    private Long projectId;
+
 
     public Attachment(Long id, String name, String description, OffsetDateTime uploadDate) {
         this.id = id;
