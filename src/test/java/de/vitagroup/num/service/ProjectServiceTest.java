@@ -1620,6 +1620,74 @@ public class ProjectServiceTest {
     Mockito.verify(projectRepository, Mockito.times(1)).existsById(5L);
   }
 
+    @Test
+    public void shouldAllowDeleteAttachmentWhenProjectWithDraftStatus() {
+        Project projectToEdit =
+                Project.builder()
+                        .name("Project")
+                        .status(ProjectStatus.DRAFT)
+                        .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+                        .build();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
+
+        ProjectDto projectDto =
+                ProjectDto.builder()
+                        .name("Project is edited")
+                        .attachmentsToBeDeleted(Set.of(1L, 2L))
+                        .status(DRAFT).build();
+        projectService.updateProject(
+                projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    }
+    @Test
+    public void shouldAllowDeleteAttachmentWhenProjectWithReviewStatus() {
+        Project projectToEdit =
+                Project.builder()
+                        .name("Project")
+                        .status(PENDING)
+                        .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+                        .build();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
+
+        ProjectDto projectDto =
+                ProjectDto.builder()
+                        .name("Project is edited")
+                        .attachmentsToBeDeleted(Set.of(1L, 2L))
+                        .status(REVIEWING).build();
+        projectService.updateProject(
+                projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
+    }
+
+    @Test
+    public void shouldRejectDeleteAttachmentsWhenProjectPendingTest() {
+        Project projectToEdit =
+                Project.builder()
+                        .name("Project")
+                        .status(PENDING)
+                        .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+                        .build();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
+
+        ProjectDto projectDto =
+                ProjectDto.builder()
+                        .name("Project is edited")
+                        .status(PENDING)
+                        .attachmentsToBeDeleted(Set.of(3L))
+                        .build();
+
+        Exception exception =
+                assertThrows(
+                        ForbiddenException.class,
+                        () ->
+                                projectService.updateProject(
+                                        projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
+
+        String expectedMessage = String.format(CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS, PENDING);
+        assertThat(exception.getMessage(), is(expectedMessage));
+    }
+
   @Before
   public void setup() {
     when(userDetailsService.getUserDetailsById("researcher1"))
