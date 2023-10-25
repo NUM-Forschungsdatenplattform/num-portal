@@ -60,7 +60,7 @@ public class AttachmentService {
                 .authorId(loggedInUserId)
                 .type(file.getContentType())
                 .content(file.getBytes())
-                .projectId(96L)
+                //.projectId(96L)
                 .build();
         attachmentRepository.saveAttachment(model);
     }
