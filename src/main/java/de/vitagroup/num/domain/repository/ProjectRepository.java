@@ -1,7 +1,7 @@
 package de.vitagroup.num.domain.repository;
 
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.ProjectStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

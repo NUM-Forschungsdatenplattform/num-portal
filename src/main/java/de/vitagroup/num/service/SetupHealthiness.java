@@ -1,22 +1,38 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.SetupType;
+import de.vitagroup.num.domain.model.SetupType;
 import de.vitagroup.num.service.html.HtmlContent;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ANNOUNCEMENT_IN_PLACE;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.EXCEPTION_IN_PARSING_PAGE;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SetupHealthiness {
+
+    private final HtmlContent htmlContent;
+
+    @Value("${num.systemStatusUrl}")
+    private String systemStatusUrl;
+
+    @Value("${num.statusCakeUrl}")
+    private String statusCakeUrl;
 
     public Map<String, String> checkHealth(SetupType setup){
         Map<String, String> map = new HashMap<>();
@@ -48,24 +64,78 @@ public class SetupHealthiness {
             default:
                 throw new IllegalStateException("Unexpected value: " + setup);
         }
-        map.put("CHECK_FOR_ANNOUNCEMENTS", checkForAnnouncements());
         return map;
     }
 
-    private String checkForAnnouncements() {
+    public String checkForAnnouncements() {
         String message = Strings.EMPTY;
-        String URL = "https://health.num-codex.de/";
-        HtmlContent htmlContent = new HtmlContent();
         try {
-            htmlContent.init();
-            String pageContent = htmlContent.pageContent(URL);
-            if(!pageContent.contains( "No current announcements" )){
-                message = String.format("Check the %s page for the new announcements", URL);
+            String pageContent = htmlContent.pageContent(systemStatusUrl);
+            String publicID = getPublicID(pageContent);
+            if(publicID.isEmpty()){
+                return message;
+            }
+            String dynamicContent = getDynamicPageContent(publicID, htmlContent);
+            String timeOfAnnouncement = getTimeOfAnnouncement(dynamicContent, true);
+            String descriptionOfAnnouncement = getTimeOfAnnouncement(dynamicContent, false);
+            if (timeOfAnnouncement.isEmpty() && descriptionOfAnnouncement.isEmpty()){
+                return message;
+            }
+            if (!timeOfAnnouncement.isEmpty() && timeOfAnnouncement.length()<4){
+                return message;
+            }
+            if (!descriptionOfAnnouncement.isEmpty() && descriptionOfAnnouncement.length()<4){
+                return message;
+            }
+            if(!timeOfAnnouncement.isEmpty() && !descriptionOfAnnouncement.isEmpty()){
+                return String.format(ANNOUNCEMENT_IN_PLACE, timeOfAnnouncement, descriptionOfAnnouncement);
+            }
+            if(!dynamicContent.contains( "No current announcements" )){
+                message = String.format("Check the %s page for the new announcements", systemStatusUrl);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return message;
+    }
+
+    private String getTimeOfAnnouncement(String dynamicContent, boolean isTimeOfAnnouncement) {
+        if(isTimeOfAnnouncement){
+            Pattern onlyImageLink = Pattern.compile("<td style=\\\\\"width:50%;\\\\\">([0-9,:,\\\\,\\/]*)\\w+");
+            Matcher m = onlyImageLink.matcher( dynamicContent );
+            if (m.find()) {
+               return m.group( 0 ).replace("<td style=\\\"width:50%;\\\">","");
+            }
+        } else {
+            Pattern fullMatching = Pattern.compile("<td style=\\\\\"width:50%;\\\\\">([A-Z]!*)\\w+");
+            Matcher m = fullMatching.matcher(dynamicContent);
+            if (m.find()) {
+                return m.group(0).replace("<td style=\\\"width:50%;\\\">", "");
+            }
+        }
+        return Strings.EMPTY;
+    }
+
+    private String getDynamicPageContent(String publicID, HtmlContent htmlContent) throws IOException, URISyntaxException {
+        String newURL = statusCakeUrl + publicID;
+        return htmlContent.pageContent(newURL);
+    }
+
+    private String getPublicID(String pageContent) {
+        try {
+            String[] arr = new String[0];
+            if (pageContent.contains("var PublicID")) {
+                int i = pageContent.lastIndexOf("var PublicID");
+                String substring = pageContent.substring(i, i + 37);
+                arr = substring.split("'");
+                if (arr.length < 2) {
+                    return Strings.EMPTY;
+                }
+            }
+            return arr[1];
+        } catch (IndexOutOfBoundsException index){
+            throw new IndexOutOfBoundsException(EXCEPTION_IN_PARSING_PAGE + " " + index.getMessage());
+        }
     }
 
     private String checkUrl(String preprodClass, String environment, String setupTypeURL) {

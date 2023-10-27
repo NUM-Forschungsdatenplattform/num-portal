@@ -1,9 +1,9 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.CohortGroup;
-import de.vitagroup.num.domain.Project;
-import de.vitagroup.num.domain.ProjectStatus;
+import de.vitagroup.num.domain.model.Cohort;
+import de.vitagroup.num.domain.model.CohortGroup;
+import de.vitagroup.num.domain.model.Project;
+import de.vitagroup.num.domain.model.ProjectStatus;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.CohortSizeDto;
@@ -97,6 +97,7 @@ public class CohortService {
             .build();
 
     project.setCohort(cohort);
+    log.info("Cohort created by user {}", userId);
     return cohortRepository.save(cohort);
   }
 
@@ -140,6 +141,7 @@ public class CohortService {
 
     Set<String> ehrIds = cohortExecutor.execute(cohort, false);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
+      log.warn(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
       throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
 
@@ -190,6 +192,7 @@ public class CohortService {
     cohortToEdit.setCohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()));
     cohortToEdit.setDescription(cohortDto.getDescription());
     cohortToEdit.setName(cohortDto.getName());
+    log.info("User {} updated cohort {}", userId, cohortId);
     return cohortRepository.save(cohortToEdit);
   }
 
@@ -305,6 +308,7 @@ public class CohortService {
     validateCohortParameters(cohortGroupDto);
     Set<String> ehrIds = cohortExecutor.executeGroup(cohortGroup, allowUsageOutsideEu);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
+      log.warn(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
       throw new PrivacyException(CohortService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds;

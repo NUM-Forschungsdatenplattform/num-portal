@@ -2,11 +2,11 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.domain.AqlCategory;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Aql;
+import de.vitagroup.num.domain.model.AqlCategory;
+import de.vitagroup.num.domain.model.Roles;
+import de.vitagroup.num.domain.model.admin.User;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
@@ -199,7 +199,7 @@ public class AqlService {
     aqlToEdit.setModifiedDate(OffsetDateTime.now());
     aqlToEdit.setQuery(aql.getQuery());
     aqlToEdit.setPublicAql(aql.isPublicAql());
-
+    log.info("User {} updated aql criteria with id {}", loggedInUserId, aqlId);
     return aqlRepository.save(aqlToEdit);
   }
 
@@ -234,6 +234,7 @@ public class AqlService {
     }
 
     if (ehrIds.size() < privacyProperties.getMinHits()) {
+      log.warn(TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
       throw new PrivacyException(AqlService.class, TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
     return ehrIds.size();
@@ -297,6 +298,7 @@ public class AqlService {
         aqlEditorAqlService.validateAql(Result.builder().q(query).build());
     if (!response.isValid()) {
       try {
+        log.error("AQL validation for query '{}' failed: {}", query, response.getMessage());
         throw new BadRequestException(QueryValidationResponse.class, COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE,
                 String.format(COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE, mapper.writeValueAsString(response)));
       } catch (JsonProcessingException e) {

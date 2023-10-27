@@ -15,7 +15,7 @@ import static org.mockito.Mockito.when;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
-import de.vitagroup.num.domain.Project;
+import de.vitagroup.num.domain.model.Project;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,8 +25,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.dao.EmptyResultDataAccessException;
 
-import de.vitagroup.num.domain.Comment;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Comment;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.repository.CommentRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.service.exception.BadRequestException;

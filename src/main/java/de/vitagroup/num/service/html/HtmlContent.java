@@ -13,9 +13,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,15 +27,15 @@ import java.nio.charset.StandardCharsets;
 @Component
 @Log4j2
 public class HtmlContent {
-    CloseableHttpClient httpClient = null;
+    private CloseableHttpClient httpClient = null;
     static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0";
 
-    @Autowired
+    @PostConstruct
     public void init() throws Exception {
         httpClient = createTrustAllHttpClientBuilder().build();
     }
 
-	public static HttpClientBuilder createTrustAllHttpClientBuilder() throws Exception {
+	private HttpClientBuilder createTrustAllHttpClientBuilder() throws Exception {
         SSLContextBuilder builder = new SSLContextBuilder();
         builder.loadTrustMaterial( null, (chain, authType) -> true );
         SSLConnectionSocketFactory sslsf = new

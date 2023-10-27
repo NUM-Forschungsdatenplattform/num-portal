@@ -2,7 +2,7 @@ package de.vitagroup.num.domain.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.ProjectCategories;
+import de.vitagroup.num.domain.model.ProjectCategories;
 import java.io.IOException;
 import java.util.Set;
 import javax.persistence.AttributeConverter;

@@ -1,10 +1,10 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.*;
-import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.ProjectDto;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
+import de.vitagroup.num.domain.model.*;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import org.junit.Before;
 import org.junit.Test;

@@ -5,11 +5,11 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.mockito.Mockito.when;
 
-import de.vitagroup.num.domain.Cohort;
-import de.vitagroup.num.domain.CohortAql;
-import de.vitagroup.num.domain.CohortGroup;
-import de.vitagroup.num.domain.Operator;
-import de.vitagroup.num.domain.Type;
+import de.vitagroup.num.domain.model.Cohort;
+import de.vitagroup.num.domain.model.CohortAql;
+import de.vitagroup.num.domain.model.CohortGroup;
+import de.vitagroup.num.domain.model.Operator;
+import de.vitagroup.num.domain.model.Type;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.IllegalArgumentException;
 import java.util.List;

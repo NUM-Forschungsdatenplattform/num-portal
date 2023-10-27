@@ -1,7 +1,7 @@
 package de.vitagroup.num.domain.specification;
 
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Organization;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -3,9 +3,9 @@ package de.vitagroup.num.web.controller;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import de.vitagroup.num.NumPortalApplication;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.SetupType;
-import de.vitagroup.num.domain.admin.User;
+import de.vitagroup.num.domain.model.Roles;
+import de.vitagroup.num.domain.model.SetupType;
+import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.dto.OrganizationDto;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.UserNameDto;
@@ -58,6 +58,7 @@ public class AdminController extends CustomizedExceptionHandler {
 
   private static final String SUCCESS_REPLY = "Success";
   private static final String EMAIL_CLAIM = "email";
+  private static final String CHECK_FOR_ANNOUNCEMENTS = "CHECK_FOR_ANNOUNCEMENTS";
 
   private final UserService userService;
 
@@ -86,8 +87,10 @@ public class AdminController extends CustomizedExceptionHandler {
           final @RequestParam(value = "setup", defaultValue = "PREPROD") SetupType setup){
     Map<String, String> map = healthiness.checkHealth(setup);
     if(map.values().stream().filter(s -> s.length() > 0).findFirst().isEmpty()) {
+      map.put(CHECK_FOR_ANNOUNCEMENTS, healthiness.checkForAnnouncements());
       return ResponseEntity.ok(map);
     } else {
+      map.put(CHECK_FOR_ANNOUNCEMENTS, healthiness.checkForAnnouncements());
       return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(map);
     }
   }
@@ -139,7 +142,7 @@ public class AdminController extends CustomizedExceptionHandler {
   @GetMapping("user/{userId}/role")
   @Operation(description = "Retrieves the roles of the given user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
-  public ResponseEntity<Set<de.vitagroup.num.domain.admin.Role>> getRolesOfUser(
+  public ResponseEntity<Set<de.vitagroup.num.domain.model.admin.Role>> getRolesOfUser(
       @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserRoles(userId, principal.getSubject()));
   }

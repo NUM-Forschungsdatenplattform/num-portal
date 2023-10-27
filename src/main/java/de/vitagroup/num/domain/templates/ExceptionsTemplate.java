@@ -50,8 +50,8 @@ public class ExceptionsTemplate {
     public final static String ORGANIZATION_NOT_FOUND = "Organization not found: %s";
 
     public static final String ORGANIZATION_IS_NOT_EMPTY_CANT_DELETE_IT = "The organization :%s is not empty, can't delete it.";
-
     public static final String NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS = "Not allowed to update own's organization status";
+    public static final String ATTACHMENT_NOT_FOUND = "Attachment with id %s not found";
     //ForbiddenException
     public final static String CANNOT_UPDATE_ORGANIZATION = "Cannot update organization: %s";
     public final static String CANNOT_ACCESS_THIS_RESOURCE = "Cannot access this resource";
@@ -113,8 +113,9 @@ public class ExceptionsTemplate {
 
     //EhrBaseService service
     public final static String NO_DATA_COLUMNS_IN_THE_QUERY_RESULT = "No data columns in the query result";
-    public final static String AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL = "An error has occurred, cannot execute aql: %s";
-    public final static String QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN = "query result doesn't contain ehr_status column";
+    public static final String AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL = "An error has occurred, cannot execute aql: %s";
+    public static final String AN_ERROR_HAS_OCCURRED_CANNOT_GET_TEMPLATES = "An error has occurred, cannot retrieve templates: %s";
+    public static final String QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN = "query result doesn't contain ehr_status column";
 
     //PrivacyException
     public final static String TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS = "Too few matches, results withheld for privacy reasons.";
@@ -143,12 +144,18 @@ public class ExceptionsTemplate {
     public final static String CANNOT_EXECUTE_AN_EMPTY_COHORT = "Cannot execute an empty cohort";
     public final static String RELATIVE_COMPLEMENT_REQUIRES_TWO_VALID_SETS = "Relative complement requires two valid sets";
 
-    public final static String INVALID_AQL_QUERY = "Malformed query exception";
-    public final static String ERROR_MESSAGE = "An error has occurred while calling ehrbase";
+    public final static String INVALID_AQL_QUERY = "EhrBase - Malformed query exception: {}";
+    public static final String ERROR_MESSAGE = "EhrBase - An error has occurred while calling EhrBase: {} ";
     public final static String CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED = "Cannot check consent for data usage outside the European Union, oid not configured";
     public final static String CACHE_IS_NOT_REACHABLE = "Cache is not reachable";
     public final static String EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT = "Exception happened in %s class for %s environment. Link %s is not accessible";//3 parameters
+    public final static String EXCEPTION_IN_PARSING_PAGE = "health.num-codex.de page was modified and regex expressions needs to be checked.";
+    public final static String ANNOUNCEMENT_IN_PLACE = "Please visit health.num-codex.de page for announcement. Date/Time - [%s]  Description - [%s]";
 
+    //document
+    public final static String DOCUMENT_TYPE_MISMATCH = "Document type mismatch. Only PDF type is allowed to be uploaded.";
+    public final static String INVALID_FILE_MISSING_CONTENT = "Invalid file. Missing content";
+    public final static String PDF_FILE_SIZE_EXCEEDED = "PDF File Size Exceeded. Maximum file size is [%s] MB. Current file size is [%s]+ MB.";
 
     public static final Map<String, ExceptionDto> errorMap = new HashMap<>();
 
@@ -257,6 +264,7 @@ public class ExceptionsTemplate {
         errorMap.put(CANNOT_PARSE_RESULTS, new ExceptionDto( 70, new ArrayList<>() ) );//1 parameter
         errorMap.put(CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID, new ExceptionDto( 71, new ArrayList<>() ) );
         errorMap.put(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, new ExceptionDto( 72, new ArrayList<>() ) );//1 parameter
+        errorMap.put(AN_ERROR_HAS_OCCURRED_CANNOT_GET_TEMPLATES, new ExceptionDto( 102, new ArrayList<>() ) );//1 parameter
         //CohortService
         errorMap.put(CAN_T_FIND_THE_COHORT_BY_ID, new ExceptionDto( 73, new ArrayList<>() ) );//1 parameter
         //ProjectService
@@ -301,6 +309,14 @@ public class ExceptionsTemplate {
         errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, new ExceptionDto(99, new ArrayList<>()));
         errorMap.put(CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION, new ExceptionDto(100, new ArrayList<>()));//1 parameter
         errorMap.put(EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT, new ExceptionDto(101, new ArrayList<>()));//3 parameter
+        errorMap.put(EXCEPTION_IN_PARSING_PAGE, new ExceptionDto(102, new ArrayList<>()));
+        errorMap.put(ANNOUNCEMENT_IN_PLACE, new ExceptionDto(103, new ArrayList<>()));//2 parameters
+        errorMap.put(ATTACHMENT_NOT_FOUND, new ExceptionDto( 104, new ArrayList<>() ) );//1 parameter
+
+        //Document
+        errorMap.put(DOCUMENT_TYPE_MISMATCH, new ExceptionDto( 105, new ArrayList<>() ) );
+        errorMap.put(INVALID_FILE_MISSING_CONTENT, new ExceptionDto( 106, new ArrayList<>() ) );
+        errorMap.put(PDF_FILE_SIZE_EXCEEDED, new ExceptionDto( 107, new ArrayList<>() ) );//2 parameters
 
     }
 

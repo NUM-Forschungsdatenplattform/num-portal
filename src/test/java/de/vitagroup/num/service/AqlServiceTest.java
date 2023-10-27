@@ -1,11 +1,12 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.Aql;
-import de.vitagroup.num.domain.AqlCategory;
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.domain.model.Aql;
+import de.vitagroup.num.domain.model.AqlCategory;
+import de.vitagroup.num.domain.model.Organization;
+import de.vitagroup.num.domain.model.Roles;
+import de.vitagroup.num.domain.model.admin.User;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SlimAqlDto;
@@ -14,10 +15,7 @@ import de.vitagroup.num.domain.repository.AqlRepository;
 import de.vitagroup.num.domain.specification.AqlSpecification;
 import de.vitagroup.num.properties.PrivacyProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
-import de.vitagroup.num.service.exception.BadRequestException;
-import de.vitagroup.num.service.exception.ForbiddenException;
-import de.vitagroup.num.service.exception.ResourceNotFound;
-import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.exception.*;
 import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
@@ -62,6 +60,9 @@ public class AqlServiceTest {
 
   @Mock
   private PrivacyProperties privacyProperties;
+
+  @Mock
+  private ObjectMapper mapper;
 
   @InjectMocks private AqlService aqlService;
 
@@ -152,6 +153,12 @@ public class AqlServiceTest {
             .thenReturn(new PageImpl<>(Arrays.asList(aqlOne, aqlTwo)));
     when(userService.getOwner("approvedUserId")).thenReturn(User.builder().id("approvedUserId").firstName("Approver first name").lastName("Doe").build());
     when(userService.getOwner("2ndApprovedUserId")).thenReturn(User.builder().id("2ndApprovedUserId").firstName("Second approver first name").lastName("Doe").build());
+    when(privacyProperties.getMinHits()).thenReturn(2);
+    Mockito.when(aqlEditorAqlService.validateAql(Mockito.any(Result.class)))
+            .thenReturn(QueryValidationResponse.builder()
+                                               .valid(true)
+                                               .build()
+            );
   }
 
   @Test
@@ -161,13 +168,33 @@ public class AqlServiceTest {
   }
   @Test
   public void getAqlSizeTest() {
-    SlimAqlDto aqlDto = new SlimAqlDto();
-    aqlDto.setQuery("select * from dummy_table");
-    Mockito.when(aqlEditorAqlService.validateAql(Mockito.any(Result.class))).thenReturn(QueryValidationResponse.builder()
-            .valid(true)
-            .build());
-    when(privacyProperties.getMinHits()).thenReturn(2);
+    SlimAqlDto aqlDto = SlimAqlDto.builder()
+            .query("select * from dummy_table")
+            .build();
     Mockito.when(ehrBaseService.retrieveEligiblePatientIds(Mockito.any(Aql.class))).thenReturn(new HashSet<>(Arrays.asList("id1", "id2", "id3", "id4")));
+    aqlService.getAqlSize(aqlDto, "4");
+  }
+
+  @Test(expected = PrivacyException.class)
+  public void shouldHandlePrivacyExceptionWhenGetAqlSize() {
+    SlimAqlDto aqlDto = SlimAqlDto.builder()
+            .query("select * from dummy_table")
+            .build();
+    Mockito.when(ehrBaseService.retrieveEligiblePatientIds(Mockito.any(Aql.class))).thenReturn(new HashSet<>(Arrays.asList("id1")));
+    aqlService.getAqlSize(aqlDto, "4");
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void shouldHandleInvalidQueryWhenGetAqlSize() {
+    SlimAqlDto aqlDto = SlimAqlDto.builder()
+            .query("select * from another_table")
+            .build();
+    Result queryResult = Result.builder().q(aqlDto.getQuery()).build();
+    Mockito.when(aqlEditorAqlService.validateAql(Mockito.eq(queryResult)))
+            .thenReturn(QueryValidationResponse.builder()
+                    .valid(false)
+                    .build()
+            );
     aqlService.getAqlSize(aqlDto, "4");
   }
 

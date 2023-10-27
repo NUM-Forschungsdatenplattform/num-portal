@@ -7,12 +7,20 @@ spring:
     hikari:
       data-source-properties:
         stringtype: unspecified
-    url: ${DB_URL}
-    driver-class-name: org.postgresql.Driver
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    numportal:
+      url: ${DB_URL}
+      driver-class-name: org.postgresql.Driver
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
+    numportal-attachment:
+      url: jdbc:postgresql://localhost:5432/num-attachment?currentSchema=num
+      driver-class-name: org.postgresql.Driver
+      username: num-attachment
+      password: num-attachment
   flyway:
-    enabled: true
+    enabled: false
+    numportal:
+      locations: classpath:db/migration/num-portal
   jpa:
     show-sql: false
     hibernate:
@@ -118,8 +126,8 @@ consent:
   allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
 
 num:
-  systemStatusUrl: 'health-url'
+  systemStatusUrl: 'http://localhost:8099/health-url'
+  statusCakeUrl: 'http://localhost:8099/statusCake?PublicID='
   userManualUrl:
     DE: 'user-manual-de'
     EN: 'user-manual-en'
-

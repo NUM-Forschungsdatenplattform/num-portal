@@ -1,7 +1,7 @@
 package de.vitagroup.num.mapper;
 
-import de.vitagroup.num.domain.Organization;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.Organization;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.UserDetailsDto;
 import org.junit.Before;
 import org.junit.Test;

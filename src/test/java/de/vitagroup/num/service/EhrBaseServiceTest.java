@@ -1,7 +1,7 @@
 package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Aql;
+import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.service.ehrbase.CompositionResponseDataBuilder;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
@@ -99,6 +99,12 @@ public class EhrBaseServiceTest {
     assertThat(templates.get(1).getConcept(), is("c2"));
   }
 
+  @Test(expected = SystemException.class)
+  public void shouldHandleExceptionWhenRetrieveAllTemplates() {
+    when(restClient.templateEndpoint()).thenThrow(ClientException.class);
+    ehr.getAllTemplatesMetadata();
+  }
+
   @Test
   public void shouldFlattenResultsWhenContainsComposition() {
     QueryResponseData compositionsQueryResponseData = new QueryResponseData();
@@ -143,7 +149,6 @@ public class EhrBaseServiceTest {
         .thenThrow(ClientException.class);
     ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
   }
-
   @Test(expected = SystemException.class)
   public void shouldHandleClientExceptionWhenConnectToEhrBase() {
     when(restClient.aqlEndpoint().execute(any(Query.class)))
@@ -162,6 +167,13 @@ public class EhrBaseServiceTest {
   public void shouldHandleWrongStatusCodeExceptionWhenExecutePlainQuery(){
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
             .thenThrow(WrongStatusCodeException.class);
+    ehr.executePlainQuery(GOOD_QUERY);
+  }
+
+  @Test(expected = SystemException.class)
+  public void shouldHandleClientExceptionWhenExecutePlainQuery() {
+    when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
+            .thenThrow(ClientException.class);
     ehr.executePlainQuery(GOOD_QUERY);
   }
 

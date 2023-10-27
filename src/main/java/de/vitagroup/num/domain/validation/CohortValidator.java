@@ -1,7 +1,8 @@
 package de.vitagroup.num.domain.validation;
 
-import de.vitagroup.num.domain.*;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
+import de.vitagroup.num.domain.model.Operator;
+import de.vitagroup.num.domain.model.Type;
 import org.apache.commons.collections4.CollectionUtils;
 
 import javax.validation.*;

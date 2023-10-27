@@ -1,11 +1,11 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.EntityGroup;
-import de.vitagroup.num.domain.Roles;
-import de.vitagroup.num.domain.Translation;
-import de.vitagroup.num.domain.admin.Role;
-import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.EntityGroup;
+import de.vitagroup.num.domain.model.Roles;
+import de.vitagroup.num.domain.model.Translation;
+import de.vitagroup.num.domain.model.admin.Role;
+import de.vitagroup.num.domain.model.admin.User;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
@@ -148,6 +148,7 @@ public class UserService {
                 String.format(CANNOT_DELETE_APPROVED_USER, userId));
       }
     }
+    log.info("Logged in user {} deleted user with id {} ", loggedInUserId, userId);
   }
 
   @Transactional

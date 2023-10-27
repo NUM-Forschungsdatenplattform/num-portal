@@ -2,10 +2,10 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.*;
-import de.vitagroup.num.domain.admin.User;
-import de.vitagroup.num.domain.admin.UserDetails;
+import de.vitagroup.num.domain.model.admin.User;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
+import de.vitagroup.num.domain.model.*;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.repository.ProjectTransitionRepository;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
@@ -221,6 +221,7 @@ public class ProjectService {
         Set<String> ehrIds = cohortService.executeCohort(cohort, false);
 
         if (ehrIds.size() < privacyProperties.getMinHits()) {
+            log.warn(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
             throw new PrivacyException(ProjectService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
         }
 

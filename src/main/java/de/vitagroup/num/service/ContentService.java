@@ -1,8 +1,8 @@
 package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.Content;
-import de.vitagroup.num.domain.ContentType;
+import de.vitagroup.num.domain.model.Content;
+import de.vitagroup.num.domain.model.ContentType;
 import de.vitagroup.num.domain.dto.CardDto;
 import de.vitagroup.num.domain.dto.MetricsDto;
 import de.vitagroup.num.domain.dto.NavigationItemDto;
