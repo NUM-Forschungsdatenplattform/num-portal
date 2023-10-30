@@ -31,6 +31,7 @@ public class AttachmentRepositoryImpl implements AttachmentRepository {
                 .name(model.getName())
                 .description(model.getDescription())
                 .authorId(model.getAuthorId())
+                .projectId(model.getProjectId())
                 .uploadDate(OffsetDateTime.now())
                 .type(model.getType())
                 .content(model.getContent())

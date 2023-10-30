@@ -27,6 +27,8 @@ public class AttachmentDto {
 
     private byte[] content;
 
+    private Long projectId;
+
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private OffsetDateTime uploadDate;
 
