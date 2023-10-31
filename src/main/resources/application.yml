@@ -167,7 +167,7 @@ num:
   enableAttachmentDatabase: false
   # default PDF file size is 10 MB. 1024*1024*10
   pdfFileSize: 10485760
-  fileVirusScanEnabled: false
+  fileVirusScanEnabled: true
 
 clamAV:
   host: localhost
