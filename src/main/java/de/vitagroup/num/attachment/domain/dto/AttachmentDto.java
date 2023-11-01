@@ -31,4 +31,6 @@ public class AttachmentDto {
     private OffsetDateTime uploadDate;
 
     private String authorId;
+
+    private Long projectId;
 }
