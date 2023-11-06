@@ -24,7 +24,7 @@ public class AttachmentRepositoryTest {
     @Test
     public void getAttachmentsTest() {
         Mockito.when(attachmentRepositoryJpa.getAttachments())
-                .thenReturn(List.of(new Attachment(3L, "dummy name", "dummy description", OffsetDateTime.now())));
+                .thenReturn(List.of(new Attachment(3L, "dummy name", "dummy description", OffsetDateTime.now(), 0)));
         attachmentRepository.getAttachments();
         Mockito.verify(attachmentRepositoryJpa, Mockito.times(1)).getAttachments();
     }
@@ -58,5 +58,23 @@ public class AttachmentRepositoryTest {
     public void findByIdTest() {
         attachmentRepository.findById(1L);
         Mockito.verify(attachmentRepositoryJpa, Mockito.times(1)).findById(1L);
+    }
+
+    @Test
+    public void updateReviewCounterByProjectIdTest() {
+        attachmentRepository.updateReviewCounterByProjectId(9L);
+        Mockito.verify(attachmentRepositoryJpa, Mockito.times(1)).updateReviewCounterByProjectId(9L);
+    }
+
+    @Test
+    public void findByIdAndProjectIdTest() {
+        attachmentRepository.findByIdAndProjectId(3L, 9L);
+        Mockito.verify(attachmentRepositoryJpa, Mockito.times(1)).findByIdAndProjectId(3L, 9L);
+    }
+
+    @Test
+    public void findAttachmentsByProjectIdTest() {
+        attachmentRepository.findAttachmentsByProjectId(9L);
+        Mockito.verify(attachmentRepositoryJpa, Mockito.times(1)).findAttachmentsByProjectId(9L);
     }
 }
