@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface AttachmentRepositoryJpa extends JpaRepository<Attachment, Long> {
 
-    @Query("SELECT new Attachment (atc.id, atc.name, atc.description, atc.uploadDate) " +
+    @Query("SELECT new Attachment (atc.id, atc.name, atc.description, atc.uploadDate, atc.reviewCounter) " +
             "FROM Attachment atc ")
     List<Attachment> getAttachments();
 
@@ -22,4 +22,9 @@ public interface AttachmentRepositoryJpa extends JpaRepository<Attachment, Long>
     void updateReviewCounterByProjectId(@Param("projectId") Long projectId);
 
     Optional<Attachment> findByIdAndProjectId(Long id, Long projectId);
+
+    @Query("SELECT new Attachment (atc.id, atc.name, atc.description, atc.uploadDate, atc.reviewCounter) " +
+            "FROM Attachment atc " +
+            "WHERE atc.projectId = :projectId")
+    List<Attachment> findAttachmentsByProjectId(@Param("projectId") Long projectId);
 }

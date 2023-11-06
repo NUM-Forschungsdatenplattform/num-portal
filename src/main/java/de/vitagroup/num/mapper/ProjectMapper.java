@@ -1,5 +1,6 @@
 package de.vitagroup.num.mapper;
 
+import de.vitagroup.num.attachment.service.AttachmentService;
 import de.vitagroup.num.domain.model.Project;
 import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.dto.ProjectDto;
@@ -17,6 +18,8 @@ public class ProjectMapper {
   private final ModelMapper modelMapper;
   private final TemplateMapper templateMapper;
   private final UserService userService;
+
+  private final AttachmentService attachmentService;
 
   @PostConstruct
   public void initialize() {
@@ -36,6 +39,7 @@ public class ProjectMapper {
     projectDto.setTemplates(templateMapper.convertToTemplateInfoDtoList(project.getTemplates()));
     User coordinator = userService.getOwner(project.getCoordinator().getUserId());
     projectDto.setCoordinator(coordinator);
+    projectDto.setAttachments(attachmentService.findAttachmentsByProjectId(project.getId()));
     return projectDto;
   }
 }
