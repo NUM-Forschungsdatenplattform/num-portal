@@ -1,5 +1,6 @@
 package de.vitagroup.num.mapper;
 
+import de.vitagroup.num.attachment.service.AttachmentService;
 import de.vitagroup.num.domain.model.Cohort;
 import de.vitagroup.num.domain.model.Project;
 import de.vitagroup.num.domain.model.ProjectStatus;
@@ -38,6 +39,9 @@ public class ProjectMapperTest {
 
   @Mock
   private UserService userService;
+
+  @Mock
+  private AttachmentService attachmentService;
 
   @Before
   public void setup() {
