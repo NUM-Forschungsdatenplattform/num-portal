@@ -19,6 +19,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -158,7 +159,16 @@ public class AttachmentServiceTest {
                 .projectId(9L)
                 .build();
         Mockito.when(attachmentRepository.findByIdAndProjectId(Mockito.eq(1L), Mockito.eq(9L))).thenReturn(Optional.of(one));
-        attachmentService.deleteAttachments(Set.of(1L, 2L), 9L, "loggedInUser", false);
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        ids.add(1L);
+        ids.add(2L);
+        attachmentService.deleteAttachments(ids, 9L, "loggedInUser", false);
         Mockito.verify(attachmentRepository, Mockito.never()).deleteAttachment(Mockito.anyLong());
+    }
+
+    @Test
+    public void findAttachmentsByProjectIdTest() {
+        attachmentService.findAttachmentsByProjectId(3L);
+        Mockito.verify(attachmentRepository, Mockito.times(1)).findAttachmentsByProjectId(3L);
     }
 }
