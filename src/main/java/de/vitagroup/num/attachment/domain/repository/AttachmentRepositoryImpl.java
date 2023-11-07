@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -51,7 +52,13 @@ public class AttachmentRepositoryImpl implements AttachmentRepository {
     }
 
     @Override
-    public List<Attachment> findAttachmentsByProjectId(Long projectId) {
-        return attachmentRepositoryJpa.findAttachmentsByProjectId(projectId);
+    @Transactional(transactionManager = "attachmentTransactionManager")
+    public void updateReviewCounterByProjectId(Long projectId) {
+        attachmentRepositoryJpa.updateReviewCounterByProjectId(projectId);
+    }
+
+    @Override
+    public Optional<Attachment> findByIdAndProjectId(Long id, Long projectId) {
+        return attachmentRepositoryJpa.findByIdAndProjectId(id, projectId);
     }
 }

@@ -4,6 +4,7 @@ import de.vitagroup.num.attachment.AttachmentRepository;
 import de.vitagroup.num.attachment.domain.dto.AttachmentDto;
 import de.vitagroup.num.attachment.domain.model.Attachment;
 import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,7 +19,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DOCUMENT_TYPE_MISMATCH;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_FILE_MISSING_CONTENT;
@@ -114,5 +117,52 @@ public class AttachmentServiceTest {
         }catch (BadRequestException fe) {
             Assert.assertEquals(String.format(PDF_FILE_SIZE_EXCEEDED, 0, 0), fe.getMessage());
         }
+    }
+
+    @Test
+    public void updateStatusChangeCounterTest() {
+        attachmentService.updateStatusChangeCounter(9L);
+        Mockito.verify(attachmentRepository, Mockito.times(1)).updateReviewCounterByProjectId(Mockito.eq(9L));
+    }
+
+    @Test
+    public void deleteAttachmentsTest() {
+        Attachment one = Attachment.builder()
+                .id(1L)
+                .name("attachmentOne.pdf")
+                .reviewCounter(1)
+                .projectId(9L)
+                .build();
+        Attachment two = Attachment.builder()
+                .id(2L)
+                .name("attachmentTwo.pdf")
+                .reviewCounter(0)
+                .projectId(9L)
+                .build();
+        Mockito.when(attachmentRepository.findByIdAndProjectId(Mockito.eq(1L), Mockito.eq(9L))).thenReturn(Optional.of(one));
+        Mockito.when(attachmentRepository.findByIdAndProjectId(Mockito.eq(2L), Mockito.eq(9L))).thenReturn(Optional.of(two));
+        attachmentService.deleteAttachments(Set.of(1L, 2L), 9L, "loggedInUser", false);
+        Mockito.verify(attachmentRepository, Mockito.times(2)).deleteAttachment(Mockito.anyLong());
+    }
+
+    @Test(expected = ResourceNotFound.class)
+    public void deleteAttachmentsAndExpectResourceNotFoundTest() {
+        attachmentService.deleteAttachments(Set.of(3L), 9L, "loggedInUser", true);
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void deleteAttachmentsHandleReviewCounterExceededTest() {
+        Attachment one = Attachment.builder()
+                .id(1L)
+                .name("attachmentOne.pdf")
+                .reviewCounter(2)
+                .projectId(9L)
+                .build();
+        Mockito.when(attachmentRepository.findByIdAndProjectId(Mockito.eq(1L), Mockito.eq(9L))).thenReturn(Optional.of(one));
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        ids.add(1L);
+        ids.add(2L);
+        attachmentService.deleteAttachments(ids, 9L, "loggedInUser", false);
+        Mockito.verify(attachmentRepository, Mockito.never()).deleteAttachment(Mockito.anyLong());
     }
 }

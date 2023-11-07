@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.attachment.service.AttachmentService;
 import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
@@ -119,6 +120,8 @@ public class ProjectService {
     private final ProjectDocCreator projectDocCreator;
 
     private final ProjectMapper projectMapper;
+
+    private final AttachmentService attachmentService;
 
 
     @Transactional
@@ -516,11 +519,16 @@ public class ProjectService {
         }
 
         if (CollectionUtils.isNotEmpty(roles)
-                && roles.contains(Roles.STUDY_COORDINATOR)
+                && Roles.isProjectLead(roles)
                 && projectToEdit.isCoordinator(userId)) {
             return updateProjectAllFields(projectDto, roles, user, projectToEdit);
-        } else if (CollectionUtils.isNotEmpty(roles) && roles.contains(Roles.STUDY_APPROVER)) {
-            return updateProjectStatus(projectDto, roles, user, projectToEdit);
+        } else if (CollectionUtils.isNotEmpty(roles) && Roles.isProjectApprover(roles)) {
+            Project savedProject = updateProjectStatus(projectDto, roles, user, projectToEdit);
+            deleteAttachments(projectDto.getAttachmentsToBeDeleted(), roles, user, savedProject);
+            if (ProjectStatus.REVIEWING.equals(projectToEdit.getStatus())) {
+                attachmentService.updateStatusChangeCounter(projectToEdit.getId());
+            }
+            return savedProject;
         } else {
             throw new ForbiddenException(ProjectService.class, NO_PERMISSIONS_TO_EDIT_THIS_PROJECT);
         }
@@ -593,6 +601,8 @@ public class ProjectService {
         }
         setTemplates(projectToEdit, projectDto);
 
+        deleteAttachments(projectDto.getAttachmentsToBeDeleted(), roles, user, projectToEdit);
+
         projectToEdit.setStatus(projectDto.getStatus());
         projectToEdit.setName(projectDto.getName());
         projectToEdit.setSimpleDescription(projectDto.getSimpleDescription());
@@ -609,6 +619,9 @@ public class ProjectService {
         projectToEdit.setFinanced(projectDto.isFinanced());
 
         var savedProject = projectRepository.save(projectToEdit);
+        if (ProjectStatus.REVIEWING.equals(savedProject.getStatus())) {
+            attachmentService.updateStatusChangeCounter(projectToEdit.getId());
+        }
         registerToZarsIfNecessary(savedProject, oldStatus, oldResearchers, newResearchers);
 
         List<Notification> notifications =
@@ -622,8 +635,34 @@ public class ProjectService {
                         user.getUserId());
 
         notificationService.send(notifications);
-
         return savedProject;
+    }
+
+    private void deleteAttachments(Set<Long> attachmentsToBeDeleted, List<String> roles, UserDetails user, Project projectToEdit) {
+        if (CollectionUtils.isNotEmpty(attachmentsToBeDeleted)) {
+            if (Roles.isProjectLead(roles)) {
+                if (ProjectStatus.DRAFT.equals(projectToEdit.getStatus()) || ProjectStatus.CHANGE_REQUEST.equals(projectToEdit.getStatus())) {
+                    attachmentService.deleteAttachments(attachmentsToBeDeleted, projectToEdit.getId(), user.getUserId(), false);
+                    log.info("Project lead {} removed attachments {} from project {}", user.getUserId(), attachmentsToBeDeleted, projectToEdit.getId());
+                } else {
+                    log.error("Not allowed to delete attachments for project {} because status is {} ", projectToEdit.getId(), projectToEdit.getStatus());
+                    throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS,
+                            String.format(CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS, projectToEdit.getStatus()));
+                }
+            } else if (Roles.isProjectApprover(roles)) {
+                if (ProjectStatus.REVIEWING.equals(projectToEdit.getStatus())) {
+                    attachmentService.deleteAttachments(attachmentsToBeDeleted, projectToEdit.getId(), user.getUserId(), true);
+                    log.info("Project approver {} removed attachments {} from project {}", user.getUserId(), attachmentsToBeDeleted, projectToEdit.getId());
+                } else {
+                    log.error("Not allowed to delete attachments for project {} as project approver {} because status is {} ", projectToEdit.getId(), user.getUserId(), projectToEdit.getStatus());
+                    throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS,
+                            String.format(CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS, projectToEdit.getStatus()));
+                }
+            } else {
+                log.error("User {} is not allowed to delete attachments from project {}", user.getUserId(), projectToEdit.getId());
+                throw new ForbiddenException(ProjectService.class, NO_PERMISSIONS_TO_DELETE_ATTACHMENTS);
+            }
+        }
     }
 
     private List<Policy> collectProjectPolicies(
