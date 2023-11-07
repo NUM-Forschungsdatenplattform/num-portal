@@ -51,9 +51,6 @@ public class AttachmentServiceTest {
     @InjectMocks
     private AttachmentService attachmentService;
 
-    @Mock
-    private ProjectRepository projectRepository;
-
     @Mock private ProjectService projectService;
 
     @Before

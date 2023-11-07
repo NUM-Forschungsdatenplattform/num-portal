@@ -52,10 +52,11 @@ public class AttachmentService {
 
     private final ModelMapper modelMapper;
 
-    public AttachmentService(AttachmentRepository attachmentRepository, @Lazy ProjectService projectService, FileScanService fileScanService) {
+    public AttachmentService(AttachmentRepository attachmentRepository, @Lazy ProjectService projectService, FileScanService fileScanService, ModelMapper modelMapper) {
         this.attachmentRepository = attachmentRepository;
         this.projectService = projectService;
         this.fileScanService = fileScanService;
+        this.modelMapper = modelMapper;
     }
 
     public List<Attachment> listAttachments() {
@@ -69,7 +70,7 @@ public class AttachmentService {
                         String.format(ExceptionsTemplate.ATTACHMENT_NOT_FOUND, id)));
     }
 
-    private static AttachmentDto buildModel(MultipartFile file, String description, String loggedInUserId, Long projectId) throws IOException {
+    private AttachmentDto buildModel(MultipartFile file, String description, String loggedInUserId, Long projectId) throws IOException {
         return AttachmentDto.builder()
                 .name(file.getOriginalFilename())
                 .description(description)
@@ -185,7 +186,7 @@ public class AttachmentService {
         return attachmentRepository.findAttachmentsByProjectId(projectId);
     }
 
-        public boolean isInsertable(ProjectStatus status) {
+    private boolean isInsertable(ProjectStatus status) {
         return (ProjectStatus.DRAFT.equals(status) || ProjectStatus.CHANGE_REQUEST.equals(status));
     }
 
