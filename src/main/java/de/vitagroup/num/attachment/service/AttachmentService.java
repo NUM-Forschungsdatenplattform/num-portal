@@ -34,8 +34,6 @@ import static java.util.Objects.nonNull;
 
 @Service
 @Transactional(value = "attachmentTransactionManager")
-@RequiredArgsConstructor
-@Transactional("attachmentTransactionManager")
 @Slf4j
 @ConditionalOnProperty(prefix = "num", name = "enableAttachmentDatabase", havingValue = "true")
 public class AttachmentService {
@@ -67,13 +65,6 @@ public class AttachmentService {
                         String.format(ExceptionsTemplate.ATTACHMENT_NOT_FOUND, id)));
     }
 
-    public void saveAttachment(MultipartFile file, String description, String loggedInUserId, Long projectId) throws IOException {
-
-        validate(file);
-        AttachmentDto model = buildModel(file, description, loggedInUserId, -1L);
-        attachmentRepository.saveAttachment(model);
-    }
-
     private static AttachmentDto buildModel(MultipartFile file, String description, String loggedInUserId, Long projectId) throws IOException {
         return AttachmentDto.builder()
                 .name(file.getOriginalFilename())
@@ -83,7 +74,6 @@ public class AttachmentService {
                 .type(file.getContentType())
                 .content(file.getBytes())
                 .build();
-        attachmentRepository.saveAttachment(model);
     }
 
     private void validate(MultipartFile file) throws IOException {
@@ -208,7 +198,7 @@ public class AttachmentService {
         }
     }
 
-    private void saveAttachment(MultipartFile file, String description, String loggedInUserId, Long projectId) throws IOException {
+    public void saveAttachment(MultipartFile file, String description, String loggedInUserId, Long projectId) throws IOException {
         validate(file);
         AttachmentDto model = buildModel(file, description, loggedInUserId, projectId);
         attachmentRepository.saveAttachment(model);

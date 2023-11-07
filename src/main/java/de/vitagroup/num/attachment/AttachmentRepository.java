@@ -19,4 +19,6 @@ public interface AttachmentRepository {
     void updateReviewCounterByProjectId(Long projectId);
 
     Optional<Attachment> findByIdAndProjectId(Long id, Long projectId);
+
+    List<Attachment> findAttachmentsByProjectId(Long projectId);
 }

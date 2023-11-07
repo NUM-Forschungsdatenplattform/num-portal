@@ -62,4 +62,9 @@ public class AttachmentRepositoryImpl implements AttachmentRepository {
     public Optional<Attachment> findByIdAndProjectId(Long id, Long projectId) {
         return attachmentRepositoryJpa.findByIdAndProjectId(id, projectId);
     }
+
+    @Override
+    public List<Attachment> findAttachmentsByProjectId(Long projectId) {
+        return attachmentRepositoryJpa.findAttachmentsByProjectId(projectId);
+    }
 }
