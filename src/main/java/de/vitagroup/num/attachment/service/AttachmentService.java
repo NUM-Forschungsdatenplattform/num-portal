@@ -11,11 +11,11 @@ import de.vitagroup.num.service.ProjectService;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.web.controller.NumAttachmentController;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,7 +32,6 @@ import static java.util.Objects.nonNull;
 
 @Service
 @Transactional("attachmentTransactionManager")
-@RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty(prefix = "num", name = "enableAttachmentDatabase", havingValue = "true")
 public class AttachmentService {
@@ -46,6 +45,12 @@ public class AttachmentService {
     @Value("${num.fileVirusScanEnabled}")
     private boolean fileVirusScanEnabled;
     private final FileScanService fileScanService;
+
+    public AttachmentService(AttachmentRepository attachmentRepository, @Lazy ProjectService projectService, FileScanService fileScanService) {
+        this.attachmentRepository = attachmentRepository;
+        this.projectService = projectService;
+        this.fileScanService = fileScanService;
+    }
 
     public List<Attachment> listAttachments() {
         return attachmentRepository.getAttachments();
