@@ -51,7 +51,7 @@ public class AttachmentService {
                         String.format(ExceptionsTemplate.ATTACHMENT_NOT_FOUND, id)));
     }
 
-    public void saveAttachment(MultipartFile file, String description, String loggedInUserId) throws IOException {
+    public void saveAttachment(MultipartFile file, String description, String loggedInUserId, Long projectId) throws IOException {
 
         validate(file);
         AttachmentDto model = AttachmentDto.builder()
@@ -60,7 +60,7 @@ public class AttachmentService {
                 .authorId(loggedInUserId)
                 .type(file.getContentType())
                 .content(file.getBytes())
-                //.projectId(96L)
+                .projectId(projectId)
                 .build();
         attachmentRepository.saveAttachment(model);
     }

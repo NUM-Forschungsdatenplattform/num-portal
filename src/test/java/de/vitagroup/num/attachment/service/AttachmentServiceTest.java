@@ -81,7 +81,7 @@ public class AttachmentServiceTest {
     public void saveAttachmentTest() throws IOException {
         ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 10485760);
         MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "%PDF-1.5content".getBytes());
-        attachmentService.saveAttachment(mockFile, null, "author-id");
+        attachmentService.saveAttachment(mockFile, null, "author-id", 1L);
         Mockito.verify(attachmentRepository, Mockito.times(1)).saveAttachment(Mockito.any(AttachmentDto.class));
     }
 
@@ -90,7 +90,7 @@ public class AttachmentServiceTest {
         ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 10485760);
         MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "".getBytes());
         try {
-            attachmentService.saveAttachment(mockFile, null, "author-id");
+            attachmentService.saveAttachment(mockFile, null, "author-id",1L);
         }catch (BadRequestException fe) {
             Assert.assertEquals(INVALID_FILE_MISSING_CONTENT, fe.getMessage());
         }
@@ -101,7 +101,7 @@ public class AttachmentServiceTest {
         ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 10485760);
         MultipartFile mockFile = new MockMultipartFile("testFile", "testFile", "application/pdf", "%PDF-1.5 content".getBytes());
         try {
-            attachmentService.saveAttachment(mockFile, null, "author-id");
+            attachmentService.saveAttachment(mockFile, null, "author-id", 1L);
         }catch (BadRequestException fe) {
             Assert.assertEquals(DOCUMENT_TYPE_MISMATCH, fe.getMessage());
         }
@@ -112,7 +112,7 @@ public class AttachmentServiceTest {
         ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 1);
         MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "%PDF-1.5".getBytes());
         try {
-            attachmentService.saveAttachment(mockFile, null, "author-id");
+            attachmentService.saveAttachment(mockFile, null, "author-id", 1L);
         }catch (BadRequestException fe) {
             Assert.assertEquals(String.format(PDF_FILE_SIZE_EXCEEDED, 0, 0), fe.getMessage());
         }
