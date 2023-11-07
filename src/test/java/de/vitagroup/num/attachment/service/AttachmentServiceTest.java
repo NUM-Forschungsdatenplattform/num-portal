@@ -29,9 +29,7 @@ import java.util.Optional;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ATTACHMENT_LIMIT_REACHED;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DESCRIPTION_TOO_LONG;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DOCUMENT_TYPE_MISMATCH;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.FILE_DESCRIPTION_IS_NOT_PRESENT;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_FILE_MISSING_CONTENT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NOT_ENOUGH_DESCRIPTION;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PDF_FILES_ARE_NOT_ATTACHED;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PDF_FILE_SIZE_EXCEEDED;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
@@ -144,7 +142,7 @@ public class AttachmentServiceTest {
         LightAttachmentDto attachmentDto = LightAttachmentDto.builder()
                 .description(List.of("first file"))
                 .files(multipartFiles).build();
-        attachmentService.saveAttachments(1L, "author-id", attachmentDto);
+        attachmentService.saveAttachments(1L, "author-id", attachmentDto, false);
     }
 
     private void instantiateProject(ProjectStatus status) {
@@ -165,7 +163,7 @@ public class AttachmentServiceTest {
         instantiateProject(ProjectStatus.DRAFT);
 
         try {
-            attachmentService.saveAttachments(0L, "author-id", null);
+            attachmentService.saveAttachments(0L, "author-id", null, false);
         }catch (ResourceNotFound fe) {
             Assert.assertEquals(String.format(PROJECT_NOT_FOUND, 0L), fe.getMessage());
         }
@@ -180,44 +178,9 @@ public class AttachmentServiceTest {
                 .description(List.of("first file"))
                 .build();
         try {
-            attachmentService.saveAttachments(1L, "author-id", attachmentDto);
+            attachmentService.saveAttachments(1L, "author-id", attachmentDto, false);
         }catch (ResourceNotFound fe) {
             Assert.assertEquals(PDF_FILES_ARE_NOT_ATTACHED, fe.getMessage());
-        }
-    }
-
-    @Test
-    public void filesDescriptionIsMissing() throws IOException {
-        ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 10485760);
-        instantiateProject(ProjectStatus.DRAFT);
-
-        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "%PDF-1.5 content".getBytes());
-        MultipartFile[] multipartFiles = { mockFile };
-
-        LightAttachmentDto attachmentDto = LightAttachmentDto.builder()
-                .files(multipartFiles).build();
-        try {
-            attachmentService.saveAttachments(1L, "author-id", attachmentDto);
-        }catch (BadRequestException fe) {
-            Assert.assertEquals(FILE_DESCRIPTION_IS_NOT_PRESENT, fe.getMessage());
-        }
-    }
-
-    @Test
-    public void notEnoughDescriptionForFiles() throws IOException {
-        ReflectionTestUtils.setField(attachmentService, "pdfFileSize", 10485760);
-        instantiateProject(ProjectStatus.DRAFT);
-
-        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "%PDF-1.5 content".getBytes());
-        MultipartFile[] multipartFiles = { mockFile, mockFile };
-
-        LightAttachmentDto attachmentDto = LightAttachmentDto.builder()
-                .description(List.of("first file description"))
-                .files(multipartFiles).build();
-        try {
-            attachmentService.saveAttachments(1L, "author-id", attachmentDto);
-        }catch (BadRequestException fe) {
-            Assert.assertEquals(NOT_ENOUGH_DESCRIPTION, fe.getMessage());
         }
     }
 
@@ -234,7 +197,7 @@ public class AttachmentServiceTest {
                 .description(List.of(description))
                 .files(multipartFiles).build();
         try {
-            attachmentService.saveAttachments(1L, "author-id", attachmentDto);
+            attachmentService.saveAttachments(1L, "author-id", attachmentDto, false);
         }catch (BadRequestException fe) {
             Assert.assertEquals(String.format(DESCRIPTION_TOO_LONG, description), fe.getMessage());
         }
@@ -252,7 +215,7 @@ public class AttachmentServiceTest {
                 .description(List.of("first file description"))
                 .files(multipartFiles).build();
         try {
-            attachmentService.saveAttachments(1L, "author-id", attachmentDto);
+            attachmentService.saveAttachments(1L, "author-id", attachmentDto, false);
         }catch (BadRequestException fe) {
             Assert.assertEquals(String.format(WRONG_PROJECT_STATUS, ProjectStatus.APPROVED), fe.getMessage());
         }
@@ -270,7 +233,7 @@ public class AttachmentServiceTest {
                 .description(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"))
                 .files(multipartFiles).build();
         try {
-            attachmentService.saveAttachments(1L, "author-id", attachmentDto);
+            attachmentService.saveAttachments(1L, "author-id", attachmentDto, false);
         }catch (BadRequestException fe) {
             Assert.assertEquals(ATTACHMENT_LIMIT_REACHED, fe.getMessage());
         }

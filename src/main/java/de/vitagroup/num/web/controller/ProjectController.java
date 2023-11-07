@@ -32,6 +32,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.validation.Valid;
@@ -101,6 +102,23 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
+  @AuditLog(description = "Create project")
+  @PostMapping(path = "/new", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+  @Operation(
+          description = "Creates a project; the logged in user is assigned as coordinator of the project")
+  @PreAuthorize(Role.STUDY_COORDINATOR)
+  public ResponseEntity<ProjectDto> createMultipartProject(
+          @AuthenticationPrincipal @NotNull Jwt principal,
+          @Valid @NotNull @RequestPart ProjectDto projectDto,
+          @RequestPart(value = "files", required = false) @Valid MultipartFile[] files) {
+
+    Project project =
+            projectService.createMultipartProject(
+                    projectDto, principal.getSubject(), Roles.extractRoles(principal), files);
+
+    return ResponseEntity.ok(projectMapper.convertToDto(project));
+  }
+
   @AuditLog(description = "Update project")
   @PutMapping(value = "/{id}")
   @Operation(description =
@@ -114,6 +132,24 @@ public class ProjectController extends CustomizedExceptionHandler {
     Project project =
         projectService.updateProject(
             projectDto, projectId, principal.getSubject(), Roles.extractRoles(principal));
+
+    return ResponseEntity.ok(projectMapper.convertToDto(project));
+  }
+
+  @AuditLog(description = "Update project")
+  @PutMapping(value = "/new/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+  @Operation(description =
+          "Updates a project; the logged in user is assigned as coordinator of the project at creation time")
+  @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)
+  public ResponseEntity<ProjectDto> updateMultipartProject(
+          @AuthenticationPrincipal @NotNull Jwt principal,
+          @PathVariable("id") Long projectId,
+          @Valid @NotNull @RequestPart ProjectDto projectDto,
+          @RequestPart(value = "files", required = false) @Valid MultipartFile[] files) {
+
+    Project project =
+            projectService.updateMultipartProject(
+                    projectDto, projectId, principal.getSubject(), Roles.extractRoles(principal), files);
 
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }

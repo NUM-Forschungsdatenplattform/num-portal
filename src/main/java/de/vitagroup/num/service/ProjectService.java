@@ -2,6 +2,8 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.attachment.domain.dto.LightAttachmentDto;
+import de.vitagroup.num.attachment.service.AttachmentService;
 import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
@@ -39,6 +41,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.transaction.Transactional;
@@ -58,6 +61,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
+import static java.util.Objects.nonNull;
 
 @Service
 @Slf4j
@@ -119,6 +123,8 @@ public class ProjectService {
     private final ProjectDocCreator projectDocCreator;
 
     private final ProjectMapper projectMapper;
+
+    private final AttachmentService attachmentService;
 
 
     @Transactional
@@ -501,6 +507,24 @@ public class ProjectService {
     }
 
     @Transactional
+    public Project createMultipartProject(ProjectDto projectDto, String userId, List<String> roles, MultipartFile[] files) {
+        Project savedProject = createProject(projectDto, userId, roles);
+        if(nonNull(files)){
+            try {
+                LightAttachmentDto lightDto = LightAttachmentDto.builder()
+                        .files(files)
+                        .description(projectDto.getFilesDescription())
+                        .build();
+                attachmentService.saveAttachments(savedProject.getId(), userId, lightDto, true);
+            } catch (IOException e) {
+                log.error("Exception in createMultipartProject saveAttachments" + e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+        return savedProject;
+    }
+
+    @Transactional
     public Project updateProject(ProjectDto projectDto, Long id, String userId, List<String> roles) {
         var user = userDetailsService.checkIsUserApproved(userId);
 
@@ -524,6 +548,24 @@ public class ProjectService {
         } else {
             throw new ForbiddenException(ProjectService.class, NO_PERMISSIONS_TO_EDIT_THIS_PROJECT);
         }
+    }
+
+    @Transactional
+    public Project updateMultipartProject(ProjectDto projectDto, Long id, String userId, List<String> roles, MultipartFile[] files) {
+        Project updatedProject = updateProject(projectDto, id, userId, roles);
+        if(nonNull(files)){
+            try {
+                LightAttachmentDto lightDto = LightAttachmentDto.builder()
+                        .files(files)
+                        .description(projectDto.getFilesDescription())
+                        .build();
+                attachmentService.saveAttachments(updatedProject.getId(), userId, lightDto, false);
+            } catch (IOException e) {
+                log.error("Exception in updateMultipartProject saveAttachments" + e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+        return updatedProject;
     }
 
     private Project updateProjectStatus(ProjectDto projectDto, List<String> roles, UserDetails user, Project projectToEdit) {
@@ -854,7 +896,7 @@ public class ProjectService {
             pageRequest = PageRequest.of(0, count != 0 ? (int) count : 1);
         }
         String sortByField = searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy()) ? searchCriteria.getSortBy() : "modifiedDate";
-        Language language = Objects.nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
+        Language language = nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
         ProjectSpecification projectSpecification = ProjectSpecification.builder()
                 .filter(searchCriteria.getFilter())
                 .roles(roles)

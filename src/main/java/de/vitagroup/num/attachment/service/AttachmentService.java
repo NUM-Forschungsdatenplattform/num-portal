@@ -6,8 +6,8 @@ import de.vitagroup.num.attachment.domain.dto.LightAttachmentDto;
 import de.vitagroup.num.attachment.domain.model.Attachment;
 import de.vitagroup.num.domain.model.Project;
 import de.vitagroup.num.domain.model.ProjectStatus;
-import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.templates.ExceptionsTemplate;
+import de.vitagroup.num.service.ProjectService;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.web.controller.NumAttachmentController;
@@ -28,6 +28,7 @@ import java.util.Optional;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 @Service
 @Transactional("attachmentTransactionManager")
@@ -37,7 +38,7 @@ import static java.util.Objects.isNull;
 public class AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
-    private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
 
     @Value("${num.pdfFileSize:10485760}")
     private long pdfFileSize;
@@ -65,7 +66,7 @@ public class AttachmentService {
     }
 
     private static AttachmentDto buildModel(MultipartFile file, String description, String loggedInUserId, Long projectId) throws IOException {
-        AttachmentDto model = AttachmentDto.builder()
+        return AttachmentDto.builder()
                 .name(file.getOriginalFilename())
                 .description(description)
                 .authorId(loggedInUserId)
@@ -73,7 +74,6 @@ public class AttachmentService {
                 .type(file.getContentType())
                 .content(file.getBytes())
                 .build();
-        return model;
     }
 
     private void validate(MultipartFile file) throws IOException {
@@ -126,16 +126,23 @@ public class AttachmentService {
         }
     }
 
-    public void saveAttachments(Long projectId, String loggedInUserId, @Valid LightAttachmentDto lightDto) throws IOException {
-        Project project = projectRepository
-            .findById(projectId)
-            .orElseThrow(() -> new ResourceNotFound(AttachmentService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId)));
+    public void saveAttachments(Long projectId, String loggedInUserId, @Valid LightAttachmentDto lightDto, boolean isNewProject) throws IOException {
+        if(isNewProject) {
+            checkConsistency(lightDto, projectId, ProjectStatus.DRAFT);
+        } else {
+            Project project = projectService.getProjectById(loggedInUserId, projectId)
+                    .orElseThrow(() -> new ResourceNotFound(AttachmentService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId)));
 
-        checkConsistency(lightDto, projectId, project.getStatus());
+            checkConsistency(lightDto, projectId, project.getStatus());
+        }
 
         int i = 0;
         for (MultipartFile file: lightDto.getFiles()) {
-            saveAttachment(file, lightDto.getDescription().get(i++),loggedInUserId,projectId);
+            if(nonNull(lightDto.getDescription()) && (lightDto.getDescription().size() > i)) {
+                saveAttachment(file, lightDto.getDescription().get(i++), loggedInUserId, projectId);
+            } else {
+                saveAttachment(file, Strings.EMPTY, loggedInUserId, projectId);
+            }
         }
     }
 
@@ -152,17 +159,11 @@ public class AttachmentService {
             throw new ResourceNotFound(AttachmentService.class, PDF_FILES_ARE_NOT_ATTACHED);
         }
 
-        if(isNull(lightDto.getDescription())){
-            throw new BadRequestException(AttachmentService.class, FILE_DESCRIPTION_IS_NOT_PRESENT);
-        }
-
-        if(lightDto.getDescription().size() != lightDto.getFiles().length){
-            throw new BadRequestException(AttachmentService.class, NOT_ENOUGH_DESCRIPTION);
-        }
-
-        for (String description: lightDto.getDescription()) {
-            if(description.length() > 255) {
-                throw new BadRequestException(AttachmentService.class, DESCRIPTION_TOO_LONG, String.format(DESCRIPTION_TOO_LONG, description));
+        if(nonNull(lightDto.getDescription())) {
+            for (String description : lightDto.getDescription()) {
+                if (description.length() > 255) {
+                    throw new BadRequestException(AttachmentService.class, DESCRIPTION_TOO_LONG, String.format(DESCRIPTION_TOO_LONG, description));
+                }
             }
         }
 

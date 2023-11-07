@@ -54,7 +54,7 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
     public ResponseEntity<String> createMultipleAttachments(@AuthenticationPrincipal @NotNull Jwt principal,
                                                             @NotNull @NotEmpty @PathVariable Long projectId,
                                                             @ModelAttribute @Valid LightAttachmentDto lightDto) throws IOException {
-        attachmentService.saveAttachments(projectId, principal.getSubject(), lightDto);
+        attachmentService.saveAttachments(projectId, principal.getSubject(), lightDto, false);
         return ResponseEntity.ok("ok");
     }
 

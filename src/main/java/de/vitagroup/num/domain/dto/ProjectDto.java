@@ -74,4 +74,6 @@ public class ProjectDto {
   private LocalDate endDate;
 
   @Builder.Default private boolean financed = false;
+
+  private List<String> filesDescription;
 }
