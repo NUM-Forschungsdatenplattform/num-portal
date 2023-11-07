@@ -146,7 +146,7 @@ public class AttachmentService {
             if(nonNull(lightDto.getDescription()) && (lightDto.getDescription().size() > i)) {
                 saveAttachment(file, lightDto.getDescription().get(i++), loggedInUserId, projectId);
             } else {
-                saveAttachment(file, Strings.EMPTY, loggedInUserId, projectId);
+                saveAttachment(file, null, loggedInUserId, projectId);
             }
         }
     }
