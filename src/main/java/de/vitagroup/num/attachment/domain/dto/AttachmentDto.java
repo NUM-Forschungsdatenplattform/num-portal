@@ -27,12 +27,12 @@ public class AttachmentDto {
 
     private byte[] content;
 
+    private Long projectId;
+
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private OffsetDateTime uploadDate;
 
     private String authorId;
-
-    private Long projectId;
 
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private int reviewCounter;

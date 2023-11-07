@@ -78,5 +78,6 @@ public class ProjectDto {
 
   private Set<Long> attachmentsToBeDeleted;
 
+  private List<String> filesDescription;
   private List<AttachmentDto> attachments;
 }
