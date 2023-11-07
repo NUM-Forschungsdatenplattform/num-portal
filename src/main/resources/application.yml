@@ -13,7 +13,7 @@ spring:
       data-source-properties:
         stringtype: unspecified
     numportal:
-      url: jdbc:postgresql://localhost:5432/numportal?currentSchema=num
+      url: jdbc:postgresql://localhost:5432/num?currentSchema=num
       driver-class-name: org.postgresql.Driver
       username: postgres
       password: postgres
@@ -93,8 +93,8 @@ springdoc:
       client-secret: num-portal-webapp
 swagger:
   oauth2:
-    token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
-    auth-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/auth
+    token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/auth
     client-name: num-portal-webapp
     client-secret: num-portal-webapp
 
@@ -164,7 +164,7 @@ num:
     DE: 'https://num-portal-webapp.readthedocs.io/de/latest/'
     EN: 'https://num-portal-webapp.readthedocs.io/en/latest/'
   # if true a second database is configured for attachments - check configs for numportal-attachment
-  enableAttachmentDatabase: false
+  enableAttachmentDatabase: true
   # default PDF file size is 10 MB. 1024*1024*10
   pdfFileSize: 10485760
   fileVirusScanEnabled: false

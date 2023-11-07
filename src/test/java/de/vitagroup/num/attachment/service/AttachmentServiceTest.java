@@ -8,6 +8,7 @@ import de.vitagroup.num.domain.model.Project;
 import de.vitagroup.num.domain.model.ProjectStatus;
 import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.repository.ProjectRepository;
+import de.vitagroup.num.service.ProjectService;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import org.junit.Assert;
@@ -50,6 +51,8 @@ public class AttachmentServiceTest {
 
     @Mock
     private ProjectRepository projectRepository;
+
+    @Mock private ProjectService projectService;
 
     @Before
     public void setup() {
@@ -153,7 +156,8 @@ public class AttachmentServiceTest {
                         .status(status)
                         .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
                         .build();
-
+        Mockito.when(projectService.getProjectById("author-id", 1L))
+                .thenReturn(Optional.of(project));
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
     }
 
