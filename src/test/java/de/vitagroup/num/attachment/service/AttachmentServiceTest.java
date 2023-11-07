@@ -35,7 +35,6 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PDF_FILES_ARE
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PDF_FILE_SIZE_EXCEEDED;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.WRONG_PROJECT_STATUS;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AttachmentServiceTest {
@@ -158,7 +157,6 @@ public class AttachmentServiceTest {
                         .build();
         Mockito.when(projectService.getProjectById("author-id", 1L))
                 .thenReturn(Optional.of(project));
-        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
     }
 
     @Test
