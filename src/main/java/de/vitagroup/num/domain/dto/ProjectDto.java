@@ -75,5 +75,7 @@ public class ProjectDto {
 
   @Builder.Default private boolean financed = false;
 
+  private Set<Long> attachmentsToBeDeleted;
+
   private List<String> filesDescription;
 }

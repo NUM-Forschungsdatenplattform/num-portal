@@ -40,10 +40,10 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
     @AuditLog(description = "Create a new attachment")
     @PreAuthorize(Role.SUPER_ADMIN)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> createAttachment(@AuthenticationPrincipal @NotNull Jwt principal,
+    public ResponseEntity<String> createAttachment(@AuthenticationPrincipal @NotNull Jwt principal, @RequestParam Long projectId,
                                                    @RequestParam(required = false) String description,
                                                    @NotNull @RequestPart("file") MultipartFile file) throws IOException {
-        attachmentService.saveAttachment(file, description, principal.getSubject());
+        attachmentService.saveAttachment(file, description, principal.getSubject(), projectId);
         return ResponseEntity.ok("ok");
     }
 
