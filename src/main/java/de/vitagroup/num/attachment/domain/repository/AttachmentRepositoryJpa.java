@@ -22,4 +22,6 @@ public interface AttachmentRepositoryJpa extends JpaRepository<Attachment, Long>
     void updateReviewCounterByProjectId(@Param("projectId") Long projectId);
 
     Optional<Attachment> findByIdAndProjectId(Long id, Long projectId);
+
+    List<Attachment> findAttachmentsByProjectId(Long projectId);
 }

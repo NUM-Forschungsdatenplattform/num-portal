@@ -32,6 +32,7 @@ public class AttachmentRepositoryImpl implements AttachmentRepository {
                 .name(model.getName())
                 .description(model.getDescription())
                 .authorId(model.getAuthorId())
+                .projectId(model.getProjectId())
                 .uploadDate(OffsetDateTime.now())
                 .type(model.getType())
                 .content(model.getContent())
@@ -60,5 +61,10 @@ public class AttachmentRepositoryImpl implements AttachmentRepository {
     @Override
     public Optional<Attachment> findByIdAndProjectId(Long id, Long projectId) {
         return attachmentRepositoryJpa.findByIdAndProjectId(id, projectId);
+    }
+
+    @Override
+    public List<Attachment> findAttachmentsByProjectId(Long projectId) {
+        return attachmentRepositoryJpa.findAttachmentsByProjectId(projectId);
     }
 }

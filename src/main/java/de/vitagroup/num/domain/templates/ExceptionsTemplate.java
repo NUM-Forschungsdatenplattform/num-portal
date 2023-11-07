@@ -163,6 +163,10 @@ public class ExceptionsTemplate {
     public final static String DOCUMENT_TYPE_MISMATCH = "Document type mismatch. Only PDF type is allowed to be uploaded.";
     public final static String INVALID_FILE_MISSING_CONTENT = "Invalid file. Missing content";
     public final static String PDF_FILE_SIZE_EXCEEDED = "PDF File Size Exceeded. Maximum file size is [%s] MB. Current file size is [%s]+ MB.";
+    public final static String PDF_FILES_ARE_NOT_ATTACHED = "PDF Files are not attached to the project.";
+    public final static String ATTACHMENT_LIMIT_REACHED = "Attachment limit reached. Maximum of 10 attachments can be assigned to a project.";
+    public final static String WRONG_PROJECT_STATUS = "Wrong project status [%s]. Only projects with status 'Draft' or 'Change Request' can accept attachments.";
+    public final static String DESCRIPTION_TOO_LONG = "Description is too long. Only 255 characters are accepted for description. [%s]";
 
     public static final String CLAMAV_PING_FAILED = "Could not ping ClamAV service";
     public static final String CLAMAV_SCAN_FAILED = "Could not scan file %s";
@@ -334,6 +338,10 @@ public class ExceptionsTemplate {
         errorMap.put(CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS, new ExceptionDto( 111, new ArrayList<>() ) ); //1 parameter
         errorMap.put(CANNOT_DELETE_ATTACHMENT_INVALID_REVIEW_STATUS_COUNTER, new ExceptionDto( 112, new ArrayList<>() ) );
 
+        errorMap.put(PDF_FILES_ARE_NOT_ATTACHED, new ExceptionDto( 110, new ArrayList<>() ) );
+        errorMap.put(ATTACHMENT_LIMIT_REACHED, new ExceptionDto( 111, new ArrayList<>() ) );
+        errorMap.put(WRONG_PROJECT_STATUS, new ExceptionDto( 112, new ArrayList<>() ) );
+        errorMap.put(DESCRIPTION_TOO_LONG, new ExceptionDto( 113, new ArrayList<>() ) );//1 parameter
     }
 
     private ExceptionsTemplate() {

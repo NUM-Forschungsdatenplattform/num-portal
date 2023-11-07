@@ -44,7 +44,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -1132,6 +1134,43 @@ public class ProjectServiceTest {
     projectService.createProject(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
     verify(projectRepository, times(1)).save(any());
   }
+
+    @Test
+    public void shouldCreateMultipartProject() {
+        ProjectDto newStudy =
+                ProjectDto.builder()
+                        .name("new project")
+                        .financed(false)
+                        .status(ProjectStatus.DRAFT)
+                        .build();
+
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "%PDF-1.5 content".getBytes());
+        MultipartFile[] multipartFiles = { mockFile };
+
+        projectService.createMultipartProject(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR), multipartFiles);
+        verify(projectRepository, times(1)).save(any());
+    }
+
+    @Test
+    public void shouldUpdateMultipartProject() {
+        Project projectToEdit =
+                Project.builder()
+                        .name("Project")
+                        .status(ProjectStatus.PENDING)
+                        .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+                        .build();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
+
+        ProjectDto projectDto =
+                ProjectDto.builder().name("Project is edited").status(ProjectStatus.DRAFT).build();
+
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "%PDF-1.5 content".getBytes());
+        MultipartFile[] multipartFiles = { mockFile };
+
+        projectService.updateMultipartProject(
+                projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR), multipartFiles);
+    }
 
   @Test
   public void shouldAllowInitialPendingStudyStatus() {
