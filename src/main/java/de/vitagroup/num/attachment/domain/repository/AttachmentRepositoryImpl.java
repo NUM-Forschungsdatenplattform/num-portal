@@ -67,4 +67,11 @@ public class AttachmentRepositoryImpl implements AttachmentRepository {
     public List<Attachment> findAttachmentsByProjectId(Long projectId) {
         return attachmentRepositoryJpa.findAttachmentsByProjectId(projectId);
     }
+
+    @Override
+    public void deleteByProjectId(Long projectId) {
+        attachmentRepositoryJpa.deleteByProjectId(projectId);
+    }
+
+
 }

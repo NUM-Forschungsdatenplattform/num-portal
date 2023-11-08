@@ -142,6 +142,7 @@ public class ProjectService {
 
         if (project.isDeletable()) {
             projectRepository.deleteById(projectId);
+            attachmentService.deleteAllProjectAttachments(projectId, userId);
             log.info("Project {} was deleted by {}", projectId, userId);
         } else {
             throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT_INVALID_STATUS,

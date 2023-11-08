@@ -64,8 +64,10 @@ public class ProjectDto {
   @NotNull(message = "Project status is mandatory")
   private ProjectStatus status;
 
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
   private OffsetDateTime createDate;
 
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
   private OffsetDateTime modifiedDate;
 
   @NotNull(message = "Project startDate cannot be null")
@@ -76,8 +78,12 @@ public class ProjectDto {
 
   @Builder.Default private boolean financed = false;
 
+  @Schema(description = "attachment's id to be deleted")
   private Set<Long> attachmentsToBeDeleted;
 
+  @Schema(accessMode = Schema.AccessMode.WRITE_ONLY)
   private List<String> filesDescription;
+
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "attachments assigned to project")
   private List<AttachmentDto> attachments;
 }
