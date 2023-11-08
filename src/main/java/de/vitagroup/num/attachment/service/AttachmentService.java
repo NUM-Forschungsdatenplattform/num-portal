@@ -189,7 +189,7 @@ public class AttachmentService {
     public void deleteAllProjectAttachments(Long projectId, String loggedInUser) {
         log.info("Receive request to delete all attachments from project {} by loggedInUser {} ", projectId, loggedInUser);
         if (!projectService.exists(projectId)) {
-            new ResourceNotFound(AttachmentService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId));
+            throw new ResourceNotFound(AttachmentService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId));
         }
         attachmentRepository.deleteByProjectId(projectId);
     }
