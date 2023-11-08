@@ -13,6 +13,7 @@ import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.web.controller.NumAttachmentController;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 import static java.util.Objects.isNull;
@@ -48,10 +50,13 @@ public class AttachmentService {
     private boolean fileVirusScanEnabled;
     private final FileScanService fileScanService;
 
-    public AttachmentService(AttachmentRepository attachmentRepository, @Lazy ProjectService projectService, FileScanService fileScanService) {
+    private final ModelMapper modelMapper;
+
+    public AttachmentService(AttachmentRepository attachmentRepository, @Lazy ProjectService projectService, FileScanService fileScanService, ModelMapper modelMapper) {
         this.attachmentRepository = attachmentRepository;
         this.projectService = projectService;
         this.fileScanService = fileScanService;
+        this.modelMapper = modelMapper;
     }
 
     public List<Attachment> listAttachments() {
@@ -65,7 +70,7 @@ public class AttachmentService {
                         String.format(ExceptionsTemplate.ATTACHMENT_NOT_FOUND, id)));
     }
 
-    private static AttachmentDto buildModel(MultipartFile file, String description, String loggedInUserId, Long projectId) throws IOException {
+    private AttachmentDto buildModel(MultipartFile file, String description, String loggedInUserId, Long projectId) throws IOException {
         return AttachmentDto.builder()
                 .name(file.getOriginalFilename())
                 .description(description)
@@ -132,6 +137,7 @@ public class AttachmentService {
     }
 
     public void deleteAttachments(Set<Long> attachmentsId, Long projectId, String loggedInUser, Boolean userIsApprover) {
+        log.info("Receive request to delete attachments {} from project {} by loggedInUser {} ", attachmentsId, projectId, loggedInUser);
         for(Long attachmentId : attachmentsId) {
             Optional<Attachment> attachment = attachmentRepository.findByIdAndProjectId(attachmentId, projectId);
             if(attachment.isEmpty()) {
@@ -146,6 +152,14 @@ public class AttachmentService {
             attachmentRepository.deleteAttachment(attachmentId);
         }
         log.info("Attachments with id {} from project {} deleted by user {} ", attachmentsId, projectId, loggedInUser);
+    }
+
+    public List<AttachmentDto> findAttachmentsByProjectId(Long projectId) {
+        log.info("Retrieve attachments for project {}", projectId);
+        List<Attachment> attachments = attachmentRepository.findAttachmentsByProjectId(projectId);
+        return attachments.stream()
+                .map(attachment -> modelMapper.map(attachment, AttachmentDto.class))
+                .collect(Collectors.toList());
     }
 
     public void saveAttachments(Long projectId, String loggedInUserId, @Valid LightAttachmentDto lightDto, boolean isNewProject) throws IOException {
@@ -172,7 +186,7 @@ public class AttachmentService {
         return attachmentRepository.findAttachmentsByProjectId(projectId);
     }
 
-        public boolean isInsertable(ProjectStatus status) {
+    private boolean isInsertable(ProjectStatus status) {
         return (ProjectStatus.DRAFT.equals(status) || ProjectStatus.CHANGE_REQUEST.equals(status));
     }
 

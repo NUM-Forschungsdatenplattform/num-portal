@@ -41,10 +41,11 @@ public class Attachment implements Serializable {
     private Long projectId;
 
 
-    public Attachment(Long id, String name, String description, OffsetDateTime uploadDate) {
+    public Attachment(Long id, String name, String description, OffsetDateTime uploadDate, int reviewCounter) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.uploadDate = uploadDate;
+        this.reviewCounter = reviewCounter;
     }
 }

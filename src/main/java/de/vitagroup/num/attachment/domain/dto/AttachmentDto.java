@@ -33,4 +33,7 @@ public class AttachmentDto {
     private OffsetDateTime uploadDate;
 
     private String authorId;
+
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+    private int reviewCounter;
 }

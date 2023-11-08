@@ -1,6 +1,7 @@
 package de.vitagroup.num.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.vitagroup.num.attachment.domain.dto.AttachmentDto;
 import de.vitagroup.num.domain.model.ProjectCategories;
 import de.vitagroup.num.domain.model.ProjectStatus;
 import de.vitagroup.num.domain.model.admin.User;
@@ -78,4 +79,5 @@ public class ProjectDto {
   private Set<Long> attachmentsToBeDeleted;
 
   private List<String> filesDescription;
+  private List<AttachmentDto> attachments;
 }

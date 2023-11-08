@@ -51,9 +51,6 @@ public class AttachmentServiceTest {
     @InjectMocks
     private AttachmentService attachmentService;
 
-    @Mock
-    private ProjectRepository projectRepository;
-
     @Mock private ProjectService projectService;
 
     @Before
@@ -289,5 +286,11 @@ public class AttachmentServiceTest {
         }catch (BadRequestException fe) {
             Assert.assertEquals(ATTACHMENT_LIMIT_REACHED, fe.getMessage());
         }
+    }
+
+    @Test
+    public void findAttachmentsByProjectIdTest() {
+        attachmentService.findAttachmentsByProjectId(3L);
+        Mockito.verify(attachmentRepository, Mockito.times(1)).findAttachmentsByProjectId(3L);
     }
 }
