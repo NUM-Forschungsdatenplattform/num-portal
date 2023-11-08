@@ -77,4 +77,10 @@ public class AttachmentRepositoryTest {
         attachmentRepository.findAttachmentsByProjectId(9L);
         Mockito.verify(attachmentRepositoryJpa, Mockito.times(1)).findAttachmentsByProjectId(9L);
     }
+
+    @Test
+    public void deleteByProjectIdTest() {
+       attachmentRepository.deleteByProjectId(3L);
+       Mockito.verify(attachmentRepositoryJpa, Mockito.times(1)).deleteByProjectId(3L);
+    }
 }
