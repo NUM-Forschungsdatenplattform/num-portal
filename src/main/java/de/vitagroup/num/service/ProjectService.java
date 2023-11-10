@@ -680,7 +680,7 @@ public class ProjectService {
 
     private void deleteAttachments(Set<Long> attachmentsToBeDeleted, List<String> roles, UserDetails user, Project projectToEdit) {
         if (CollectionUtils.isNotEmpty(attachmentsToBeDeleted)) {
-            if (Roles.isProjectLead(roles)) {
+            if (Roles.isProjectLead(roles) && projectToEdit.isCoordinator(user.getUserId())) {
                 if (ProjectStatus.DRAFT.equals(projectToEdit.getStatus()) || ProjectStatus.CHANGE_REQUEST.equals(projectToEdit.getStatus())) {
                     attachmentService.deleteAttachments(attachmentsToBeDeleted, projectToEdit.getId(), user.getUserId(), false);
                     log.info("Project lead {} removed attachments {} from project {}", user.getUserId(), attachmentsToBeDeleted, projectToEdit.getId());
