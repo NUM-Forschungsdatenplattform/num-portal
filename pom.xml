@@ -27,10 +27,10 @@
     <springdoc.version>1.7.0</springdoc.version>
     <java.version>17</java.version>
     <commons-csv.version>1.10.0</commons-csv.version>
-    <jacoco.version>0.8.10</jacoco.version>
+    <jacoco.version>0.8.11</jacoco.version>
     <dependency-check.version>8.4.2</dependency-check.version>
-    <failsafe.version>3.1.2</failsafe.version>
-    <surefire.version>3.1.2</surefire.version>
+    <failsafe.version>3.2.2</failsafe.version>
+    <surefire.version>3.2.2</surefire.version>
     <ehcache.version>3.10.8</ehcache.version>
     <git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
     <skip.integration.tests>false</skip.integration.tests>
