@@ -293,4 +293,20 @@ public class AttachmentServiceTest {
         attachmentService.findAttachmentsByProjectId(3L);
         Mockito.verify(attachmentRepository, Mockito.times(1)).findAttachmentsByProjectId(3L);
     }
+
+    @Test
+    public void deleteAllProjectAttachmentsTest() {
+        Mockito.when(projectService.exists(2L)).thenReturn(Boolean.TRUE);
+        attachmentService.deleteAllProjectAttachments(2L, "loggedInUser");
+        Mockito.verify(attachmentRepository, Mockito.times(1)).deleteByProjectId(2L);
+    }
+
+    @Test
+    public void deleteAllProjectAttachmentsProjectNotExists() {
+        try {
+            attachmentService.deleteAllProjectAttachments(2L, "loggedInUser");
+        } catch (ResourceNotFound rnf) {
+            Assert.assertEquals(String.format(PROJECT_NOT_FOUND, 2L), rnf.getMessage());
+        }
+    }
 }

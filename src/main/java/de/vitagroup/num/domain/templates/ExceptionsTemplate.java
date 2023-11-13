@@ -92,7 +92,7 @@ public class ExceptionsTemplate {
 
     public static final String CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS = "Not allowed to delete attachments , invalid project status: %s";
 
-    public static final String CANNOT_DELETE_ATTACHMENT_INVALID_REVIEW_STATUS_COUNTER = "Not allowed to delete attachment because %s was already reviewed";
+    public static final String CANNOT_DELETE_ATTACHMENT_INVALID_REVIEW_STATUS_COUNTER = "Not allowed to delete attachment %s because was already reviewed";
 
 
     //Template service

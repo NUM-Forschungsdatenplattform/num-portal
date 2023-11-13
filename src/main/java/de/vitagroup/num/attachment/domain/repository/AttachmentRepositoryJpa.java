@@ -27,4 +27,8 @@ public interface AttachmentRepositoryJpa extends JpaRepository<Attachment, Long>
             "FROM Attachment atc " +
             "WHERE atc.projectId = :projectId")
     List<Attachment> findAttachmentsByProjectId(@Param("projectId") Long projectId);
+
+    @Modifying
+    @Query("DELETE FROM Attachment atch WHERE atch.projectId = :projectId")
+    void deleteByProjectId(@Param("projectId") Long projectId);
 }

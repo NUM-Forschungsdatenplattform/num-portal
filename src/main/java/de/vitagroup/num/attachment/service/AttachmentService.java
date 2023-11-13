@@ -13,8 +13,8 @@ import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import de.vitagroup.num.web.controller.NumAttachmentController;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.apache.logging.log4j.util.Strings;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
@@ -147,7 +147,7 @@ public class AttachmentService {
             if  (Boolean.FALSE.equals(userIsApprover) && currentAttachment.getReviewCounter() > 1) {
                 log.error("Not allowed to delete attachment with id {} and name {} because it was at least once in review {}", attachmentId, currentAttachment.getName(), currentAttachment.getReviewCounter());
                 throw new ForbiddenException(AttachmentService.class, CANNOT_DELETE_ATTACHMENT_INVALID_REVIEW_STATUS_COUNTER,
-                        String.format(CANNOT_DELETE_ATTACHMENT_INVALID_REVIEW_STATUS_COUNTER, currentAttachment.getId()));
+                        String.format(CANNOT_DELETE_ATTACHMENT_INVALID_REVIEW_STATUS_COUNTER, currentAttachment.getName()));
             }
             attachmentRepository.deleteAttachment(attachmentId);
         }
@@ -184,6 +184,14 @@ public class AttachmentService {
 
     public List<Attachment> getAttachmentsBy(Long projectId) {
         return attachmentRepository.findAttachmentsByProjectId(projectId);
+    }
+
+    public void deleteAllProjectAttachments(Long projectId, String loggedInUser) {
+        log.info("Receive request to delete all attachments from project {} by loggedInUser {} ", projectId, loggedInUser);
+        if (!projectService.exists(projectId)) {
+            throw new ResourceNotFound(AttachmentService.class, PROJECT_NOT_FOUND, String.format(PROJECT_NOT_FOUND, projectId));
+        }
+        attachmentRepository.deleteByProjectId(projectId);
     }
 
     private boolean isInsertable(ProjectStatus status) {
