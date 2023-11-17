@@ -3,6 +3,7 @@ package de.vitagroup.num.integrationtesting.tests;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import de.vitagroup.num.TestNumPortalApplication;
+import de.vitagroup.num.integrationtesting.config.AttachmentPostgresqlContainer;
 import de.vitagroup.num.integrationtesting.config.NumPostgresqlContainer;
 import de.vitagroup.num.integrationtesting.security.TokenGenerator;
 import lombok.SneakyThrows;
@@ -42,6 +43,9 @@ public abstract class IntegrationTest {
 
   @ClassRule
   public static PostgreSQLContainer postgreSQLContainer = NumPostgresqlContainer.getInstance("numportal");
+
+  @ClassRule
+  public static PostgreSQLContainer attachmentPostgreSQLContainer = AttachmentPostgresqlContainer.getInstance("num-attachment");
 
   @Autowired public MockMvc mockMvc;
   @Rule public WireMockRule wireMockRule = new WireMockRule(8099);

@@ -167,6 +167,13 @@ num:
   enableAttachmentDatabase: false
   # default PDF file size is 10 MB. 1024*1024*10
   pdfFileSize: 10485760
+  fileVirusScanEnabled: true
+
+clamAV:
+  host: localhost
+  port: 3310
+  read-timeout: 35000
+  connection-timeout: 2000
 
 consent:
   allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37

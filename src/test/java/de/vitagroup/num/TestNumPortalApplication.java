@@ -18,8 +18,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @ComponentScan(excludeFilters = @ComponentScan.Filter(
         type = FilterType.ASSIGNABLE_TYPE,
         value = { UserCacheInit.class,
-                NumPortalApplication.class,
-                NumPortalAttachmentDatasourceConfiguration.class, NumAttachmentFlywayConfig.class}))
+                NumPortalApplication.class
+                }))
 public class TestNumPortalApplication {
 
   public static void main(String[] args) {

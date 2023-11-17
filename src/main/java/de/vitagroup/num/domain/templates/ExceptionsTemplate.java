@@ -88,6 +88,13 @@ public class ExceptionsTemplate {
     public final static String DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY = "Data explorer available for published projects only";
     public final static String CANNOT_ACCESS_THIS_PROJECT = "Cannot access this project";
 
+    public static final String NO_PERMISSIONS_TO_DELETE_ATTACHMENTS = "No permissions to delete attachments";
+
+    public static final String CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS = "Not allowed to delete attachments , invalid project status: %s";
+
+    public static final String CANNOT_DELETE_ATTACHMENT_INVALID_REVIEW_STATUS_COUNTER = "Not allowed to delete attachment %s because was already reviewed";
+
+
     //Template service
     public final static String CANNOT_FIND_TEMPLATE = "Cannot find template: %s";
     public final static String CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID = "Cannot create query for template with id: %s";
@@ -156,6 +163,13 @@ public class ExceptionsTemplate {
     public final static String DOCUMENT_TYPE_MISMATCH = "Document type mismatch. Only PDF type is allowed to be uploaded.";
     public final static String INVALID_FILE_MISSING_CONTENT = "Invalid file. Missing content";
     public final static String PDF_FILE_SIZE_EXCEEDED = "PDF File Size Exceeded. Maximum file size is [%s] MB. Current file size is [%s]+ MB.";
+    public final static String PDF_FILES_ARE_NOT_ATTACHED = "PDF Files are not attached to the project.";
+    public final static String ATTACHMENT_LIMIT_REACHED = "Attachment limit reached. Maximum of 10 attachments can be assigned to a project.";
+    public final static String WRONG_PROJECT_STATUS = "Wrong project status [%s]. Only projects with status 'Draft' or 'Change Request' can accept attachments.";
+    public final static String DESCRIPTION_TOO_LONG = "Description is too long. Only 255 characters are accepted for description. [%s]";
+
+    public static final String CLAMAV_PING_FAILED = "Could not ping ClamAV service";
+    public static final String CLAMAV_SCAN_FAILED = "Could not scan file %s";
 
     public static final Map<String, ExceptionDto> errorMap = new HashMap<>();
 
@@ -318,6 +332,16 @@ public class ExceptionsTemplate {
         errorMap.put(INVALID_FILE_MISSING_CONTENT, new ExceptionDto( 106, new ArrayList<>() ) );
         errorMap.put(PDF_FILE_SIZE_EXCEEDED, new ExceptionDto( 107, new ArrayList<>() ) );//2 parameters
 
+        errorMap.put(CLAMAV_PING_FAILED, new ExceptionDto( 108, new ArrayList<>() ) );
+        errorMap.put(CLAMAV_SCAN_FAILED, new ExceptionDto( 109, new ArrayList<>() ) );//1 parameter
+        errorMap.put(NO_PERMISSIONS_TO_DELETE_ATTACHMENTS, new ExceptionDto( 110, new ArrayList<>() ) );
+        errorMap.put(CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS, new ExceptionDto( 111, new ArrayList<>() ) ); //1 parameter
+        errorMap.put(CANNOT_DELETE_ATTACHMENT_INVALID_REVIEW_STATUS_COUNTER, new ExceptionDto( 112, new ArrayList<>() ) );
+
+        errorMap.put(PDF_FILES_ARE_NOT_ATTACHED, new ExceptionDto( 110, new ArrayList<>() ) );
+        errorMap.put(ATTACHMENT_LIMIT_REACHED, new ExceptionDto( 111, new ArrayList<>() ) );
+        errorMap.put(WRONG_PROJECT_STATUS, new ExceptionDto( 112, new ArrayList<>() ) );
+        errorMap.put(DESCRIPTION_TOO_LONG, new ExceptionDto( 113, new ArrayList<>() ) );//1 parameter
     }
 
     private ExceptionsTemplate() {

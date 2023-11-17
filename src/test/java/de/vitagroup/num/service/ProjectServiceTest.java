@@ -2,6 +2,7 @@ package de.vitagroup.num.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.attachment.service.AttachmentService;
 import de.vitagroup.num.domain.model.admin.User;
 import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
@@ -43,7 +44,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -135,6 +138,9 @@ public class ProjectServiceTest {
 
   @Mock
   private TemplateService templateService;
+
+  @Mock
+  private AttachmentService attachmentService;
 
   @Spy private ResponseFilter responseFilter;
 
@@ -1129,6 +1135,43 @@ public class ProjectServiceTest {
     verify(projectRepository, times(1)).save(any());
   }
 
+    @Test
+    public void shouldCreateMultipartProject() {
+        ProjectDto newStudy =
+                ProjectDto.builder()
+                        .name("new project")
+                        .financed(false)
+                        .status(ProjectStatus.DRAFT)
+                        .build();
+
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "%PDF-1.5 content".getBytes());
+        MultipartFile[] multipartFiles = { mockFile };
+
+        projectService.createMultipartProject(newStudy, "approvedCoordinatorId", List.of(STUDY_COORDINATOR), multipartFiles);
+        verify(projectRepository, times(1)).save(any());
+    }
+
+    @Test
+    public void shouldUpdateMultipartProject() {
+        Project projectToEdit =
+                Project.builder()
+                        .name("Project")
+                        .status(ProjectStatus.PENDING)
+                        .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+                        .build();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
+
+        ProjectDto projectDto =
+                ProjectDto.builder().name("Project is edited").status(ProjectStatus.DRAFT).build();
+
+        MultipartFile mockFile = new MockMultipartFile("testFile", "testFile.pdf", "application/pdf", "%PDF-1.5 content".getBytes());
+        MultipartFile[] multipartFiles = { mockFile };
+
+        projectService.updateMultipartProject(
+                projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR), multipartFiles);
+    }
+
   @Test
   public void shouldAllowInitialPendingStudyStatus() {
     ProjectDto newStudy =
@@ -1615,6 +1658,74 @@ public class ProjectServiceTest {
     projectService.exists(5L);
     Mockito.verify(projectRepository, Mockito.times(1)).existsById(5L);
   }
+
+    @Test
+    public void shouldAllowDeleteAttachmentWhenProjectWithDraftStatus() {
+        Project projectToEdit =
+                Project.builder()
+                        .name("Project")
+                        .status(ProjectStatus.DRAFT)
+                        .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+                        .build();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
+
+        ProjectDto projectDto =
+                ProjectDto.builder()
+                        .name("Project is edited")
+                        .attachmentsToBeDeleted(Set.of(1L, 2L))
+                        .status(DRAFT).build();
+        projectService.updateProject(
+                projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
+    }
+    @Test
+    public void shouldAllowDeleteAttachmentWhenProjectWithReviewStatus() {
+        Project projectToEdit =
+                Project.builder()
+                        .name("Project")
+                        .status(PENDING)
+                        .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+                        .build();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
+
+        ProjectDto projectDto =
+                ProjectDto.builder()
+                        .name("Project is edited")
+                        .attachmentsToBeDeleted(Set.of(1L, 2L))
+                        .status(REVIEWING).build();
+        projectService.updateProject(
+                projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_APPROVER));
+    }
+
+    @Test
+    public void shouldRejectDeleteAttachmentsWhenProjectPendingTest() {
+        Project projectToEdit =
+                Project.builder()
+                        .name("Project")
+                        .status(PENDING)
+                        .coordinator(UserDetails.builder().userId("approvedCoordinatorId").build())
+                        .build();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToEdit));
+
+        ProjectDto projectDto =
+                ProjectDto.builder()
+                        .name("Project is edited")
+                        .status(PENDING)
+                        .attachmentsToBeDeleted(Set.of(3L))
+                        .build();
+
+        Exception exception =
+                assertThrows(
+                        ForbiddenException.class,
+                        () ->
+                                projectService.updateProject(
+                                        projectDto, 1L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR)));
+
+        String expectedMessage = String.format(CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS, PENDING);
+        assertThat(exception.getMessage(), is(expectedMessage));
+    }
 
   @Before
   public void setup() {

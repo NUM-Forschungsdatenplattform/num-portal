@@ -13,14 +13,16 @@ spring:
       username: ${DB_USERNAME}
       password: ${DB_PASSWORD}
     numportal-attachment:
-      url: jdbc:postgresql://localhost:5432/num-attachment?currentSchema=num
+      url: ${ATTACHMENT_DB_URL}
       driver-class-name: org.postgresql.Driver
-      username: num-attachment
-      password: num-attachment
+      username: ${ATTACHMENT_DB_USERNAME}
+      password: ${ATTACHMENT_DB_PASSWORD}
   flyway:
     enabled: false
     numportal:
       locations: classpath:db/migration/num-portal
+    numportal-attachment:
+      locations: classpath:db/migration/num-portal-attachment
   jpa:
     show-sql: false
     hibernate:
@@ -131,3 +133,5 @@ num:
   userManualUrl:
     DE: 'user-manual-de'
     EN: 'user-manual-en'
+  enableAttachmentDatabase: true
+  fileVirusScanEnabled: false

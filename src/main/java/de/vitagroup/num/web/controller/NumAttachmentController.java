@@ -1,6 +1,7 @@
 package de.vitagroup.num.web.controller;
 
 import de.vitagroup.num.attachment.domain.dto.AttachmentDto;
+import de.vitagroup.num.attachment.domain.dto.LightAttachmentDto;
 import de.vitagroup.num.attachment.domain.model.Attachment;
 import de.vitagroup.num.attachment.service.AttachmentService;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -38,12 +40,33 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
     @AuditLog(description = "Create a new attachment")
     @PreAuthorize(Role.SUPER_ADMIN)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> createAttachment(@AuthenticationPrincipal @NotNull Jwt principal,
+    public ResponseEntity<String> createAttachment(@AuthenticationPrincipal @NotNull Jwt principal, @RequestParam Long projectId,
                                                    @RequestParam(required = false) String description,
                                                    @NotNull @RequestPart("file") MultipartFile file) throws IOException {
-        attachmentService.saveAttachment(file, description, principal.getSubject());
+        attachmentService.saveAttachment(file, description, principal.getSubject(), projectId);
         return ResponseEntity.ok("ok");
     }
+
+    @AuditLog(description = "Create multiple attachments for a project with given ID")
+    @Operation(description = "Create multiple attachments for a project with given ID")
+    @PreAuthorize(Role.STUDY_COORDINATOR)
+    @PostMapping(path = "/{projectId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> createMultipleAttachments(@AuthenticationPrincipal @NotNull Jwt principal,
+                                                            @NotNull @NotEmpty @PathVariable Long projectId,
+                                                            @ModelAttribute @Valid LightAttachmentDto lightDto) throws IOException {
+        attachmentService.saveAttachments(projectId, principal.getSubject(), lightDto, false);
+        return ResponseEntity.ok("ok");
+    }
+
+    @AuditLog(description = "Get a list of all attachments for one project (by projectId)")
+    @Operation(description = "Get a list of all attachments for one project (by projectId)")
+    @GetMapping("/project/{projectId}")
+    public ResponseEntity<List<AttachmentDto>> listAllAttachments(@NotNull @NotEmpty @PathVariable Long projectId) {
+        return ResponseEntity.ok(attachmentService.getAttachmentsBy(projectId).stream()
+                .map(attachment -> modelMapper.map(attachment, AttachmentDto.class))
+                .collect(Collectors.toList()));
+    }
+
 
     @AuditLog(description = "Retrieves a list of existing attachments")
     @Operation(description = "Retrieves a list of existing attachments")

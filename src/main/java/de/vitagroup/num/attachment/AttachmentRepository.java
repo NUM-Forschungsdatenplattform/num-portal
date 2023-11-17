@@ -15,4 +15,12 @@ public interface AttachmentRepository {
     void deleteAttachment(Long id);
 
     Optional<Attachment> findById(Long id);
+
+    void updateReviewCounterByProjectId(Long projectId);
+
+    Optional<Attachment> findByIdAndProjectId(Long id, Long projectId);
+
+    List<Attachment> findAttachmentsByProjectId(Long projectId);
+
+    void deleteByProjectId(Long projectId);
 }
