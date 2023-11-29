@@ -30,7 +30,7 @@ import java.util.*;
 
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.SystemException;
-import joptsimple.internal.Strings;
+import org.apache.logging.log4j.util.Strings;
 import org.ehrbase.response.openehr.QueryResponseData;
 import org.junit.Test;
 import org.junit.runner.RunWith;
