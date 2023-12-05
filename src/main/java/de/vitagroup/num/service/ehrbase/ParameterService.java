@@ -30,7 +30,7 @@ import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.client.openehrclient.VersionUid;
 import org.ehrbase.client.openehrclient.defaultrestclient.TemporalAccessorDeSerializer;
 import org.ehrbase.client.openehrclient.defaultrestclient.VersionUidDeSerializer;
-import org.ehrbase.serialisation.jsonencoding.JacksonUtil;
+import org.ehrbase.serialisation.jsonencoding.ArchieObjectMapperProvider;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -71,7 +71,7 @@ public class ParameterService {
   private final UserDetailsService userDetailsService;
 
   private static ObjectMapper buildAqlObjectMapper() {
-    var objectMapper = JacksonUtil.getObjectMapper();
+    var objectMapper = ArchieObjectMapperProvider.getObjectMapper().copy();
     var module = new SimpleModule("openEHR", new Version(1, 0, 0, null, null, null));
     module.addDeserializer(VersionUid.class, new VersionUidDeSerializer());
     module.addDeserializer(TemporalAccessor.class, new TemporalAccessorDeSerializer());

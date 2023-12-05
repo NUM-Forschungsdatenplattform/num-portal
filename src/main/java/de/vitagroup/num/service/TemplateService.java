@@ -5,9 +5,6 @@ import de.vitagroup.num.mapper.TemplateMapper;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
@@ -20,6 +17,10 @@ import org.ehrbase.aqleditor.dto.containment.ContainmentDto;
 import org.ehrbase.aqleditor.service.AqlEditorContainmentService;
 import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
 import org.springframework.stereotype.Service;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_FIND_TEMPLATE;
@@ -72,7 +73,7 @@ public class TemplateService {
   private AqlDto createQuery(String archetypeId) {
     org.ehrbase.aql.dto.containment.ContainmentDto contains =
         new org.ehrbase.aql.dto.containment.ContainmentDto();
-    contains.setArchetypeId(archetypeId);
+    contains.getContainment().setArchetypeId(archetypeId);
     contains.setId(COMPOSITION_CONTAINMENT_ID);
 
     SelectFieldDto fieldDto = new SelectFieldDto();

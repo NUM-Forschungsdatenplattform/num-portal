@@ -19,9 +19,9 @@
   <properties>
     <commons-collections4.version>4.4</commons-collections4.version>
     <commons-io.version>2.15.0</commons-io.version>
-    <ehr-sdk.version>v1.18.0</ehr-sdk.version>
+    <ehr-sdk.version>v1.20.0</ehr-sdk.version>
     <!-- aql-editor-backend-starter repo was archived on August 2023 -->
-    <num-aql-editor-backend-starter.version>1.0.0</num-aql-editor-backend-starter.version>
+    <num-aql-editor-backend-starter.version>1.0.1-rc-1</num-aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
     <modelmapper.version>3.2.0</modelmapper.version>
     <springdoc.version>1.7.0</springdoc.version>
