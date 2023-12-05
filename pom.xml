@@ -12,7 +12,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.7.17</version>
+    <version>2.7.18</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -21,7 +21,7 @@
     <commons-io.version>2.15.0</commons-io.version>
     <ehr-sdk.version>v1.18.0</ehr-sdk.version>
     <!-- aql-editor-backend-starter repo was archived on August 2023 -->
-    <aql-editor-backend-starter.version>v0.5.1</aql-editor-backend-starter.version>
+    <num-aql-editor-backend-starter.version>1.0.0</num-aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
     <modelmapper.version>3.2.0</modelmapper.version>
     <springdoc.version>1.7.0</springdoc.version>
@@ -36,10 +36,10 @@
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
     <skip.dependency.check>false</skip.dependency.check>
-    <postgresql.version>42.6.0</postgresql.version>
+    <postgresql.version>42.7.0</postgresql.version>
     <hapi.version>6.8.3</hapi.version>
-    <wiremock-standalone.version>3.0.0-beta-7</wiremock-standalone.version>
-    <testcontainers.version>1.19.1</testcontainers.version>
+    <wiremock-standalone.version>3.2.0</wiremock-standalone.version>
+    <testcontainers.version>1.19.3</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
     <spring-security.version>5.8.8</spring-security.version>
     <spring.cloud-version>2021.0.8</spring.cloud-version>
@@ -161,9 +161,9 @@
       <version>${ehr-sdk.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.github.ehrbase</groupId>
-      <artifactId>aql-editor-backend-spring-boot-starter</artifactId>
-      <version>${aql-editor-backend-starter.version}</version>
+      <groupId>com.github.NUM-Forschungsdatenplattform</groupId>
+      <artifactId>num-aql-editor-backend-spring-boot-starter</artifactId>
+      <version>${num-aql-editor-backend-starter.version}</version>
     </dependency>
     <dependency>
       <groupId>org.modelmapper</groupId>
@@ -237,7 +237,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.tomakehurst</groupId>
+      <groupId>org.wiremock</groupId>
       <artifactId>wiremock-standalone</artifactId>
       <version>${wiremock-standalone.version}</version>
       <scope>test</scope>
