@@ -183,7 +183,7 @@ public class ParameterService {
     select.setStatement(List.of(selectFieldDto));
 
     var contains = new ContainmentDto();
-    contains.setArchetypeId(archetypeId);
+    contains.getContainment().setArchetypeId(archetypeId);
     contains.setId(1);
 
     var orderByExpressionDto = new OrderByExpressionDto();
