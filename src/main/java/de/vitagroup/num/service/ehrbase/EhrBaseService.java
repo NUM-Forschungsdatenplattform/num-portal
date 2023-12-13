@@ -11,25 +11,22 @@ import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.ehrbase.aql.binder.AqlBinder;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.condition.ParameterValue;
-import org.ehrbase.aql.dto.select.SelectDto;
-import org.ehrbase.aql.dto.select.SelectFieldDto;
-import org.ehrbase.aql.dto.select.SelectStatementDto;
-import org.ehrbase.aql.parser.AqlToDtoParser;
-import org.ehrbase.client.aql.field.EhrFields;
-import org.ehrbase.client.aql.query.EntityQuery;
-import org.ehrbase.client.aql.query.NativeQuery;
-import org.ehrbase.client.aql.query.Query;
-import org.ehrbase.client.aql.record.Record;
-import org.ehrbase.client.exception.ClientException;
-import org.ehrbase.client.exception.WrongStatusCodeException;
-import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestClient;
-import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
-import org.ehrbase.response.openehr.QueryResponseData;
-import org.ehrbase.response.openehr.TemplatesResponseData;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
+import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
+import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
+import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
+import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
+import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.DefaultRestClient;
+import org.ehrbase.openehr.sdk.generator.commons.aql.field.EhrFields;
+import org.ehrbase.openehr.sdk.generator.commons.aql.query.NativeQuery;
+import org.ehrbase.openehr.sdk.generator.commons.aql.query.Query;
+import org.ehrbase.openehr.sdk.generator.commons.aql.record.Record;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
+import org.ehrbase.openehr.sdk.response.dto.TemplatesResponseData;
+import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
+import org.ehrbase.openehr.sdk.util.exception.ClientException;
+import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -82,17 +79,16 @@ public class EhrBaseService {
 
   public Set<String> retrieveEligiblePatientIds(String query) {
     log.debug("EhrBase retrieve ehr ids for query: {} ", query);
-    AqlDto dto = new AqlToDtoParser().parse(query);
-    SelectFieldDto selectStatementDto = new SelectFieldDto();
-    selectStatementDto.setAqlPath(EhrFields.EHR_ID().getPath());
-    selectStatementDto.setContainmentId(dto.getEhr().getContainmentId());
-    SelectDto selectDto = new SelectDto();
-    selectDto.setStatement(List.of(selectStatementDto));
-    dto.setSelect(selectDto);
-    Pair<EntityQuery<Record>, List<ParameterValue>> pair = new AqlBinder().bind(dto);
+    AqlQuery dto = AqlQueryParser.parse(query);
+    SelectExpression selectExpression = new SelectExpression();
+    IdentifiedPath ehrIdPath = new IdentifiedPath();
+    ehrIdPath.setPath(AqlObjectPath.parse(EhrFields.EHR_ID().getPath()));
+    selectExpression.setColumnExpression(ehrIdPath);
+
+    dto.getSelect().getStatement().add(selectExpression);
 
     try {
-      List<Record> results = restClient.aqlEndpoint().execute(pair.getLeft());
+      List<Record> results = restClient.aqlEndpoint().execute(Query.buildNativeQuery(AqlRenderer.render(dto)));
       return results.stream().map(result -> result.value(0).toString()).collect(Collectors.toSet());
     } catch (WrongStatusCodeException e) {
       log.error(INVALID_AQL_QUERY, e.getMessage(), e);
@@ -110,24 +106,23 @@ public class EhrBaseService {
    * @param aqlDto The aql query
    * @return QueryResponseData
    */
-  public List<QueryResponseData> executeRawQuery(AqlDto aqlDto, Long projectId) {
+  public List<QueryResponseData> executeRawQuery(AqlQuery aqlDto, Long projectId) {
 
     addSelectSecondlevelPseudonyms(aqlDto);
-    Query<Record> query = new AqlBinder().bind(aqlDto).getLeft();
+    String query = AqlRenderer.render(aqlDto);
 
     try {
 
       try {
         log.info(
             String.format(
-                "[AQL QUERY] EHR request query: %s ",
-                new AqlBinder().bind(aqlDto).getLeft().buildAql()));
+                "[AQL QUERY] EHR request query: %s ", query));
       } catch (Exception e) {
         log.error("Error parsing query while logging", e);
       }
 
       log.debug("EhrBase call to execute raw query: {}", query);
-      QueryResponseData response = restClient.aqlEndpoint().executeRaw(query);
+      QueryResponseData response = restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(query));
       return flattenIfCompositionPresent(response, projectId);
 
     } catch (WrongStatusCodeException e) {
@@ -157,14 +152,12 @@ public class EhrBaseService {
     }
   }
 
-  private void addSelectSecondlevelPseudonyms(AqlDto aqlDto) {
-    SelectDto selectDto = aqlDto.getSelect();
-    List<SelectStatementDto> selectStatementDtos = selectDto.getStatement();
-    SelectFieldDto pseudosStatement = new SelectFieldDto();
-    pseudosStatement.setAqlPath(EHR_STATUS_PATH);
-    pseudosStatement.setContainmentId(aqlDto.getEhr().getContainmentId());
-    selectStatementDtos.add(0, pseudosStatement);
-    selectDto.setStatement(selectStatementDtos);
+  private void addSelectSecondlevelPseudonyms(AqlQuery aqlDto) {
+    SelectExpression selectExpression = new SelectExpression();
+    IdentifiedPath ehrIdPath = new IdentifiedPath();
+    ehrIdPath.setPath(AqlObjectPath.parse(EHR_STATUS_PATH));
+    selectExpression.setColumnExpression(ehrIdPath);
+    aqlDto.getSelect().getStatement().add(0, selectExpression);
   }
 
   public Set<String> getAllPatientIds() {

@@ -4,8 +4,8 @@ import de.vitagroup.num.service.exception.SystemException;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.condition.Value;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.condition.WhereCondition;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
@@ -28,7 +28,7 @@ public class EuropeanConsentPolicy extends Policy {
   }
 
   @Override
-  public boolean apply(AqlDto aql) {
+  public boolean apply(AqlQuery aql) {
     if (oid == null) {
       throw new SystemException(EuropeanConsentPolicy.class, CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED);
     }
@@ -37,7 +37,7 @@ public class EuropeanConsentPolicy extends Policy {
       throw new SystemException(EuropeanConsentPolicy.class, INVALID_AQL);
     }
 
-    List<Value> oidValues = toSimpleValueList(List.of(oid));
+    List<WhereCondition> oidValues = toSimpleValueList(List.of(oid));
     restrictAqlWithCompositionAttribute(aql, FEEDER_AUDIT_PATH, oidValues);
     return true;
   }

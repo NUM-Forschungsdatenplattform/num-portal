@@ -15,6 +15,7 @@ import com.nedap.archie.rm.datavalues.quantity.datetime.DvDate;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvDateTime;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvDuration;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvTime;
+import com.nedap.archie.rm.support.identification.ObjectVersionId;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.service.UserDetailsService;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +28,10 @@ import org.ehrbase.aql.dto.orderby.OrderByExpressionDto;
 import org.ehrbase.aql.dto.orderby.OrderByExpressionSymbol;
 import org.ehrbase.aql.dto.select.SelectDto;
 import org.ehrbase.aql.dto.select.SelectFieldDto;
-import org.ehrbase.client.openehrclient.VersionUid;
-import org.ehrbase.client.openehrclient.defaultrestclient.TemporalAccessorDeSerializer;
-import org.ehrbase.client.openehrclient.defaultrestclient.VersionUidDeSerializer;
-import org.ehrbase.serialisation.jsonencoding.ArchieObjectMapperProvider;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.TemporalAccessorDeSerializer;
+import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.VersionUidDeSerializer;
+import org.ehrbase.openehr.sdk.serialisation.jsonencoding.ArchieObjectMapperProvider;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -73,7 +74,7 @@ public class ParameterService {
   private static ObjectMapper buildAqlObjectMapper() {
     var objectMapper = ArchieObjectMapperProvider.getObjectMapper().copy();
     var module = new SimpleModule("openEHR", new Version(1, 0, 0, null, null, null));
-    module.addDeserializer(VersionUid.class, new VersionUidDeSerializer());
+    module.addDeserializer(ObjectVersionId.class, new VersionUidDeSerializer());
     module.addDeserializer(TemporalAccessor.class, new TemporalAccessorDeSerializer());
     objectMapper.registerModule(module);
     return objectMapper;
@@ -173,7 +174,7 @@ public class ParameterService {
 
   /** Create the aql query for retrieving all distinct existing values of a certain aql path */
   private String createQueryString(String aqlPath, String archetypeId) {
-    var aql = new AqlDto();
+    var aql = new AqlQuery();
 
     var selectFieldDto = new SelectFieldDto();
     selectFieldDto.setAqlPath(aqlPath);

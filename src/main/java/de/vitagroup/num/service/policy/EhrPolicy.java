@@ -1,12 +1,15 @@
 package de.vitagroup.num.service.policy;
 
 import de.vitagroup.num.service.exception.SystemException;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import lombok.Builder;
 import org.apache.commons.collections.CollectionUtils;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.select.SelectFieldDto;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
+import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_SIZE_CANNOT_BE_0;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
@@ -25,7 +28,7 @@ public class EhrPolicy extends Policy {
   }
 
   @Override
-  public boolean apply(AqlDto aql) {
+  public boolean apply(AqlQuery aql) {
     if (aql == null) {
       throw new SystemException(EhrPolicy.class, INVALID_AQL);
     }
@@ -34,11 +37,11 @@ public class EhrPolicy extends Policy {
       throw new SystemException(EhrPolicy.class, COHORT_SIZE_CANNOT_BE_0);
     }
 
-    SelectFieldDto select = new SelectFieldDto();
-    select.setAqlPath(EHR_ID_PATH);
-    select.setContainmentId(aql.getEhr().getContainmentId());
+    IdentifiedPath select = new IdentifiedPath();
+    select.setPath(AqlObjectPath.parse(EHR_ID_PATH));
+    //select.setContainmentId(aql.getEhr().getContainmentId());
 
-    extendWhereClause(aql, List.of(select), toSimpleValueList(cohortEhrIds));
+    extendWhereClause(aql, List.of(select), toSimpleValueList(new ArrayList<>(cohortEhrIds)));
     return true;
   }
 }

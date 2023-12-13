@@ -3,7 +3,7 @@ package de.vitagroup.num.mapper;
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.TemplateMetadataDto;
 import lombok.AllArgsConstructor;
-import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
+import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.stereotype.Component;

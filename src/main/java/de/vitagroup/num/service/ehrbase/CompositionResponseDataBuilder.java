@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ehrbase.response.openehr.QueryResponseData;
-import org.ehrbase.serialisation.jsonencoding.CanonicalJson;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
+import org.ehrbase.openehr.sdk.serialisation.jsonencoding.CanonicalJson;
 import org.springframework.stereotype.Component;
 
 @Component

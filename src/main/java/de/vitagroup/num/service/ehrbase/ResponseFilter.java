@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ehrbase.response.openehr.QueryResponseData;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 

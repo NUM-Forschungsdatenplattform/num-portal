@@ -1,13 +1,10 @@
 package de.vitagroup.num.service;
 
+import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.model.Cohort;
 import de.vitagroup.num.domain.model.CohortGroup;
 import de.vitagroup.num.domain.model.Project;
 import de.vitagroup.num.domain.model.ProjectStatus;
-import de.vitagroup.num.domain.dto.CohortDto;
-import de.vitagroup.num.domain.dto.CohortGroupDto;
-import de.vitagroup.num.domain.dto.CohortSizeDto;
-import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.properties.PrivacyProperties;
@@ -26,11 +23,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ehrbase.aql.binder.AqlBinder;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.condition.*;
-import org.ehrbase.aql.parser.AqlToDtoParser;
-import org.ehrbase.response.openehr.QueryResponseData;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.condition.ComparisonOperatorCondition;
+import org.ehrbase.openehr.sdk.aql.dto.condition.LogicalOperatorCondition;
+import org.ehrbase.openehr.sdk.aql.dto.condition.WhereCondition;
+import org.ehrbase.openehr.sdk.aql.dto.operand.Operand;
+import org.ehrbase.openehr.sdk.aql.dto.operand.QueryParameter;
+import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
+import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -157,7 +158,7 @@ public class CohortService {
 
   private void getTemplateHits(Set<String> ehrIds, Map<String, Integer> hits, String templateId) {
     try {
-      AqlDto aql = templateService.createSelectCompositionQuery(templateId);
+      AqlQuery aql = templateService.createSelectCompositionQuery(templateId);
 
       List<Policy> policies = new LinkedList<>();
       policies.add(EhrPolicy.builder().cohortEhrIds(ehrIds).build());
@@ -165,7 +166,7 @@ public class CohortService {
       policyService.apply(aql, policies);
 
       Set<String> templateHits =
-          ehrBaseService.retrieveEligiblePatientIds(new AqlBinder().bind(aql).getLeft().buildAql());
+          ehrBaseService.retrieveEligiblePatientIds(AqlRenderer.render(aql));
       hits.put(templateId, templateHits != null ? templateHits.size() : 0);
 
     } catch (Exception e) {
@@ -217,19 +218,19 @@ public class CohortService {
         throw new BadRequestException(CohortGroup.class, INVALID_COHORT_GROUP_AQL_MISSING);
       }
       Set<String> parameterNames = new HashSet<>();
-      AqlDto aqlDto = new AqlToDtoParser().parse(cohortGroupDto.getQuery().getQuery());
-      ConditionDto conditionDto = aqlDto.getWhere();
-      if (conditionDto instanceof ConditionComparisonOperatorDto) {
-        Value value = ((ConditionComparisonOperatorDto) conditionDto).getValue();
-        if (value instanceof ParameterValue parameterValue) {
+      AqlQuery aqlDto = AqlQueryParser.parse(cohortGroupDto.getQuery().getQuery());
+      WhereCondition conditionDto = aqlDto.getWhere();
+      if (conditionDto instanceof ComparisonOperatorCondition) {
+        Operand value = ((ComparisonOperatorCondition) conditionDto).getValue();
+        if (value instanceof QueryParameter parameterValue) {
           parameterNames.add(parameterValue.getName());
         }
-      } else if (conditionDto instanceof ConditionLogicalOperatorDto) {
-        List<ConditionDto> values = ((ConditionLogicalOperatorDto) conditionDto).getValues();
-        for (ConditionDto v : values) {
-          if (v instanceof ConditionComparisonOperatorDto) {
-            Value value = ((ConditionComparisonOperatorDto) v).getValue();
-            if (value instanceof ParameterValue parameterValue) {
+      } else if (conditionDto instanceof LogicalOperatorCondition) {
+        List<WhereCondition> values = ((LogicalOperatorCondition) conditionDto).getValues();
+        for (WhereCondition v : values) {
+          if (v instanceof ComparisonOperatorCondition) {
+            Operand value = ((ComparisonOperatorCondition) v).getValue();
+            if (value instanceof QueryParameter parameterValue) {
               parameterNames.add(parameterValue.getName());
             }
           }

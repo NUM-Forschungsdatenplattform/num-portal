@@ -30,9 +30,9 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.parser.AqlToDtoParser;
-import org.ehrbase.response.openehr.QueryResponseData;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
@@ -248,7 +248,7 @@ public class ProjectService {
     private List<QueryResponseData> retrieveTemplateData(
             Set<String> ehrIds, String templateId, Long projectId, Boolean usedOutsideEu) {
         try {
-            AqlDto aql = templateService.createSelectCompositionQuery(templateId);
+            AqlQuery aql = templateService.createSelectCompositionQuery(templateId);
 
             List<Policy> policies =
                     collectProjectPolicies(ehrIds, Map.of(templateId, templateId), usedOutsideEu);
@@ -280,7 +280,7 @@ public class ProjectService {
             Set<String> ehrIds =
                     cohortService.executeCohort(project.getCohort().getId(), project.isUsedOutsideEu());
 
-            AqlDto aql = new AqlToDtoParser().parse(query);
+            AqlQuery aql = AqlQueryParser.parse(query);
 
             List<Policy> policies =
                     collectProjectPolicies(ehrIds, project.getTemplates(), project.isUsedOutsideEu());

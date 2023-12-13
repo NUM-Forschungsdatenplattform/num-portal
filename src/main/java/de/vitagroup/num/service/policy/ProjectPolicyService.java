@@ -5,6 +5,8 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.aql.binder.AqlBinder;
 import org.ehrbase.aql.dto.AqlDto;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -13,13 +15,13 @@ public class ProjectPolicyService {
 
     private static final String ERROR_MESSAGE = "Cannot parse aql query while logging";
 
-    public void apply(AqlDto aql, List<Policy> policies) {
+    public void apply(AqlQuery aql, List<Policy> policies) {
 
         try {
             log.info(
                     String.format(
                             "[AQL QUERY] Aql before executing project policies: %s ",
-                            new AqlBinder().bind(aql).getLeft().buildAql()));
+                                AqlRenderer.render(aql)));
         } catch (Exception e) {
             log.error(ERROR_MESSAGE, e);
         }
@@ -30,7 +32,7 @@ public class ProjectPolicyService {
             log.info(
                     String.format(
                             "[AQL QUERY] Aql after executing project policies: %s ",
-                            new AqlBinder().bind(aql).getLeft().buildAql()));
+                            AqlRenderer.render(aql)));
         } catch (Exception e) {
             log.error(ERROR_MESSAGE, e);
         }

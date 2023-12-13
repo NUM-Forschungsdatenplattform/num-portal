@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.aql.dto.condition.Value;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.operand.Primitive;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_TEMPLATES_ATTACHED_TO_THE_PROJECT;
@@ -26,7 +28,7 @@ public class TemplatesPolicy extends Policy {
   }
 
   @Override
-  public boolean apply(AqlDto aql) {
+  public boolean apply(AqlQuery aql) {
     if (MapUtils.isEmpty(templatesMap)) {
       log.error(NO_TEMPLATES_ATTACHED_TO_THE_PROJECT);
       return true;
@@ -36,7 +38,7 @@ public class TemplatesPolicy extends Policy {
       throw new SystemException(TemplatesPolicy.class, INVALID_AQL);
     }
 
-    List<Value> templateValues = toSimpleValueList(templatesMap.keySet());
+    List<Primitive> templateValues = toSimpleValueList(templatesMap.keySet());
     restrictAqlWithCompositionAttribute(aql, TEMPLATE_ID_PATH, templateValues);
     return true;
   }

@@ -1,6 +1,7 @@
 package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.dto.TemplateMetadataDto;
+import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.mapper.TemplateMapper;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.BadRequestException;
@@ -15,7 +16,13 @@ import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.aql.dto.select.SelectStatementDto;
 import org.ehrbase.aqleditor.dto.containment.ContainmentDto;
 import org.ehrbase.aqleditor.service.AqlEditorContainmentService;
-import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.containment.Containment;
+import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentClassExpression;
+import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
+import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
+import org.ehrbase.openehr.sdk.aql.webtemplatepath.predicate.PredicateHelper;
+import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
@@ -55,7 +62,7 @@ public class TemplateService {
         .collect(Collectors.toList());
   }
 
-  public AqlDto createSelectCompositionQuery(String templateId) {
+  public AqlQuery createSelectCompositionQuery(String templateId) {
 
     try {
       ContainmentDto containmentDto = aqlEditorContainmentService.buildContainment(templateId);
@@ -70,7 +77,9 @@ public class TemplateService {
     }
   }
 
-  private AqlDto createQuery(String archetypeId) {
+  private AqlQuery createQuery(String archetypeId) {
+    IdentifiedPath path = new IdentifiedPath();
+    path.setPath(AqlObjectPath.parse(archetypeId));
     org.ehrbase.aql.dto.containment.ContainmentDto contains =
         new org.ehrbase.aql.dto.containment.ContainmentDto();
     contains.getContainment().setArchetypeId(archetypeId);
