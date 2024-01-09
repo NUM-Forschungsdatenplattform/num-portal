@@ -1,13 +1,11 @@
 package de.vitagroup.num.service.policy;
 
-import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
-import org.ehrbase.aql.binder.AqlBinder;
-import org.ehrbase.aql.dto.AqlDto;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Slf4j
 @Service

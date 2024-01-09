@@ -1,18 +1,6 @@
 package de.vitagroup.num.service.policy;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
-import org.ehrbase.aql.dto.condition.MatchesOperatorDto;
-import org.ehrbase.aql.dto.condition.SimpleValue;
-import org.ehrbase.aql.dto.condition.Value;
-import org.ehrbase.aql.dto.containment.ContainmentExpresionDto;
-import org.ehrbase.aql.dto.containment.ContainmentLogicalOperator;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.ehrbase.openehr.sdk.aql.dto.condition.LogicalOperatorCondition;
 import org.ehrbase.openehr.sdk.aql.dto.condition.MatchesCondition;
@@ -23,9 +11,13 @@ import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentSetOperator;
 import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentSetOperatorSymbol;
 import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
 import org.ehrbase.openehr.sdk.aql.dto.operand.MatchesOperand;
-import org.ehrbase.openehr.sdk.aql.dto.operand.Operand;
 import org.ehrbase.openehr.sdk.aql.dto.operand.Primitive;
+import org.ehrbase.openehr.sdk.aql.dto.operand.StringPrimitive;
 import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
+import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /** Defines a certain project policy to be applied to an aql query */
 public abstract class Policy {
@@ -36,27 +28,30 @@ public abstract class Policy {
 
   protected void restrictAqlWithCompositionAttribute(AqlQuery aql, String attributePath, List<Primitive> attributeValues) {
 
-    List<IdentifiedPath> whereClauseSelectFields = new LinkedList<>();
+    List<SelectExpression> whereClauseSelectFields = new LinkedList<>();
 
-    //List<SelectFieldDto> whereClauseSelectFields = new LinkedList<>();
+    ContainmentClassExpression originalFrom = (ContainmentClassExpression) aql.getFrom();
+    Containment contains = originalFrom.getContains();
 
-    ContainmentExpresionDto contains = aql.ge;
     int nextContainmentId = findNextContainmentId(contains);
 
     if (contains != null) {
-      List<Integer> compositions = findCompositions(contains);
+      List<String> compositions = findCompositionsIdentifier(contains);
 
       if (CollectionUtils.isNotEmpty(compositions)) {
         compositions.forEach(
             id -> {
-//              SelectFieldDto selectFieldDto = new SelectFieldDto();
-//              selectFieldDto.setAqlPath(attributePath);
-//              selectFieldDto.setContainmentId(id);
-
               IdentifiedPath selectFieldDto = new IdentifiedPath();
               selectFieldDto.setPath(AqlObjectPath.parse(attributePath));
 
-              whereClauseSelectFields.add(selectFieldDto);
+              ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
+              containmentClassExpression.setType(COMPOSITION_ARCHETYPE_ID);
+              containmentClassExpression.setIdentifier(id);
+              selectFieldDto.setRoot(containmentClassExpression);
+
+              SelectExpression se = new SelectExpression();
+              se.setColumnExpression(selectFieldDto);
+              whereClauseSelectFields.add(se);
             });
 
       } else {
@@ -68,90 +63,87 @@ public abstract class Policy {
     extendWhereClause(aql, whereClauseSelectFields, attributeValues);
   }
 
-  protected void createContainsClause(AqlQuery aql, List<IdentifiedPath> whereClauseSelectFields,
-                                      int nextContainmentId,
-                                      String path) {
+  protected void createContainsClause(AqlQuery aql, List<SelectExpression> whereClauseSelectFields, int nextContainmentId, String attrPath) {
     IdentifiedPath selectField = new IdentifiedPath();
-    selectField.setPath(AqlObjectPath.parse(path));
-    whereClauseSelectFields.add(selectField);
+    selectField.setPath(AqlObjectPath.parse(attrPath));
 
-//    SelectFieldDto select = new SelectFieldDto();
-//    select.setAqlPath(path);
-//    select.setContainmentId(nextContainmentId);
-//    whereClauseSelectFields.add(select);
+    ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
+    containmentClassExpression.setType(COMPOSITION_ARCHETYPE_ID);
+    containmentClassExpression.setIdentifier("c" + nextContainmentId);
+    selectField.setRoot(containmentClassExpression);
 
-    ContainmentClassExpression ct = new ContainmentClassExpression();
-    //ct.setContains();
-    //ContainmentDto composition = new ContainmentDto();
-    //composition.setId(nextContainmentId);
-    //composition.setArchetypeId(COMPOSITION_ARCHETYPE_ID);
-    //aql.setFrom(selectField);
+    SelectExpression se = new SelectExpression();
+    se.setColumnExpression(selectField);
+    whereClauseSelectFields.add(se);
+
+    ContainmentClassExpression from = (ContainmentClassExpression) aql.getFrom();
+    from.setContains(containmentClassExpression);
   }
 
-  protected void extendWhereClause(AqlQuery aql, List<IdentifiedPath> selects, List<Primitive> values) {
-    List<MatchesCondition> matchesOperatorDtos = new LinkedList<>();
+  protected void extendWhereClause(AqlQuery aql, List<SelectExpression> selectExpressions, List<Primitive> values) {
+    List<WhereCondition> whereConditions = new ArrayList<>();
 
-    selects.forEach(
+    selectExpressions.forEach(
             selectFieldDto -> {
               MatchesCondition matches = new MatchesCondition();
-              matches.setStatement(selectFieldDto);
-              matches.setValues(values.stream().map(v -> v.get));
-              matchesOperatorDtos.add(matches);
+              matches.setStatement((IdentifiedPath) selectFieldDto.getColumnExpression());
+              List<MatchesOperand> operands = values.stream()
+                      .map(v -> new StringPrimitive(v.getValue().toString()))
+                      .collect(Collectors.toList());
+              matches.setValues(operands);
+              whereConditions.add(matches);
             });
 
     LogicalOperatorCondition newWhere = new LogicalOperatorCondition();
     newWhere.setValues(new ArrayList<>());
-    WhereCondition where = aql.getWhere();
+    newWhere.setSymbol(LogicalOperatorCondition.ConditionLogicalOperatorSymbol.AND);
 
+    WhereCondition where = aql.getWhere();
     if (where != null) {
-      newWhere.setSymbol(LogicalOperatorCondition.ConditionLogicalOperatorSymbol.AND);
       newWhere.getValues().add(where);
     }
 
-    if (CollectionUtils.isNotEmpty(matchesOperatorDtos) && matchesOperatorDtos.size() > 1) {
-      newWhere.setSymbol(LogicalOperatorCondition.ConditionLogicalOperatorSymbol.AND);
+    if (CollectionUtils.isNotEmpty(whereConditions)) {
+      newWhere.getValues().addAll(whereConditions);
     }
-
-    matchesOperatorDtos.forEach(
-            matchesOperatorDto -> newWhere.getValues().add(matchesOperatorDto));
-
     aql.setWhere(newWhere);
   }
 
-  protected void extendContainsClause(AqlQuery aql, List<IdentifiedPath> whereClauseSelectFields,
-          Containment contains, int nextContainmentId,  String path) {
-    IdentifiedPath select = new IdentifiedPath();
-    select.setPath(AqlObjectPath.parse(path));
-    //select.setContainmentId(nextContainmentId);
-    whereClauseSelectFields.add(select);
+  protected void extendContainsClause(AqlQuery aql, List<SelectExpression> whereClauseSelectFields, Containment contains, int nextContainmentId,  String attrPath) {
+    IdentifiedPath path = new IdentifiedPath();
+    path.setPath(AqlObjectPath.parse(attrPath));
+
+    SelectExpression se = new SelectExpression();
+    se.setColumnExpression(path);
+    whereClauseSelectFields.add(se);
 
     ContainmentSetOperator newContains = new ContainmentSetOperator();
     newContains.setValues(new ArrayList<>());
 
 
-//    ContainmentDto composition = new ContainmentDto();
-//    composition.setId(nextContainmentId);
-//    composition.getContainment().setArchetypeId(COMPOSITION_ARCHETYPE_ID);
+    ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
+    containmentClassExpression.setType(COMPOSITION_ARCHETYPE_ID);
+    containmentClassExpression.setIdentifier("c" + nextContainmentId);
 
     newContains.setSymbol(ContainmentSetOperatorSymbol.AND);
-    //newContains.getValues().add(composition);
+    newContains.getValues().add(containmentClassExpression);
     newContains.getValues().add(contains);
 
-    aql.setFrom(newContains);
+    ((ContainmentClassExpression) aql.getFrom()).setContains(newContains);
   }
 
   protected List<Primitive> toSimpleValueList(Collection<String> list) {
     return list.stream()
-        .map()
+        .map(StringPrimitive::new)
         .collect(Collectors.toList());
   }
 
-  protected List<Integer> findCompositions(Containment dto) {
+  protected List<String> findCompositionsIdentifier(Containment dto) {
     if (dto == null) {
       return null;
     }
 
-    List<Integer> compositions = new LinkedList<>();
+    List<String> compositions = new LinkedList<>();
 
     Queue<Containment> queue = new ArrayDeque<>();
     queue.add(dto);
@@ -163,16 +155,16 @@ public abstract class Policy {
 
         queue.addAll(containmentLogicalOperator.getValues());
 
-      } //else if (current instanceof ContainmentDto containmentDto) {
+      } else if (current instanceof ContainmentClassExpression containmentDto) {
 
-//        if (containmentDto.getContainment().getArchetypeId().contains(COMPOSITION_ARCHETYPE_ID)) {
-//          compositions.add(containmentDto.getId());
-//        }
-//
-//        if (containmentDto.getContains() != null) {
-//          queue.add(containmentDto.getContains());
-//        }
-      //}
+        if (containmentDto.getType().toUpperCase().contains(COMPOSITION_ARCHETYPE_ID)) {
+          compositions.add(containmentDto.getIdentifier());
+        }
+
+        if (containmentDto.getContains() != null) {
+          queue.add(containmentDto.getContains());
+        }
+      }
     }
     return compositions;
   }
@@ -192,19 +184,20 @@ public abstract class Policy {
       Containment current = queue.remove();
 
       if (current instanceof ContainmentSetOperator containmentLogicalOperator) {
-
         queue.addAll(containmentLogicalOperator.getValues());
-
-      } //else if (current instanceof ContainmentDto containmentDto) {
-
-//        if (containmentDto.getId() > nextId) {
-//          nextId = containmentDto.getId();
-//        }
-//
-//        if (containmentDto.getContains() != null) {
-//          queue.add(containmentDto.getContains());
-//        }
-      //}
+      } else if (current instanceof ContainmentClassExpression containmentDto) {
+        String identifier = containmentDto.getIdentifier();
+        String[] identifierId = identifier.split("\\D");
+        if (identifierId.length > 2) {
+          int currentId = Integer.getInteger(identifierId[1]);
+          if (currentId > nextId) {
+            nextId = currentId;
+          }
+        }
+        if (containmentDto.getContains() != null) {
+          queue.add(containmentDto.getContains());
+        }
+      }
     }
     return nextId + 1;
   }

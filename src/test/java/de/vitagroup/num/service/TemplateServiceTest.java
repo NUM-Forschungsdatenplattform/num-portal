@@ -1,20 +1,14 @@
 package de.vitagroup.num.service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_FIND_TEMPLATE;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import java.time.OffsetDateTime;
-import java.util.List;
-
+import de.vitagroup.num.domain.dto.TemplateMetadataDto;
+import de.vitagroup.num.domain.model.admin.UserDetails;
+import de.vitagroup.num.mapper.TemplateMapper;
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
 import org.ehrbase.aqleditor.dto.containment.ContainmentDto;
 import org.ehrbase.aqleditor.service.AqlEditorContainmentService;
-import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
+import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,11 +16,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import de.vitagroup.num.domain.model.admin.UserDetails;
-import de.vitagroup.num.domain.dto.TemplateMetadataDto;
-import de.vitagroup.num.mapper.TemplateMapper;
-import de.vitagroup.num.service.ehrbase.EhrBaseService;
-import de.vitagroup.num.service.exception.BadRequestException;
+import java.time.OffsetDateTime;
+import java.util.List;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_FIND_TEMPLATE;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TemplateServiceTest {

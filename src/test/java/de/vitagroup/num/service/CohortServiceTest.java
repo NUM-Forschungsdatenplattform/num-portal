@@ -1,8 +1,8 @@
 package de.vitagroup.num.service;
 
-import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.model.*;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.repository.CohortRepository;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.templates.ExceptionsTemplate;
@@ -11,8 +11,9 @@ import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.*;
 import de.vitagroup.num.service.executors.CohortExecutor;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
-import org.ehrbase.aql.parser.AqlToDtoParser;
-import org.ehrbase.response.openehr.QueryResponseData;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -490,7 +491,7 @@ public class CohortServiceTest {
                 .build();
         when(cohortExecutor.execute(any(Cohort.class), Mockito.eq(false)))
                 .thenReturn(Set.of("1", "2", "3", "4", "5"));
-        org.ehrbase.aql.dto.AqlDto aqlDto  = new AqlToDtoParser().parse(query);
+        AqlQuery aqlDto = AqlQueryParser.parse(query);
         when(templateService.createSelectCompositionQuery(Mockito.eq("Alter"))).thenReturn(aqlDto);
         when(ehrBaseService.retrieveEligiblePatientIds(Mockito.any(String.class))).thenReturn(Set.of("id1", "id2", "id3"));
         cohortService.getSizePerTemplates(approvedUser.getUserId(), requestDto);

@@ -1,15 +1,15 @@
 package de.vitagroup.num.service.policy;
 
 import de.vitagroup.num.service.exception.SystemException;
-import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.condition.Value;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.ehrbase.openehr.sdk.aql.dto.operand.Primitive;
+import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
+
+import java.util.List;
+import java.util.Map;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_TEMPLATES_ATTACHED_TO_THE_PROJECT;
@@ -38,8 +38,16 @@ public class TemplatesPolicy extends Policy {
       throw new SystemException(TemplatesPolicy.class, INVALID_AQL);
     }
 
+    log.debug(
+            String.format(
+                    "[AQL QUERY] Aql before executing TemplatesPolicy: %s ",
+                    AqlRenderer.render(aql)));
     List<Primitive> templateValues = toSimpleValueList(templatesMap.keySet());
     restrictAqlWithCompositionAttribute(aql, TEMPLATE_ID_PATH, templateValues);
+    log.debug(
+            String.format(
+                    "[AQL QUERY] Aql after executing TemplatesPolicy: %s ",
+                    AqlRenderer.render(aql)));
     return true;
   }
 }

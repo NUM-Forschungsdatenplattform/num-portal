@@ -1,41 +1,37 @@
 package de.vitagroup.num.service;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULDN_T_PARSE_CARD;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULDN_T_PARSE_NAVIGATION_CONTENT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULDN_T_SAVE_CARD;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COULDN_T_SAVE_NAVIGATION_CONTENT;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.vitagroup.num.domain.dto.CardDto;
+import de.vitagroup.num.domain.dto.CardDto.LocalizedPart;
+import de.vitagroup.num.domain.dto.MetricsDto;
+import de.vitagroup.num.domain.dto.NavigationItemDto;
+import de.vitagroup.num.domain.model.Content;
+import de.vitagroup.num.domain.model.ContentType;
+import de.vitagroup.num.domain.model.Roles;
+import de.vitagroup.num.domain.model.admin.UserDetails;
+import de.vitagroup.num.domain.repository.ContentItemRepository;
+import de.vitagroup.num.service.ehrbase.EhrBaseService;
+import de.vitagroup.num.service.exception.SystemException;
+import org.apache.logging.log4j.util.Strings;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.*;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import de.vitagroup.num.domain.model.Content;
-import de.vitagroup.num.domain.model.ContentType;
-import de.vitagroup.num.domain.model.Roles;
-import de.vitagroup.num.domain.model.admin.UserDetails;
-import de.vitagroup.num.domain.dto.CardDto;
-import de.vitagroup.num.domain.dto.CardDto.LocalizedPart;
-import de.vitagroup.num.domain.dto.MetricsDto;
-import de.vitagroup.num.domain.dto.NavigationItemDto;
-import de.vitagroup.num.domain.repository.ContentItemRepository;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
-
-import de.vitagroup.num.service.ehrbase.EhrBaseService;
-import de.vitagroup.num.service.exception.SystemException;
-import org.apache.logging.log4j.util.Strings;
-import org.ehrbase.response.openehr.QueryResponseData;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.*;
-import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ContentServiceTest {

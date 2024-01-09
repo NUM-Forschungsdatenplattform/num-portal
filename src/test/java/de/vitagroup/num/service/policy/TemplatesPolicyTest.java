@@ -1,18 +1,17 @@
 package de.vitagroup.num.service.policy;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.ehrbase.aql.dto.AqlDto;
+import de.vitagroup.num.service.exception.SystemException;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import de.vitagroup.num.service.exception.SystemException;
+import java.util.HashMap;
+import java.util.Map;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TemplatesPolicyTest {
@@ -38,7 +37,7 @@ public class TemplatesPolicyTest {
     Map<String, String> templatesMap = new HashMap<>();
     templatesMap.put("1", "1");
     TemplatesPolicy templatesPolicy = TemplatesPolicy.builder().templatesMap(templatesMap).build();
-    assertTrue(templatesPolicy.apply(new AqlDto()));
+    assertTrue(templatesPolicy.apply(new AqlQuery()));
   }
 
 }

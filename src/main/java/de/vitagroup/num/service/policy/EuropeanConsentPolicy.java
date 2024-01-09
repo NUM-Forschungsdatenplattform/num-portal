@@ -1,11 +1,13 @@
 package de.vitagroup.num.service.policy;
 
 import de.vitagroup.num.service.exception.SystemException;
-import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
-import org.ehrbase.openehr.sdk.aql.dto.condition.WhereCondition;
+import org.ehrbase.openehr.sdk.aql.dto.operand.Primitive;
+import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
+
+import java.util.List;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
@@ -37,8 +39,16 @@ public class EuropeanConsentPolicy extends Policy {
       throw new SystemException(EuropeanConsentPolicy.class, INVALID_AQL);
     }
 
-    List<WhereCondition> oidValues = toSimpleValueList(List.of(oid));
+    log.debug(
+            String.format(
+                    "[AQL QUERY] Aql before executing EuropeanConsentPolicy: %s ",
+                    AqlRenderer.render(aql)));
+    List<Primitive> oidValues = toSimpleValueList(List.of(oid));
     restrictAqlWithCompositionAttribute(aql, FEEDER_AUDIT_PATH, oidValues);
+    log.debug(
+            String.format(
+                    "[AQL QUERY] Aql after executing EuropeanConsentPolicy: %s ",
+                    AqlRenderer.render(aql)));
     return true;
   }
 }

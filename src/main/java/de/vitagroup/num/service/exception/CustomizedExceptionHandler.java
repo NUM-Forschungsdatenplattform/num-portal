@@ -2,7 +2,7 @@ package de.vitagroup.num.service.exception;
 
 import de.vitagroup.num.service.exception.dto.ErrorDetails;
 import lombok.extern.slf4j.Slf4j;
-import org.ehrbase.client.exception.WrongStatusCodeException;
+import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

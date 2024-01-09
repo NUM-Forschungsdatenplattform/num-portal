@@ -21,14 +21,14 @@ import de.vitagroup.num.service.UserDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.ehrbase.aql.binder.AqlBinder;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.containment.ContainmentDto;
-import org.ehrbase.aql.dto.orderby.OrderByExpressionDto;
-import org.ehrbase.aql.dto.orderby.OrderByExpressionSymbol;
-import org.ehrbase.aql.dto.select.SelectDto;
-import org.ehrbase.aql.dto.select.SelectFieldDto;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentClassExpression;
+import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
+import org.ehrbase.openehr.sdk.aql.dto.orderby.OrderByExpression;
+import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
+import org.ehrbase.openehr.sdk.aql.dto.select.SelectClause;
+import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
+import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.TemporalAccessorDeSerializer;
 import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.VersionUidDeSerializer;
 import org.ehrbase.openehr.sdk.serialisation.jsonencoding.ArchieObjectMapperProvider;
@@ -176,29 +176,44 @@ public class ParameterService {
   private String createQueryString(String aqlPath, String archetypeId) {
     var aql = new AqlQuery();
 
-    var selectFieldDto = new SelectFieldDto();
-    selectFieldDto.setAqlPath(aqlPath);
-    selectFieldDto.setContainmentId(1);
+    ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
+    containmentClassExpression.setIdentifier("c0");
+    IdentifiedPath path = new IdentifiedPath();
+    path.setPath(AqlObjectPath.parse(aqlPath));
+    path.setRoot(containmentClassExpression);
 
-    var select = new SelectDto();
-    select.setStatement(List.of(selectFieldDto));
+    // generate select expression
+    SelectClause selectClause = new SelectClause();
+    SelectExpression se = new SelectExpression();
+    se.setColumnExpression(path);
+    se.setAlias("F1");
+    selectClause.setStatement(List.of(se));
+    selectClause.setDistinct(true);
 
-    var contains = new ContainmentDto();
-    contains.getContainment().setArchetypeId(archetypeId);
-    contains.setId(1);
+    // generate from expression
+    ContainmentClassExpression from = new ContainmentClassExpression();
+    from.setType("EHR");
+    from.setIdentifier("e");
 
-    var orderByExpressionDto = new OrderByExpressionDto();
-    orderByExpressionDto.setStatement(selectFieldDto);
-    orderByExpressionDto.setSymbol(OrderByExpressionSymbol.ASC);
+    // generate contains expression
+    ContainmentClassExpression contains = new ContainmentClassExpression();
+    contains.setType(StringUtils.substringBetween(archetypeId, "openEHR-EHR-", "."));
+    contains.setIdentifier("c0"+"[" + archetypeId + "]");
 
-    List<OrderByExpressionDto> orderByList = new LinkedList<>();
+    from.setContains(contains);
+
+    var orderByExpressionDto = new OrderByExpression();
+    orderByExpressionDto.setStatement(path);
+    orderByExpressionDto.setSymbol(OrderByExpression.OrderByDirection.ASC.ASC);
+
+    List<OrderByExpression> orderByList = new LinkedList<>();
     orderByList.add(orderByExpressionDto);
-    aql.setSelect(select);
-    aql.setContains(contains);
+    aql.setSelect(selectClause);
+    aql.setFrom(from);
     aql.setOrderBy(orderByList);
 
-    String query = new AqlBinder().bind(aql).getLeft().buildAql();
-    return insertSelect(query);
+    String query = AqlRenderer.render(aql);
+    return query;
   }
 
   private void convertDvCodedText(DvCodedText data, ParameterOptionsDto dto, String postfix) {

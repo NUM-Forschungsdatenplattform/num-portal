@@ -1,6 +1,6 @@
 package de.vitagroup.num.service.ehrbase;
 
-import org.ehrbase.response.openehr.QueryResponseData;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

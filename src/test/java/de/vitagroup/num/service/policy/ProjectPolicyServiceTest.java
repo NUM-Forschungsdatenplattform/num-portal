@@ -1,8 +1,8 @@
 package de.vitagroup.num.service.policy;
 
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorDto;
-import org.ehrbase.aql.parser.AqlToDtoParser;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.condition.LogicalOperatorCondition;
+import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,7 +26,7 @@ public class ProjectPolicyServiceTest {
 
     @Test
     public void applyTest() {
-        AqlDto aqlDto = new AqlToDtoParser().parse(Q1);
+        AqlQuery aqlDto = AqlQueryParser.parse(Q1);
         Assert.assertNull(aqlDto.getWhere());
         projectPolicyService.apply(aqlDto, List.of(
                 TemplatesPolicy.builder()
@@ -35,7 +35,7 @@ public class ProjectPolicyServiceTest {
                 EuropeanConsentPolicy.builder().oid("dummy-oid")
                         .build()));
         Assert.assertNotNull(aqlDto.getWhere());
-        ConditionLogicalOperatorDto where = (ConditionLogicalOperatorDto) aqlDto.getWhere();
+        LogicalOperatorCondition where = (LogicalOperatorCondition)aqlDto.getWhere();
         Assert.assertEquals(2, where.getValues().size());
     }
 }

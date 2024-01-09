@@ -6,18 +6,18 @@ import de.vitagroup.num.service.ehrbase.CompositionResponseDataBuilder;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.ehrbase.Pseudonymity;
 import de.vitagroup.num.service.exception.SystemException;
-import org.ehrbase.aql.parser.AqlParseException;
-import org.ehrbase.aql.parser.AqlToDtoParser;
-import org.ehrbase.client.aql.field.AqlFieldImp;
-import org.ehrbase.client.aql.query.EntityQuery;
-import org.ehrbase.client.aql.query.Query;
-import org.ehrbase.client.aql.record.Record;
-import org.ehrbase.client.exception.ClientException;
-import org.ehrbase.client.exception.WrongStatusCodeException;
-import org.ehrbase.client.openehrclient.defaultrestclient.DefaultRestClient;
-import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
-import org.ehrbase.response.openehr.QueryResponseData;
-import org.ehrbase.response.openehr.TemplatesResponseData;
+import org.ehrbase.openehr.sdk.aql.parser.AqlParseException;
+import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
+import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.DefaultRestClient;
+import org.ehrbase.openehr.sdk.generator.commons.aql.field.AqlFieldImp;
+import org.ehrbase.openehr.sdk.generator.commons.aql.query.EntityQuery;
+import org.ehrbase.openehr.sdk.generator.commons.aql.query.Query;
+import org.ehrbase.openehr.sdk.generator.commons.aql.record.Record;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
+import org.ehrbase.openehr.sdk.response.dto.TemplatesResponseData;
+import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
+import org.ehrbase.openehr.sdk.util.exception.ClientException;
+import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -122,7 +122,7 @@ public class EhrBaseServiceTest {
 
     when(compositionResponseDataBuilder.build(any())).thenReturn(compositionsQueryResponseData);
 
-    ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
+    ehr.executeRawQuery(AqlQueryParser.parse(GOOD_QUERY), 1L);
     verify(compositionResponseDataBuilder, times(1)).build(any());
   }
 
@@ -139,7 +139,7 @@ public class EhrBaseServiceTest {
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
         .thenReturn(response);
 
-    ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
+    ehr.executeRawQuery(AqlQueryParser.parse(GOOD_QUERY), 1L);
     verify(compositionResponseDataBuilder, times(0)).build(any());
   }
 
@@ -147,7 +147,7 @@ public class EhrBaseServiceTest {
   public void shouldHandleClientExceptionWhenExecutingAql() {
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
         .thenThrow(ClientException.class);
-    ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
+    ehr.executeRawQuery(AqlQueryParser.parse(GOOD_QUERY), 1L);
   }
   @Test(expected = SystemException.class)
   public void shouldHandleClientExceptionWhenConnectToEhrBase() {
@@ -160,7 +160,7 @@ public class EhrBaseServiceTest {
   public void shouldHandleWrongStatusCodeExceptionWhenExecutingAql(){
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
             .thenThrow(WrongStatusCodeException.class);
-    ehr.executeRawQuery(new AqlToDtoParser().parse(GOOD_QUERY), 1L);
+    ehr.executeRawQuery(AqlQueryParser.parse(GOOD_QUERY), 1L);
   }
 
   @Test(expected = WrongStatusCodeException.class)
