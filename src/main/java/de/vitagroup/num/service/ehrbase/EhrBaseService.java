@@ -52,6 +52,7 @@ public class EhrBaseService {
   private static final String PATH = "path";
   private static final String PSEUDONYM = "pseudonym";
   private static final String EHR_STATUS_PATH = "ehr_status/subject/external_ref/id/value";
+  private static final String EHR_ID_PATH = "ehr_id/value";
 
   private final DefaultRestClient restClient;
   private final CompositionResponseDataBuilder compositionResponseDataBuilder;
@@ -83,17 +84,17 @@ public class EhrBaseService {
     AqlQuery dto = AqlQueryParser.parse(query);
     SelectExpression selectExpression = new SelectExpression();
     IdentifiedPath ehrIdPath = new IdentifiedPath();
-    ehrIdPath.setPath(AqlObjectPath.parse("ehr_id/value"));
+    ehrIdPath.setPath(AqlObjectPath.parse(EHR_ID_PATH));
 
     ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
     containmentClassExpression.setType("EHR");
-    containmentClassExpression.setIdentifier("e0");
+    containmentClassExpression.setIdentifier("e");
     ehrIdPath.setRoot(containmentClassExpression);
 
     selectExpression.setColumnExpression(ehrIdPath);
 
-    dto.getSelect().getStatement().add(selectExpression);
-    System.out.println("Generated query " + AqlRenderer.render(dto));
+    dto.getSelect().setStatement(List.of(selectExpression));
+    log.info("Generated query for retrieveEligiblePatientIds {} ", AqlRenderer.render(dto));
 
     try {
       List<Record> results = restClient.aqlEndpoint().execute(Query.buildNativeQuery(AqlRenderer.render(dto)));
@@ -164,6 +165,12 @@ public class EhrBaseService {
     SelectExpression selectExpression = new SelectExpression();
     IdentifiedPath ehrIdPath = new IdentifiedPath();
     ehrIdPath.setPath(AqlObjectPath.parse(EHR_STATUS_PATH));
+
+    ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
+    containmentClassExpression.setType("EHR");
+    containmentClassExpression.setIdentifier("e");
+    ehrIdPath.setRoot(containmentClassExpression);
+
     selectExpression.setColumnExpression(ehrIdPath);
     aqlDto.getSelect().getStatement().add(0, selectExpression);
   }
