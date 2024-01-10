@@ -73,7 +73,7 @@ public class EhrBaseServiceTest {
   public void shouldHandleMalformedAqlQuery() {
     when(restClient.aqlEndpoint().execute(any(Query.class)))
         .thenThrow(WrongStatusCodeException.class);
-    ehr.retrieveEligiblePatientIds(Aql.builder().query("SLECT e/ehr_id/value FROM EHR e").build());
+    ehr.retrieveEligiblePatientIds(Aql.builder().query("SELECT e/ehr_id/value FROM EHR e").build());
   }
 
   @Test

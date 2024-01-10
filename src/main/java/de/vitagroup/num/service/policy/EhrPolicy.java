@@ -21,7 +21,7 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
 @Slf4j
 public class EhrPolicy extends Policy {
 
-  private static final String EHR_ID_PATH = "/ehr_id/value";
+  private static final String EHR_ID_PATH = "ehr_id/value";
 
 
   private Set<String> cohortEhrIds;
@@ -47,17 +47,9 @@ public class EhrPolicy extends Policy {
     SelectExpression se = new SelectExpression();
     se.setColumnExpression(select);
 
-    log.debug(
-            String.format(
-                    "[AQL QUERY] Aql before executing EhrPolicy: %s ",
-                    AqlRenderer.render(aql)));
-
+    logAqlQuery(log, aql, "[AQL QUERY] Aql before executing EhrPolicy: %s ");
     extendWhereClause(aql, List.of(se), toSimpleValueList(new ArrayList<>(cohortEhrIds)));
-
-    log.debug(
-            String.format(
-                    "[AQL QUERY] Aql after executing EhrPolicy: %s ",
-                    AqlRenderer.render(aql)));
+    logAqlQuery(log, aql, "[AQL QUERY] Aql after executing EhrPolicy: %s ");
     return true;
   }
 }

@@ -12,6 +12,7 @@ import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentClassExpression;
 import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
 import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
 import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
@@ -50,7 +51,7 @@ public class EhrBaseService {
   private static final String NAME = "name";
   private static final String PATH = "path";
   private static final String PSEUDONYM = "pseudonym";
-  private static final String EHR_STATUS_PATH = "/ehr_status/subject/external_ref/id/value";
+  private static final String EHR_STATUS_PATH = "ehr_status/subject/external_ref/id/value";
 
   private final DefaultRestClient restClient;
   private final CompositionResponseDataBuilder compositionResponseDataBuilder;
@@ -82,10 +83,17 @@ public class EhrBaseService {
     AqlQuery dto = AqlQueryParser.parse(query);
     SelectExpression selectExpression = new SelectExpression();
     IdentifiedPath ehrIdPath = new IdentifiedPath();
-    ehrIdPath.setPath(AqlObjectPath.parse(EhrFields.EHR_ID().getPath()));
+    ehrIdPath.setPath(AqlObjectPath.parse("ehr_id/value"));
+
+    ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
+    containmentClassExpression.setType("EHR");
+    containmentClassExpression.setIdentifier("e0");
+    ehrIdPath.setRoot(containmentClassExpression);
+
     selectExpression.setColumnExpression(ehrIdPath);
 
     dto.getSelect().getStatement().add(selectExpression);
+    System.out.println("Generated query " + AqlRenderer.render(dto));
 
     try {
       List<Record> results = restClient.aqlEndpoint().execute(Query.buildNativeQuery(AqlRenderer.render(dto)));
