@@ -18,7 +18,7 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.NO_TEMPLATES_
 @Slf4j
 public class TemplatesPolicy extends Policy {
 
-  private static final String TEMPLATE_ID_PATH = "/archetype_details/template_id/value";
+  private static final String TEMPLATE_ID_PATH = "archetype_details/template_id/value";
 
   private Map<String, String> templatesMap;
 

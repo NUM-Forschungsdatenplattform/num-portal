@@ -54,14 +54,13 @@ public class ParameterServiceTest {
     private static final String AQL_PATH_UNITS = "/items[at0001]/value/units";
 
     private static final String AQL_PATH_VALUE_VALUE_ORDINAL = "/data[at0001]/events[at0002]/data[at0003]/items[at0004]/value/value";
-    private static final String AQL_CODE_QUERY = "Select distinct e0/data[at0002]/items[at0019] as F1 from EHR e contains EVALUATION e0[openEHR-EHR-EVALUATION.gender.v1] order by e0/data[at0002]/items[at0019] ASCENDING";
-    private static final String AQL_MAGNITUDE_QUERY = "Select distinct o0/data[at0001]/events[at0002]/data[at0003]/items[at0004] as F1 from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.height.v2] order by o0/data[at0001]/events[at0002]/data[at0003]/items[at0004] ASCENDING";
-    private static final String AQL_VALUE_UNITS_QUERY = "Select distinct c0/items[at0001] as F1 from EHR e contains CLUSTER c0[openEHR-EHR-CLUSTER.laboratory_test_analyte.v1] order by c0/items[at0001] ASCENDING";
-    private static final String AQL_VALUE_VALUE_QUERY = "Select distinct c0/items[at0001] as F1 from EHR e contains CLUSTER c0[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] order by c0/items[at0001] ASCENDING";
-    private static final String AQL_VALUE_QUERY = "Select distinct o0/data[at0001]/events[at0006]/time as F1 from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.blood_pressure.v2] order by o0/data[at0001]/events[at0006]/time ASCENDING";
-    private static final String AQL_VALUE_VALUE_ORDINAL_QUERY = "Select distinct o0/data[at0001]/events[at0002]/data[at0003]/items[at0004] as F1 from EHR e contains OBSERVATION o0[openEHR-EHR-OBSERVATION.clinical_frailty_scale.v1] order by o0/data[at0001]/events[at0002]/data[at0003]/items[at0004] ASCENDING";
-
-    private static final String AQL_VALUE_SYMBOL_QUERY = "Select distinct c0/items[at0009] as F1 from EHR e contains CLUSTER c0[openEHR-EHR-CLUSTER.laboratory_test_analyte.v1] order by c0/items[at0009] ASCENDING";
+    private static final String AQL_CODE_QUERY = "SELECT DISTINCT c0/data[at0002]/items[at0019] AS F1 FROM EHR e CONTAINS EVALUATION c0[openEHR-EHR-EVALUATION.gender.v1] ORDER BY c0/data[at0002]/items[at0019] ASC";
+    private static final String AQL_MAGNITUDE_QUERY = "SELECT DISTINCT c0/data[at0001]/events[at0002]/data[at0003]/items[at0004] AS F1 FROM EHR e CONTAINS OBSERVATION c0[openEHR-EHR-OBSERVATION.height.v2] ORDER BY c0/data[at0001]/events[at0002]/data[at0003]/items[at0004] ASC";
+    private static final String AQL_VALUE_UNITS_QUERY = "SELECT DISTINCT c0/items[at0001] AS F1 FROM EHR e CONTAINS CLUSTER c0[openEHR-EHR-CLUSTER.laboratory_test_analyte.v1] ORDER BY c0/items[at0001] ASC";
+    private static final String AQL_VALUE_VALUE_QUERY = "SELECT DISTINCT c0/items[at0001] AS F1 FROM EHR e CONTAINS CLUSTER c0[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] ORDER BY c0/items[at0001] ASC";
+    private static final String AQL_VALUE_QUERY = "SELECT DISTINCT c0/data[at0001]/events[at0006]/time AS F1 FROM EHR e CONTAINS OBSERVATION c0[openEHR-EHR-OBSERVATION.blood_pressure.v2] ORDER BY c0/data[at0001]/events[at0006]/time ASC";
+    private static final String AQL_VALUE_VALUE_ORDINAL_QUERY = "SELECT DISTINCT c0/data[at0001]/events[at0002]/data[at0003]/items[at0004] AS F1 FROM EHR e CONTAINS OBSERVATION c0[openEHR-EHR-OBSERVATION.clinical_frailty_scale.v1] ORDER BY c0/data[at0001]/events[at0002]/data[at0003]/items[at0004] ASC";
+    private static final String AQL_VALUE_SYMBOL_QUERY = "SELECT DISTINCT c0/items[at0009] AS F1 FROM EHR e CONTAINS CLUSTER c0[openEHR-EHR-CLUSTER.laboratory_test_analyte.v1] ORDER BY c0/items[at0009] ASC";
 
     @Parameterized.Parameter()
     public String aqlPath;
