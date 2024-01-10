@@ -17,6 +17,7 @@ import com.nedap.archie.rm.datavalues.quantity.datetime.DvDuration;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvTime;
 import com.nedap.archie.rm.support.identification.ObjectVersionId;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
+import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.service.UserDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -83,7 +84,6 @@ public class ParameterService {
   @CachePut(value = PARAMETERS_CACHE, key = "#aqlPath")
   public ParameterOptionsDto getParameterValues(String userId, String aqlPath, String archetypeId) {
     userDetailsService.checkIsUserApproved(userId);
-
     if (aqlPath.endsWith(VALUE_VALUE)) {
       return getParameters(aqlPath, archetypeId, VALUE_VALUE);
     } else if (aqlPath.endsWith(VALUE_MAGNITUDE)) {
@@ -111,9 +111,14 @@ public class ParameterService {
   }
 
   private ParameterOptionsDto getParameters(String aqlPath, String archetypeId, String postfix) {
-    var query =
-        createQueryString(aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
-
+    String query;
+    if(aqlPath.startsWith("/")) {
+      query =
+              createQueryString(aqlPath.substring(1, aqlPath.length() - postfix.length()), archetypeId);
+    } else {
+      query =
+              createQueryString(aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
+    }
     try {
       log.info(
           String.format(

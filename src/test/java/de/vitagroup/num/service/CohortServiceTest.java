@@ -88,7 +88,7 @@ public class CohortServiceTest {
     private final String Q1 = "Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
     private final String Q2 = "SELECT c0 as GECCO_Personendaten " +
             "FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
-            "WHERE (c0/archetype_details/template_id/value = 'GECCO_Personendaten'";
+            "WHERE c0/archetype_details/template_id/value = 'GECCO_Personendaten'";
 
     private final String Q3 = "SELECT  c0 as GECCO_Personendaten " +
             "FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
@@ -471,7 +471,7 @@ public class CohortServiceTest {
         String query = "SELECT c0 as GECCO_Personendaten " +
                 "FROM EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.registereintrag.v1] " +
                 "contains CLUSTER c1[openEHR-EHR-CLUSTER.person_birth_data_iso.v0] " +
-                "WHERE  (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value > $Geburtsdatum";
+                "WHERE  (c0/archetype_details/template_id/value = 'GECCO_Personendaten' and c1/items[at0001]/value/value > $Geburtsdatum)";
         when(aqlService.existsById(99L)).thenReturn(true);
         CohortDto cohortDto = CohortDto.builder()
                 .cohortGroup(CohortGroupDto.builder()

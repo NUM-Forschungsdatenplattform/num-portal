@@ -39,16 +39,11 @@ public class EuropeanConsentPolicy extends Policy {
       throw new SystemException(EuropeanConsentPolicy.class, INVALID_AQL);
     }
 
-    log.debug(
-            String.format(
-                    "[AQL QUERY] Aql before executing EuropeanConsentPolicy: %s ",
-                    AqlRenderer.render(aql)));
+    logAqlQuery(log, aql,"[AQL QUERY] Aql before executing EuropeanConsentPolicy: %s ");
     List<Primitive> oidValues = toSimpleValueList(List.of(oid));
     restrictAqlWithCompositionAttribute(aql, FEEDER_AUDIT_PATH, oidValues);
-    log.debug(
-            String.format(
-                    "[AQL QUERY] Aql after executing EuropeanConsentPolicy: %s ",
-                    AqlRenderer.render(aql)));
+
+    logAqlQuery(log, aql,"[AQL QUERY] Aql after executing EuropeanConsentPolicy: %s ");
     return true;
   }
 }

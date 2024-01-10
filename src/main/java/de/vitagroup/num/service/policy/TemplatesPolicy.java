@@ -38,16 +38,12 @@ public class TemplatesPolicy extends Policy {
       throw new SystemException(TemplatesPolicy.class, INVALID_AQL);
     }
 
-    log.debug(
-            String.format(
-                    "[AQL QUERY] Aql before executing TemplatesPolicy: %s ",
-                    AqlRenderer.render(aql)));
+    logAqlQuery(log, aql,"[AQL QUERY] Aql before executing TemplatesPolicy: %s ");
+
     List<Primitive> templateValues = toSimpleValueList(templatesMap.keySet());
     restrictAqlWithCompositionAttribute(aql, TEMPLATE_ID_PATH, templateValues);
-    log.debug(
-            String.format(
-                    "[AQL QUERY] Aql after executing TemplatesPolicy: %s ",
-                    AqlRenderer.render(aql)));
+
+    logAqlQuery(log, aql,"[AQL QUERY] Aql after executing TemplatesPolicy: %s ");
     return true;
   }
 }

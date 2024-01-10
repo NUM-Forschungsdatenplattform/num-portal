@@ -15,6 +15,8 @@ import org.ehrbase.openehr.sdk.aql.dto.operand.Primitive;
 import org.ehrbase.openehr.sdk.aql.dto.operand.StringPrimitive;
 import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
 import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
+import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
+import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -200,5 +202,15 @@ public abstract class Policy {
       }
     }
     return nextId + 1;
+  }
+
+  protected void logAqlQuery(Logger log, AqlQuery aql, String logMessage) {
+    try {
+      log.debug(
+              String.format(logMessage,
+                      AqlRenderer.render(aql)));
+    } catch (Exception e) {
+      log.error("Cannot parse aql query while logging", e);
+    }
   }
 }
