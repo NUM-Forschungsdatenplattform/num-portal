@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.nedap.archie.rm.support.identification.UUID;
 import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
@@ -20,9 +21,11 @@ import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
 import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.DefaultRestClient;
 import org.ehrbase.openehr.sdk.generator.commons.aql.field.EhrFields;
+import org.ehrbase.openehr.sdk.generator.commons.aql.query.EntityQuery;
 import org.ehrbase.openehr.sdk.generator.commons.aql.query.NativeQuery;
 import org.ehrbase.openehr.sdk.generator.commons.aql.query.Query;
 import org.ehrbase.openehr.sdk.generator.commons.aql.record.Record;
+import org.ehrbase.openehr.sdk.generator.commons.aql.record.Record1;
 import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.ehrbase.openehr.sdk.response.dto.TemplatesResponseData;
 import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
@@ -97,7 +100,7 @@ public class EhrBaseService {
     log.info("Generated query for retrieveEligiblePatientIds {} ", AqlRenderer.render(dto));
 
     try {
-      List<Record> results = restClient.aqlEndpoint().execute(Query.buildNativeQuery(AqlRenderer.render(dto)));
+      List<Record1<UUID>> results = restClient.aqlEndpoint().execute(Query.buildNativeQuery(AqlRenderer.render(dto), UUID.class));
       return results.stream().map(result -> result.value(0).toString()).collect(Collectors.toSet());
     } catch (WrongStatusCodeException e) {
       log.error(INVALID_AQL_QUERY, e.getMessage(), e);
