@@ -126,6 +126,7 @@ public abstract class Policy {
     ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
     containmentClassExpression.setType(COMPOSITION_ARCHETYPE_ID);
     containmentClassExpression.setIdentifier("c" + nextContainmentId);
+    path.setRoot(containmentClassExpression);
 
     newContains.setSymbol(ContainmentSetOperatorSymbol.AND);
     newContains.getValues().add(containmentClassExpression);
