@@ -110,7 +110,7 @@ public class EhrBaseServiceTest {
   public void shouldFlattenResultsWhenContainsComposition() {
     QueryResponseData compositionsQueryResponseData = new QueryResponseData();
     List<Map<String, String>> columns =
-        new ArrayList<>(List.of(Map.of("path", "ehr_status/subject/external_ref/id/value"), Map.of("uuid", "c/uuid")));
+        new ArrayList<>(List.of(Map.of("path", "/ehr_status/subject/external_ref/id/value"), Map.of("uuid", "c/uuid")));
     List<List<Object>> rows =
         List.of(
             new ArrayList<>(List.of("testehrId", Map.of("_type", "COMPOSITION", "uuid", "12345"))),
@@ -132,7 +132,7 @@ public class EhrBaseServiceTest {
     QueryResponseData response = new QueryResponseData();
 
     response.setColumns(
-        new ArrayList<>(List.of(Map.of("path", "ehr_status/subject/external_ref/id/value"), Map.of("uuid", "c/uuid"))));
+        new ArrayList<>(List.of(Map.of("path", "/ehr_status/subject/external_ref/id/value"), Map.of("uuid", "c/uuid"))));
     response.setRows(List.of(
         new ArrayList<>(List.of("testehrid1", Map.of("_type", "OBSERVATION", "uuid", "12345"))),
         new ArrayList<>(List.of("testehrid2", Map.of("_type", "SECTION", "uuid", "bla")))));
