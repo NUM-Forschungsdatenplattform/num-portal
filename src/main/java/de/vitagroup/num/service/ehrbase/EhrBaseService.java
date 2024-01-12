@@ -1,16 +1,10 @@
 package de.vitagroup.num.service.ehrbase;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import com.nedap.archie.rm.support.identification.UUID;
 import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentClassExpression;
@@ -20,8 +14,6 @@ import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
 import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
 import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.DefaultRestClient;
-import org.ehrbase.openehr.sdk.generator.commons.aql.field.EhrFields;
-import org.ehrbase.openehr.sdk.generator.commons.aql.query.EntityQuery;
 import org.ehrbase.openehr.sdk.generator.commons.aql.query.NativeQuery;
 import org.ehrbase.openehr.sdk.generator.commons.aql.query.Query;
 import org.ehrbase.openehr.sdk.generator.commons.aql.record.Record;
@@ -35,10 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-/**
- * Service using the EhrBaseSDK to talk to the EhrBaseAPI
- */
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
@@ -101,7 +91,7 @@ public class EhrBaseService {
 
     try {
       List<Record1<UUID>> results = restClient.aqlEndpoint().execute(Query.buildNativeQuery(AqlRenderer.render(dto), UUID.class));
-      return results.stream().map(result -> result.value(0).toString()).collect(Collectors.toSet());
+      return results.stream().map(result -> result.value1().getValue()).collect(Collectors.toSet());
     } catch (WrongStatusCodeException e) {
       log.error(INVALID_AQL_QUERY, e.getMessage(), e);
       throw new WrongStatusCodeException("EhrBaseService.class", 93, 1);
@@ -175,7 +165,10 @@ public class EhrBaseService {
     ehrIdPath.setRoot(containmentClassExpression);
 
     selectExpression.setColumnExpression(ehrIdPath);
-    aqlDto.getSelect().getStatement().add(0, selectExpression);
+    List<SelectExpression> existingExpressions = new ArrayList<>(aqlDto.getSelect().getStatement());
+    existingExpressions.add(0, selectExpression);
+
+    aqlDto.getSelect().setStatement(existingExpressions);
   }
 
   public Set<String> getAllPatientIds() {
@@ -266,7 +259,7 @@ public class EhrBaseService {
       throw new BadRequestException(EhrBaseService.class, NO_DATA_COLUMNS_IN_THE_QUERY_RESULT);
     }
     String ehrStatusPath = columns.get(0).get(PATH);
-    if (ehrStatusPath == null || !ehrStatusPath.equals(EHR_STATUS_PATH)) {
+    if (ehrStatusPath == null || !ehrStatusPath.equals("/" + EHR_STATUS_PATH)) {
       throw new SystemException(EhrBaseService.class, QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN);
     }
     columns.remove(0);
