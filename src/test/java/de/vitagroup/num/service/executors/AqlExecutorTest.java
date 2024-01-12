@@ -33,7 +33,7 @@ public class AqlExecutorTest {
     @InjectMocks
     private AqlExecutor aqlExecutor;
 
-    private final String Q1 = "Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
+    private final String Q1 = "SELECT c0 AS test FROM EHR e CONTAINS COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
 
     @Before
     public void setup() {

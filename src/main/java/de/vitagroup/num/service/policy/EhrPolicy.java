@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentClassExpression;
 import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
 import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
 import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
@@ -43,6 +44,11 @@ public class EhrPolicy extends Policy {
 
     IdentifiedPath select = new IdentifiedPath();
     select.setPath(AqlObjectPath.parse(EHR_ID_PATH));
+
+    ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
+    containmentClassExpression.setType("EHR");
+    containmentClassExpression.setIdentifier("e");
+    select.setRoot(containmentClassExpression);
 
     SelectExpression se = new SelectExpression();
     se.setColumnExpression(select);
