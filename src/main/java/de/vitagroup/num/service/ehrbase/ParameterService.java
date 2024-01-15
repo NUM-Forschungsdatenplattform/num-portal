@@ -209,7 +209,7 @@ public class ParameterService {
 
     var orderByExpressionDto = new OrderByExpression();
     orderByExpressionDto.setStatement(path);
-    orderByExpressionDto.setSymbol(OrderByExpression.OrderByDirection.ASC.ASC);
+    orderByExpressionDto.setSymbol(OrderByExpression.OrderByDirection.ASC);
 
     List<OrderByExpression> orderByList = new LinkedList<>();
     orderByList.add(orderByExpressionDto);
@@ -217,8 +217,7 @@ public class ParameterService {
     aql.setFrom(from);
     aql.setOrderBy(orderByList);
 
-    String query = AqlRenderer.render(aql);
-    return query;
+    return AqlRenderer.render(aql);
   }
 
   private void convertDvCodedText(DvCodedText data, ParameterOptionsDto dto, String postfix) {
@@ -260,9 +259,5 @@ public class ParameterService {
 
   private void convertTime(ParameterOptionsDto dto) {
     dto.setType("DV_TIME");
-  }
-  private String insertSelect(String query) {
-    var result = StringUtils.substringAfter(query, SELECT);
-    return new StringBuilder(result).insert(0, SELECT_DISTINCT).toString();
   }
 }

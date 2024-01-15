@@ -40,8 +40,6 @@ public class TemplateService {
 
   private final AqlEditorContainmentService aqlEditorContainmentService;
 
-  private static final int COMPOSITION_CONTAINMENT_ID = 1;
-  private static final int EHR_CONTAINMENT_ID = 0;
   private static final String EHR_CONTAINMENT_IDENTIFIER = "e";
 
   /**
