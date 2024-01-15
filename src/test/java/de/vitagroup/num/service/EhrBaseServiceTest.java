@@ -77,15 +77,14 @@ public class EhrBaseServiceTest {
   }
 
 
-  //@Test
+  @Test
   public void shouldReplaceSelect() {
     when(restClient.aqlEndpoint().execute(any(Query.class))).thenReturn(Collections.emptyList());
     ehr.retrieveEligiblePatientIds(Aql.builder().query("SELECT e/ehr_id FROM EHR e").build());
     ArgumentCaptor<NativeQuery<Record>> queryArgumentCaptor =
         ArgumentCaptor.forClass(NativeQuery.class);
     verify(restClient.aqlEndpoint(), times(1)).execute(queryArgumentCaptor.capture());
-    AqlFieldImp fieldImp = (AqlFieldImp) queryArgumentCaptor.getValue().fields()[0];
-    assertThat(fieldImp.getPath(), is("/ehr_id/value"));
+    assertThat(queryArgumentCaptor.getValue().buildAql(), is("SELECT e/ehr_id/value FROM EHR e"));
   }
 
   @Test
