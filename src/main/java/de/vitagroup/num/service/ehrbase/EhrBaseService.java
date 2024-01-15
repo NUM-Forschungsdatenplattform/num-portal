@@ -4,6 +4,7 @@ import com.nedap.archie.rm.support.identification.UUID;
 import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.util.AqlQueryConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
@@ -39,13 +40,11 @@ public class EhrBaseService {
   private static final Aql ALL_PATIENTS_IDS =
       Aql.builder().query("select e/ehr_id/value from ehr e").build();
 
-  private static final String COMPOSITION_VALUE = "COMPOSITION";
   private static final String COMPOSITION_KEY = "_type";
   private static final String NAME = "name";
   private static final String PATH = "path";
   private static final String PSEUDONYM = "pseudonym";
   private static final String EHR_STATUS_PATH = "ehr_status/subject/external_ref/id/value";
-  private static final String EHR_ID_PATH = "ehr_id/value";
 
   private final DefaultRestClient restClient;
   private final CompositionResponseDataBuilder compositionResponseDataBuilder;
@@ -77,11 +76,11 @@ public class EhrBaseService {
     AqlQuery dto = AqlQueryParser.parse(query);
     SelectExpression selectExpression = new SelectExpression();
     IdentifiedPath ehrIdPath = new IdentifiedPath();
-    ehrIdPath.setPath(AqlObjectPath.parse(EHR_ID_PATH));
+    ehrIdPath.setPath(AqlObjectPath.parse(AqlQueryConstants.EHR_ID_PATH));
 
     ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
-    containmentClassExpression.setType("EHR");
-    containmentClassExpression.setIdentifier("e");
+    containmentClassExpression.setType(AqlQueryConstants.EHR_TYPE);
+    containmentClassExpression.setIdentifier(AqlQueryConstants.EHR_CONTAINMENT_IDENTIFIER);
     ehrIdPath.setRoot(containmentClassExpression);
 
     selectExpression.setColumnExpression(ehrIdPath);
@@ -160,8 +159,8 @@ public class EhrBaseService {
     ehrIdPath.setPath(AqlObjectPath.parse(EHR_STATUS_PATH));
 
     ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
-    containmentClassExpression.setType("EHR");
-    containmentClassExpression.setIdentifier("e");
+    containmentClassExpression.setType(AqlQueryConstants.EHR_TYPE);
+    containmentClassExpression.setIdentifier(AqlQueryConstants.EHR_CONTAINMENT_IDENTIFIER);
     ehrIdPath.setRoot(containmentClassExpression);
 
     selectExpression.setColumnExpression(ehrIdPath);
@@ -272,6 +271,6 @@ public class EhrBaseService {
   private boolean isComposition(Object object) {
     return object instanceof Map
         && ((Map<String, String>) object).containsKey(COMPOSITION_KEY)
-        && ((Map<String, String>) object).get(COMPOSITION_KEY).equals(COMPOSITION_VALUE);
+        && ((Map<String, String>) object).get(COMPOSITION_KEY).equals(AqlQueryConstants.COMPOSITION_TYPE);
   }
 }

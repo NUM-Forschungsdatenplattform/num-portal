@@ -5,6 +5,7 @@ import de.vitagroup.num.mapper.TemplateMapper;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.util.AqlQueryConstants;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aqleditor.dto.containment.ContainmentDto;
@@ -40,8 +41,6 @@ public class TemplateService {
 
   private final AqlEditorContainmentService aqlEditorContainmentService;
 
-  private static final String EHR_CONTAINMENT_IDENTIFIER = "e";
-
   /**
    * Retrieves a list of all available templates metadata information
    *
@@ -73,8 +72,8 @@ public class TemplateService {
 
   private AqlQuery createQuery(String archetypeId) {
     ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
-    containmentClassExpression.setType("COMPOSITION");
-    containmentClassExpression.setIdentifier("c0");
+    containmentClassExpression.setType(AqlQueryConstants.COMPOSITION_TYPE);
+    containmentClassExpression.setIdentifier(AqlQueryConstants.COMPOSITION_CONTAINMENT_IDENTIFIER);
     IdentifiedPath identifiedPath = new IdentifiedPath();
     identifiedPath.setRoot(containmentClassExpression);
 
@@ -87,12 +86,12 @@ public class TemplateService {
 
     // generate from expression
     ContainmentClassExpression from = new ContainmentClassExpression();
-    from.setType("EHR");
-    from.setIdentifier(EHR_CONTAINMENT_IDENTIFIER);
+    from.setType(AqlQueryConstants.EHR_TYPE);
+    from.setIdentifier(AqlQueryConstants.EHR_CONTAINMENT_IDENTIFIER);
 
     ContainmentClassExpression contains = new ContainmentClassExpression();
-    contains.setType("COMPOSITION");
-    contains.setIdentifier("c0");
+    contains.setType(AqlQueryConstants.COMPOSITION_TYPE);
+    contains.setIdentifier(AqlQueryConstants.COMPOSITION_CONTAINMENT_IDENTIFIER);
 
     List<AndOperatorPredicate> fromPredList = new ArrayList<>();
     ComparisonOperatorPredicate fromPred = new ComparisonOperatorPredicate(AqlObjectPathUtil.ARCHETYPE_NODE_ID,

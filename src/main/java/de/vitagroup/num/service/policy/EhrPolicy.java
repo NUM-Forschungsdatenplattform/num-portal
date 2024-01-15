@@ -5,6 +5,8 @@ import de.vitagroup.num.service.exception.SystemException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import de.vitagroup.num.service.util.AqlQueryConstants;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -21,8 +23,6 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;
 /** Restricts the aql to a set of ehr ids defined by the project cohort */
 @Slf4j
 public class EhrPolicy extends Policy {
-
-  private static final String EHR_ID_PATH = "ehr_id/value";
 
 
   private Set<String> cohortEhrIds;
@@ -43,11 +43,11 @@ public class EhrPolicy extends Policy {
     }
 
     IdentifiedPath select = new IdentifiedPath();
-    select.setPath(AqlObjectPath.parse(EHR_ID_PATH));
+    select.setPath(AqlObjectPath.parse(AqlQueryConstants.EHR_ID_PATH));
 
     ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
-    containmentClassExpression.setType("EHR");
-    containmentClassExpression.setIdentifier("e");
+    containmentClassExpression.setType(AqlQueryConstants.EHR_TYPE);
+    containmentClassExpression.setIdentifier(AqlQueryConstants.EHR_CONTAINMENT_IDENTIFIER);
     select.setRoot(containmentClassExpression);
 
     SelectExpression se = new SelectExpression();

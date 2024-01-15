@@ -17,8 +17,8 @@ import com.nedap.archie.rm.datavalues.quantity.datetime.DvDuration;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvTime;
 import com.nedap.archie.rm.support.identification.ObjectVersionId;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
-import de.vitagroup.num.domain.model.Aql;
 import de.vitagroup.num.service.UserDetailsService;
+import de.vitagroup.num.service.util.AqlQueryConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -47,10 +47,6 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class ParameterService {
-
-  private static final String SELECT = "Select";
-
-  private static final String SELECT_DISTINCT = "Select distinct";
 
   private static final String VALUE_DEFINING_CODE = "/value/defining_code/code_string";
 
@@ -197,8 +193,8 @@ public class ParameterService {
 
     // generate from expression
     ContainmentClassExpression from = new ContainmentClassExpression();
-    from.setType("EHR");
-    from.setIdentifier("e");
+    from.setType(AqlQueryConstants.EHR_TYPE);
+    from.setIdentifier(AqlQueryConstants.EHR_CONTAINMENT_IDENTIFIER);
 
     // generate contains expression
     ContainmentClassExpression contains = new ContainmentClassExpression();

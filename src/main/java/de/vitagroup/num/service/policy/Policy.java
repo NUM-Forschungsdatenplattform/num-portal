@@ -1,5 +1,6 @@
 package de.vitagroup.num.service.policy;
 
+import de.vitagroup.num.service.util.AqlQueryConstants;
 import org.apache.commons.collections.CollectionUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.ehrbase.openehr.sdk.aql.dto.condition.LogicalOperatorCondition;
@@ -24,8 +25,6 @@ import java.util.stream.Collectors;
 /** Defines a certain project policy to be applied to an aql query */
 public abstract class Policy {
 
-  private static final String COMPOSITION_ARCHETYPE_ID = "COMPOSITION";
-
   public abstract boolean apply(AqlQuery aql);
 
   protected void restrictAqlWithCompositionAttribute(AqlQuery aql, String attributePath, List<Primitive> attributeValues) {
@@ -47,7 +46,7 @@ public abstract class Policy {
               selectFieldDto.setPath(AqlObjectPath.parse(attributePath));
 
               ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
-              containmentClassExpression.setType(COMPOSITION_ARCHETYPE_ID);
+              containmentClassExpression.setType(AqlQueryConstants.COMPOSITION_TYPE);
               containmentClassExpression.setIdentifier(id);
               selectFieldDto.setRoot(containmentClassExpression);
 
@@ -70,7 +69,7 @@ public abstract class Policy {
     selectField.setPath(AqlObjectPath.parse(attrPath));
 
     ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
-    containmentClassExpression.setType(COMPOSITION_ARCHETYPE_ID);
+    containmentClassExpression.setType(AqlQueryConstants.COMPOSITION_TYPE);
     containmentClassExpression.setIdentifier("c" + nextContainmentId);
     selectField.setRoot(containmentClassExpression);
 
@@ -124,7 +123,7 @@ public abstract class Policy {
 
 
     ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
-    containmentClassExpression.setType(COMPOSITION_ARCHETYPE_ID);
+    containmentClassExpression.setType(AqlQueryConstants.COMPOSITION_TYPE);
     containmentClassExpression.setIdentifier("c" + nextContainmentId);
     path.setRoot(containmentClassExpression);
 
@@ -160,7 +159,7 @@ public abstract class Policy {
 
       } else if (current instanceof ContainmentClassExpression containmentDto) {
 
-        if (containmentDto.getType().toUpperCase().contains(COMPOSITION_ARCHETYPE_ID)) {
+        if (containmentDto.getType().toUpperCase().contains(AqlQueryConstants.COMPOSITION_TYPE)) {
           compositions.add(containmentDto.getIdentifier());
         }
 
