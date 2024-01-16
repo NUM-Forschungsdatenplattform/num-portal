@@ -18,7 +18,7 @@
 
   <properties>
     <commons-collections4.version>4.4</commons-collections4.version>
-    <commons-io.version>2.15.0</commons-io.version>
+    <commons-io.version>2.15.1</commons-io.version>
     <ehr-sdk.version>v2.5.0</ehr-sdk.version>
     <!-- aql-editor-backend-starter repo was archived on August 2023 -->
     <num-aql-editor-backend-starter.version>1.0.3-rc1</num-aql-editor-backend-starter.version>
@@ -36,13 +36,13 @@
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
     <skip.dependency.check>false</skip.dependency.check>
-    <postgresql.version>42.7.0</postgresql.version>
+    <postgresql.version>42.7.1</postgresql.version>
     <hapi.version>6.8.3</hapi.version>
     <wiremock-standalone.version>3.2.0</wiremock-standalone.version>
     <testcontainers.version>1.19.3</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
-    <spring-security.version>5.8.8</spring-security.version>
-    <spring.cloud-version>2021.0.8</spring.cloud-version>
+    <spring-security.version>5.8.9</spring-security.version>
+    <spring.cloud-version>2021.0.9</spring.cloud-version>
   </properties>
 
   <repositories>
