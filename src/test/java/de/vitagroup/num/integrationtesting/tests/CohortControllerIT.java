@@ -201,12 +201,12 @@ public class CohortControllerIT extends IntegrationTest {
     String cohortDtoJson = mapper.writeValueAsString(cohortGroupDto);
     WireMock.stubFor(
             WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
-                    .withRequestBody(WireMock.containing("[openEHR-EHR-OBSERVATION.height.v2] where (c1/archetype_details/template_id/value = 'Körpergröße'"))
+                    .withRequestBody(WireMock.containing("[openEHR-EHR-OBSERVATION.height.v2] WHERE (c1/archetype_details/template_id/value = 'Körpergröße'"))
                     .willReturn(
                             WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/height_ehr_ids_result.json"),
                                     StandardCharsets.UTF_8))));
     WireMock.stubFor(WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
-            .withRequestBody(WireMock.containing("Select e/ehr_id/value as F1 from EHR e"))
+            .withRequestBody(WireMock.containing("SELECT e/ehr_id/value FROM ehr e"))
             .willReturn(WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/ehr_id_response.json"),
                     StandardCharsets.UTF_8))));
 

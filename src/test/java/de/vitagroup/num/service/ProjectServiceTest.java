@@ -3,10 +3,10 @@ package de.vitagroup.num.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.attachment.service.AttachmentService;
-import de.vitagroup.num.domain.model.admin.User;
-import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.*;
 import de.vitagroup.num.domain.model.*;
+import de.vitagroup.num.domain.model.admin.User;
+import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
 import de.vitagroup.num.mapper.ProjectMapper;
@@ -22,18 +22,15 @@ import de.vitagroup.num.service.notification.dto.ProjectCloseNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStartNotification;
 import de.vitagroup.num.service.notification.dto.ProjectStatusChangeRequestNotification;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
-import org.ehrbase.aql.binder.AqlBinder;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorDto;
-import org.ehrbase.aql.dto.condition.ConditionLogicalOperatorSymbol;
-import org.ehrbase.aql.dto.condition.MatchesOperatorDto;
-import org.ehrbase.aql.dto.condition.SimpleValue;
-import org.ehrbase.aql.dto.select.SelectFieldDto;
-import org.ehrbase.aql.parser.AqlParseException;
-import org.ehrbase.aql.parser.AqlToDtoParser;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
-import org.ehrbase.client.aql.field.EhrFields;
-import org.ehrbase.response.openehr.QueryResponseData;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.condition.LogicalOperatorCondition;
+import org.ehrbase.openehr.sdk.aql.dto.condition.MatchesCondition;
+import org.ehrbase.openehr.sdk.aql.dto.operand.Primitive;
+import org.ehrbase.openehr.sdk.aql.parser.AqlParseException;
+import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
+import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -109,7 +106,7 @@ public class ProjectServiceTest {
   private static final String QUERY_5 =
       "SELECT c0 as openEHR_EHR_COMPOSITION_self_monitoring_v0, c1 as openEHR_EHR_COMPOSITION_report_v1 FROM EHR e contains (COMPOSITION c0[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c2[openEHR-EHR-COMPOSITION.self_monitoring.v0] and COMPOSITION c1[openEHR-EHR-COMPOSITION.report.v1])";
 
-  @Captor ArgumentCaptor<AqlDto> aqlDtoArgumentCaptor;
+  @Captor ArgumentCaptor<AqlQuery> aqlDtoArgumentCaptor;
 
   @Mock private ProjectRepository projectRepository;
 
@@ -164,7 +161,7 @@ public class ProjectServiceTest {
   public void shouldCorrectlyValidateInvalidQuery() {
     String query =
         "Select e/ehr_id/value as F1, c0 as F1 from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
-    new AqlToDtoParser().parse(query);
+    AqlQueryParser.parse(query);
   }
 
   @Test
@@ -174,14 +171,14 @@ public class ProjectServiceTest {
     String query =
         "Select c0 as F1 from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
 
-    AqlDto dto = new AqlToDtoParser().parse(query);
+    AqlQuery dto = AqlQueryParser.parse(query);
 
-    SelectFieldDto selectFieldDto = new SelectFieldDto();
-    selectFieldDto.setAqlPath(EhrFields.EHR_ID().getPath());
-    selectFieldDto.setContainmentId(dto.getEhr().getContainmentId());
-    dto.getSelect().getStatement().add(0, selectFieldDto);
+//    SelectFieldDto selectFieldDto = new SelectFieldDto();
+//    selectFieldDto.setAqlPath(EhrFields.EHR_ID().getPath());
+//    selectFieldDto.setContainmentId(dto.getEhr().getContainmentId());
+//    dto.getSelect().getStatement().add(0, selectFieldDto);
 
-    String editedQuery = new AqlBinder().bind(dto).getLeft().buildAql();
+    String editedQuery = AqlRenderer.render(dto);
 
     Matcher matcher = Pattern.compile("F1").matcher(editedQuery);
 
@@ -333,29 +330,29 @@ public class ProjectServiceTest {
             + "and c0/archetype_details/template_id/value matches {'Corona_Anamnese'} "
             + "and c1/archetype_details/template_id/value matches {'Corona_Anamnese'})";
 
-    AqlDto initialDto = new AqlToDtoParser().parse(initialQuery);
+    AqlQuery initialDto = AqlQueryParser.parse(initialQuery);
     assertThat(initialDto.getWhere(), notNullValue());
-    assertThat(((ConditionLogicalOperatorDto) initialDto.getWhere()).getValues(), notNullValue());
-    assertThat(((ConditionLogicalOperatorDto) initialDto.getWhere()).getValues().size(), is(3));
+    assertThat(((LogicalOperatorCondition) initialDto.getWhere()).getValues(), notNullValue());
+    assertThat(((LogicalOperatorCondition) initialDto.getWhere()).getValues().size(), is(3));
 
-    String initialDtoToString = new AqlBinder().bind(initialDto).getLeft().buildAql();
-    AqlDto parsedQuery = new AqlToDtoParser().parse(initialDtoToString);
+    String initialDtoToString = AqlRenderer.render(initialDto);
+    AqlQuery parsedQuery = AqlQueryParser.parse(initialDtoToString);
 
     assertThat(parsedQuery.getWhere(), notNullValue());
-    assertThat(((ConditionLogicalOperatorDto) parsedQuery.getWhere()).getValues(), notNullValue());
-    assertThat(((ConditionLogicalOperatorDto) parsedQuery.getWhere()).getValues().size(), is(3));
+    assertThat(((LogicalOperatorCondition) parsedQuery.getWhere()).getValues(), notNullValue());
+    assertThat(((LogicalOperatorCondition) parsedQuery.getWhere()).getValues().size(), is(3));
   }
 
   @Test
   public void shouldHandleQuery5() {
 
-    AqlDto initialQueryDto = new AqlToDtoParser().parse(QUERY_5);
+    AqlQuery initialQueryDto = AqlQueryParser.parse(QUERY_5);
     assertThat(initialQueryDto, notNullValue());
     assertThat(initialQueryDto.getWhere(), nullValue());
 
     projectService.executeAql(QUERY_5, 2L, "approvedCoordinatorId");
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
-    AqlDto restrictedQuery = aqlDtoArgumentCaptor.getValue();
+    AqlQuery restrictedQuery = aqlDtoArgumentCaptor.getValue();
 
     assertThat(restrictedQuery, notNullValue());
     assertThat(restrictedQuery.getWhere(), notNullValue());
@@ -367,7 +364,7 @@ public class ProjectServiceTest {
     public void shouldExecuteAqlForProjectOutsideEU() {
         projectService.executeAql(QUERY_5, 33L, "approvedCoordinatorId");
         Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
-        AqlDto restrictedQuery = aqlDtoArgumentCaptor.getValue();
+        AqlQuery restrictedQuery = aqlDtoArgumentCaptor.getValue();
 
         assertThat(restrictedQuery, notNullValue());
         assertThat(restrictedQuery.getWhere(), notNullValue());
@@ -392,76 +389,76 @@ public class ProjectServiceTest {
   public void shouldHandleQuery3() {
     projectService.executeAql(QUERY_3, 2L, "approvedCoordinatorId");
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
-    AqlDto restrictedQuery = aqlDtoArgumentCaptor.getValue();
+    AqlQuery restrictedQuery = aqlDtoArgumentCaptor.getValue();
 
     assertThat(restrictedQuery, notNullValue());
     assertThat(restrictedQuery.getWhere(), notNullValue());
 
-    ConditionLogicalOperatorDto conditionDto0 =
-        (ConditionLogicalOperatorDto) restrictedQuery.getWhere();
-    assertThat(conditionDto0.getSymbol(), is(ConditionLogicalOperatorSymbol.AND));
+    LogicalOperatorCondition conditionDto0 =
+        (LogicalOperatorCondition) restrictedQuery.getWhere();
+    assertThat(conditionDto0.getSymbol(), is(LogicalOperatorCondition.ConditionLogicalOperatorSymbol.AND));
     assertThat(conditionDto0.getValues().size(), is(3));
-    ConditionLogicalOperatorDto conditionDto =
-        (ConditionLogicalOperatorDto) conditionDto0.getValues().get(0);
+    LogicalOperatorCondition conditionDto =
+        (LogicalOperatorCondition) conditionDto0.getValues().get(0);
     assertThat(conditionDto.getValues().size(), is(1));
 
     assertTrue(
         conditionDto.getValues().stream()
-            .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto));
+            .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesCondition));
 
-    MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
+    MatchesCondition ehrMatches = (MatchesCondition) conditionDto.getValues().get(0);
     assertThat(ehrMatches.getValues().size(), is(2));
 
     assertTrue(
         ehrMatches.getValues().stream()
-            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_1)));
+            .anyMatch(e -> ((Primitive) e).getValue().equals(EHR_ID_1)));
     assertTrue(
         ehrMatches.getValues().stream()
-            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_2)));
+            .anyMatch(e -> ((Primitive) e).getValue().equals(EHR_ID_2)));
 
-    MatchesOperatorDto templatesMatches = (MatchesOperatorDto) conditionDto0.getValues().get(1);
+    MatchesCondition templatesMatches = (MatchesCondition) conditionDto0.getValues().get(1);
     assertThat(templatesMatches.getValues().size(), is(1));
     assertTrue(
         templatesMatches.getValues().stream()
-            .anyMatch(t -> ((SimpleValue) t).getValue().equals(CORONA_TEMPLATE)));
+            .anyMatch(t -> ((Primitive) t).getValue().equals(CORONA_TEMPLATE)));
   }
 
   @Test
   public void shouldHandleQuery4() {
     projectService.executeAql(QUERY_4, 2L, "approvedCoordinatorId");
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
-    AqlDto restrictedQuery = aqlDtoArgumentCaptor.getValue();
+    AqlQuery restrictedQuery = aqlDtoArgumentCaptor.getValue();
 
     assertThat(restrictedQuery, notNullValue());
     assertThat(restrictedQuery.getWhere(), notNullValue());
 
-    ConditionLogicalOperatorDto conditionDto0 =
-        (ConditionLogicalOperatorDto) restrictedQuery.getWhere();
-    assertThat(conditionDto0.getSymbol(), is(ConditionLogicalOperatorSymbol.AND));
+    LogicalOperatorCondition conditionDto0 =
+        (LogicalOperatorCondition) restrictedQuery.getWhere();
+    assertThat(conditionDto0.getSymbol(), is(LogicalOperatorCondition.ConditionLogicalOperatorSymbol.AND));
     assertThat(conditionDto0.getValues().size(), is(4));
-    ConditionLogicalOperatorDto conditionDto =
-        (ConditionLogicalOperatorDto) conditionDto0.getValues().get(0);
+    LogicalOperatorCondition conditionDto =
+        (LogicalOperatorCondition) conditionDto0.getValues().get(0);
     assertThat(conditionDto.getValues().size(), is(1));
 
     assertTrue(
         conditionDto.getValues().stream()
-            .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto));
+            .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesCondition));
 
-    MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
+    MatchesCondition ehrMatches = (MatchesCondition) conditionDto.getValues().get(0);
     assertThat(ehrMatches.getValues().size(), is(2));
 
     assertTrue(
         ehrMatches.getValues().stream()
-            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_1)));
+            .anyMatch(e -> ((Primitive) e).getValue().equals(EHR_ID_1)));
     assertTrue(
         ehrMatches.getValues().stream()
-            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_2)));
+            .anyMatch(e -> ((Primitive) e).getValue().equals(EHR_ID_2)));
 
-    MatchesOperatorDto templatesMatches = (MatchesOperatorDto) conditionDto0.getValues().get(1);
+    MatchesCondition templatesMatches = (MatchesCondition) conditionDto0.getValues().get(1);
     assertThat(templatesMatches.getValues().size(), is(1));
     assertTrue(
         templatesMatches.getValues().stream()
-            .anyMatch(t -> ((SimpleValue) t).getValue().equals(CORONA_TEMPLATE)));
+            .anyMatch(t -> ((Primitive) t).getValue().equals(CORONA_TEMPLATE)));
   }
 
   @Test(expected = BadRequestException.class)
@@ -479,19 +476,19 @@ public class ProjectServiceTest {
     projectService.executeAql(QUERY_2, 4L, "approvedCoordinatorId");
 
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
-    AqlDto restrictedQueryDto = aqlDtoArgumentCaptor.getValue();
-    String restrictedQuery = new AqlBinder().bind(restrictedQueryDto).getLeft().buildAql();
+    AqlQuery restrictedQueryDto = aqlDtoArgumentCaptor.getValue();
+    String restrictedQuery = AqlRenderer.render(restrictedQueryDto);
 
-    new AqlToDtoParser().parse(restrictedQuery);
+    AqlQueryParser.parse(restrictedQuery);
 
     String expectedQuery =
-        "Select e/ehr_id/value as F1, "
-            + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value as F2, "
-            + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value as F3 "
-            + "from EHR e "
-            + "contains (COMPOSITION c0 and SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
-            + "contains OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]) "
-            + "where (e/ehr_id/value matches {'47dc21a2-7076-4a57-89dc-bd83729ed52f'} and c0/archetype_details/template_id/value matches {'Corona_Anamnese'})";
+        "SELECT e/ehr_id/value AS F1, "
+            + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value AS F2, "
+            + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value AS F3 "
+            + "FROM EHR e "
+            + "CONTAINS (COMPOSITION c1 AND (SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
+            + "CONTAINS OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0])) "
+            + "WHERE ((e/ehr_id/value MATCHES {'47dc21a2-7076-4a57-89dc-bd83729ed52f'}) AND c1/archetype_details/template_id/value MATCHES {'Corona_Anamnese'})";
 
     assertEquals(restrictedQuery, expectedQuery);
   }
@@ -500,10 +497,10 @@ public class ProjectServiceTest {
   public void shouldCorrectlyRestrictBasicQuery() {
     projectService.executeAql(QUERY_BASIC, 2L, "approvedCoordinatorId");
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
-    AqlDto restrictedQueryDto = aqlDtoArgumentCaptor.getValue();
-    String restrictedQuery = new AqlBinder().bind(restrictedQueryDto).getLeft().buildAql();
+    AqlQuery restrictedQueryDto = aqlDtoArgumentCaptor.getValue();
+    String restrictedQuery = AqlRenderer.render(restrictedQueryDto);
 
-    new AqlToDtoParser().parse(restrictedQuery);
+    AqlQueryParser.parse(restrictedQuery);
   }
 
   @Test
@@ -511,36 +508,36 @@ public class ProjectServiceTest {
     projectService.executeAql(QUERY_1, 2L, "approvedCoordinatorId");
 
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
-    AqlDto restrictedQuery = aqlDtoArgumentCaptor.getValue();
+    AqlQuery restrictedQuery = aqlDtoArgumentCaptor.getValue();
 
     assertThat(restrictedQuery.getWhere(), notNullValue());
-    ConditionLogicalOperatorDto conditionDto0 =
-        (ConditionLogicalOperatorDto) restrictedQuery.getWhere();
-    assertThat(conditionDto0.getSymbol(), is(ConditionLogicalOperatorSymbol.AND));
+    LogicalOperatorCondition conditionDto0 =
+        (LogicalOperatorCondition) restrictedQuery.getWhere();
+    assertThat(conditionDto0.getSymbol(), is(LogicalOperatorCondition.ConditionLogicalOperatorSymbol.AND));
     assertThat(conditionDto0.getValues().size(), is(2));
-    ConditionLogicalOperatorDto conditionDto =
-        (ConditionLogicalOperatorDto) conditionDto0.getValues().get(0);
+    LogicalOperatorCondition conditionDto =
+        (LogicalOperatorCondition) conditionDto0.getValues().get(0);
     assertThat(conditionDto.getValues().size(), is(1));
 
     assertTrue(
         conditionDto.getValues().stream()
-            .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesOperatorDto));
+            .anyMatch(conditionDto1 -> conditionDto1 instanceof MatchesCondition));
 
-    MatchesOperatorDto ehrMatches = (MatchesOperatorDto) conditionDto.getValues().get(0);
+    MatchesCondition ehrMatches = (MatchesCondition) conditionDto.getValues().get(0);
     assertEquals(2, ehrMatches.getValues().size());
 
     assertTrue(
         ehrMatches.getValues().stream()
-            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_1)));
+            .anyMatch(e -> ((Primitive) e).getValue().equals(EHR_ID_1)));
     assertTrue(
         ehrMatches.getValues().stream()
-            .anyMatch(e -> ((SimpleValue) e).getValue().equals(EHR_ID_2)));
+            .anyMatch(e -> ((Primitive) e).getValue().equals(EHR_ID_2)));
 
-    MatchesOperatorDto templatesMatches = (MatchesOperatorDto) conditionDto0.getValues().get(1);
+    MatchesCondition templatesMatches = (MatchesCondition) conditionDto0.getValues().get(1);
     assertThat(templatesMatches.getValues().size(), is(1));
     assertTrue(
         templatesMatches.getValues().stream()
-            .anyMatch(t -> ((SimpleValue) t).getValue().equals(CORONA_TEMPLATE)));
+            .anyMatch(t -> ((Primitive) t).getValue().equals(CORONA_TEMPLATE)));
   }
 
   @Test
@@ -1616,7 +1613,7 @@ public class ProjectServiceTest {
 
   @Test
   public void getExportResponseBodyAsJsonTest() {
-    AqlDto aqlDto = new AqlToDtoParser().parse(QUERY_5);
+    AqlQuery aqlDto = AqlQueryParser.parse(QUERY_5);
     when(templateService.createSelectCompositionQuery(Mockito.any())).thenReturn(aqlDto);
     projectService.getExportResponseBody("select * from dummy", 2L, "approvedCoordinatorId", ExportType.json, true);
     Mockito.verify(cohortService, times(1)).executeCohort(Mockito.any(Cohort.class), Mockito.eq(false));

@@ -1,7 +1,7 @@
 package de.vitagroup.num.service.policy;
 
 import de.vitagroup.num.service.exception.SystemException;
-import org.ehrbase.aql.dto.AqlDto;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -19,7 +19,7 @@ public class EuropeanConsentPolicyTest {
   @Test(expected = SystemException.class)
   public void applyAqlDtoIsNull() {
     EuropeanConsentPolicy europeanConsentPolicy = EuropeanConsentPolicy.builder().build();
-    AqlDto aqlDto = new AqlDto();
+    AqlQuery aqlDto = new AqlQuery();
     when(europeanConsentPolicy.apply(aqlDto))
             .thenThrow(new SystemException(EhrPolicy.class, CANNOT_CHECK_CONSENT_FOR_DATA_USAGE_OUTSIDE_THE_EUROPEAN_UNION_OID_NOT_CONFIGURED));
     europeanConsentPolicy.apply(aqlDto);

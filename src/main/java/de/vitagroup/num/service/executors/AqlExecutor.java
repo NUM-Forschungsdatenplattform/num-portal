@@ -5,23 +5,20 @@ import de.vitagroup.num.properties.ConsentProperties;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.policy.EuropeanConsentPolicy;
 import de.vitagroup.num.service.policy.ProjectPolicyService;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ehrbase.aql.binder.AqlBinder;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.parser.AqlToDtoParser;
-import org.ehrbase.aql.util.AqlUtil;
-import org.ehrbase.client.aql.parameter.ParameterValue;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
+import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
+import org.ehrbase.openehr.sdk.aql.util.AqlUtil;
+import org.ehrbase.openehr.sdk.generator.commons.aql.parameter.ParameterValue;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Slf4j
 @Service
@@ -52,7 +49,7 @@ public class AqlExecutor {
   }
 
   private void applyPolicy(CohortAql cohortAql) {
-    AqlDto aql = new AqlToDtoParser().parse(cohortAql.getQuery());
+    AqlQuery aql = AqlQueryParser.parse(cohortAql.getQuery());
     projectPolicyService.apply(
         aql,
         List.of(
@@ -60,7 +57,7 @@ public class AqlExecutor {
                 .oid(consentProperties.getAllowUsageOutsideEuOid())
                 .build()));
 
-    cohortAql.setQuery(new AqlBinder().bind(aql).getLeft().buildAql());
+    cohortAql.setQuery(AqlRenderer.render(aql));
   }
 
   private String addParameters(Map<String, Object> parameters, String query) {

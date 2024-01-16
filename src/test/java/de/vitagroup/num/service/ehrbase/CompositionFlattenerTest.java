@@ -1,23 +1,12 @@
 package de.vitagroup.num.service.ehrbase;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
 import com.nedap.archie.rm.archetyped.Archetyped;
 import com.nedap.archie.rm.composition.Composition;
 import de.vitagroup.num.service.exception.SystemException;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.xmlbeans.XmlException;
-import org.ehrbase.client.templateprovider.ClientTemplateProvider;
-import org.ehrbase.serialisation.jsonencoding.CanonicalJson;
+import org.ehrbase.openehr.sdk.client.templateprovider.ClientTemplateProvider;
+import org.ehrbase.openehr.sdk.serialisation.jsonencoding.CanonicalJson;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,10 +17,23 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.openehr.schemas.v1.TemplateDocument;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Optional;
+
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class CompositionFlattenerTest {
 
-  @Mock ClientTemplateProvider clientTemplateProvider;
+  @Mock
+  ClientTemplateProvider clientTemplateProvider;
 
   @InjectMocks private CompositionFlattener flattener;
 

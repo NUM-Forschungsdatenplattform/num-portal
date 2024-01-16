@@ -15,22 +15,24 @@ import com.nedap.archie.rm.datavalues.quantity.datetime.DvDate;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvDateTime;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvDuration;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvTime;
+import com.nedap.archie.rm.support.identification.ObjectVersionId;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.service.UserDetailsService;
+import de.vitagroup.num.service.util.AqlQueryConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.ehrbase.aql.binder.AqlBinder;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.containment.ContainmentDto;
-import org.ehrbase.aql.dto.orderby.OrderByExpressionDto;
-import org.ehrbase.aql.dto.orderby.OrderByExpressionSymbol;
-import org.ehrbase.aql.dto.select.SelectDto;
-import org.ehrbase.aql.dto.select.SelectFieldDto;
-import org.ehrbase.client.openehrclient.VersionUid;
-import org.ehrbase.client.openehrclient.defaultrestclient.TemporalAccessorDeSerializer;
-import org.ehrbase.client.openehrclient.defaultrestclient.VersionUidDeSerializer;
-import org.ehrbase.serialisation.jsonencoding.ArchieObjectMapperProvider;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentClassExpression;
+import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
+import org.ehrbase.openehr.sdk.aql.dto.orderby.OrderByExpression;
+import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
+import org.ehrbase.openehr.sdk.aql.dto.select.SelectClause;
+import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
+import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
+import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.TemporalAccessorDeSerializer;
+import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.VersionUidDeSerializer;
+import org.ehrbase.openehr.sdk.serialisation.jsonencoding.ArchieObjectMapperProvider;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -45,10 +47,6 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class ParameterService {
-
-  private static final String SELECT = "Select";
-
-  private static final String SELECT_DISTINCT = "Select distinct";
 
   private static final String VALUE_DEFINING_CODE = "/value/defining_code/code_string";
 
@@ -73,7 +71,7 @@ public class ParameterService {
   private static ObjectMapper buildAqlObjectMapper() {
     var objectMapper = ArchieObjectMapperProvider.getObjectMapper().copy();
     var module = new SimpleModule("openEHR", new Version(1, 0, 0, null, null, null));
-    module.addDeserializer(VersionUid.class, new VersionUidDeSerializer());
+    module.addDeserializer(ObjectVersionId.class, new VersionUidDeSerializer());
     module.addDeserializer(TemporalAccessor.class, new TemporalAccessorDeSerializer());
     objectMapper.registerModule(module);
     return objectMapper;
@@ -82,7 +80,6 @@ public class ParameterService {
   @CachePut(value = PARAMETERS_CACHE, key = "#aqlPath")
   public ParameterOptionsDto getParameterValues(String userId, String aqlPath, String archetypeId) {
     userDetailsService.checkIsUserApproved(userId);
-
     if (aqlPath.endsWith(VALUE_VALUE)) {
       return getParameters(aqlPath, archetypeId, VALUE_VALUE);
     } else if (aqlPath.endsWith(VALUE_MAGNITUDE)) {
@@ -110,9 +107,14 @@ public class ParameterService {
   }
 
   private ParameterOptionsDto getParameters(String aqlPath, String archetypeId, String postfix) {
-    var query =
-        createQueryString(aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
-
+    String query;
+    if(aqlPath.startsWith("/")) {
+      query =
+              createQueryString(aqlPath.substring(1, aqlPath.length() - postfix.length()), archetypeId);
+    } else {
+      query =
+              createQueryString(aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
+    }
     try {
       log.info(
           String.format(
@@ -173,31 +175,45 @@ public class ParameterService {
 
   /** Create the aql query for retrieving all distinct existing values of a certain aql path */
   private String createQueryString(String aqlPath, String archetypeId) {
-    var aql = new AqlDto();
+    var aql = new AqlQuery();
 
-    var selectFieldDto = new SelectFieldDto();
-    selectFieldDto.setAqlPath(aqlPath);
-    selectFieldDto.setContainmentId(1);
+    ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
+    containmentClassExpression.setIdentifier("c0");
+    IdentifiedPath path = new IdentifiedPath();
+    path.setPath(AqlObjectPath.parse(aqlPath));
+    path.setRoot(containmentClassExpression);
 
-    var select = new SelectDto();
-    select.setStatement(List.of(selectFieldDto));
+    // generate select expression
+    SelectClause selectClause = new SelectClause();
+    SelectExpression se = new SelectExpression();
+    se.setColumnExpression(path);
+    se.setAlias("F1");
+    selectClause.setStatement(List.of(se));
+    selectClause.setDistinct(true);
 
-    var contains = new ContainmentDto();
-    contains.getContainment().setArchetypeId(archetypeId);
-    contains.setId(1);
+    // generate from expression
+    ContainmentClassExpression from = new ContainmentClassExpression();
+    from.setType(AqlQueryConstants.EHR_TYPE);
+    from.setIdentifier(AqlQueryConstants.EHR_CONTAINMENT_IDENTIFIER);
 
-    var orderByExpressionDto = new OrderByExpressionDto();
-    orderByExpressionDto.setStatement(selectFieldDto);
-    orderByExpressionDto.setSymbol(OrderByExpressionSymbol.ASC);
+    // generate contains expression
+    ContainmentClassExpression contains = new ContainmentClassExpression();
+    contains.setType(StringUtils.substringBetween(archetypeId, "openEHR-EHR-", "."));
+    contains.setIdentifier("c0"+"[" + archetypeId + "]");
 
-    List<OrderByExpressionDto> orderByList = new LinkedList<>();
+    from.setContains(contains);
+
+    var orderByExpressionDto = new OrderByExpression();
+    orderByExpressionDto.setStatement(path);
+    orderByExpressionDto.setSymbol(OrderByExpression.OrderByDirection.ASC);
+
+    List<OrderByExpression> orderByList = new LinkedList<>();
     orderByList.add(orderByExpressionDto);
-    aql.setSelect(select);
-    aql.setContains(contains);
+    aql.setSelect(selectClause);
+    aql.setFrom(from);
     aql.setOrderBy(orderByList);
 
-    String query = new AqlBinder().bind(aql).getLeft().buildAql();
-    return insertSelect(query);
+    return AqlRenderer.render(aql);
   }
 
   private void convertDvCodedText(DvCodedText data, ParameterOptionsDto dto, String postfix) {
@@ -239,9 +255,5 @@ public class ParameterService {
 
   private void convertTime(ParameterOptionsDto dto) {
     dto.setType("DV_TIME");
-  }
-  private String insertSelect(String query) {
-    var result = StringUtils.substringAfter(query, SELECT);
-    return new StringBuilder(result).insert(0, SELECT_DISTINCT).toString();
   }
 }

@@ -5,20 +5,24 @@ import de.vitagroup.num.mapper.TemplateMapper;
 import de.vitagroup.num.service.ehrbase.EhrBaseService;
 import de.vitagroup.num.service.exception.BadRequestException;
 import de.vitagroup.num.service.exception.SystemException;
+import de.vitagroup.num.service.util.AqlQueryConstants;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.util.Strings;
-import org.ehrbase.aql.dto.AqlDto;
-import org.ehrbase.aql.dto.EhrDto;
-import org.ehrbase.aql.dto.select.SelectDto;
-import org.ehrbase.aql.dto.select.SelectFieldDto;
-import org.ehrbase.aql.dto.select.SelectStatementDto;
 import org.ehrbase.aqleditor.dto.containment.ContainmentDto;
 import org.ehrbase.aqleditor.service.AqlEditorContainmentService;
-import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
+import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
+import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentClassExpression;
+import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
+import org.ehrbase.openehr.sdk.aql.dto.operand.StringPrimitive;
+import org.ehrbase.openehr.sdk.aql.dto.path.AndOperatorPredicate;
+import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPathUtil;
+import org.ehrbase.openehr.sdk.aql.dto.path.ComparisonOperatorPredicate;
+import org.ehrbase.openehr.sdk.aql.dto.select.SelectClause;
+import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
+import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,10 +41,6 @@ public class TemplateService {
 
   private final AqlEditorContainmentService aqlEditorContainmentService;
 
-  private static final int COMPOSITION_CONTAINMENT_ID = 1;
-  private static final int EHR_CONTAINMENT_ID = 0;
-  private static final String EHR_CONTAINMENT_IDENTIFIER = "e";
-
   /**
    * Retrieves a list of all available templates metadata information
    *
@@ -55,7 +55,7 @@ public class TemplateService {
         .collect(Collectors.toList());
   }
 
-  public AqlDto createSelectCompositionQuery(String templateId) {
+  public AqlQuery createSelectCompositionQuery(String templateId) {
 
     try {
       ContainmentDto containmentDto = aqlEditorContainmentService.buildContainment(templateId);
@@ -70,31 +70,40 @@ public class TemplateService {
     }
   }
 
-  private AqlDto createQuery(String archetypeId) {
-    org.ehrbase.aql.dto.containment.ContainmentDto contains =
-        new org.ehrbase.aql.dto.containment.ContainmentDto();
-    contains.getContainment().setArchetypeId(archetypeId);
-    contains.setId(COMPOSITION_CONTAINMENT_ID);
+  private AqlQuery createQuery(String archetypeId) {
+    ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
+    containmentClassExpression.setType(AqlQueryConstants.COMPOSITION_TYPE);
+    containmentClassExpression.setIdentifier(AqlQueryConstants.COMPOSITION_CONTAINMENT_IDENTIFIER);
+    IdentifiedPath identifiedPath = new IdentifiedPath();
+    identifiedPath.setRoot(containmentClassExpression);
 
-    SelectFieldDto fieldDto = new SelectFieldDto();
-    fieldDto.setContainmentId(COMPOSITION_CONTAINMENT_ID);
-    fieldDto.setAqlPath(Strings.EMPTY);
+    // generate select expression
+    SelectClause selectClause = new SelectClause();
+    SelectExpression se = new SelectExpression();
+    se.setColumnExpression(identifiedPath);
+    se.setAlias("F1");
+    selectClause.setStatement(List.of(se));
 
-    SelectDto select = new SelectDto();
-    List<SelectStatementDto> fieldDtos = new LinkedList<>();
-    fieldDtos.add(fieldDto);
+    // generate from expression
+    ContainmentClassExpression from = new ContainmentClassExpression();
+    from.setType(AqlQueryConstants.EHR_TYPE);
+    from.setIdentifier(AqlQueryConstants.EHR_CONTAINMENT_IDENTIFIER);
 
-    select.setStatement(fieldDtos);
+    ContainmentClassExpression contains = new ContainmentClassExpression();
+    contains.setType(AqlQueryConstants.COMPOSITION_TYPE);
+    contains.setIdentifier(AqlQueryConstants.COMPOSITION_CONTAINMENT_IDENTIFIER);
 
-    EhrDto ehrDto = new EhrDto();
-    ehrDto.setContainmentId(EHR_CONTAINMENT_ID);
-    ehrDto.setIdentifier(EHR_CONTAINMENT_IDENTIFIER);
+    List<AndOperatorPredicate> fromPredList = new ArrayList<>();
+    ComparisonOperatorPredicate fromPred = new ComparisonOperatorPredicate(AqlObjectPathUtil.ARCHETYPE_NODE_ID,
+            ComparisonOperatorPredicate.PredicateComparisonOperator.EQ, new StringPrimitive(archetypeId));
+    fromPredList.add(new AndOperatorPredicate(List.of(fromPred)));
+    contains.setPredicates(fromPredList);
+    from.setContains(contains);
 
-    AqlDto dto = new AqlDto();
-    dto.setEhr(ehrDto);
-    dto.setSelect(select);
-    dto.setContains(contains);
+    AqlQuery aqlQuery = new AqlQuery();
+    aqlQuery.setSelect(selectClause);
+    aqlQuery.setFrom(from);
 
-    return dto;
+    return aqlQuery;
   }
 }

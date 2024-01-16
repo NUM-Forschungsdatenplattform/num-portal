@@ -2,7 +2,7 @@ package de.vitagroup.num.mapper;
 
 import de.vitagroup.num.domain.dto.TemplateInfoDto;
 import de.vitagroup.num.domain.dto.TemplateMetadataDto;
-import org.ehrbase.response.ehrscape.TemplateMetaDataDto;
+import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
