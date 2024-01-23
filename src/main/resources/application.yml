@@ -146,6 +146,9 @@ ehrbase:
   rest-api-url: http://localhost:8080/ehrbase/
   username: ehrbase-user
   password: SuperSecretPassword
+  adminUsername: ehrbase-admin
+  adminPassword: EvenMoreSecretPassword
+
 
 cors:
   allowedOrigins:
