@@ -1,17 +1,24 @@
 package de.vitagroup.num.service;
 
 import de.vitagroup.num.domain.model.SetupType;
+import de.vitagroup.num.properties.EhrBaseProperties;
 import de.vitagroup.num.service.html.HtmlContent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAmount;
+import java.time.temporal.TemporalUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -27,6 +34,8 @@ import static de.vitagroup.num.domain.templates.ExceptionsTemplate.EXCEPTION_IN_
 public class SetupHealthiness {
 
     private final HtmlContent htmlContent;
+
+    private final EhrBaseProperties ehrBaseProperties;
 
     @Value("${num.systemStatusUrl}")
     private String systemStatusUrl;
@@ -146,6 +155,8 @@ public class SetupHealthiness {
             con.setRequestMethod("GET");
             con.setConnectTimeout(5000);
             con.setReadTimeout(5000);
+            con.setRequestProperty("Authorization", getBasicAuthenticationHeader(ehrBaseProperties.getAdminUsername(),
+                    ehrBaseProperties.getAdminPassword()));
             if(con.getResponseCode() == 200) {
                 return Strings.EMPTY;
             } else {
@@ -158,6 +169,11 @@ public class SetupHealthiness {
             log.error(error);
         }
         return error;
+    }
+
+    private static final String getBasicAuthenticationHeader(String username, String password) {
+        String valueToEncode = username + ":" + password;
+        return "Basic " + Base64.encodeBase64String(valueToEncode.getBytes(StandardCharsets.UTF_8));
     }
 
 }

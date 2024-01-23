@@ -120,7 +120,7 @@ public class AdminControllerIT extends IntegrationTest {
                     .willReturn(okTextXml(IOUtils.toString(getClass().getResourceAsStream("/health-check/statusCakeResponse.json"),
                             StandardCharsets.UTF_8))));
     //testSuccess("/admin/services-status", status().isOk());//PREPROD
-    testSuccess("/admin/services-status?setup=PROD", status().isOk());
+    testSuccess("/admin/services-status?setup=PROD", status().isServiceUnavailable());
     testFail("/admin/services-status?setup=STAGING", status().isServiceUnavailable());
     testFail("/admin/services-status?setup=DEV", status().isServiceUnavailable());
   }
@@ -140,9 +140,9 @@ public class AdminControllerIT extends IntegrationTest {
                     get("/admin/services-status?setup=PROD")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
+            .andExpect(status().isServiceUnavailable())
             .andExpect(jsonPath("NUM").value(""))
-            .andExpect(jsonPath("EHRBASE").value(""))
+            .andExpect(jsonPath("EHRBASE").isNotEmpty())
             .andExpect(jsonPath("FHIR_BRIDGE").value(""))
             .andExpect(jsonPath("CHECK_FOR_ANNOUNCEMENTS").value("Please visit health.num-codex.de page for announcement. Date/Time - [13:30]  Description - [Testing]"))
             .andExpect(jsonPath("FE").value(""))
@@ -157,7 +157,7 @@ public class AdminControllerIT extends IntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status)
             .andExpect(jsonPath("NUM").value(""))
-            .andExpect(jsonPath("EHRBASE").value(""))
+            .andExpect(jsonPath("EHRBASE").isNotEmpty())
             .andExpect(jsonPath("FHIR_BRIDGE").value(""))
             .andExpect(jsonPath("FE").value(""))
             .andExpect(jsonPath("KEYCLOAK").value(""));

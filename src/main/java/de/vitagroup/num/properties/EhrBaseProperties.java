@@ -14,4 +14,10 @@ public class EhrBaseProperties {
   private String username;
 
   private String password;
+
+  private String adminUsername;
+
+  private String adminPassword;
+
+
 }

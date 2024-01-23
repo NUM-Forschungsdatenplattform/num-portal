@@ -58,6 +58,8 @@ ehrbase:
   rest-api-url: ${EHRBASE_ENDPOINT}/ehrbase/
   username: ${EHRBASE_USER}
   password: ${EHRBASE_PASSWORD}
+  adminUsername: ${EHRBASE_ADMIN_USER}
+  adminPassword: ${EHRBASE_ADMIN_PASSWORD}
 
 privacy:
   minHits: ${PRIVACY_MIN_HITS}
