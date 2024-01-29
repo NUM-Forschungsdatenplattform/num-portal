@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
@@ -284,8 +285,7 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);
     }
     @Override
-    protected ResponseEntity<Object> handleBindException(BindException exception, HttpHeaders headers,
-                                                         HttpStatus status, WebRequest request) {
+    protected ResponseEntity<Object> handleBindException(BindException exception, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
 
         Map<String, String> errors = new HashMap<>();
         exception.getFieldErrors()

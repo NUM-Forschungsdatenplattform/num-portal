@@ -4,6 +4,9 @@ import de.vitagroup.num.domain.model.Project;
 import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.domain.dto.Language;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -13,9 +16,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.*;
 import java.util.Collections;
 import java.util.List;
 

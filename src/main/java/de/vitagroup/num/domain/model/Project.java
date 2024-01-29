@@ -14,7 +14,7 @@ import org.hibernate.annotations.JoinColumnOrFormula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -91,7 +91,6 @@ public class Project implements Serializable {
   @ToString.Exclude
   @OneToMany(fetch = FetchType.LAZY)
   @JoinColumnOrFormula(column = @JoinColumn(name = "property", referencedColumnName = "status", insertable = false, updatable = false))
-  @NotFound(action = NotFoundAction.IGNORE)
   private Set<Translation> translations = new HashSet<>();
 
   @ToString.Exclude

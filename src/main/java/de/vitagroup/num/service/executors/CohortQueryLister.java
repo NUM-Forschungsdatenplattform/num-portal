@@ -7,7 +7,7 @@ import de.vitagroup.num.domain.model.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

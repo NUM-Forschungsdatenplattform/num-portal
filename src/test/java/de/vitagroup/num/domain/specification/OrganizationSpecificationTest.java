@@ -7,10 +7,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.criteria.*;
 import java.util.HashMap;
 import java.util.Map;
 

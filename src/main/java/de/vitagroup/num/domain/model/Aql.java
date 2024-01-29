@@ -2,19 +2,15 @@ package de.vitagroup.num.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.vitagroup.num.domain.model.admin.UserDetails;
-import java.io.Serializable;
-import java.time.OffsetDateTime;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
+
+import java.io.Serializable;
+import java.time.OffsetDateTime;
 
 @Entity
 @Builder

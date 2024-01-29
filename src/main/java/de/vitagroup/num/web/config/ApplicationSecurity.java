@@ -2,7 +2,9 @@ package de.vitagroup.num.web.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -21,18 +23,14 @@ public class ApplicationSecurity {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
     httpSecurity
-            .httpBasic().disable()
-            .formLogin().disable()
-            .authorizeHttpRequests()
-            .anyRequest().authenticated()
-            .and()
-            .oauth2ResourceServer().jwt()
-                .jwtAuthenticationConverter(new AuthorizationConverter())
-                .and()
-            .and()
-            .sessionManagement(sessionManagement ->
-                               sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .cors();
+            .httpBasic(basicConfigurer -> basicConfigurer.disable())
+            .formLogin(formLoginConfigurer -> formLoginConfigurer.disable());
+    httpSecurity
+            .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
+                    jwt.jwtAuthenticationConverter(new AuthorizationConverter())))
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .cors(Customizer.withDefaults());
     return httpSecurity.build();
   }
     @Bean
@@ -45,7 +43,5 @@ public class ApplicationSecurity {
                         .requestMatchers(HttpMethod.GET, "/content/metrics")
                         .requestMatchers(HttpMethod.GET, "/actuator/health/**")
                         .requestMatchers(HttpMethod.GET, "/actuator/info**");
-
-
     }
 }

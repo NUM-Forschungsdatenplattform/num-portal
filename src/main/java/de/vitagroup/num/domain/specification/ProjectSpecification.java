@@ -7,12 +7,12 @@ import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.dto.SearchCriteria;
 import de.vitagroup.num.domain.dto.SearchFilter;
+import jakarta.persistence.criteria.*;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.persistence.criteria.*;
 import java.util.*;
 import java.util.stream.Collectors;
 

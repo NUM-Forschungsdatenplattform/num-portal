@@ -1,11 +1,11 @@
 package de.vitagroup.num.attachment.domain.model;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
 

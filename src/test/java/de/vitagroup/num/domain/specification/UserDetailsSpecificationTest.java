@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import javax.persistence.criteria.*;
+import jakarta.persistence.criteria.*;
 import java.util.HashSet;
 import java.util.Set;
 
