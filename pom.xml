@@ -19,7 +19,7 @@
   <properties>
     <commons-collections4.version>4.4</commons-collections4.version>
     <commons-io.version>2.15.1</commons-io.version>
-    <ehr-sdk.version>v2.6.0</ehr-sdk.version>
+    <ehr-sdk.version>2.6.0</ehr-sdk.version>
     <!-- aql-editor-backend-starter repo was archived on August 2023 -->
     <num-aql-editor-backend-starter.version>1.0.4</num-aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
@@ -151,12 +151,12 @@
       <artifactId>spring-boot-configuration-processor</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.ehrbase.openEHR_SDK</groupId>
+      <groupId>org.ehrbase.openehr.sdk</groupId>
       <artifactId>client</artifactId>
       <version>${ehr-sdk.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.github.ehrbase.openEHR_SDK</groupId>
+      <groupId>org.ehrbase.openehr.sdk</groupId>
       <artifactId>aql</artifactId>
       <version>${ehr-sdk.version}</version>
     </dependency>
