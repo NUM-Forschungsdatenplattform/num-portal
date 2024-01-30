@@ -165,9 +165,25 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status( HttpStatus.BAD_REQUEST ).body( errorDetails );
     }
 
-    @ExceptionHandler({ForbiddenException.class, AccessDeniedException.class})
-    public ResponseEntity<ErrorDetails> handleForbiddenErrors(
-            ForbiddenException exception) {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorDetails> handleAccessDeniedException(AccessDeniedException exception) {
+
+        var description = exception.getMessage();
+        var errors = Map.of( "Error Message",
+                nonNull(exception.getMessage()) ? exception.getMessage() : description);
+        ErrorDetails errorDetails = ErrorDetails
+                .builder()
+                .messageId(-1)
+                .argumentsList(new ArrayList<>())
+                .message(exception.getMessage())
+                .details(errors)
+                .build();
+        log.debug(exception.getMessage(), exception);
+        return new ResponseEntity<>(errorDetails, new HttpHeaders(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorDetails> handleForbiddenErrors(ForbiddenException exception) {
 
         var className = nonNull(exception.getEntity()) ? exception.getEntity().getSimpleName() : null;
         var description = exception.getMessage();
