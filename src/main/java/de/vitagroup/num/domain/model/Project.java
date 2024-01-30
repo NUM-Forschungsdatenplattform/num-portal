@@ -11,8 +11,6 @@ import lombok.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.hibernate.annotations.JoinColumnOrFormula;
-import org.hibernate.annotations.NotFound;
-import org.hibernate.annotations.NotFoundAction;
 
 import jakarta.persistence.*;
 import java.io.Serializable;

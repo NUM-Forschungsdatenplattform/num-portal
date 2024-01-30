@@ -5,7 +5,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesMapper;
-import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesRegistrationAdapter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

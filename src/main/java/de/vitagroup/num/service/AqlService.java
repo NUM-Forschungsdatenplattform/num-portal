@@ -60,8 +60,7 @@ public class AqlService {
   private final ObjectMapper mapper;
   private final UserDetailsService userDetailsService;
   private final PrivacyProperties privacyProperties;
-  @Autowired
-  private AqlEditorAqlService aqlEditorAqlService;
+  private final AqlEditorAqlService aqlEditorAqlService;
 
   private final UserService userService;
 
