@@ -1,5 +1,9 @@
 package de.vitagroup.num.service.email;
 
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,11 +13,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.mail.javamail.JavaMailSender;
-
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.MimeMessage;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EmailServiceTest {

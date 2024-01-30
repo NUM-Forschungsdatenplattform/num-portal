@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.vitagroup.num.domain.model.Organization;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.persistence.*;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +18,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDetails implements Serializable {
 
-  @Id private String userId;
+  @Id
+  private String userId;
 
   @ManyToOne
   @JsonBackReference

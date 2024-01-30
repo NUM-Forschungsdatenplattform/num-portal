@@ -26,12 +26,13 @@ import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
 import org.ehrbase.aqleditor.dto.aql.Result;
 import org.ehrbase.aqleditor.service.AqlEditorAqlService;
 import org.ehrbase.openehr.sdk.aql.parser.AqlParseException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;

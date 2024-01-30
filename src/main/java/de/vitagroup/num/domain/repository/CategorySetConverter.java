@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vitagroup.num.domain.model.ProjectCategories;
 import java.io.IOException;
 import java.util.Set;
-import javax.persistence.AttributeConverter;
-import javax.validation.constraints.NotNull;
+
+import jakarta.persistence.AttributeConverter;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

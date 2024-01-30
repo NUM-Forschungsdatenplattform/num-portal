@@ -5,9 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -164,9 +166,25 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status( HttpStatus.BAD_REQUEST ).body( errorDetails );
     }
 
-    @ExceptionHandler({ForbiddenException.class, AccessDeniedException.class})
-    public ResponseEntity<ErrorDetails> handleForbiddenErrors(
-            ForbiddenException exception) {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorDetails> handleAccessDeniedException(AccessDeniedException exception) {
+
+        var description = exception.getMessage();
+        var errors = Map.of( "Error Message",
+                nonNull(exception.getMessage()) ? exception.getMessage() : description);
+        ErrorDetails errorDetails = ErrorDetails
+                .builder()
+                .messageId(-1)
+                .argumentsList(new ArrayList<>())
+                .message(exception.getMessage())
+                .details(errors)
+                .build();
+        log.debug(exception.getMessage(), exception);
+        return new ResponseEntity<>(errorDetails, new HttpHeaders(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorDetails> handleForbiddenErrors(ForbiddenException exception) {
 
         var className = nonNull(exception.getEntity()) ? exception.getEntity().getSimpleName() : null;
         var description = exception.getMessage();
@@ -284,11 +302,9 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);
     }
     @Override
-    protected ResponseEntity<Object> handleBindException(BindException exception, HttpHeaders headers,
-                                                         HttpStatus status, WebRequest request) {
-
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         Map<String, String> errors = new HashMap<>();
-        exception.getFieldErrors()
+        ex.getFieldErrors()
                 .forEach( error -> errors.put( error.getField(), error.getDefaultMessage() ) );
 
         ErrorDetails errorDetails = ErrorDetails

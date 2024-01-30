@@ -5,15 +5,15 @@ import de.vitagroup.num.domain.model.Organization;
 import de.vitagroup.num.domain.model.Project;
 import de.vitagroup.num.domain.model.admin.UserDetails;
 import de.vitagroup.num.domain.specification.ProjectSpecification;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

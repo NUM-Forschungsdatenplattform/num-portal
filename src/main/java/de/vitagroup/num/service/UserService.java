@@ -39,8 +39,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
-import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;

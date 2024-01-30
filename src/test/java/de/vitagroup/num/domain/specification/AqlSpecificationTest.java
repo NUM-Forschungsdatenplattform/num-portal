@@ -10,7 +10,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.domain.Sort;
 
-import javax.persistence.criteria.*;
+import jakarta.persistence.criteria.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

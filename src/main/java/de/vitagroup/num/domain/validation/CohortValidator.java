@@ -5,7 +5,7 @@ import de.vitagroup.num.domain.model.Operator;
 import de.vitagroup.num.domain.model.Type;
 import org.apache.commons.collections4.CollectionUtils;
 
-import javax.validation.*;
+import jakarta.validation.*;
 import java.util.ArrayDeque;
 import java.util.Queue;
 

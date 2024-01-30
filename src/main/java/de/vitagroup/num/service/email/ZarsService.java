@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
