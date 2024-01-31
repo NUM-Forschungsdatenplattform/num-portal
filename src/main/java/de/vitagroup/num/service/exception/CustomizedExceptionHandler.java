@@ -322,9 +322,7 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
         for (final var validation : ex.getAllValidationResults()) {
             if (validation instanceof ParameterErrors) {
                 ParameterErrors parameterErrors = (ParameterErrors) validation;
-                parameterErrors.getFieldErrors().forEach(fieldError -> {
-                    errors.put(fieldError.getField(), fieldError.getDefaultMessage());
-                });
+                parameterErrors.getFieldErrors().forEach(fieldError -> errors.put(fieldError.getField(), fieldError.getDefaultMessage()));
             } else {
                 final String parameterName = validation.getMethodParameter().getParameterName();
                 validation
