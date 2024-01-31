@@ -16,6 +16,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class ParameterOptionsDto {
 
+  @Builder.Default
   private Map<String, Object> options = new LinkedHashMap<>();
   private String aqlPath;
   private String archetypeId;

@@ -12,7 +12,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.1.8</version>
+    <version>3.2.2</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -21,7 +21,7 @@
     <commons-io.version>2.15.1</commons-io.version>
     <ehr-sdk.version>2.6.0</ehr-sdk.version>
     <!-- aql-editor-backend-starter repo was archived on August 2023 -->
-    <num-aql-editor-backend-starter.version>1.0.4</num-aql-editor-backend-starter.version>
+    <num-aql-editor-backend-starter.version>1.0.5</num-aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
     <modelmapper.version>3.2.0</modelmapper.version>
     <springdoc.version>2.3.0</springdoc.version>
@@ -29,8 +29,8 @@
     <commons-csv.version>1.10.0</commons-csv.version>
     <jacoco.version>0.8.11</jacoco.version>
     <dependency-check.version>9.0.8</dependency-check.version>
-    <failsafe.version>3.2.2</failsafe.version>
-    <surefire.version>3.2.2</surefire.version>
+    <failsafe.version>3.2.5</failsafe.version>
+    <surefire.version>3.2.5</surefire.version>
     <ehcache.version>3.10.8</ehcache.version>
     <git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
     <skip.integration.tests>false</skip.integration.tests>
@@ -41,7 +41,7 @@
     <wiremock-standalone.version>3.2.0</wiremock-standalone.version>
     <testcontainers.version>1.19.3</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
-    <spring.cloud-version>2022.0.3</spring.cloud-version>
+    <spring.cloud-version>2023.0.0</spring.cloud-version>
   </properties>
 
   <repositories>

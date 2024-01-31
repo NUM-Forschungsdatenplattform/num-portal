@@ -49,7 +49,6 @@ public class User {
   private String email;
 
   @NotNull
-  @NotEmpty
   @Schema(description = "The timestamp of user registration")
   private Long createdTimestamp;
 

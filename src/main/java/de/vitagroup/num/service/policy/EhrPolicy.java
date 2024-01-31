@@ -1,11 +1,6 @@
 package de.vitagroup.num.service.policy;
 
 import de.vitagroup.num.service.exception.SystemException;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
 import de.vitagroup.num.service.util.AqlQueryConstants;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +10,10 @@ import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentClassExpression;
 import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
 import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
 import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
-import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.COHORT_SIZE_CANNOT_BE_0;
 import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_AQL;

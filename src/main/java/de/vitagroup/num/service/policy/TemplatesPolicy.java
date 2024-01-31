@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.ehrbase.openehr.sdk.aql.dto.operand.Primitive;
-import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 
 import java.util.List;
 import java.util.Map;

@@ -76,7 +76,7 @@ public class ProjectController extends CustomizedExceptionHandler {
   @Operation(description = "Retrieves a project by id")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<ProjectDto> getProjectById(@AuthenticationPrincipal @NotNull Jwt principal,
-                                                   @NotNull @NotEmpty @PathVariable Long id) {
+                                                   @NotNull @PathVariable Long id) {
     Optional<Project> project = projectService.getProjectById(principal.getSubject(), id);
 
     if (project.isEmpty()) {
@@ -161,7 +161,7 @@ public class ProjectController extends CustomizedExceptionHandler {
   public ResponseEntity<String> executeAql(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid RawQueryDto query,
-      @NotNull @NotEmpty @PathVariable Long projectId,
+      @NotNull @PathVariable Long projectId,
       @RequestParam(required = false) Boolean defaultConfiguration) {
     return ResponseEntity.ok(
         projectService.retrieveData(
@@ -190,7 +190,7 @@ public class ProjectController extends CustomizedExceptionHandler {
   public ResponseEntity<StreamingResponseBody> exportResults(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @RequestBody @Valid RawQueryDto query,
-      @NotNull @NotEmpty @PathVariable Long projectId,
+      @NotNull @PathVariable Long projectId,
       @RequestParam(required = false) Boolean defaultConfiguration,
       @RequestParam(required = false)
       @Parameter( description = "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
@@ -228,7 +228,7 @@ public class ProjectController extends CustomizedExceptionHandler {
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<List<CommentDto>> getComments(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @NotEmpty @PathVariable Long projectId) {
+      @NotNull @PathVariable Long projectId) {
     return ResponseEntity.ok(
         commentService.getComments(projectId, principal.getSubject()).stream()
             .map(commentMapper::convertToDto)
@@ -241,8 +241,8 @@ public class ProjectController extends CustomizedExceptionHandler {
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<CommentDto> addComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @NotEmpty @PathVariable Long projectId,
-      @Valid @NotNull @RequestBody CommentDto commentDto) {
+      @NotNull @PathVariable Long projectId,
+      @Valid @RequestBody CommentDto commentDto) {
 
     Comment comment =
         commentService.createComment(
@@ -257,8 +257,8 @@ public class ProjectController extends CustomizedExceptionHandler {
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public ResponseEntity<CommentDto> updateComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @NotEmpty @PathVariable Long projectId,
-      @NotNull @NotEmpty @PathVariable Long commentId,
+      @NotNull @PathVariable Long projectId,
+      @NotNull @PathVariable Long commentId,
       @Valid @NotNull @RequestBody CommentDto commentDto) {
 
     Comment comment =
@@ -276,8 +276,8 @@ public class ProjectController extends CustomizedExceptionHandler {
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
   public void deleteComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @NotNull @NotEmpty @PathVariable Long projectId,
-      @NotNull @NotEmpty @PathVariable Long commentId) {
+      @NotNull @PathVariable Long projectId,
+      @NotNull @PathVariable Long commentId) {
     commentService.deleteComment(commentId, projectId, principal.getSubject());
   }
 

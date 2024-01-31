@@ -26,6 +26,7 @@ public class UserDetails implements Serializable {
   @JoinColumn(name = "organization_id")
   private Organization organization;
 
+  @Builder.Default
   private boolean approved = false;
 
   private LocalDateTime createdDate;

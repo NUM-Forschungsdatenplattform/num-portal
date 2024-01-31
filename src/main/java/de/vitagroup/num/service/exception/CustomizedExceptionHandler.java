@@ -8,10 +8,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.BindException;
+import org.springframework.validation.method.ParameterErrors;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.*;
@@ -313,5 +314,28 @@ public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
                 .details( errors )
                 .build();
         return ResponseEntity.status( HttpStatus.BAD_REQUEST ).body( errorDetails );
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHandlerMethodValidationException(HandlerMethodValidationException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        Map<String, String> errors = new HashMap<>();
+        for (final var validation : ex.getAllValidationResults()) {
+            if (validation instanceof ParameterErrors) {
+                ParameterErrors parameterErrors = (ParameterErrors) validation;
+                parameterErrors.getFieldErrors().forEach(fieldError -> errors.put(fieldError.getField(), fieldError.getDefaultMessage()));
+            } else {
+                final String parameterName = validation.getMethodParameter().getParameterName();
+                validation
+                        .getResolvableErrors()
+                        .forEach(
+                                error -> errors.put(parameterName, error.getDefaultMessage()));
+            }
+        }
+        ErrorDetails errorDetails = ErrorDetails
+                .builder()
+                .message("Validation failed")
+                .details(errors)
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);
     }
 }

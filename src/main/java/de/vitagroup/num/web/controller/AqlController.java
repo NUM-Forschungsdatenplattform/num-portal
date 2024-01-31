@@ -46,7 +46,7 @@ public class AqlController extends CustomizedExceptionHandler {
   @Operation(description = "Retrieves public or owned aql query by id.")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<AqlDto> getAqlById(
-      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @NotEmpty @PathVariable Long id) {
+      @AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable Long id) {
     return ResponseEntity.ok(
         mapper.convertToDto(aqlService.getAqlById(id, principal.getSubject())));
   }
@@ -68,7 +68,7 @@ public class AqlController extends CustomizedExceptionHandler {
   @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlDto> updateAql(
       @AuthenticationPrincipal @NotNull Jwt principal,
-      @PathVariable("id") Long aqlId,
+      @NotNull @PathVariable("id") Long aqlId,
       @Valid @NotNull @RequestBody AqlDto aqlDto) {
     var aql = aqlService.updateAql(mapper.convertToEntity(aqlDto), aqlId, principal.getSubject(), aqlDto.getCategoryId());
 
@@ -79,7 +79,7 @@ public class AqlController extends CustomizedExceptionHandler {
   @DeleteMapping("/{id}")
   @Operation(description = "Delete AQL criteria")
   @PreAuthorize(Role.CRITERIA_EDITOR_OR_SUPER_ADMIN)
-  public void deleteAql(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable Long id) {
+  public void deleteAql(@AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable Long id) {
     aqlService.deleteById(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 

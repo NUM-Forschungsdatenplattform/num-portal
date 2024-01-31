@@ -42,10 +42,10 @@ public abstract class IntegrationTest {
   private static final String EHR_BASE_URL = "/ehrbase/rest/openehr/v1/definition/template/adl1.4/";
 
   @ClassRule
-  public static PostgreSQLContainer postgreSQLContainer = NumPostgresqlContainer.getInstance("numportal");
+  public static PostgreSQLContainer<NumPostgresqlContainer> postgreSQLContainer = NumPostgresqlContainer.getInstance("numportal");
 
   @ClassRule
-  public static PostgreSQLContainer attachmentPostgreSQLContainer = AttachmentPostgresqlContainer.getInstance("num-attachment");
+  public static PostgreSQLContainer<AttachmentPostgresqlContainer> attachmentPostgreSQLContainer = AttachmentPostgresqlContainer.getInstance("num-attachment");
 
   @Autowired public MockMvc mockMvc;
   @Rule public WireMockRule wireMockRule = new WireMockRule(8099);

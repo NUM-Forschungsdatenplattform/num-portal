@@ -11,22 +11,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.*;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
+import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAmount;
-import java.time.temporal.TemporalUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ANNOUNCEMENT_IN_PLACE;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.EXCEPTION_IN_PARSING_PAGE;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 @Service

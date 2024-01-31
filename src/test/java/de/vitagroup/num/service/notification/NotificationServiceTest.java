@@ -12,8 +12,10 @@ import de.vitagroup.num.service.notification.dto.account.UserNameUpdateNotificat
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
@@ -38,15 +40,14 @@ public class NotificationServiceTest {
 
   @Before
   public void setUp() {
-    when((messageSource.getMessage(any()))).thenReturn("Any content");
+    when((numProperties.getUrl())).thenReturn("https://dev.num-codex.de/home");
+    when(messageSource.getMessage(any())).thenReturn("Any content");
     when((messageSource.getMessage(anyString(), any()))).thenReturn("Any content");
     when((messageSource.getMessage(any(), any(), any(), any(), any(), any(),any()))).thenReturn("Any content");
   }
 
   @Test
   public void shouldSendOneEmailPerNotification() {
-    when((numProperties.getUrl())).thenReturn("Portal url");
-
     notificationService.send(
         List.of(
             AccountApprovalNotification.builder().recipientEmail("john.doe@vita.ag").build(),
@@ -57,8 +58,7 @@ public class NotificationServiceTest {
 
   @Test
   public void shouldSendEmailsPerNotification() {
-    when((numProperties.getUrl())).thenReturn("Portal url");
-
+    when(messageSource.getMessage(anyString(), any(Object[].class))).thenReturn("Another body content");
     notificationService.send(
         List.of(
             ProjectStartNotification.builder().recipientEmail("john.doe@vita.ag").build(),
@@ -100,8 +100,7 @@ public class NotificationServiceTest {
 
   @Test
   public void shouldNotSendEmailsWhenRecipientMissing() {
-    when((numProperties.getUrl())).thenReturn("Portal url");
-
+    when(messageSource.getMessage(Mockito.eq("mail.project-pending-approval.body"), any(Object[].class))).thenReturn("Any body content");
     notificationService.send(
         List.of(
             ProjectStartNotification.builder().build(),
@@ -109,6 +108,7 @@ public class NotificationServiceTest {
             ProjectStatusChangeNotification.builder().build(),
             ProjectApprovalRequestNotification.builder()
                 .recipientEmail("ann.doe@vita.ag")
+                .projectId(9L)
                 .build()));
 
     verify(emailService, times(1)).sendEmail(anyString(), anyString(), anyString());

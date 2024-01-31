@@ -27,6 +27,7 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectDto {
 
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
   private Long id;
 
   @NotNull(message = "Project name cannot be null")

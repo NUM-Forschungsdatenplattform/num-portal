@@ -9,7 +9,6 @@ import de.vitagroup.num.service.exception.SystemException;
 import org.ehrbase.openehr.sdk.aql.parser.AqlParseException;
 import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
 import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.DefaultRestClient;
-import org.ehrbase.openehr.sdk.generator.commons.aql.field.AqlFieldImp;
 import org.ehrbase.openehr.sdk.generator.commons.aql.query.NativeQuery;
 import org.ehrbase.openehr.sdk.generator.commons.aql.query.Query;
 import org.ehrbase.openehr.sdk.generator.commons.aql.record.Record;

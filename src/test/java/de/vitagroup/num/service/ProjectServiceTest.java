@@ -165,18 +165,11 @@ public class ProjectServiceTest {
   }
 
   @Test
-  @Ignore(
-      value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/216 is fixed")
   public void shouldCorrectlyGenerateAliases() {
     String query =
         "Select c0 as F1 from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
 
     AqlQuery dto = AqlQueryParser.parse(query);
-
-//    SelectFieldDto selectFieldDto = new SelectFieldDto();
-//    selectFieldDto.setAqlPath(EhrFields.EHR_ID().getPath());
-//    selectFieldDto.setContainmentId(dto.getEhr().getContainmentId());
-//    dto.getSelect().getStatement().add(0, selectFieldDto);
 
     String editedQuery = AqlRenderer.render(dto);
 
