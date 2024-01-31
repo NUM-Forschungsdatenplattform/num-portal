@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.ehrbase.openehr.sdk.aql.dto.operand.Primitive;
-import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 
 import java.util.List;
 

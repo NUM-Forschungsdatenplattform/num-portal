@@ -18,7 +18,7 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 public class AqlDto {
 
-  @Schema(description = "The unique identifier", example = "1")
+  @Schema(description = "The unique identifier", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
   private Long id;
 
   @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The name of the aql")
@@ -56,6 +56,7 @@ public class AqlDto {
   private String query;
 
   @Schema(description = "Flag marking aql as being public")
+  @Builder.Default
   private boolean publicAql = true;
 
   @Schema(description = "The owner of the aql", hidden = true)
@@ -67,9 +68,9 @@ public class AqlDto {
   @Schema(description = "to for category data", hidden = true)
   private AqlCategoryDto category;
 
-  @Schema
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
   private OffsetDateTime createDate;
 
-  @Schema
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
   private OffsetDateTime modifiedDate;
 }

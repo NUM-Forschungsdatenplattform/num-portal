@@ -1,11 +1,11 @@
 package de.vitagroup.num.web.controller;
 
-import de.vitagroup.num.domain.model.Cohort;
-import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.domain.dto.CohortDto;
 import de.vitagroup.num.domain.dto.CohortGroupDto;
 import de.vitagroup.num.domain.dto.CohortSizeDto;
 import de.vitagroup.num.domain.dto.TemplateSizeRequestDto;
+import de.vitagroup.num.domain.model.Cohort;
+import de.vitagroup.num.domain.model.Roles;
 import de.vitagroup.num.mapper.CohortMapper;
 import de.vitagroup.num.service.CohortService;
 import de.vitagroup.num.service.exception.CustomizedExceptionHandler;
@@ -14,10 +14,11 @@ import de.vitagroup.num.service.logger.AuditLog;
 import de.vitagroup.num.web.config.Role;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -27,8 +28,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;

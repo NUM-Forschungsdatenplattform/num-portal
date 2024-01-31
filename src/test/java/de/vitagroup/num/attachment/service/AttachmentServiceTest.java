@@ -4,13 +4,12 @@ import de.vitagroup.num.attachment.AttachmentRepository;
 import de.vitagroup.num.attachment.domain.dto.AttachmentDto;
 import de.vitagroup.num.attachment.domain.dto.LightAttachmentDto;
 import de.vitagroup.num.attachment.domain.model.Attachment;
-import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.domain.model.Project;
 import de.vitagroup.num.domain.model.ProjectStatus;
 import de.vitagroup.num.domain.model.admin.UserDetails;
-import de.vitagroup.num.domain.repository.ProjectRepository;
 import de.vitagroup.num.service.ProjectService;
 import de.vitagroup.num.service.exception.BadRequestException;
+import de.vitagroup.num.service.exception.ForbiddenException;
 import de.vitagroup.num.service.exception.ResourceNotFound;
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,19 +24,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.ATTACHMENT_LIMIT_REACHED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DESCRIPTION_TOO_LONG;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.DOCUMENT_TYPE_MISMATCH;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.INVALID_FILE_MISSING_CONTENT;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PDF_FILES_ARE_NOT_ATTACHED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PDF_FILE_SIZE_EXCEEDED;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
-import static de.vitagroup.num.domain.templates.ExceptionsTemplate.WRONG_PROJECT_STATUS;
+import static de.vitagroup.num.domain.templates.ExceptionsTemplate.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AttachmentServiceTest {

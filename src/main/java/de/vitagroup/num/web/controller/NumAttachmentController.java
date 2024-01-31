@@ -52,7 +52,7 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
     @PreAuthorize(Role.STUDY_COORDINATOR)
     @PostMapping(path = "/{projectId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> createMultipleAttachments(@AuthenticationPrincipal @NotNull Jwt principal,
-                                                            @NotNull @NotEmpty @PathVariable Long projectId,
+                                                            @NotNull @PathVariable Long projectId,
                                                             @ModelAttribute @Valid LightAttachmentDto lightDto) throws IOException {
         attachmentService.saveAttachments(projectId, principal.getSubject(), lightDto, false);
         return ResponseEntity.ok("ok");
@@ -61,7 +61,7 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
     @AuditLog(description = "Get a list of all attachments for one project (by projectId)")
     @Operation(description = "Get a list of all attachments for one project (by projectId)")
     @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<AttachmentDto>> listAllAttachments(@NotNull @NotEmpty @PathVariable Long projectId) {
+    public ResponseEntity<List<AttachmentDto>> listAllAttachments(@NotNull @PathVariable Long projectId) {
         return ResponseEntity.ok(attachmentService.getAttachmentsBy(projectId).stream()
                 .map(attachment -> modelMapper.map(attachment, AttachmentDto.class))
                 .collect(Collectors.toList()));
@@ -89,7 +89,7 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
     @AuditLog(description = "Download attachment")
     @Operation(description = "Download attachment with given id")
     @GetMapping("/{attachmentId}")
-    public ResponseEntity<StreamingResponseBody> downloadAttachment(@NotNull @NotEmpty @PathVariable Long attachmentId) {
+    public ResponseEntity<StreamingResponseBody> downloadAttachment(@NotNull @PathVariable Long attachmentId) {
         Attachment attachment = attachmentService.getAttachmentById(attachmentId);
         HttpHeaders header = new HttpHeaders();
         header.setContentDisposition(ContentDisposition.builder("attachment").filename(attachment.getName()).build());

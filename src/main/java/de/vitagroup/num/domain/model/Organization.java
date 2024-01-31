@@ -34,5 +34,6 @@ public class Organization implements Serializable {
   private Set<MailDomain> domains = new HashSet<>();
 
   @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+  @Builder.Default
   private Boolean active = Boolean.TRUE;
 }

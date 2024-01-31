@@ -47,8 +47,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
   @AuditLog
   @GetMapping("/{id}")
   @Operation(description = "Retrieves an organization by external id")
-  public ResponseEntity<OrganizationDto> getOrganizationById(
-      @NotNull @NotEmpty @PathVariable Long id) {
+  public ResponseEntity<OrganizationDto> getOrganizationById(@NotNull @PathVariable Long id) {
     return ResponseEntity.ok(mapper.convertToDto(organizationService.getOrganizationById(id)));
   }
 
@@ -102,9 +101,8 @@ public class OrganizationController extends CustomizedExceptionHandler {
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates an organization")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
-  public ResponseEntity<OrganizationDto> updateOrganization(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @PathVariable("id") Long organizationId,
+  public ResponseEntity<OrganizationDto> updateOrganization(@AuthenticationPrincipal @NotNull Jwt principal,
+      @NotNull @PathVariable("id") Long organizationId,
       @Valid @NotNull @RequestBody OrganizationDto organizationDto) {
     return ResponseEntity.ok(
         mapper.convertToDto(
@@ -120,7 +118,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
   @DeleteMapping(value = "/{id}")
   @PreAuthorize(Role.SUPER_ADMIN)
   public void deleteOrganization(@AuthenticationPrincipal @NotNull Jwt principal,
-                                 @PathVariable("id") Long organizationId) {
+                                 @NotNull @PathVariable("id") Long organizationId) {
     organizationService.deleteOrganization(organizationId, principal.getSubject());
   }
 }
