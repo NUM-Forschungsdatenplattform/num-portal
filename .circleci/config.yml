@@ -18,7 +18,7 @@ workflows:
   build_and_test:
     jobs:
       - test:
-          context: 
+          context:
             - org-global
             - ms_teams
       - tag-version:
@@ -68,7 +68,7 @@ jobs:
           path: ~/test-results/unit-tests/
       - store_test_results:
           path: ~/test-results/integration-tests/
-      - sonarcloud/scan
+#      - sonarcloud/scan
       - cache-in-maven-dependencies
       - jq/install
       - run:
@@ -133,7 +133,7 @@ jobs:
             )
             echo "$MS_TEAMS_MSG_TEMPLATE" > /tmp/ms_teams_message
           when: always
-      - run:    
+      - run:
           name: Report Build Success
           command: |
             MSG_PATH=/tmp/ms_teams_success_message
@@ -146,7 +146,7 @@ jobs:
             MSG_PATH=/tmp/ms_teams_failure_message
             sed -e 's/__build_status__/Failed/' -e 's/__theme_color__/e2091d/' /tmp/ms_teams_message > $MSG_PATH
             curl --fail -H "Content-Type: application/json" --data-binary @$MSG_PATH $CODEX_NOTIFICATIONS
-          when: on_fail      
+          when: on_fail
   tag-version:
     docker:
       - image: cimg/openjdk:17.0.8
