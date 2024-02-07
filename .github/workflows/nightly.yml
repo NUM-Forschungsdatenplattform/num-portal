@@ -20,9 +20,9 @@ jobs:
       - name: Save test results
         run: |
           mkdir -p ~/test-results/unit-tests/
-          mkdir -p ~/test-results/integration-tests/
+#          mkdir -p ~/test-results/integration-tests/
           find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/unit-tests/ \;
-          find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/test-results/integration-tests/ \;
+#          find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/test-results/integration-tests/ \;
       - name: Run CVE scan
         run: mvn dependency-check:check
       - name: Upload test coverage report
@@ -40,11 +40,11 @@ jobs:
         with:
           name: unit-tests-report
           path: ~/test-results/unit-tests/
-      - name: Upload integration tests report
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-tests-report
-          path: ~/test-results/integration-tests/
+#      - name: Upload integration tests report
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: integration-tests-report
+#          path: ~/test-results/integration-tests/
       #- name: SonarCloud Scan
       #  uses: sonarsource/sonarcloud-github-action@v2.1.1
       #  env:
