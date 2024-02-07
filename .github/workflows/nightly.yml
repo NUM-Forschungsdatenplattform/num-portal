@@ -1,5 +1,7 @@
 name: nightly test run
-on: [push]
+on:
+  schedule:
+    - cron: '* 12 * * *'
 
 jobs:
   test:
