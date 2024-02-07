@@ -15,8 +15,8 @@ jobs:
           cache: 'maven'
       - name: Run unit tests
         run: mvn clean test
-#      - name: Run integration tests
-#        run: mvn verify -P integration-tests
+      - name: Run integration tests
+        run: mvn verify -P integration-tests
       - name: Save test results
         run: |
           mkdir -p ~/test-results/unit-tests/
