@@ -2,6 +2,7 @@ name: nightly test run
 on:
   schedule:
     - cron: '0 22 * * *'
+  push:
 
 jobs:
   test:
