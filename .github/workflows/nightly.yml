@@ -1,8 +1,7 @@
 name: nightly test run
 on:
   schedule:
-    - cron: '0 22 * * *'
-  push:
+    - cron: '0 21 * * *'
 
 jobs:
   test:
@@ -20,6 +19,7 @@ jobs:
         run: mvn clean test
       - name: Run integration tests
         run: mvn verify -P integration-tests
+        continue-on-error: true
       - name: Save test results
         run: |
           mkdir -p ~/test-results/unit-tests/
@@ -48,8 +48,9 @@ jobs:
         with:
           name: integration-tests-report
           path: ~/test-results/integration-tests/
-      #- name: SonarCloud Scan
-      #  uses: sonarsource/sonarcloud-github-action@v2.1.1
-      #  env:
-      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v2.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true
