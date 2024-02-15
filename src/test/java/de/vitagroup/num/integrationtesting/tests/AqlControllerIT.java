@@ -7,20 +7,24 @@ import de.vitagroup.num.domain.dto.AqlDto;
 import de.vitagroup.num.domain.dto.ParameterOptionsDto;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 import static de.vitagroup.num.domain.model.Roles.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -28,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Slf4j
 public class AqlControllerIT extends IntegrationTest {
 
   private static final String AQL_PATH = "/aql";
@@ -257,6 +262,10 @@ public class AqlControllerIT extends IntegrationTest {
                     .with(csrf()))
             .andExpect(status().isOk())
             .andReturn();
+
+    printResultInfos(result);
+
+    assertThat(result.getResponse().getStatus(), is(HttpStatus.OK.value()));
     assertThat(
         result.getResponse().getContentAsString(), containsString("\"type\":\"DV_QUANTITY\""));
 
@@ -341,6 +350,14 @@ public class AqlControllerIT extends IntegrationTest {
     ParameterOptionsDto dto = mapper.readValue(genderResult.getResponse().getContentAsString(), ParameterOptionsDto.class);
     assertThat((String)dto.getOptions().get("female"),containsString("Female"));
     assertThat((String)dto.getOptions().get("male"),containsString("Male"));
+  }
+
+  private static void printResultInfos(MvcResult result) throws UnsupportedEncodingException {
+    log.info("========= Failed Test Results: =========");
+    log.info("Headers: {}", result.getResponse().getHeaderNames());
+    log.info("Status: {}", result.getResponse().getStatus());
+    log.info("Content: {}", result.getResponse().getContentAsString());
+    log.info("Error: {}", result.getResponse().getErrorMessage());
   }
 
   @Test
