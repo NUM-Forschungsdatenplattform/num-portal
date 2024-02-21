@@ -1,4 +1,4 @@
-name:  Test and verify push
+name: onpush pipeline
 on:
   push:
 
