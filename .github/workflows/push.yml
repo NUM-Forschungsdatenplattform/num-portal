@@ -1,4 +1,5 @@
 name: onpush pipeline
+
 on:
   push:
 
