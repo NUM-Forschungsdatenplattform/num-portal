@@ -71,7 +71,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Build
-        run: mvn clear package
+        run: mvn clean package
       - name: build image
         run: mvn spring-boot:build-image -Dspring-boot.build-image.imageName=${{ secrets.DOCKER_USERNAME }}/num-portal:develop -DskipTests
       - name: Login to Docker Hub
