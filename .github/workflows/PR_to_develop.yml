@@ -82,4 +82,4 @@ jobs:
       - name: build and push Docker image
         run: |
           mvn spring-boot:build-image -Dspring-boot.build-image.imageName=${{ secrets.DOCKER_USERNAME }}/num-portal:develop -DskipTests
-          docker push $DOCKER_USER/num-portal:develop
+          docker push ${{ secrets.DOCKER_USERNAME }}/num-portal:develop
