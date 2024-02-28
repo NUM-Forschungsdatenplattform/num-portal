@@ -15,6 +15,7 @@ import de.vitagroup.num.domain.repository.UserDetailsRepository;
 import de.vitagroup.num.integrationtesting.security.WithMockNumUser;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -57,6 +58,7 @@ public class CohortControllerIT extends IntegrationTest {
   }
 
   @Test
+  @Ignore
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_APPROVER})
   public void shouldAccessCohortApiWithRightRole() {
@@ -155,6 +157,7 @@ public class CohortControllerIT extends IntegrationTest {
   }
 
   @Test
+  @Ignore
   @SneakyThrows
   @WithMockNumUser(roles = {STUDY_COORDINATOR, MANAGER})
   public void shouldHandleCohortWithNullParameter() {

@@ -24,7 +24,6 @@ jobs:
         run: mvn clean test
       - name: Run integration tests
         run: mvn verify -P integration-tests
-        continue-on-error: true
       - name: Prepare test results
         run: |
           mkdir -p ~/test-results/unit-tests/
