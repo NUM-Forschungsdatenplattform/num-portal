@@ -37,7 +37,7 @@
     <skip.unit.tests>false</skip.unit.tests>
     <skip.dependency.check>false</skip.dependency.check>
     <postgresql.version>42.7.2</postgresql.version>
-    <hapi.version>6.8.3</hapi.version>
+    <hapi.version>7.0.0</hapi.version>
     <wiremock-standalone.version>3.2.0</wiremock-standalone.version>
     <testcontainers.version>1.19.3</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
