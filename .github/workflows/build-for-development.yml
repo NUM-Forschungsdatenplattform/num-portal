@@ -2,7 +2,7 @@ name: Build for development
 
 on:
   push:
-    branches: [ 'feature/**' ]
+    branches: [ 'feature/**', 'dependabot/**' ]
   pull_request_target:
     branches: [ develop ]
     types: [ closed ]
