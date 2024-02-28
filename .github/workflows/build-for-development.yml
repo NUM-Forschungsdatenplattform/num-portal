@@ -1,13 +1,14 @@
-name: PR into develop
+name: Build for development
 
 on:
   push:
+    branches: [ 'feature/**' ]
   pull_request_target:
-    branches:
-      - 'develop'
+    branches: [ develop ]
+    types: [ closed ]
 
 jobs:
-  verify:
+  test_and_scan:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,24 +25,17 @@ jobs:
       - name: Run integration tests
         run: mvn verify -P integration-tests
         continue-on-error: true
-      - name: Save test results
+      - name: Prepare test results
         run: |
           mkdir -p ~/test-results/unit-tests/
           mkdir -p ~/test-results/integration-tests/
           find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/unit-tests/ \;
           find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/test-results/integration-tests/ \;
-      - name: Run CVE scan
-        run: mvn dependency-check:check
       - name: Upload test coverage report
         uses: actions/upload-artifact@v4
         with:
           name: test-coverage-report
           path: target/site/jacoco-merged-test-coverage-report
-      - name: Upload dependency check report
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-check-report
-          path: target/dependency-check-report.html
       - name: Upload unit tests report
         uses: actions/upload-artifact@v4
         with:
@@ -52,6 +46,18 @@ jobs:
         with:
           name: integration-tests-report
           path: ~/test-results/integration-tests/
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2.1.1
         env:
@@ -60,9 +66,10 @@ jobs:
         continue-on-error: true
 
   docker:
-    runs-on: ubuntu-latest
-    needs: verify
+    needs: test_and_scan
+    if: github.event.pull_request.merged == true
 
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,14 +79,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-      - name: Build
-        run: mvn clean package
-      - name: Login to Docker Hub
+      - name: Login to docker hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: build and push Docker image
+      - name: Build and push docker image
         run: |
           mvn spring-boot:build-image -Dspring-boot.build-image.imageName=${{ secrets.DOCKER_USERNAME }}/num-portal:develop -DskipTests
           docker push ${{ secrets.DOCKER_USERNAME }}/num-portal:develop
