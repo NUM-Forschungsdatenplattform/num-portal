@@ -29,10 +29,11 @@ jobs:
     - name: Create new development version
       id: createVersion
       run: |
-        RELEASE_VERSION=$(mvn -q -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec)
+        CURRENT_VERSION=$(mvn -q -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec)
+        RELEASE_VERSION=`echo $CURRENT_VERSION | cut -d- -f1`
         echo "Current version: $RELEASE_VERSION"
-        MAJOR=`echo $RELEASE_VERSION | cut -d. -f1`
-        MINOR=`echo $RELEASE_VERSION | cut -d. -f2`
+        MAJOR=`echo $CURRENT_VERSION | cut -d. -f1`
+        MINOR=`echo $CURRENT_VERSION | cut -d. -f2`
         
         DEV_VERSION=${MAJOR}.$((MINOR+1)).0-SNAPSHOT
         
@@ -42,6 +43,8 @@ jobs:
         
         echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
         echo "DEV_VERSION=${DEV_VERSION}" >> "$GITHUB_OUTPUT"
+        
+        echo "### ${RELEASE_VERSION} :rocket:" >> $GITHUB_STEP_SUMMARY
 
   update_dev:
     needs: read_version
@@ -60,7 +63,11 @@ jobs:
       env:
         DEV_VERSION: ${{ needs.read_version.outputs.DEV_VERSION }}
       run: |
+        git config --global user.email "github-actions@example.com"
+        git config --global user.name "Github Actions"
+        
         git branch feature/update_develop_${DEV_VERSION}
+        git checkout feature/update_develop_${DEV_VERSION}
         
         mvn versions:set -DnewVersion=${DEV_VERSION} versions:commit
         git commit -am "updated development version to ${DEV_VERSION}"
@@ -70,9 +77,9 @@ jobs:
     - name: Create PR to merge changes to Develop and update Version
       env:
         RELEASE_VERSION: ${{ needs.read_version.outputs.RELEASE_VERSION }}
+        GH_TOKEN: ${{ github.token }}
       run: |
-        gh pr create -B develop --title "Merge release branch '${RELEASE_VERSION} back to develop"
-        gh pr review --approve
+        gh pr create -B develop --title "Merge release branch '${RELEASE_VERSION} back to develop" --body "Merge release branch '${RELEASE_VERSION} back to develop"
         gh pr merge --auto --delete-branch --squash
 
   release:
@@ -95,16 +102,16 @@ jobs:
     - name: Create PR to merge release branch to main
       env:
         RELEASE_VERSION: ${{ needs.read_version.outputs.RELEASE_VERSION }}
+        GH_TOKEN: ${{ github.token }}
       run: |
-        gh pr create -B master --title "Merge release branch '${RELEASE_VERSION}"
-        gh pr review --approve
+        gh pr create -B main --title "Merge release branch '${RELEASE_VERSION}" --body "Merge release branch '${RELEASE_VERSION}"
         gh pr merge --auto --delete-branch --squash
 
-  wrong_branch:
-    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/develop'
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: ERROR
-      run: echo 'This workflow only runs on develop branch!'
+#  wrong_branch:
+#    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/release*'
+#
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#    - name: ERROR
+#      run: echo 'This workflow only runs on develop branch!'
