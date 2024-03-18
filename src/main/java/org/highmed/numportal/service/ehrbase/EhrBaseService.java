@@ -1,7 +1,6 @@
 package org.highmed.numportal.service.ehrbase;
 
 import com.nedap.archie.rm.support.identification.UUID;
-import org.highmed.numportal.domain.model.Aql;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
@@ -21,9 +20,11 @@ import org.ehrbase.openehr.sdk.response.dto.TemplatesResponseData;
 import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.ehrbase.openehr.sdk.util.exception.ClientException;
 import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
+import org.highmed.numportal.domain.model.Aql;
+import org.highmed.numportal.properties.PrivacyProperties;
+import org.highmed.numportal.service.exception.BadRequestException;
 import org.highmed.numportal.service.exception.SystemException;
 import org.highmed.numportal.service.util.AqlQueryConstants;
-import org.highmed.numportal.service.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -49,15 +50,18 @@ public class EhrBaseService {
   private final DefaultRestClient restClient;
   private final CompositionResponseDataBuilder compositionResponseDataBuilder;
   private final Pseudonymity pseudonymity;
+  private final PrivacyProperties privacyProperties;
 
   @Autowired
   public EhrBaseService(
       DefaultRestClient restClient,
       CompositionResponseDataBuilder compositionResponseDataBuilder,
-      @Lazy Pseudonymity pseudonymity) {
+      @Lazy Pseudonymity pseudonymity,
+      PrivacyProperties privacyProperties) {
     this.restClient = restClient;
     this.compositionResponseDataBuilder = compositionResponseDataBuilder;
     this.pseudonymity = pseudonymity;
+    this.privacyProperties = privacyProperties;
   }
 
   /**
@@ -236,6 +240,9 @@ public class EhrBaseService {
   }
 
   private void addPseudonyms(List<String> secondLevelPseudos, List<QueryResponseData> listOfResponseData, Long projectId) {
+    if (!privacyProperties.isEnabled()) {
+      return;
+    }
 
     List<String> pseudonyms = pseudonymity.getPseudonyms(secondLevelPseudos, projectId);
 

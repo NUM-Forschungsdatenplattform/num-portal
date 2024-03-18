@@ -86,6 +86,7 @@ privacy:
   minHits: 1
   pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
   pseudonomityChunksSize: 20
+  enabled: false
 
 atna:
   enabled: false
