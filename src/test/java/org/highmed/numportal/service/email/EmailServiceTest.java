@@ -32,6 +32,7 @@ public class EmailServiceTest {
     @Before
     public void setup() {
         Mockito.when(emailProperties.getFrom()).thenReturn("support@highmed.org");
+        Mockito.when(emailProperties.isEnabled()).thenReturn(true);
         message = new MimeMessage((Session) null);
         Mockito.when(javaMailSender.createMimeMessage()).thenReturn(message);
     }
