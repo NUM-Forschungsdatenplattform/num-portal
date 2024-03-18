@@ -20,6 +20,9 @@ public class EmailService {
   private final EmailProperties emailProperties;
 
   public void sendEmail(String subject, String htmlBody, String to) {
+    if (!emailProperties.isEnabled()) {
+      return;
+    }
 
     MimeMessage message = javaMailSender.createMimeMessage();
 
@@ -45,6 +48,9 @@ public class EmailService {
       String attachment,
       String filename,
       String contentType) {
+    if (!emailProperties.isEnabled()) {
+      return;
+    }
 
     MimeMessage message = javaMailSender.createMimeMessage();
 
