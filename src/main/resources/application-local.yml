@@ -83,6 +83,7 @@ ehrbase:
   password: SuperSecretPassword
 
 privacy:
+  enabled: false
   minHits: 1
   pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
   pseudonomityChunksSize: 20
