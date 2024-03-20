@@ -5,7 +5,7 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>de.vitagroup.num-portal</groupId>
+  <groupId>org.highmed.num-portal</groupId>
   <artifactId>num-portal</artifactId>
   <version>1.17.0</version>
   
