@@ -81,7 +81,6 @@ jobs:
         run: |
           PR_URL=`gh pr create -B develop --title "Merge release branch '${RELEASE_VERSION}' back to develop" --body "Merge release branch '${RELEASE_VERSION}' back to develop"`
           echo $PR_URL
-  #        gh pr merge --auto --delete-branch --squash $PR_URL
 
   release:
     needs: read_version
@@ -96,7 +95,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-      - name: Create branch to update develop version
+      - name: Set release version
         env:
           RELEASE_VERSION: ${{ needs.read_version.outputs.RELEASE_VERSION }}
         run: |
@@ -114,13 +113,3 @@ jobs:
         run: |
           PR_URL=`gh pr create -B main --title "Merge release branch '${RELEASE_VERSION}'" --body "Merge release branch '${RELEASE_VERSION}'"`
           echo $PR_URL
-#        gh pr merge --auto --delete-branch --squash $PR_URL
-
-#  wrong_branch:
-#    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/release*'
-#
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#    - name: ERROR
-#      run: echo 'This workflow only runs on develop branch!'
