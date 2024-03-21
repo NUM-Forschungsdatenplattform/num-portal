@@ -9,6 +9,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.highmed.domain.model.*;
 import org.highmed.service.ehrbase.EhrBaseService;
+import org.highmed.service.exception.IllegalArgumentException;
 
 import java.util.List;
 import java.util.Map;
