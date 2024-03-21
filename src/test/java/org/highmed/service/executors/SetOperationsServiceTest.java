@@ -6,6 +6,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.highmed.domain.model.Operator;
+import org.highmed.service.exception.IllegalArgumentException;
 
 import java.util.Collections;
 import java.util.LinkedList;
