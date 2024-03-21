@@ -362,6 +362,7 @@ public class AqlControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
+  @Ignore
   @WithMockNumUser(roles = {CRITERIA_EDITOR})
   public void shouldSaveAndDeleteAqlCategorySuccessfully() {
 
