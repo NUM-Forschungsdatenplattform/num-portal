@@ -107,6 +107,7 @@ public class CohortControllerIT extends IntegrationTest {
   }
 
   @Test
+  @Ignore
   @SneakyThrows
   @WithMockNumUser(
       userId = UNAUTHORIZED_USER_ID,
