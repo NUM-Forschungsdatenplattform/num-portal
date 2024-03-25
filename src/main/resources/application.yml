@@ -129,8 +129,8 @@ logging:
   level:
     org.springframework.web: info
     # DEBUG enables keycloak feign logging
-    de.vitagroup.num.web.feign.KeycloakFeign: INFO
-    de.vitagroup.num: INFO
+    org.highmed.web.feign.KeycloakFeign: INFO
+    org.highmed.num: INFO
 
 atna:
   enabled: false

@@ -75,7 +75,7 @@ feign:
 
 logging:
   level:
-    de.vitagroup.num: DEBUG
+    org.highmed: DEBUG
 
 ehrbase:
   rest-api-url: http://localhost:8080/ehrbase/
