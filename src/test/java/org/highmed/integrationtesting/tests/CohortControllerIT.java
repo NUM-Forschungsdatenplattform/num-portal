@@ -107,7 +107,6 @@ public class CohortControllerIT extends IntegrationTest {
   }
 
   @Test
-  @Ignore
   @SneakyThrows
   @Ignore
   @WithMockNumUser(

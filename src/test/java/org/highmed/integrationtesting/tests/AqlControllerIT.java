@@ -263,8 +263,6 @@ public class AqlControllerIT extends IntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
 
-    printResultInfos(result);
-
     assertThat(result.getResponse().getStatus(), is(HttpStatus.OK.value()));
     assertThat(
         result.getResponse().getContentAsString(), containsString("\"type\":\"DV_QUANTITY\""));
@@ -350,14 +348,6 @@ public class AqlControllerIT extends IntegrationTest {
     ParameterOptionsDto dto = mapper.readValue(genderResult.getResponse().getContentAsString(), ParameterOptionsDto.class);
     assertThat((String)dto.getOptions().get("female"),containsString("Female"));
     assertThat((String)dto.getOptions().get("male"),containsString("Male"));
-  }
-
-  private static void printResultInfos(MvcResult result) throws UnsupportedEncodingException {
-    log.info("========= Failed Test Results: =========");
-    log.info("Headers: {}", result.getResponse().getHeaderNames());
-    log.info("Status: {}", result.getResponse().getStatus());
-    log.info("Content: {}", result.getResponse().getContentAsString());
-    log.info("Error: {}", result.getResponse().getErrorMessage());
   }
 
   @Test
