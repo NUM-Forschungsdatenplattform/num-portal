@@ -43,7 +43,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/certs
+          jwk-set-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/certs
       client:
         registration:
           userStoreClient:
@@ -52,7 +52,7 @@ spring:
             client-secret: 89dddc8f-0f25-4faf-a58d-6cda681f6ed3
         provider:
           userStoreClient:
-            token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
+            token-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/token
   mail:
     host: smtp.gmail.com
     port: 587
@@ -93,13 +93,13 @@ springdoc:
       client-secret: num-portal-webapp
 swagger:
   oauth2:
-    token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
-    auth-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/auth
+    token-uri: ${keycloak.url}/realms/Num/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/realms/Num/protocol/openid-connect/auth
     client-name: num-portal-webapp
     client-secret: num-portal-webapp
 
 userstore:
-  url: ${keycloak.url}/auth/admin/realms/crr
+  url: ${keycloak.url}/admin/realms/crr
 
 keycloak:
   url: https://keycloak.dev.num-codex.de
@@ -129,7 +129,7 @@ logging:
   level:
     org.springframework.web: info
     # DEBUG enables keycloak feign logging
-    org.highmed.web.feign.KeycloakFeign: INFO
+    org.highmed.numportal.web.feign.KeycloakFeign: INFO
     org.highmed.num: INFO
 
 atna:
