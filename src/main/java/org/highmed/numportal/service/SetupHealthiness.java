@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor

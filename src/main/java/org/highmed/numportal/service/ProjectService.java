@@ -34,7 +34,7 @@ import org.highmed.numportal.service.executors.CohortQueryLister;
 import org.highmed.numportal.service.notification.NotificationService;
 import org.highmed.numportal.service.notification.dto.*;
 import org.highmed.numportal.service.policy.*;
-import org.highmed.service.exception.*;
+import org.highmed.numportal.service.exception.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
@@ -62,6 +62,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static java.util.Objects.nonNull;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 
 @Service
 @Slf4j
@@ -128,7 +129,7 @@ public class ProjectService {
 
 
     @Transactional
-    public boolean deleteProject(Long projectId, String userId, List<String> roles) {
+    public boolean deleteProject(Long projectId, String userId, List<String> roles) throws ForbiddenException {
         userDetailsService.checkIsUserApproved(userId);
 
         var project =

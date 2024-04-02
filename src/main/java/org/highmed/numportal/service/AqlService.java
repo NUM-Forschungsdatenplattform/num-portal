@@ -36,6 +36,8 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+
 @Slf4j
 @Service
 @AllArgsConstructor

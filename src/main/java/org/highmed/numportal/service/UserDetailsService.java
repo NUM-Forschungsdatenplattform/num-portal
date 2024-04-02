@@ -31,6 +31,7 @@ import java.time.ZoneOffset;
 import java.util.*;
 
 import static java.util.Objects.nonNull;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 @Service

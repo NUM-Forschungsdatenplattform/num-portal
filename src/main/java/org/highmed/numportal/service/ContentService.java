@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+
 @Slf4j
 @Service
 public class ContentService {

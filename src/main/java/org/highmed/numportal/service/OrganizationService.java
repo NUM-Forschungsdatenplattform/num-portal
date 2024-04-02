@@ -27,6 +27,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+
 /** Service responsible for retrieving organization information from the terminology server */
 @Slf4j
 @Service

@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+
 @Service
 @AllArgsConstructor
 public class CommentService {
