@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+
 @RunWith(MockitoJUnitRunner.class)
 public class AttachmentServiceTest {
 

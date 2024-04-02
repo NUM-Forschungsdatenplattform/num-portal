@@ -62,6 +62,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
+import static org.highmed.numportal.domain.model.ProjectStatus.*;
+import static org.highmed.numportal.domain.model.Roles.*;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -732,12 +735,12 @@ public class ProjectServiceTest {
             .build();
     Project pr2 = Project.builder().id(2L)
             .name("project name two")
-            .status(ProjectStatus.PUBLISHED)
+            .status(PUBLISHED)
             .coordinator(anotherCoordinator)
             .build();
     Project pr3 = Project.builder().id(3L)
             .name("project name blaaa")
-            .status(ProjectStatus.PUBLISHED)
+            .status(PUBLISHED)
             .coordinator(anotherCoordinator)
             .build();
     when(userService.getOwner("anotherCoordinatorId")).thenReturn(User.builder().id("anotherCoordinatorId").firstName("Coordinator first name").build());
@@ -1484,11 +1487,11 @@ public class ProjectServiceTest {
                     .id(3L).build())
             .build());
     Mockito.when(projectRepository.findByStatusInOrderByCreateDateDesc(Arrays.asList(ProjectStatus.APPROVED,
-                 ProjectStatus.PUBLISHED, ProjectStatus.CLOSED), PageRequest.of(0, 10)))
+                 PUBLISHED, CLOSED), PageRequest.of(0, 10)))
                 .thenReturn(Arrays.asList(pr1,pr2));
     projectService.getLatestProjectsInfo(10, roles);
     verify(projectRepository, times(1)).findByStatusInOrderByCreateDateDesc(Arrays.asList(ProjectStatus.APPROVED,
-            ProjectStatus.PUBLISHED, ProjectStatus.CLOSED), PageRequest.of(0, 10));
+            PUBLISHED, CLOSED), PageRequest.of(0, 10));
   }
 
   @Test
@@ -1538,7 +1541,7 @@ public class ProjectServiceTest {
                     Optional.of(
                             Project.builder()
                                     .id(5L)
-                                    .status(ProjectStatus.CLOSED)
+                                    .status(CLOSED)
                                     .coordinator(UserDetails.builder().userId("approvedCoordinatorId").approved(true).build())
                                     .build()));
     projectService.archiveProject(5L, "approvedCoordinatorId", List.of(STUDY_COORDINATOR));
