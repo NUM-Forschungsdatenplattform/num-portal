@@ -31,6 +31,8 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+
 @Slf4j
 @Service
 public class EhrBaseService {

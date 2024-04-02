@@ -18,6 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import java.util.*;
 
 import static java.util.Objects.nonNull;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 public class CustomizedExceptionHandler extends ResponseEntityExceptionHandler {
