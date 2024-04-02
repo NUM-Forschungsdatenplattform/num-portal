@@ -46,10 +46,10 @@ public class AdminControllerIT extends IntegrationTest {
           roles = {STUDY_COORDINATOR})
   public void shouldCreateUserOnFirstLoginSuccessfully() throws Exception {
     stubFor(
-            WireMock.get("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a79")
+            WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a79")
                     .willReturn(okJson(
                             "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a79\",\"username\": \"new-user\"}")));
-    stubFor(WireMock.get("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a79/role-mappings/realm")
+    stubFor(WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a79/role-mappings/realm")
             .willReturn(okJson("[{\"id\":\"12345-2f04-4356-8f34-12345\",\"name\":\"STUDY_COORDINATOR\",\"composite\":false,\"clientRole\":false,\"containerId\":\"Num\"}]")));
     mockMvc
             .perform(
@@ -65,7 +65,7 @@ public class AdminControllerIT extends IntegrationTest {
           roles = {SUPER_ADMIN, ORGANIZATION_ADMIN})
   public void shouldApproveUserSuccessfully() {
     stubFor(
-            WireMock.get("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73")
+            WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73")
                     .willReturn(okJson(
                             "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a73\",\"username\": \"new-user\", \"firstname\":\"John\", \"email\": \"john.doe@vitagroup.ag\"}")));
     mockMvc
@@ -81,11 +81,11 @@ public class AdminControllerIT extends IntegrationTest {
   @WithMockNumUser(roles = {SUPER_ADMIN})
   public void shouldUpdateUserStatusSuccessfully() {
     stubFor(
-            WireMock.get("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73")
+            WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73")
                     .willReturn(okJson(
                             "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a73\",\"username\": \"new-user\", \"firstname\":\"John\", \"email\": \"john.doe@vitagroup.ag\", \"enabled\": \"true\"}")));
-    stubFor(WireMock.put("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73").willReturn(okJson("[]")));
-    stubFor(WireMock.get("/auth/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73/role-mappings/realm")
+    stubFor(WireMock.put("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73").willReturn(okJson("[]")));
+    stubFor(WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73/role-mappings/realm")
             .willReturn(okJson("[{\"id\":\"12345-2f04-1156-8f34-12345\",\"name\":\"RESEARCHER\",\"composite\":false,\"clientRole\":false,\"containerId\":\"Num\"}]")));
     mockMvc
             .perform(

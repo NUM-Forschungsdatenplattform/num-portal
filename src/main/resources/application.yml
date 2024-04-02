@@ -94,7 +94,7 @@ springdoc:
 swagger:
   oauth2:
     token-uri: ${keycloak.url}/realms/Num/protocol/openid-connect/token
-    auth-uri: ${keycloak.url}/realms/Num/protocol/openid-connect/auth
+    auth-uri: ${keycloak.url}/realms/Num/protocol/openid-connect
     client-name: num-portal-webapp
     client-secret: num-portal-webapp
 

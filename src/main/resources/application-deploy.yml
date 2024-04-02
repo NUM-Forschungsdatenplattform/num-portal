@@ -50,7 +50,7 @@ userstore:
 swagger:
   oauth2:
     token-uri: ${KEYCLOAK_CANONICAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
-    auth-uri: ${KEYCLOAK_CANONICAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth
+    auth-uri: ${KEYCLOAK_CANONICAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect
     client-name: ${SWAGGER_OAUTH2_CLIENT-NAME}
     client-secret: ${SWAGGER_OAUTH2_CLIENT-NAME}
 
