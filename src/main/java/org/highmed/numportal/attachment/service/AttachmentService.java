@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 
 @Service
 @Transactional(value = "attachmentTransactionManager")

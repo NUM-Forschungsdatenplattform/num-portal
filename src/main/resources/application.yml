@@ -130,7 +130,7 @@ logging:
     org.springframework.web: info
     # DEBUG enables keycloak feign logging
     org.highmed.numportal.web.feign.KeycloakFeign: INFO
-    org.highmed.num: INFO
+    org.highmed.numportal: INFO
 
 atna:
   enabled: false

@@ -17,6 +17,7 @@ import org.highmed.numportal.service.SetupHealthiness;
 import java.nio.charset.StandardCharsets;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.highmed.numportal.domain.model.Roles.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

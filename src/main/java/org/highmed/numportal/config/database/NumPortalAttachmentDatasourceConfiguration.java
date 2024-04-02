@@ -24,7 +24,7 @@ import java.util.Objects;
 
 @ConditionalOnProperty(prefix = "num", name = "enableAttachmentDatabase", havingValue = "true")
 @Configuration
-@EnableJpaRepositories(basePackages = "org.highmed.attachment",
+@EnableJpaRepositories(basePackages = "org.highmed.numportal.attachment",
         entityManagerFactoryRef = "attachmentEntityManagerFactory",
         transactionManagerRef = "attachmentTransactionManager")
 @EnableTransactionManagement
@@ -50,7 +50,7 @@ public class NumPortalAttachmentDatasourceConfiguration {
                                                                                  @Qualifier("numAttachmentDatasource") DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = builder
                 .dataSource(dataSource)
-                .packages("org.highmed.attachment")
+                .packages("org.highmed.numportal.attachment")
                 .persistenceUnit("numAttachment")
                 .build();
         localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.IMPLICIT_NAMING_STRATEGY, new SpringImplicitNamingStrategy());

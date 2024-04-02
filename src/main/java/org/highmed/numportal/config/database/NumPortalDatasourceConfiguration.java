@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.Properties;
 
 @Configuration
-@EnableJpaRepositories(basePackages = {"org.highmed.domain", "org.highmed.service"},
+@EnableJpaRepositories(basePackages = {"org.highmed.numportal.domain", "org.highmed.numportal.service"},
         entityManagerFactoryRef = "numEntityManagerFactory",
         transactionManagerRef = "numTransactionManager")
 @EnableTransactionManagement
@@ -69,7 +69,7 @@ public class NumPortalDatasourceConfiguration {
                                                                           @Qualifier("numPortalDatasource") DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
         localContainerEntityManagerFactoryBean.setDataSource(dataSource);
-        localContainerEntityManagerFactoryBean.setPackagesToScan("org.highmed.domain", "org.highmed.service");
+        localContainerEntityManagerFactoryBean.setPackagesToScan("org.highmed.numportal.domain", "org.highmed.numportal.service");
         localContainerEntityManagerFactoryBean.setPersistenceUnitName("numPortal");
         localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.BEAN_CONTAINER, new SpringBeanContainer(beanFactory));
         localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.IMPLICIT_NAMING_STRATEGY, new SpringImplicitNamingStrategy());

@@ -16,6 +16,6 @@ public class TranslatedStringValidator
       return false;
     }
 
-    return !Strings.isBlank(translationMap.get("en")) && !Strings.isBlank(translationMap.get("org"));
+    return !Strings.isBlank(translationMap.get("en")) && !Strings.isBlank(translationMap.get("de"));
   }
 }

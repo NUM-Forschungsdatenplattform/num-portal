@@ -75,7 +75,7 @@ feign:
 
 logging:
   level:
-    org.highmed: DEBUG
+    org.highmed.numportal: DEBUG
 
 ehrbase:
   rest-api-url: http://localhost:8080/ehrbase/

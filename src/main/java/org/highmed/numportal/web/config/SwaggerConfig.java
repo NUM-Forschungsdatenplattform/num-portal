@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
 public class SwaggerConfig {
   private static final String SEC_CONFIG_NAME = "oauth_setting";
 
-  private static final String NUM_PACKAGES_TO_SCAN = "org.highmed.web.controller";
+  private static final String NUM_PACKAGES_TO_SCAN = "org.highmed.numportal.web.controller";
 
 
   private final SwaggerProperties swaggerProperties;
