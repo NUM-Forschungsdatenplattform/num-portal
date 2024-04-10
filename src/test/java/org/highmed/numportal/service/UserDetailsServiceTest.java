@@ -149,14 +149,14 @@ public class UserDetailsServiceTest {
 
   @Test
   public void shouldSendNotificationWhenCreateUserDetails() {
-    String userEmail = "dummyUser@vitagroup.de";
+    String userEmail = "dummyUser@highmed.org";
     String userId = "dummyUserId";
     Organization organization = Organization.builder()
             .id(9L)
-            .name("Organization VitaGroup")
+            .name("Organization Highmed")
             .build();
     OrganizationDto organizationDto = OrganizationDto.builder()
-            .name("Organization VitaGroup")
+            .name("Organization Highmed")
             .id(9L)
             .build();
     when(organizationService.resolveOrganization(userEmail)).thenReturn(Optional.of(organization));
@@ -172,7 +172,7 @@ public class UserDetailsServiceTest {
     User organizationAdmin = User.builder()
             .firstName("organization admin")
             .lastName("lastname")
-            .email("organization-admin@vitagroup.de")
+            .email("organization-admin@highmed.org")
             .organization(organizationDto)
             .build();
     when(userDetailsRepository.save(any())).thenReturn(UserDetails.builder()
@@ -268,7 +268,7 @@ public class UserDetailsServiceTest {
                     .id("someUserId")
                     .firstName("John")
                     .lastName("Doe")
-                    .email("john.doe@vitagroup.ag")
+                    .email("john.doe@highmed.org")
                     .approved(true)
                     .build();
     User loggedInUser =
@@ -276,7 +276,7 @@ public class UserDetailsServiceTest {
                     .id("loggedInUser")
                     .firstName("Admin")
                     .lastName("Doe")
-                    .email("admin.doe@vitagroup.ag")
+                    .email("admin.doe@highmed.org")
                     .approved(true)
                     .build();
     when(userService.getUserById("someUserId", false)).thenReturn(user);

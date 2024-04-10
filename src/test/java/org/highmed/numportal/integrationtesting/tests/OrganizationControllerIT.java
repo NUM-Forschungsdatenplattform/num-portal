@@ -167,8 +167,8 @@ public class OrganizationControllerIT extends IntegrationTest {
     List<String> domains = mapper.readValue(result.getResponse().getContentAsString(), List.class);
     Assert.assertTrue(domains.isEmpty());
     OrganizationDto activeOrganization = OrganizationDto.builder()
-            .name("Organization Test Vita")
-            .mailDomains(Set.of(("vitagroup.test.ag")))
+            .name("Organization Test Highmed")
+            .mailDomains(Set.of(("highmed.test.org")))
             .active(Boolean.TRUE)
             .build();
     String organizationJson = mapper.writeValueAsString(activeOrganization);
@@ -191,11 +191,11 @@ public class OrganizationControllerIT extends IntegrationTest {
     domains = mapper.readValue(result.getResponse().getContentAsString(), List.class);
     Assert.assertEquals(1, domains.size());
 
-    Optional<Organization> organization = organizationRepository.findByName("Organization Test Vita");
+    Optional<Organization> organization = organizationRepository.findByName("Organization Test Highmed");
 
     OrganizationDto toUpdate = OrganizationDto.builder()
-            .name("Organization Test Vita")
-            .mailDomains(Set.of(("vitagroup.test.ag")))
+            .name("Organization Test Highmed")
+            .mailDomains(Set.of(("highmed.test.org")))
             .active(Boolean.FALSE)
             .build();
 

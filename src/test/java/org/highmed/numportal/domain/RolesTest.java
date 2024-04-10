@@ -35,7 +35,7 @@ public class RolesTest {
                 .subject("user-uuid-1234")
                 .issuedAt(Instant.now())
                 .claim("name", "John")
-                .claim("email", "john.doe@vitagroup.de")
+                .claim("email", "john.doe@highmed.org")
                 .claim("realm_access", Map.of("roles", List.of(Roles.STUDY_APPROVER, Roles.STUDY_COORDINATOR)))
                 .claim("username", "john.doe")
                 .header("dummy", "dummy")
@@ -51,7 +51,7 @@ public class RolesTest {
                 .subject("user-uuid-1234")
                 .issuedAt(Instant.now())
                 .claim("name", "John")
-                .claim("email", "john.doe@vitagroup.de")
+                .claim("email", "john.doe@highmed.org")
                 .claim("username", "john.doe")
                 .header("dummy", "dummy")
                 .build();

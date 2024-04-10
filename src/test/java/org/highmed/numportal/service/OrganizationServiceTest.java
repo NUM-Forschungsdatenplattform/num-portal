@@ -205,14 +205,14 @@ public class OrganizationServiceTest {
   public void shouldHandleNotUniqueMailDomain() {
     organizationService.create(
             "approvedUserId",
-            OrganizationDto.builder().name("Organization").mailDomains(Set.of("vitagroup.ag")).build());
+            OrganizationDto.builder().name("Organization").mailDomains(Set.of("highmed.org")).build());
   }
 
   @Test(expected = BadRequestException.class)
   public void shouldHandleNotUniqueMailDomainInMixCase() {
     organizationService.create(
             "approvedUserId",
-            OrganizationDto.builder().name("Organization").mailDomains(Set.of("vitagroup.ag")).build());
+            OrganizationDto.builder().name("Organization").mailDomains(Set.of("highmed.org")).build());
   }
 
   @Test
@@ -277,7 +277,7 @@ public class OrganizationServiceTest {
             3L,
             OrganizationDto.builder()
                     .name("Good name")
-                    .mailDomains(Set.of("some mail domain name", "vitagroup.ag"))
+                    .mailDomains(Set.of("some mail domain name", "highmed.org"))
                     .build(),
             List.of(Roles.SUPER_ADMIN),
             "approvedUserId");
@@ -461,9 +461,9 @@ public class OrganizationServiceTest {
     when(organizationRepository.findById(33L))
             .thenReturn(Optional.of(Organization.builder().id(33L).active(Boolean.TRUE).name("Organization name").build()));
 
-    when(mailDomainRepository.findByName("vitagroup.ag"))
+    when(mailDomainRepository.findByName("highmed.org"))
         .thenReturn(Optional.of(MailDomain.builder()
-                .name("vitagroup.ag")
+                .name("highmed.org")
                         .organization(Organization.builder().id(33L).build())
                 .build()));
   }

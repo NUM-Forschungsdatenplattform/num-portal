@@ -37,11 +37,11 @@ public class OrganizationMapperTest {
         Organization entity = Organization.builder()
                 .id(2L)
                 .name("organization name")
-                .domains(Set.of(MailDomain.builder().name("vitagroup.ag").build()))
+                .domains(Set.of(MailDomain.builder().name("highmed.org").build()))
                 .build();
         OrganizationDto dto = organizationMapper.convertToDto(entity);
         assertThat(dto, notNullValue());
         assertThat(dto.getId(), is(entity.getId()));
-        Assert.assertTrue(dto.getMailDomains().contains("vitagroup.ag"));
+        Assert.assertTrue(dto.getMailDomains().contains("highmed.org"));
     }
 }

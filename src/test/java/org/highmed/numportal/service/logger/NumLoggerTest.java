@@ -61,7 +61,7 @@ public class NumLoggerTest {
                 .subject("user-uuid-12345")
                 .issuedAt(Instant.now())
                 .claim("name", "John")
-                .claim("email", "john.doe@vitagroup.de")
+                .claim("email", "john.doe@highmed.org")
                 .claim("username", "john.doe")
                 .header("dummy", "dummy")
                 .build();
