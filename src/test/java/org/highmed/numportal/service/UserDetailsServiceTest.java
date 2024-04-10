@@ -153,10 +153,10 @@ public class UserDetailsServiceTest {
     String userId = "dummyUserId";
     Organization organization = Organization.builder()
             .id(9L)
-            .name("Organization Highmed")
+            .name("Organization HiGHmed")
             .build();
     OrganizationDto organizationDto = OrganizationDto.builder()
-            .name("Organization Highmed")
+            .name("Organization HiGHmed")
             .id(9L)
             .build();
     when(organizationService.resolveOrganization(userEmail)).thenReturn(Optional.of(organization));
