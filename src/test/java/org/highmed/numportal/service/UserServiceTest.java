@@ -730,7 +730,7 @@ public class UserServiceTest {
         UserDetailsSpecification capturedInput = argumentCaptor.getValue();
         Assert.assertEquals(Boolean.FALSE, capturedInput.getApproved());
         User firstUser = users.getContent().get(0);
-        Assert.assertEquals("ana-maria.doe@vitagroup.ag", firstUser.getEmail());
+        Assert.assertEquals("ana-maria.doe@highmed.org", firstUser.getEmail());
     }
 
     private void mockDataSearchUsers() {
@@ -763,7 +763,7 @@ public class UserServiceTest {
                                             .id("userId-one")
                                             .firstName("John")
                                             .lastName("doe")
-                                            .email("john.doe@vitagroup.ag")
+                                            .email("john.doe@highmed.org")
                                             .createdTimestamp(System.currentTimeMillis())
                                             .roles(Set.of(Roles.RESEARCHER, Roles.STUDY_COORDINATOR, Roles.CRITERIA_EDITOR))
                                             .enabled(true)
@@ -772,7 +772,7 @@ public class UserServiceTest {
                 .firstName("Ana")
                 .lastName("Doe")
                 .id("userId-two")
-                .email("ana-maria.doe@vitagroup.ag")
+                .email("ana-maria.doe@highmed.org")
                 .createdTimestamp(System.currentTimeMillis())
                 .roles(Set.of(Roles.ORGANIZATION_ADMIN, Roles.STUDY_COORDINATOR, Roles.CRITERIA_EDITOR))
                 .enabled(true)
@@ -781,7 +781,7 @@ public class UserServiceTest {
                 .firstName("Elena")
                 .lastName("Doe")
                 .id("userId-three")
-                .email("willi.doe@vitagroup.ag")
+                .email("willi.doe@highmed.org")
                 .createdTimestamp(System.currentTimeMillis())
                 .roles(Set.of(Roles.RESEARCHER))
                 .enabled(false)
@@ -790,7 +790,7 @@ public class UserServiceTest {
                 .firstName("Mike")
                 .lastName("Doe")
                 .id("userId-four")
-                .email("mike.doe@vitagroup.ag")
+                .email("mike.doe@highmed.org")
                 .createdTimestamp(System.currentTimeMillis())
                 .roles(Set.of(Roles.RESEARCHER))
                 .enabled(false)
@@ -928,7 +928,7 @@ public class UserServiceTest {
         Map<String, String> filter = new HashMap<>();
         filter.put(SearchCriteria.FILTER_USER_WITH_ROLES_KEY, "true");
         filter.put(SearchCriteria.FILTER_BY_ROLES, "RESEARCHER");
-        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "vitagroup");
+        filter.put(SearchCriteria.FILTER_SEARCH_BY_KEY, "highmed");
 
         SearchCriteria searchCriteria = SearchCriteria.builder()
                 .filter(filter)
@@ -1101,7 +1101,7 @@ public class UserServiceTest {
                 .id("userId-one")
                 .firstName("John")
                 .lastName("doe")
-                .email("john.doe@vitagroup.ag")
+                .email("john.doe@highmed.org")
                 .createdTimestamp(System.currentTimeMillis())
                 .build());
         Mockito.when(cacheManager.getCache("users")).thenReturn(usersCache);

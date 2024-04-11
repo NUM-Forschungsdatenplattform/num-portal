@@ -79,6 +79,6 @@ public abstract class IntegrationTest {
     stubFor(
             WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a72")
                     .willReturn(okJson(
-                            "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"admin-user\", \"firstname\":\"Admin\", \"email\": \"admin.doe@vitagroup.ag\"}")));
+                            "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"admin-user\", \"firstname\":\"Admin\", \"email\": \"admin.doe@highmed.org\"}")));
   }
 }

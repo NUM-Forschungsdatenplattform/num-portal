@@ -50,8 +50,8 @@ public class NotificationServiceTest {
   public void shouldSendOneEmailPerNotification() {
     notificationService.send(
         List.of(
-            AccountApprovalNotification.builder().recipientEmail("john.doe@vita.ag").build(),
-            UserNameUpdateNotification.builder().recipientEmail("jane.doe@vita.ag").build()));
+            AccountApprovalNotification.builder().recipientEmail("john.doe@highmed.org").build(),
+            UserNameUpdateNotification.builder().recipientEmail("jane.doe@highmed.org").build()));
 
     verify(emailService, times(2)).sendEmail(anyString(), anyString(), anyString());
   }
@@ -61,35 +61,35 @@ public class NotificationServiceTest {
     when(messageSource.getMessage(anyString(), any(Object[].class))).thenReturn("Another body content");
     notificationService.send(
         List.of(
-            ProjectStartNotification.builder().recipientEmail("john.doe@vita.ag").build(),
-            ProjectCloseNotification.builder().recipientEmail("jane.doe@vita.ag").build(),
-            ProjectStatusChangeNotification.builder().recipientEmail("anne.doe@vita.ag").build(),
+            ProjectStartNotification.builder().recipientEmail("john.doe@highmed.org").build(),
+            ProjectCloseNotification.builder().recipientEmail("jane.doe@highmed.org").build(),
+            ProjectStatusChangeNotification.builder().recipientEmail("anne.doe@highmed.org").build(),
             ProjectApprovalRequestNotification.builder()
-                .recipientEmail("ann.doe@vita.ag")
+                .recipientEmail("ann.doe@highmed.org")
                 .build(),
             RolesUpdateNotification.builder()
-                    .recipientEmail("recipient.email@vita.ag")
+                    .recipientEmail("recipient.email@highmed.org")
                     .rolesAdded(Arrays.asList(Roles.RESEARCHER, Roles.STUDY_APPROVER))
                     .rolesRemoved(Collections.emptyList())
                     .allRoles(Collections.emptyList())
                     .build(),
             ProjectStatusChangeRequestNotification.changeRequestBuilder()
                     .projectId(99L)
-                    .recipientEmail("coordinator@vita.ag")
+                    .recipientEmail("coordinator@highmed.org")
                     .build(),
             NewUserNotification.builder()
-                    .newUserEmail("newAccount@vita.ag")
+                    .newUserEmail("newAccount@highmed.org")
                     .newUserFirstName("super firstname")
                     .newUserLastName("lastname")
                     .requestedRoles(List.of("Researcher"))
                     .department("some department")
-                    .recipientEmail("recipient@vita.ag")
+                    .recipientEmail("recipient@highmed.org")
                     .build(),
             AccountStatusChangedNotification.builder()
-                    .recipientEmail("john.doe@vitagroup.ag")
+                    .recipientEmail("john.doe@highmed.org")
                     .recipientFirstName("John")
                     .recipientLastName("Doe")
-                    .adminEmail("admin@vitagroup.ag")
+                    .adminEmail("admin@highmed.org")
                     .adminFullName("Super Admin")
                     .userCurrentStatus(true)
                     .build()
@@ -107,7 +107,7 @@ public class NotificationServiceTest {
             ProjectCloseNotification.builder().build(),
             ProjectStatusChangeNotification.builder().build(),
             ProjectApprovalRequestNotification.builder()
-                .recipientEmail("ann.doe@vita.ag")
+                .recipientEmail("ann.doe@highmed.org")
                 .projectId(9L)
                 .build()));
 

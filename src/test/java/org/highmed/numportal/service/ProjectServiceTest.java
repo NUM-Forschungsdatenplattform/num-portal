@@ -884,7 +884,7 @@ public class ProjectServiceTest {
     User userOne = User.builder()
             .firstName("John")
             .lastName("Doe")
-            .email("john.doe@vitagorup.de")
+            .email("john.doe@highmed.org")
             .approved(true)
             .build();
     Mockito.when(userService.getByRole(STUDY_APPROVER)).thenReturn(Set.of(userOne));
@@ -1729,7 +1729,7 @@ public class ProjectServiceTest {
             .id("researcher2")
             .firstName("f2")
             .lastName("l2")
-            .email("em2@vitagroup.ag")
+            .email("em2@highmed.org")
             .build();
       UserDetails researcher = UserDetails.builder()
               .userId("researcher2")
@@ -1743,7 +1743,7 @@ public class ProjectServiceTest {
                 .id("researcher1")
                 .firstName("f1")
                 .lastName("l1")
-                .email("em1@vitagroup.ag")
+                .email("em1@highmed.org")
                 .build());
 
     UserDetails approvedCoordinator =

@@ -31,22 +31,22 @@ public class EmailServiceTest {
 
     @Before
     public void setup() {
-        Mockito.when(emailProperties.getFrom()).thenReturn("support@vitagroup.de");
+        Mockito.when(emailProperties.getFrom()).thenReturn("support@highmed.org");
         message = new MimeMessage((Session) null);
         Mockito.when(javaMailSender.createMimeMessage()).thenReturn(message);
     }
 
     @Test
     public void sendEmailTest() throws MessagingException {
-        emailService.sendEmail("Test subject", "test body", "testaccount@vitagroup.de");
-        Assert.assertEquals("testaccount@vitagroup.de", message.getRecipients(Message.RecipientType.TO)[0].toString());
+        emailService.sendEmail("Test subject", "test body", "testaccount@highmed.org");
+        Assert.assertEquals("testaccount@highmed.org", message.getRecipients(Message.RecipientType.TO)[0].toString());
         Assert.assertEquals("Test subject", message.getSubject());
     }
 
     @Test
     public void sendEmailWithAttachmentTest() throws MessagingException {
-        emailService.sendEmailWithAttachment("another test subject", "dummy email body", "testaccount2@vitagroup.de", "dummy file content", "dummyAttachment.txt","text/plain");
-        Assert.assertEquals("testaccount2@vitagroup.de", message.getRecipients(Message.RecipientType.TO)[0].toString());
+        emailService.sendEmailWithAttachment("another test subject", "dummy email body", "testaccount2@highmed.org", "dummy file content", "dummyAttachment.txt","text/plain");
+        Assert.assertEquals("testaccount2@highmed.org", message.getRecipients(Message.RecipientType.TO)[0].toString());
         Assert.assertEquals("another test subject", message.getSubject());
         Assert.assertEquals("text/plain", message.getContentType());
     }

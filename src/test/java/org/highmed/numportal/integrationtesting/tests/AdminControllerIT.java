@@ -64,7 +64,7 @@ public class AdminControllerIT extends IntegrationTest {
     stubFor(
             WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73")
                     .willReturn(okJson(
-                            "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a73\",\"username\": \"new-user\", \"firstname\":\"John\", \"email\": \"john.doe@vitagroup.ag\"}")));
+                            "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a73\",\"username\": \"new-user\", \"firstname\":\"John\", \"email\": \"john.doe@highmed.org\"}")));
     mockMvc
             .perform(
                     post(String.format("%s/%s/%s", ADMIN_PATH, USER_ID_TO_BE_APPROVED, "approve"))
@@ -80,7 +80,7 @@ public class AdminControllerIT extends IntegrationTest {
     stubFor(
             WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73")
                     .willReturn(okJson(
-                            "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a73\",\"username\": \"new-user\", \"firstname\":\"John\", \"email\": \"john.doe@vitagroup.ag\", \"enabled\": \"true\"}")));
+                            "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a73\",\"username\": \"new-user\", \"firstname\":\"John\", \"email\": \"john.doe@highmed.org\", \"enabled\": \"true\"}")));
     stubFor(WireMock.put("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73").willReturn(okJson("[]")));
     stubFor(WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a73/role-mappings/realm")
             .willReturn(okJson("[{\"id\":\"12345-2f04-1156-8f34-12345\",\"name\":\"RESEARCHER\",\"composite\":false,\"clientRole\":false,\"containerId\":\"Num\"}]")));
