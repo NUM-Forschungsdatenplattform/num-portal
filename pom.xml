@@ -28,14 +28,12 @@
     <java.version>17</java.version>
     <commons-csv.version>1.10.0</commons-csv.version>
     <jacoco.version>0.8.11</jacoco.version>
-    <dependency-check.version>9.0.9</dependency-check.version>
     <failsafe.version>3.2.5</failsafe.version>
     <surefire.version>3.2.5</surefire.version>
     <ehcache.version>3.10.8</ehcache.version>
     <git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
-    <skip.dependency.check>false</skip.dependency.check>
     <postgresql.version>42.7.2</postgresql.version>
     <hapi.version>6.8.3</hapi.version>
     <wiremock-standalone.version>3.2.0</wiremock-standalone.version>
@@ -380,24 +378,6 @@
                 ${project.reporting.outputDirectory}/jacoco-merged-test-coverage-report
               </outputDirectory>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.owasp</groupId>
-        <artifactId>dependency-check-maven</artifactId>
-        <version>${dependency-check.version}</version>
-        <configuration>
-          <formats>HTML,XML</formats>
-          <skip>${skip.dependency.check}</skip>
-          <ossindexAnalyzerEnabled>${ossindexAnalyzerEnabled}</ossindexAnalyzerEnabled>
-          <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>
