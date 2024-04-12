@@ -9,6 +9,6 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "spring.mail")
 public class EmailProperties {
 
-  private boolean enabled;
+  private boolean enabled = true;
   private String from;
 }
