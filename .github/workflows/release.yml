@@ -79,7 +79,7 @@ jobs:
           RELEASE_VERSION: ${{ needs.read_version.outputs.RELEASE_VERSION }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          PR_URL=`gh pr create -B develop --title "Merge release branch '${RELEASE_VERSION}' back to develop" --body "Merge release branch '${RELEASE_VERSION}' back to develop"`
+          PR_URL=`gh pr create --draft -B develop --title "Merge release branch '${RELEASE_VERSION}' back to develop" --body "Merge release branch '${RELEASE_VERSION}' back to develop"`
           echo $PR_URL
 
   release:
@@ -111,5 +111,5 @@ jobs:
           RELEASE_VERSION: ${{ needs.read_version.outputs.RELEASE_VERSION }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          PR_URL=`gh pr create -B main --title "Merge release branch '${RELEASE_VERSION}'" --body "Merge release branch '${RELEASE_VERSION}'"`
+          PR_URL=`gh pr create --draft -B main --title "Merge release branch '${RELEASE_VERSION}'" --body "Merge release branch '${RELEASE_VERSION}'"`
           echo $PR_URL
