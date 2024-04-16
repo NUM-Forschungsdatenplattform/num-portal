@@ -12,7 +12,6 @@ import org.ehrbase.openehr.sdk.response.dto.TemplatesResponseData;
 import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.ehrbase.openehr.sdk.util.exception.ClientException;
 import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
-import org.highmed.numportal.properties.PrivacyProperties;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,9 +51,6 @@ public class EhrBaseServiceTest {
 
   @Mock
   private Pseudonymity pseudonymity;
-
-  @Mock
-  private PrivacyProperties privacyProperties;
 
   @InjectMocks
   private EhrBaseService ehr;
@@ -196,6 +192,5 @@ public class EhrBaseServiceTest {
 
     when(restClient.templateEndpoint().findAllTemplates()).thenReturn(templatesResponseData);
     when(pseudonymity.getPseudonyms(anyList(), anyLong())).thenReturn(List.of("codex_43DG23", "codex_43DG22"));
-    when(privacyProperties.isEnabled()).thenReturn(true);
   }
 }

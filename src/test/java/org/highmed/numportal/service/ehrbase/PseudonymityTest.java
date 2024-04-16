@@ -15,6 +15,7 @@ import org.highmed.numportal.service.ehrbase.Pseudonymity;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.StringType;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,6 +72,13 @@ public class PseudonymityTest {
     public void getPseudonyms() throws IOException {
         ReflectionTestUtils.setField(pseudonymity, "fake3rdPartyPseudonymEnabled", true);
         setupTestDataWithMissingPseudonym();
+    }
+
+    @Test
+    public void getPseudonymsWhenPrivacyDisabled() throws IOException {
+        when(privacyProperties.isEnabled()).thenReturn(false);
+        Assert.assertEquals(Arrays.asList("codex_WX6QAM", "codex_ABCDE1", "123"),
+                pseudonymity.getPseudonyms(Arrays.asList("codex_WX6QAM", "codex_ABCDE1", "123"), 100L));
     }
 
     @Test(expected = ResourceNotFound.class)
@@ -142,6 +150,7 @@ public class PseudonymityTest {
         when(fhirContext.newXmlParser()).thenReturn(xmlParser);
         when(privacyProperties.getPseudonymitySecret()).thenReturn("testSecret123");
         when(privacyProperties.getPseudonomityChunksSize()).thenReturn(5);
+        when(privacyProperties.isEnabled()).thenReturn(true);
     }
 
     private Parameters mockErrorParameters() {

@@ -21,7 +21,6 @@ import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.ehrbase.openehr.sdk.util.exception.ClientException;
 import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
 import org.highmed.numportal.domain.model.Aql;
-import org.highmed.numportal.properties.PrivacyProperties;
 import org.highmed.numportal.service.exception.BadRequestException;
 import org.highmed.numportal.service.exception.SystemException;
 import org.highmed.numportal.service.util.AqlQueryConstants;
@@ -34,6 +33,9 @@ import java.util.stream.Collectors;
 
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 
+/**
+ * Service using the EhrBaseSDK to talk to the EhrBaseAPI
+ */
 @Slf4j
 @Service
 public class EhrBaseService {
@@ -50,18 +52,15 @@ public class EhrBaseService {
   private final DefaultRestClient restClient;
   private final CompositionResponseDataBuilder compositionResponseDataBuilder;
   private final Pseudonymity pseudonymity;
-  private final PrivacyProperties privacyProperties;
 
   @Autowired
   public EhrBaseService(
       DefaultRestClient restClient,
       CompositionResponseDataBuilder compositionResponseDataBuilder,
-      @Lazy Pseudonymity pseudonymity,
-      PrivacyProperties privacyProperties) {
+      @Lazy Pseudonymity pseudonymity) {
     this.restClient = restClient;
     this.compositionResponseDataBuilder = compositionResponseDataBuilder;
     this.pseudonymity = pseudonymity;
-    this.privacyProperties = privacyProperties;
   }
 
   /**
@@ -240,9 +239,6 @@ public class EhrBaseService {
   }
 
   private void addPseudonyms(List<String> secondLevelPseudos, List<QueryResponseData> listOfResponseData, Long projectId) {
-    if (!privacyProperties.isEnabled()) {
-      return;
-    }
 
     List<String> pseudonyms = pseudonymity.getPseudonyms(secondLevelPseudos, projectId);
 
