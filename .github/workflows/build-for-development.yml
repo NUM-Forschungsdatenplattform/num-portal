@@ -1,8 +1,8 @@
 name: Build for development
 
 on:
-  pull_request_target:
-    branches: [ develop ]
+  pull_request:
+    branches: [ 'feature/**', 'dependabot/**', 'release/**' ]
     types: [ opened, edited, ready_for_review, closed ]
 
 jobs:
