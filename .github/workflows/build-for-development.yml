@@ -5,7 +5,7 @@ on:
     branches: [ 'feature/**', 'dependabot/**' ]
   pull_request_target:
     branches: [ develop ]
-    types: [ closed, edited ]
+    types: [ ready_for_review, closed ]
 
 jobs:
   test_and_scan:
