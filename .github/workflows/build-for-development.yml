@@ -4,7 +4,7 @@ on:
   push:
     branches: [ 'feature/**', 'dependabot/**' ]
   pull_request_target:
-    branches: [ develop ]
+    branches: [ develop, main ]
     types: [ ready_for_review, closed ]
 
 jobs:
