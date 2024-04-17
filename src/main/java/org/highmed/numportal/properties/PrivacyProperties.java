@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "privacy")
 public class PrivacyProperties {
 
+  private boolean enabled = true;
   private int minHits = 50;
   private String pseudonymitySecret;
   private int pseudonomityChunksSize = 20;

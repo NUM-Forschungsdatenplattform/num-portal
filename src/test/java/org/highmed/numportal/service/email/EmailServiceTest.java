@@ -32,6 +32,7 @@ public class EmailServiceTest {
     @Before
     public void setup() {
         Mockito.when(emailProperties.getFrom()).thenReturn("support@highmed.org");
+        Mockito.when(emailProperties.isEnabled()).thenReturn(true);
         message = new MimeMessage((Session) null);
         Mockito.when(javaMailSender.createMimeMessage()).thenReturn(message);
     }
@@ -41,6 +42,7 @@ public class EmailServiceTest {
         emailService.sendEmail("Test subject", "test body", "testaccount@highmed.org");
         Assert.assertEquals("testaccount@highmed.org", message.getRecipients(Message.RecipientType.TO)[0].toString());
         Assert.assertEquals("Test subject", message.getSubject());
+        Mockito.verify(javaMailSender).send(message);
     }
 
     @Test
@@ -49,5 +51,20 @@ public class EmailServiceTest {
         Assert.assertEquals("testaccount2@highmed.org", message.getRecipients(Message.RecipientType.TO)[0].toString());
         Assert.assertEquals("another test subject", message.getSubject());
         Assert.assertEquals("text/plain", message.getContentType());
+        Mockito.verify(javaMailSender).send(message);
+    }
+
+    @Test
+    public void sendEmailWhenEmailIsDisabledTest() throws MessagingException {
+        Mockito.when(emailProperties.isEnabled()).thenReturn(false);
+        emailService.sendEmail("Test subject", "test body", "testaccount@highmed.org");
+        Mockito.verifyNoMoreInteractions(javaMailSender);
+    }
+
+    @Test
+    public void sendEmailWithAttachmentWhenEmailIsDisabledTest() throws MessagingException {
+        Mockito.when(emailProperties.isEnabled()).thenReturn(false);
+        emailService.sendEmailWithAttachment("another test subject", "dummy email body", "testaccount2@highmed.org", "dummy file content", "dummyAttachment.txt","text/plain");
+        Mockito.verifyNoMoreInteractions(javaMailSender);
     }
 }

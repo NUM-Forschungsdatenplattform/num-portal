@@ -1,7 +1,6 @@
 package org.highmed.numportal.service.ehrbase;
 
 import com.nedap.archie.rm.support.identification.UUID;
-import org.highmed.numportal.domain.model.Aql;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
@@ -21,9 +20,10 @@ import org.ehrbase.openehr.sdk.response.dto.TemplatesResponseData;
 import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.ehrbase.openehr.sdk.util.exception.ClientException;
 import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
+import org.highmed.numportal.domain.model.Aql;
+import org.highmed.numportal.service.exception.BadRequestException;
 import org.highmed.numportal.service.exception.SystemException;
 import org.highmed.numportal.service.util.AqlQueryConstants;
-import org.highmed.numportal.service.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -33,6 +33,9 @@ import java.util.stream.Collectors;
 
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 
+/**
+ * Service using the EhrBaseSDK to talk to the EhrBaseAPI
+ */
 @Slf4j
 @Service
 public class EhrBaseService {
@@ -103,7 +106,6 @@ public class EhrBaseService {
 
   /**
    * Executes a raw aql query
-   *
    * @param aqlDto The aql query
    * @return QueryResponseData
    */
@@ -113,7 +115,6 @@ public class EhrBaseService {
     String query = AqlRenderer.render(aqlDto);
 
     try {
-
       try {
         log.info(
             String.format(

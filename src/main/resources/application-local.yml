@@ -38,6 +38,7 @@ spring:
   mvc:
     log-request-details: false
   mail:
+    enabled: false
     host: smtp.gmail.com
     port: 587
     username: numportalwebapp@gmail.com
@@ -83,6 +84,7 @@ ehrbase:
   password: SuperSecretPassword
 
 privacy:
+  enabled: false
   minHits: 1
   pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
   pseudonomityChunksSize: 20
