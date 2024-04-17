@@ -106,7 +106,6 @@ public class EhrBaseService {
 
   /**
    * Executes a raw aql query
-   *
    * @param aqlDto The aql query
    * @return QueryResponseData
    */
@@ -116,7 +115,6 @@ public class EhrBaseService {
     String query = AqlRenderer.render(aqlDto);
 
     try {
-
       try {
         log.info(
             String.format(
