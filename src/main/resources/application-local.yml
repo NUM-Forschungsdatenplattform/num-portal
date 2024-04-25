@@ -31,7 +31,7 @@ spring:
           userStoreClient:
             authorization-grant-type: client_credentials
             client-id: num-portal
-            client-secret: 89dddc8f-0f25-4faf-a58d-6cda681f6ed3
+            client-secret: czPCJDlycHGiJkrCTGUgyRV2cDs3cgxk
         provider:
           userStoreClient:
             token-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/token
@@ -55,16 +55,15 @@ spring:
 swagger:
   oauth2:
     token-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/token
-    auth-uri: ${keycloak.url}/realms/crr/protocol/openid-connect
-    client-name: numPortalWebapp
-    client-secret: numPortalWebapp
+    auth-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/auth
+    client-name: num-portal
+    client-secret: num-portal
 
 userstore:
   url: ${keycloak.url}/admin/realms/crr
 
 keycloak:
   url: http://localhost:8180
-#  url: https://keycloak.dev.num-codex.de
 
 feign:
   client:
