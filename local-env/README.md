@@ -46,5 +46,14 @@
 ## EhrBase
 * copy [ehrbase-env file](https://github.com/ehrbase/ehrbase/blob/master/.env.ehrbase) next to the [.env file](.env)
 * Prepare database:
-  * execute the [SQL script](https://github.com/ehrbase/ehrbase/blob/develop/createdb.sql), or
-  * create `ehrbase` DB and import test date with dump if wanted `psql -U postgres -d ehrbase -f <dump-file>`
+  * execute the [SQL script](https://github.com/ehrbase/docker/blob/master/dockerfiles/scripts/db-setup.sql)
+  * optional: import test date with dump if wanted `psql -U postgres -d ehrbase -f <dump-file>`:
+    ```sql
+    CREATE ROLE ehrbase WITH LOGIN PASSWORD 'ehrbase';
+    CREATE ROLE ehrbase_restricted WITH LOGIN PASSWORD 'ehrbase_restricted';
+    CREATE DATABASE ehrbase ENCODING 'UTF-8' LOCALE 'C' TEMPLATE template0;
+    GRANT ALL PRIVILEGES ON DATABASE ehrbase TO ehrbase;
+    GRANT ALL PRIVILEGES ON DATABASE ehrbase TO ehrbase_restricted;
+    ```
+  * execute: https://github.com/ehrbase/ehrbase/blob/v0.32.0/UPDATING.md#ehrbase-0250
+  * execute: https://github.com/ehrbase/ehrbase/blob/v0.32.0/base/db-setup/add_restricted_user.sql
