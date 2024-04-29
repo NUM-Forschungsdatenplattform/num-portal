@@ -63,6 +63,6 @@
     * get postgres container id: `docker compose ps` (the id does not have to be complete, only unique)
     * copy dump into container: `docker cp <local_path_to_dump> <containerId>:./ehrbase_dump.sql`
     * connect to postgres container: `docker exec -it <containerId> bash`
-    * with dump if wanted `psql -U postgres -d ehrbase -f <dump-file>`:
+    * import data: `psql -U postgres -d ehrbase -f ehrbase_dump.sql`:
     * execute: https://github.com/ehrbase/ehrbase/blob/v0.32.0/UPDATING.md#ehrbase-0250
     * execute: https://github.com/ehrbase/ehrbase/blob/v0.32.0/base/db-setup/add_restricted_user.sql
