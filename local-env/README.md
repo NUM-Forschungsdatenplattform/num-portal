@@ -27,12 +27,18 @@
     * Users: 
       * create a user
       * \<userName> -> Credentails -> set password (disable 'Temporary')
+      * enable 'Email verified'
       * role-mapping -> Assign role -> `SUPER_ADMIN` and other
+      * insert userDetails into num database:
+        ```sql
+        INSERT INTO num.organization(id, name, description, active)	VALUES (1, '<Name>', '<description>', true);
+        INSERT INTO num.user_details(user_id, approved, organization_id, created_date) VALUES ('<keycloak_User_ID>', true, 1, CURRENT_DATE);
+        ```
     * import client [num-portal](num-portal.json)
     * num-portal client:
       * generate: Clients -> num-portal -> Credentials -> Client secret
       * copy Client secret, into [application-local.yml](./../src/main/resources/application-local.yml) -> `spring.security.oauth2.client.registration.userStoreClient.client-secret`
-      * assign service accounts roles_
+      * assign service accounts roles
         * filter by Client
         * select `manage-users` and `manage-realm`
     * Client scopes from `crr` -> profile -> Mappers -> Add mapper -> from predefined mappers: groups
