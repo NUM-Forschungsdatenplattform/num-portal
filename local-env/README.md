@@ -59,6 +59,10 @@
     ```
   * execute this [SQL script](configDB.sql) on the database `ehrbase`
   * _optional_: import test date:
+    * get a dump 😊
+    * get postgres container id: `docker compose ps` (the dump does not have to be complete, only unique)
+    * copy dump into container: `docker cp <local_path_to_dump> <containerId>:./ehrbase_dump.sql`
+    * connect to postgres container: `docker exec -it <containerId> bash`
     * with dump if wanted `psql -U postgres -d ehrbase -f <dump-file>`:
     * execute: https://github.com/ehrbase/ehrbase/blob/v0.32.0/UPDATING.md#ehrbase-0250
     * execute: https://github.com/ehrbase/ehrbase/blob/v0.32.0/base/db-setup/add_restricted_user.sql
