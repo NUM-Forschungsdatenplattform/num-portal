@@ -60,7 +60,7 @@
   * execute this [SQL script](configDB.sql) on the database `ehrbase`
   * _optional_: import test date:
     * get a dump 😊
-    * get postgres container id: `docker compose ps` (the dump does not have to be complete, only unique)
+    * get postgres container id: `docker compose ps` (the id does not have to be complete, only unique)
     * copy dump into container: `docker cp <local_path_to_dump> <containerId>:./ehrbase_dump.sql`
     * connect to postgres container: `docker exec -it <containerId> bash`
     * with dump if wanted `psql -U postgres -d ehrbase -f <dump-file>`:
