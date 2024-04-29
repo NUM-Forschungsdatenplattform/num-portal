@@ -25,7 +25,8 @@
     * create Realm `crr`
     * create 'Realm roles': `SUPER_ADMIN`, `CONTENT_ADMIN`, `ORGANIZATION_ADMIN`, `MANAGER`, `STUDY_COORDINATOR`, `STUDY_APPROVER`, `RESEARCHER` and `CRITERIA_EDITOR`
     * Users: 
-      * add some user
+      * create a user
+      * \<userName> -> Credentails -> set password (disable 'Temporary')
       * role-mapping -> Assign role -> `SUPER_ADMIN` and other
     * import client [num-portal](num-portal.json)
     * num-portal client:
