@@ -62,18 +62,6 @@ services:
       DB_PASS: ${DB_PASS}
     depends_on:
       - postgres
-#  flyway:
-#    image: flyway/flyway
-#    environment:
-#      DB_USER_ADMIN: ${DB_USER_ADMIN}
-#      DB_PASS_ADMIN: ${DB_PASS_ADMIN}
-#    command: -url=jdbc:postgresql://postgres:5432/ehrbase -schemas=ehr -user=${DB_USER_ADMIN} -password=${DB_PASS_ADMIN} -connectRetries=2 repair
-#    volumes:
-#      - ./flyway:/flyway/sql
-#    networks:
-#      - num-portal
-#    depends_on:
-#      - postgres
 
 volumes:
   pgdata:
