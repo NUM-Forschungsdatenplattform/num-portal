@@ -6,20 +6,20 @@
 
 In the root folder of the project, open cmd and run:
 
-1. Build app: ```mvn clean install```
-2. Run: ```mvn spring-boot:run```
+1. Build app: `mvn clean install`
+2. Run: `mvn spring-boot:run`
 
 ## Database 
 
 Start a local instance of PostgreSQL: 
 
-``` 
+```
 docker run --name postgres -e POSTGRES_PASSWORD=postgres -d -p 5432:5432 postgres
 ```
 
 ## Swagger
 
-http://localhost:8090/swagger-ui/
+http://localhost:8090/swagger-ui/index.html
 
 
 ## License
