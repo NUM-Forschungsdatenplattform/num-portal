@@ -1250,10 +1250,7 @@ public class ProjectService {
         Project project =
                 projectRepository
                         .findById(id)
-                        .orElseThrow(
-                                () -> {
-                                    throw new BadRequestException(ProjectService.class, PROJECT_NOT_FOUND);
-                                });
+                        .orElseThrow(() -> new BadRequestException(ProjectService.class, PROJECT_NOT_FOUND));
         ProjectDto projectDto = projectMapper.convertToDto(project);
         try {
             return projectDocCreator.getDocBytesOfProject(projectDto, locale);
