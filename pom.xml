@@ -39,7 +39,7 @@
     <wiremock-standalone.version>3.5.4</wiremock-standalone.version>
     <testcontainers.version>1.19.7</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
-    <spring.cloud-version>2023.0.0</spring.cloud-version>
+    <spring.cloud-version>2023.0.1</spring.cloud-version>
   </properties>
 
   <repositories>
