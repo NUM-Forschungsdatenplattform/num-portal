@@ -26,7 +26,7 @@
     <modelmapper.version>3.2.0</modelmapper.version>
     <springdoc.version>2.5.0</springdoc.version>
     <java.version>17</java.version>
-    <commons-csv.version>1.10.0</commons-csv.version>
+    <commons-csv.version>1.11.0</commons-csv.version>
     <jacoco.version>0.8.12</jacoco.version>
     <failsafe.version>3.2.5</failsafe.version>
     <surefire.version>3.2.5</surefire.version>
