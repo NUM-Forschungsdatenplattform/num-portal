@@ -1,5 +1,6 @@
 package org.highmed.numportal.service.html;
 
+import com.ctc.wstx.shaded.msv_core.util.Uri;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -65,8 +66,8 @@ public class HtmlContent {
 
         CloseableHttpResponse response = null;
         try {
+            isValidURI(urlStr);
             URI uri = new URI( urlStr );
-
             HttpGet request = new HttpGet( uri );
             request.setConfig( getRequestConfig( 5*5 ) );
 
@@ -97,6 +98,11 @@ public class HtmlContent {
                 response.close();
             }
         }
+    }
+    private boolean isValidURI(String uriString){
+        Boolean statsusCakeUrl = uriString.contains("statusCake");
+        Boolean systemStatusUrl = uriString.contains("codex");
+        return statsusCakeUrl || systemStatusUrl;
     }
 
 }
