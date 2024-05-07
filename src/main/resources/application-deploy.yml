@@ -108,3 +108,7 @@ pseudonymity:
 clamAV:
   host: ${CLAMAV_HOST}
   port: ${CLAMAV_PORT}
+
+logging:
+  level:
+    org.highmed.numportal: ${LOG_LEVEL}
