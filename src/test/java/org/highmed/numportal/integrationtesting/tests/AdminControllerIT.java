@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import lombok.SneakyThrows;
 import org.highmed.numportal.integrationtesting.security.WithMockNumUser;
-import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -92,7 +90,7 @@ public class AdminControllerIT extends IntegrationTest {
   public void shouldGetExternalUrlsSuccessfully() throws Exception {
     mockMvc
             .perform(
-                    get("/admin/manuel-urls")
+                    get("/admin/manuel-url")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())

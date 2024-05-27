@@ -65,7 +65,7 @@ public class AdminController extends CustomizedExceptionHandler {
   private final NumProperties numProperties;
 
 
-  @GetMapping(value = "manuel-url", produces = MediaType.APPLICATION_JSON_VALUE)
+  @GetMapping(value = "/manuel-url", produces = MediaType.APPLICATION_JSON_VALUE)
   @Operation(description = "Returns value for user manual URL")
   public ResponseEntity<Map<String, Object>> getExternalUrls(){
     Map<String, Object> map = new HashMap<>();
