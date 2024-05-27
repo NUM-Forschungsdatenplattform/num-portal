@@ -321,8 +321,6 @@ public class ExceptionsTemplate {
         errorMap.put(NOT_ALLOWED_TO_UPDATE_OWN_ORGANIZATION_STATUS, new ExceptionDto(99, new ArrayList<>()));
         errorMap.put(CANNOT_ASSIGN_USER_TO_DEACTIVATED_ORGANIZATION, new ExceptionDto(100, new ArrayList<>()));//1 parameter
         errorMap.put(EXCEPTION_HAPPENED_IN_CLASS_FOR_ENVIRONMENT, new ExceptionDto(101, new ArrayList<>()));//3 parameter
-        errorMap.put(EXCEPTION_IN_PARSING_PAGE, new ExceptionDto(102, new ArrayList<>()));
-        errorMap.put(ANNOUNCEMENT_IN_PLACE, new ExceptionDto(103, new ArrayList<>()));//2 parameters
         errorMap.put(ATTACHMENT_NOT_FOUND, new ExceptionDto( 104, new ArrayList<>() ) );//1 parameter
 
         //Document
