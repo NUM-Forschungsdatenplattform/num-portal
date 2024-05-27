@@ -62,47 +62,4 @@ public class HtmlContent {
                 .setSocketTimeout( timeout * 1000 ).build();
     }
 
-    public String pageContent(String urlStr) throws IOException, URISyntaxException {
-
-        CloseableHttpResponse response = null;
-        try {
-            isValidURI(urlStr);
-            URI uri = new URI( urlStr );
-            HttpGet request = new HttpGet( uri );
-            request.setConfig( getRequestConfig( 5*5 ) );
-
-            response = httpClient.execute( request );
-
-            if (response.getStatusLine().getStatusCode() > 200) {
-                throw new RuntimeException( "Invalid response for url: " + urlStr );
-            }
-
-            HttpEntity entity = response.getEntity();
-            InputStream inputStream = entity.getContent();
-
-            ContentType contentType = ContentType.get( entity );
-            Charset charSet = StandardCharsets.UTF_8;
-
-            if (contentType != null) {
-                charSet = contentType.getCharset();
-
-            } else {
-                log.info( "contentType unknown" );
-            }
-
-            //file content
-            return IOUtils.toString( inputStream, charSet != null ? charSet : StandardCharsets.ISO_8859_1 );
-
-        } finally {
-            if (response != null) {
-                response.close();
-            }
-        }
-    }
-    private boolean isValidURI(String uriString){
-        Boolean statsusCakeUrl = uriString.contains("statusCake");
-        Boolean systemStatusUrl = uriString.contains("codex");
-        return statsusCakeUrl || systemStatusUrl;
-    }
-
 }

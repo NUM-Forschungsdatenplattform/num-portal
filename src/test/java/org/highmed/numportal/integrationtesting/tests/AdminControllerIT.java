@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import lombok.SneakyThrows;
 import org.highmed.numportal.integrationtesting.security.WithMockNumUser;
-import org.highmed.numportal.service.SetupHealthiness;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mock;

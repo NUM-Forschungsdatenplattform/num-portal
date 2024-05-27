@@ -10,7 +10,6 @@ import org.highmed.numportal.domain.dto.OrganizationDto;
 import org.highmed.numportal.domain.dto.SearchCriteria;
 import org.highmed.numportal.domain.dto.UserNameDto;
 import org.highmed.numportal.properties.NumProperties;
-import org.highmed.numportal.service.SetupHealthiness;
 import org.highmed.numportal.service.UserDetailsService;
 import org.highmed.numportal.service.UserService;
 import org.highmed.numportal.service.ehrbase.Pseudonymity;
