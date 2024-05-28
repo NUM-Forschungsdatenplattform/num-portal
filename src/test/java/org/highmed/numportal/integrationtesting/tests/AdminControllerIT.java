@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import lombok.SneakyThrows;
 import org.highmed.numportal.integrationtesting.security.WithMockNumUser;
-import org.highmed.numportal.service.SetupHealthiness;
-import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -15,7 +12,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static org.highmed.numportal.domain.model.Roles.*;
-import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -33,9 +29,6 @@ public class AdminControllerIT extends IntegrationTest {
   private static final String USER_ID_TO_BE_APPROVED = "b59e5edb-3121-4e0a-8ccb-af6798207a73";
   @Autowired
   private ObjectMapper mapper;
-
-  @Mock
-  private SetupHealthiness setupHealthiness;
 
   @Test
   @WithMockNumUser(
@@ -97,26 +90,13 @@ public class AdminControllerIT extends IntegrationTest {
   public void shouldGetExternalUrlsSuccessfully() throws Exception {
     mockMvc
             .perform(
-                    get("/admin/external-urls")
+                    get("/admin/manuel-url")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.systemStatusUrl").value("http://localhost:8099/health-url"))
             .andExpect(jsonPath("$.userManualUrl.DE").value("user-manual-de"))
             .andExpect(jsonPath("$.userManualUrl.EN").value("user-manual-en"));
   }
 
-
-  @Test
-  public void testException() {
-    when(setupHealthiness.checkForAnnouncements()).thenReturn("myParsedPage");
-    Assert.assertEquals(setupHealthiness.checkForAnnouncements(), "myParsedPage");
-    when(setupHealthiness.checkForAnnouncements()).thenThrow(new RuntimeException("PageNotParsed"));
-    try {
-      setupHealthiness.checkForAnnouncements();
-    } catch (RuntimeException re){
-      Assert.assertEquals("PageNotParsed", re.getMessage());
-    }
-  }
 
 }

@@ -4,13 +4,11 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import org.highmed.numportal.NumPortalApplication;
 import org.highmed.numportal.domain.model.Roles;
-import org.highmed.numportal.domain.model.SetupType;
 import org.highmed.numportal.domain.model.admin.User;
 import org.highmed.numportal.domain.dto.OrganizationDto;
 import org.highmed.numportal.domain.dto.SearchCriteria;
 import org.highmed.numportal.domain.dto.UserNameDto;
 import org.highmed.numportal.properties.NumProperties;
-import org.highmed.numportal.service.SetupHealthiness;
 import org.highmed.numportal.service.UserDetailsService;
 import org.highmed.numportal.service.UserService;
 import org.highmed.numportal.service.ehrbase.Pseudonymity;
@@ -23,8 +21,6 @@ import lombok.AllArgsConstructor;
 import org.highmed.numportal.web.config.Role;
 import org.highmed.numportal.web.feign.KeycloakFeign;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.actuate.health.HealthEndpoint;
-import org.springframework.boot.actuate.health.Status;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -58,50 +54,23 @@ public class AdminController extends CustomizedExceptionHandler {
 
   private static final String SUCCESS_REPLY = "Success";
   private static final String EMAIL_CLAIM = "email";
-  private static final String CHECK_FOR_ANNOUNCEMENTS = "CHECK_FOR_ANNOUNCEMENTS";
 
   private final UserService userService;
 
   private final UserDetailsService userDetailsService;
 
-  private final HealthEndpoint healthEndpoint;
 
   private final Pseudonymity pseudonymity;
 
   private final NumProperties numProperties;
 
-  private final SetupHealthiness healthiness;
 
-  @GetMapping(value = "external-urls", produces = MediaType.APPLICATION_JSON_VALUE)
-  @Operation(description = "Returns value for health status endpoint URL and user manual URL")
+  @GetMapping(value = "manuel-url", produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(description = "Returns value for user manual URL")
   public ResponseEntity<Map<String, Object>> getExternalUrls(){
     Map<String, Object> map = new HashMap<>();
-    map.put("systemStatusUrl", numProperties.getSystemStatusUrl());
     map.put("userManualUrl", numProperties.getUserManualUrl());
     return ResponseEntity.ok(map);
-  }
-
-  @GetMapping(value = "services-status", produces = MediaType.APPLICATION_JSON_VALUE)
-  @Operation(description = "Returns value for healths of different microservices")
-  public ResponseEntity<Map<String, String>> getServicesStatus(
-          final @RequestParam(value = "setup", defaultValue = "PREPROD") SetupType setup){
-    Map<String, String> map = healthiness.checkHealth(setup);
-    if(map.values().stream().filter(s -> s.length() > 0).findFirst().isEmpty()) {
-      map.put(CHECK_FOR_ANNOUNCEMENTS, healthiness.checkForAnnouncements());
-      return ResponseEntity.ok(map);
-    } else {
-      map.put(CHECK_FOR_ANNOUNCEMENTS, healthiness.checkForAnnouncements());
-      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(map);
-    }
-  }
-
-  @GetMapping("health")
-  public ResponseEntity<Status> health() {
-    if (healthEndpoint.health().getStatus() == Status.UP) {
-      return ResponseEntity.ok(healthEndpoint.health().getStatus());
-    } else {
-      return ResponseEntity.badRequest().body(healthEndpoint.health().getStatus());
-    }
   }
 
   @GetMapping("/log-level")

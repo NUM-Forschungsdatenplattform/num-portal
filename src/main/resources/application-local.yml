@@ -31,7 +31,7 @@ spring:
           userStoreClient:
             authorization-grant-type: client_credentials
             client-id: num-portal
-            client-secret: czPCJDlycHGiJkrCTGUgyRV2cDs3cgxk
+            client-secret: ZO29JPc5OLIZ29Rv83tEHOdxiAt2P9eC
         provider:
           userStoreClient:
             token-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/token
@@ -100,7 +100,6 @@ zars:
 num:
   url: http://localhost:8180
   locale: en
-  systemStatusUrl: https://health.num-codex.de/
   # if true a second database is configured for attachments - check configs for numportal-attachment
   enableAttachmentDatabase: true
 

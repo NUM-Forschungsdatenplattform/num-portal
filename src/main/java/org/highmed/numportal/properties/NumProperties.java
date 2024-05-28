@@ -13,7 +13,6 @@ public class NumProperties {
 
   private String locale;
   private String url;
-  private String systemStatusUrl;
   private Map<String, String> userManualUrl;
 
 }
