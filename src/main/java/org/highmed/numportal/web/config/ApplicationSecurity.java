@@ -18,7 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class ApplicationSecurity {
 
   private static final String[] AUTH_WHITELIST = {"/swagger-*/**", "/v2/**", "/v3/**", "/admin/health",
-          "/admin/log-level", "/admin/log-level/*", "/admin/external-urls", "/admin/services-status"};
+          "/admin/log-level", "/admin/log-level/*", "/admin/manuel-url", "/admin/services-status"};
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
