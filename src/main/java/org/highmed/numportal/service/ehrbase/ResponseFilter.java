@@ -7,9 +7,10 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,10 +28,12 @@ public class ResponseFilter {
   @PostConstruct
   public void initialize() {
     try {
-      File pathResource = new ClassPathResource("resultfilters/pathfilters.txt").getFile();
-      pathFilters = new HashSet<>(Files.readAllLines(pathResource.toPath()));
-      File regexpResource = new ClassPathResource("resultfilters/regexpfilters.txt").getFile();
-      regexpFilters = Files.readAllLines(regexpResource.toPath()).stream().map(Pattern::compile).collect(
+      BufferedReader pathResource = new BufferedReader(new InputStreamReader(
+              new ClassPathResource("resultfilters/pathfilters.txt").getInputStream(), StandardCharsets.UTF_8));
+      pathFilters = new HashSet<>(pathResource.lines().toList());
+      BufferedReader regexpResource = new BufferedReader(new InputStreamReader(
+              new ClassPathResource("resultfilters/regexpfilters.txt").getInputStream(), StandardCharsets.UTF_8));
+      regexpFilters = regexpResource.lines().map(Pattern::compile).collect(
               Collectors.toList());
     } catch (IOException e) {
       log.error("Failed to read project data filters, can't filter results.");
@@ -39,7 +42,7 @@ public class ResponseFilter {
 
   public List<QueryResponseData> filterResponse(List<QueryResponseData> queryResponseDataList) {
     if(pathFilters == null){
-      return new ArrayList<>();
+      return queryResponseDataList;
     }
     List<QueryResponseData> resultList = new ArrayList<>();
     for (QueryResponseData queryResponseData : queryResponseDataList) {
