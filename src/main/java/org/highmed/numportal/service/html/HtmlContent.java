@@ -61,5 +61,4 @@ public class HtmlContent {
                 .setConnectionRequestTimeout( timeout * 1000 )
                 .setSocketTimeout( timeout * 1000 ).build();
     }
-
 }
