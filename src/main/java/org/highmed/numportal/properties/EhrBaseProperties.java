@@ -18,6 +18,4 @@ public class EhrBaseProperties {
   private String adminUsername;
 
   private String adminPassword;
-
-  private String idPath = "ehr_status/subject/external_ref/id/value";
 }
