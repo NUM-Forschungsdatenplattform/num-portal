@@ -62,9 +62,6 @@ public class EhrBaseServiceTest {
   private static final String GOOD_QUERY =
       "Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
 
-  private static final String BAD_QUERY =
-      "Select c0 as test contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
-
   @Test(expected = WrongStatusCodeException.class)
   public void shouldHandleBadAqlQuery() {
     when(restClient.aqlEndpoint().execute(any(Query.class)))
