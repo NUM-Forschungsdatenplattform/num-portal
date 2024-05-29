@@ -12,7 +12,6 @@ import org.ehrbase.openehr.sdk.response.dto.TemplatesResponseData;
 import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.ehrbase.openehr.sdk.util.exception.ClientException;
 import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
-import org.highmed.numportal.properties.EhrBaseProperties;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,26 +52,26 @@ public class EhrBaseServiceTest {
   @Mock
   private Pseudonymity pseudonymity;
 
-  @Mock
-  private EhrBaseProperties ehrBaseProperties;
-
   @InjectMocks
   private EhrBaseService ehr;
 
   private static final String GOOD_QUERY =
-      "Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
+          "Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
+
+  private static final String BAD_QUERY =
+          "Select c0 as test contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
 
   @Test(expected = WrongStatusCodeException.class)
   public void shouldHandleBadAqlQuery() {
     when(restClient.aqlEndpoint().execute(any(Query.class)))
-        .thenThrow(WrongStatusCodeException.class);
+            .thenThrow(WrongStatusCodeException.class);
     ehr.retrieveEligiblePatientIds(Aql.builder().query("SELECT e/ehr_id/value FROM EHR e").build());
   }
 
   @Test(expected = AqlParseException.class)
   public void shouldHandleMalformedAqlQuery() {
     when(restClient.aqlEndpoint().execute(any(Query.class)))
-        .thenThrow(WrongStatusCodeException.class);
+            .thenThrow(WrongStatusCodeException.class);
     ehr.retrieveEligiblePatientIds(Aql.builder().query("SLECT e/ehr_id/value FROM EHR e").build());
   }
 
@@ -82,7 +81,7 @@ public class EhrBaseServiceTest {
     when(restClient.aqlEndpoint().execute(any(Query.class))).thenReturn(Collections.emptyList());
     ehr.retrieveEligiblePatientIds(Aql.builder().query("SELECT e/ehr_id FROM EHR e").build());
     ArgumentCaptor<NativeQuery<Record>> queryArgumentCaptor =
-        ArgumentCaptor.forClass(NativeQuery.class);
+            ArgumentCaptor.forClass(NativeQuery.class);
     verify(restClient.aqlEndpoint(), times(1)).execute(queryArgumentCaptor.capture());
     assertThat(queryArgumentCaptor.getValue().buildAql(), is("SELECT e/ehr_id/value FROM EHR e"));
   }
@@ -109,17 +108,16 @@ public class EhrBaseServiceTest {
   public void shouldFlattenResultsWhenContainsComposition() {
     QueryResponseData compositionsQueryResponseData = new QueryResponseData();
     List<Map<String, String>> columns =
-        new ArrayList<>(List.of(Map.of("path", "/ehr_status/subject/external_ref/id/value"), Map.of("uuid", "c/uuid")));
+            new ArrayList<>(List.of(Map.of("path", "/ehr_status/subject/external_ref/id/value"), Map.of("uuid", "c/uuid")));
     List<List<Object>> rows =
-        List.of(
-            new ArrayList<>(List.of("testehrId", Map.of("_type", "COMPOSITION", "uuid", "12345"))),
-            new ArrayList<>(List.of("testehrId2", Map.of("_type", "COMPOSITION", "uuid", "bla"))));
+            List.of(
+                    new ArrayList<>(List.of("testehrId", Map.of("_type", "COMPOSITION", "uuid", "12345"))),
+                    new ArrayList<>(List.of("testehrId2", Map.of("_type", "COMPOSITION", "uuid", "bla"))));
     compositionsQueryResponseData.setColumns(columns);
     compositionsQueryResponseData.setRows(rows);
 
-    when(ehrBaseProperties.getIdPath()).thenReturn("ehr_status/subject/external_ref/id/value");
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
-        .thenReturn(compositionsQueryResponseData);
+            .thenReturn(compositionsQueryResponseData);
 
     when(compositionResponseDataBuilder.build(any())).thenReturn(compositionsQueryResponseData);
 
@@ -132,14 +130,13 @@ public class EhrBaseServiceTest {
     QueryResponseData response = new QueryResponseData();
 
     response.setColumns(
-        new ArrayList<>(List.of(Map.of("path", "/ehr_status/subject/external_ref/id/value"), Map.of("uuid", "c/uuid"))));
+            new ArrayList<>(List.of(Map.of("path", "/ehr_status/subject/external_ref/id/value"), Map.of("uuid", "c/uuid"))));
     response.setRows(List.of(
-        new ArrayList<>(List.of("testehrid1", Map.of("_type", "OBSERVATION", "uuid", "12345"))),
-        new ArrayList<>(List.of("testehrid2", Map.of("_type", "SECTION", "uuid", "bla")))));
+            new ArrayList<>(List.of("testehrid1", Map.of("_type", "OBSERVATION", "uuid", "12345"))),
+            new ArrayList<>(List.of("testehrid2", Map.of("_type", "SECTION", "uuid", "bla")))));
 
-    when(ehrBaseProperties.getIdPath()).thenReturn("ehr_status/subject/external_ref/id/value");
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
-        .thenReturn(response);
+            .thenReturn(response);
 
     ehr.executeRawQuery(AqlQueryParser.parse(GOOD_QUERY), 1L);
     verify(compositionResponseDataBuilder, times(0)).build(any());
@@ -147,9 +144,8 @@ public class EhrBaseServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleClientExceptionWhenExecutingAql() {
-    when(ehrBaseProperties.getIdPath()).thenReturn("path/to/config");
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
-        .thenThrow(ClientException.class);
+            .thenThrow(ClientException.class);
     ehr.executeRawQuery(AqlQueryParser.parse(GOOD_QUERY), 1L);
   }
   @Test(expected = SystemException.class)

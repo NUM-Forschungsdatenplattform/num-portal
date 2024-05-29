@@ -21,7 +21,6 @@ import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.ehrbase.openehr.sdk.util.exception.ClientException;
 import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
 import org.highmed.numportal.domain.model.Aql;
-import org.highmed.numportal.properties.EhrBaseProperties;
 import org.highmed.numportal.service.exception.BadRequestException;
 import org.highmed.numportal.service.exception.SystemException;
 import org.highmed.numportal.service.util.AqlQueryConstants;
@@ -42,28 +41,26 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 public class EhrBaseService {
 
   private static final Aql ALL_PATIENTS_IDS =
-      Aql.builder().query("select e/ehr_id/value from ehr e").build();
+          Aql.builder().query("select e/ehr_id/value from ehr e").build();
 
   private static final String COMPOSITION_KEY = "_type";
   private static final String NAME = "name";
   private static final String PATH = "path";
   private static final String PSEUDONYM = "pseudonym";
+  private static final String EHR_STATUS_PATH = "ehr_status/subject/external_ref/id/value";
 
   private final DefaultRestClient restClient;
   private final CompositionResponseDataBuilder compositionResponseDataBuilder;
   private final Pseudonymity pseudonymity;
-  private final EhrBaseProperties ehrBaseProperties;
 
   @Autowired
   public EhrBaseService(
-      DefaultRestClient restClient,
-      CompositionResponseDataBuilder compositionResponseDataBuilder,
-      @Lazy Pseudonymity pseudonymity,
-      EhrBaseProperties ehrBaseProperties) {
+          DefaultRestClient restClient,
+          CompositionResponseDataBuilder compositionResponseDataBuilder,
+          @Lazy Pseudonymity pseudonymity) {
     this.restClient = restClient;
     this.compositionResponseDataBuilder = compositionResponseDataBuilder;
     this.pseudonymity = pseudonymity;
-    this.ehrBaseProperties = ehrBaseProperties;
   }
 
   /**
@@ -120,8 +117,8 @@ public class EhrBaseService {
     try {
       try {
         log.info(
-            String.format(
-                "[AQL QUERY] EHR request query: %s ", query));
+                String.format(
+                        "[AQL QUERY] EHR request query: %s ", query));
       } catch (Exception e) {
         log.error("Error parsing query while logging", e);
       }
@@ -160,7 +157,7 @@ public class EhrBaseService {
   private void addSelectSecondlevelPseudonyms(AqlQuery aqlDto) {
     SelectExpression selectExpression = new SelectExpression();
     IdentifiedPath ehrIdPath = new IdentifiedPath();
-    ehrIdPath.setPath(AqlObjectPath.parse(ehrBaseProperties.getIdPath()));
+    ehrIdPath.setPath(AqlObjectPath.parse(EHR_STATUS_PATH));
 
     ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
     containmentClassExpression.setType(AqlQueryConstants.EHR_TYPE);
@@ -262,19 +259,19 @@ public class EhrBaseService {
       throw new BadRequestException(EhrBaseService.class, NO_DATA_COLUMNS_IN_THE_QUERY_RESULT);
     }
     String ehrStatusPath = columns.get(0).get(PATH);
-    if (ehrStatusPath == null || !ehrStatusPath.equals("/" + ehrBaseProperties.getIdPath())) {
+    if (ehrStatusPath == null || !ehrStatusPath.equals("/" + EHR_STATUS_PATH)) {
       throw new SystemException(EhrBaseService.class, QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN);
     }
     columns.remove(0);
     return compositions.getRows().stream()
-        .map(row -> row.remove(0))
-        .map(String.class::cast)
-        .collect(Collectors.toList());
+            .map(row -> row.remove(0))
+            .map(String.class::cast)
+            .collect(Collectors.toList());
   }
 
   private boolean isComposition(Object object) {
     return object instanceof Map
-        && ((Map<String, String>) object).containsKey(COMPOSITION_KEY)
-        && ((Map<String, String>) object).get(COMPOSITION_KEY).equals(AqlQueryConstants.COMPOSITION_TYPE);
+            && ((Map<String, String>) object).containsKey(COMPOSITION_KEY)
+            && ((Map<String, String>) object).get(COMPOSITION_KEY).equals(AqlQueryConstants.COMPOSITION_TYPE);
   }
 }
