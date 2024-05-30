@@ -12,6 +12,7 @@ import org.ehrbase.openehr.sdk.response.dto.TemplatesResponseData;
 import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.ehrbase.openehr.sdk.util.exception.ClientException;
 import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
+import org.highmed.numportal.properties.EhrBaseProperties;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,14 +53,14 @@ public class EhrBaseServiceTest {
   @Mock
   private Pseudonymity pseudonymity;
 
+  @Mock
+  private EhrBaseProperties ehrBaseProperties;
+
   @InjectMocks
   private EhrBaseService ehr;
 
   private static final String GOOD_QUERY =
           "Select c0 as test from EHR e contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
-
-  private static final String BAD_QUERY =
-          "Select c0 as test contains COMPOSITION c0[openEHR-EHR-COMPOSITION.report.v1]";
 
   @Test(expected = WrongStatusCodeException.class)
   public void shouldHandleBadAqlQuery() {
@@ -116,6 +117,7 @@ public class EhrBaseServiceTest {
     compositionsQueryResponseData.setColumns(columns);
     compositionsQueryResponseData.setRows(rows);
 
+    when(ehrBaseProperties.getIdPath()).thenReturn("ehr_status/subject/external_ref/id/value");
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
             .thenReturn(compositionsQueryResponseData);
 
@@ -135,6 +137,7 @@ public class EhrBaseServiceTest {
             new ArrayList<>(List.of("testehrid1", Map.of("_type", "OBSERVATION", "uuid", "12345"))),
             new ArrayList<>(List.of("testehrid2", Map.of("_type", "SECTION", "uuid", "bla")))));
 
+    when(ehrBaseProperties.getIdPath()).thenReturn("ehr_status/subject/external_ref/id/value");
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
             .thenReturn(response);
 
@@ -144,6 +147,7 @@ public class EhrBaseServiceTest {
 
   @Test(expected = SystemException.class)
   public void shouldHandleClientExceptionWhenExecutingAql() {
+    when(ehrBaseProperties.getIdPath()).thenReturn("path/to/config");
     when(restClient.aqlEndpoint().executeRaw(Query.buildNativeQuery(any())))
             .thenThrow(ClientException.class);
     ehr.executeRawQuery(AqlQueryParser.parse(GOOD_QUERY), 1L);
