@@ -5,44 +5,41 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>de.vitagroup.num-portal</groupId>
+  <groupId>org.highmed.num-portal</groupId>
   <artifactId>num-portal</artifactId>
-  <version>1.17.0</version>
-  
+  <version>1.18.0</version>
+
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.7.17</version>
+    <version>3.3.0</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
   <properties>
     <commons-collections4.version>4.4</commons-collections4.version>
-    <commons-io.version>2.15.0</commons-io.version>
-    <ehr-sdk.version>v1.18.0</ehr-sdk.version>
+    <commons-io.version>2.16.1</commons-io.version>
+    <ehr-sdk.version>2.11.0</ehr-sdk.version>
     <!-- aql-editor-backend-starter repo was archived on August 2023 -->
-    <aql-editor-backend-starter.version>v0.5.1</aql-editor-backend-starter.version>
+    <num-aql-editor-backend-starter.version>1.0.5</num-aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
     <modelmapper.version>3.2.0</modelmapper.version>
-    <springdoc.version>1.7.0</springdoc.version>
+    <springdoc.version>2.5.0</springdoc.version>
     <java.version>17</java.version>
-    <commons-csv.version>1.10.0</commons-csv.version>
-    <jacoco.version>0.8.11</jacoco.version>
-    <dependency-check.version>8.4.2</dependency-check.version>
-    <failsafe.version>3.2.2</failsafe.version>
-    <surefire.version>3.2.2</surefire.version>
+    <commons-csv.version>1.11.0</commons-csv.version>
+    <jacoco.version>0.8.12</jacoco.version>
+    <failsafe.version>3.2.5</failsafe.version>
+    <surefire.version>3.2.5</surefire.version>
     <ehcache.version>3.10.8</ehcache.version>
     <git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
-    <skip.dependency.check>false</skip.dependency.check>
-    <postgresql.version>42.6.0</postgresql.version>
+    <postgresql.version>42.7.3</postgresql.version>
     <hapi.version>6.8.3</hapi.version>
-    <wiremock-standalone.version>3.0.0-beta-7</wiremock-standalone.version>
-    <testcontainers.version>1.19.1</testcontainers.version>
+    <wiremock-standalone.version>3.6.0</wiremock-standalone.version>
+    <testcontainers.version>1.19.8</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
-    <spring-security.version>5.8.8</spring-security.version>
-    <spring.cloud-version>2021.0.8</spring.cloud-version>
+    <spring.cloud-version>2023.0.2</spring.cloud-version>
   </properties>
 
   <repositories>
@@ -111,18 +108,23 @@
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-ui</artifactId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
       <version>${springdoc.version}</version>
     </dependency>
     <dependency>
       <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-security</artifactId>
+      <artifactId>springdoc-openapi-starter-common</artifactId>
       <version>${springdoc.version}</version>
     </dependency>
+
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
@@ -151,19 +153,19 @@
       <artifactId>spring-boot-configuration-processor</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.ehrbase.openEHR_SDK</groupId>
+      <groupId>org.ehrbase.openehr.sdk</groupId>
       <artifactId>client</artifactId>
       <version>${ehr-sdk.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.github.ehrbase.openEHR_SDK</groupId>
+      <groupId>org.ehrbase.openehr.sdk</groupId>
       <artifactId>aql</artifactId>
       <version>${ehr-sdk.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.github.ehrbase</groupId>
-      <artifactId>aql-editor-backend-spring-boot-starter</artifactId>
-      <version>${aql-editor-backend-starter.version}</version>
+      <groupId>com.github.NUM-Forschungsdatenplattform</groupId>
+      <artifactId>num-aql-editor-backend-spring-boot-starter</artifactId>
+      <version>${num-aql-editor-backend-starter.version}</version>
     </dependency>
     <dependency>
       <groupId>org.modelmapper</groupId>
@@ -237,7 +239,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.tomakehurst</groupId>
+      <groupId>org.wiremock</groupId>
       <artifactId>wiremock-standalone</artifactId>
       <version>${wiremock-standalone.version}</version>
       <scope>test</scope>
@@ -260,7 +262,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.6.1</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -380,24 +382,6 @@
                 ${project.reporting.outputDirectory}/jacoco-merged-test-coverage-report
               </outputDirectory>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.owasp</groupId>
-        <artifactId>dependency-check-maven</artifactId>
-        <version>${dependency-check.version}</version>
-        <configuration>
-          <formats>HTML,XML</formats>
-          <skip>${skip.dependency.check}</skip>
-          <ossindexAnalyzerEnabled>${ossindexAnalyzerEnabled}</ossindexAnalyzerEnabled>
-          <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>

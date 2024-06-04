@@ -25,19 +25,20 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/certs
+          jwk-set-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/certs
       client:
         registration:
           userStoreClient:
             authorization-grant-type: client_credentials
             client-id: num-portal
-            client-secret: 89dddc8f-0f25-4faf-a58d-6cda681f6ed3
+            client-secret: ZO29JPc5OLIZ29Rv83tEHOdxiAt2P9eC
         provider:
           userStoreClient:
-            token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
+            token-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/token
   mvc:
     log-request-details: false
   mail:
+    enabled: false
     host: smtp.gmail.com
     port: 587
     username: numportalwebapp@gmail.com
@@ -53,17 +54,16 @@ spring:
 
 swagger:
   oauth2:
-    token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
-    auth-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/auth
-    client-name: numPortalWebapp
-    client-secret: numPortalWebapp
+    token-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/auth
+    client-name: num-portal
+    client-secret: num-portal
 
 userstore:
-  url: ${keycloak.url}/auth/admin/realms/crr
+  url: ${keycloak.url}/admin/realms/crr
 
 keycloak:
-  #url: http://localhost:8180
-  url: https://keycloak.dev.num-codex.de
+  url: http://localhost:8180
 
 feign:
   client:
@@ -75,7 +75,7 @@ feign:
 
 logging:
   level:
-    de.vitagroup.num: DEBUG
+    org.highmed.numportal: DEBUG
 
 ehrbase:
   rest-api-url: http://localhost:8080/ehrbase/
@@ -83,6 +83,7 @@ ehrbase:
   password: SuperSecretPassword
 
 privacy:
+  enabled: false
   minHits: 1
   pseudonymitySecret: AVmnrinfsVDRigh4QGrsDFbs43a
   pseudonomityChunksSize: 20
@@ -99,7 +100,6 @@ zars:
 num:
   url: http://localhost:8180
   locale: en
-  systemStatusUrl: https://health.num-codex.de/
   # if true a second database is configured for attachments - check configs for numportal-attachment
   enableAttachmentDatabase: true
 

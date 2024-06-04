@@ -31,7 +31,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/certs
+          jwk-set-uri: ${keycloak.url}/realms/Num/protocol/openid-connect/certs
       client:
         registration:
           userStoreClient:
@@ -40,7 +40,7 @@ spring:
             client-secret: bc1843c0-3c57-4c2c-9b40-ac38e6dd545e
         provider:
           userStoreClient:
-            token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
+            token-uri: ${keycloak.url}/realms/Num/protocol/openid-connect/token
   mail:
     host: smtp.gmail.com
     port: 587
@@ -57,13 +57,13 @@ spring:
 
 swagger:
   oauth2:
-    token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
-    auth-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/auth
+    token-uri: ${keycloak.url}/realms/Num/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/realms/Num/protocol/openid-connect
     client-name: numPortalWebapp
     client-secret: numPortalWebapp
 
 userstore:
-  url: ${keycloak.url}/auth/admin/realms/Num
+  url: ${keycloak.url}/admin/realms/Num
 
 keycloak:
   url: http://localhost:8099
@@ -95,6 +95,8 @@ ehrbase:
   rest-api-url: http://localhost:8099/ehrbase/
   username: ehrbase-user
   password: SuperSecretPassword
+  adminUsername: ehrbase-admin
+  adminPassword: EvenMoreSecretPassword
 
 cors:
   allowedOrigins:
@@ -128,8 +130,6 @@ consent:
   allow-usage-outside-eu-oid: 2.16.840.1.113883.3.1937.777.24.5.1.37
 
 num:
-  systemStatusUrl: 'http://localhost:8099/health-url'
-  statusCakeUrl: 'http://localhost:8099/statusCake?PublicID='
   userManualUrl:
     DE: 'user-manual-de'
     EN: 'user-manual-en'

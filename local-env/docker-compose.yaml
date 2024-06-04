@@ -1,0 +1,71 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    command:
+      - start-dev
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_HOSTNAME: 'localhost:8180'
+    volumes:
+      - ./keycloak.conf:/opt/keycloak/conf/keycloak.conf
+    ports:
+      - 8180:8080
+    networks:
+      - num-portal
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:16.2
+    restart: always
+    ports:
+      - 5432:5432
+    networks:
+      - num-portal
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4:8.5
+    restart: always
+    ports:
+      - 8888:80
+    networks:
+      - num-portal
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+  ehrbase:
+    image: ehrbase/ehrbase:0.32.0
+    ports:
+      - 8080:8080
+    networks:
+      - num-portal
+    env_file:
+      - .env
+      - .env.ehrbase
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/ehrbase
+      DB_USER_ADMIN: ${DB_USER_ADMIN}
+      DB_PASS_ADMIN: ${DB_PASS_ADMIN}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
+  pgadmin-data:
+networks:
+  num-portal:
+    driver: bridge

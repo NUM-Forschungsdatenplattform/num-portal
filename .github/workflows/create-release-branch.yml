@@ -1,0 +1,85 @@
+name: Create release branch
+
+on:
+  workflow_dispatch:
+    branches: [ develop ]
+    inputs:
+      release:
+        description: 'Type of the release.'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+        default: minor
+
+jobs:
+  create_branch:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Create version
+        id: createVersion
+        run: |
+          CURRENT_VERSION=$(mvn -q -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec)
+          echo "Current version: $CURRENT_VERSION"
+          MAJOR=`echo $CURRENT_VERSION | cut -d. -f1`
+          MINOR=`echo $CURRENT_VERSION | cut -d. -f2`
+          PATCH=`echo $CURRENT_VERSION | cut -d. -f3 | cut -d- -f1`
+          
+          if [ ${{ inputs.release }} == 'major' ]; then
+            MAJOR=$((MAJOR+1))
+            MINOR=0
+            PATCH=0
+          elif [ ${{ inputs.release }} == 'minor' ]; then
+            MINOR=$((MINOR+1))
+            PATCH=0
+          else
+            PATCH=$((PATCH+1))
+          fi
+          
+          VERSION=${MAJOR}.${MINOR}.${PATCH}
+          
+          echo
+          echo "Release version: $VERSION"
+          
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create release branch
+        env:
+          VERSION: ${{ steps.createVersion.outputs.VERSION }}
+        run: |
+          git config --global user.email "github-actions@example.com"
+          git config --global user.name "Github Actions"
+          
+          git branch release/$VERSION
+          git checkout release/$VERSION
+          
+          mvn versions:set -DnewVersion=${VERSION}-SNAPSHOT versions:commit
+          git add pom.xml
+          git commit -m "updated project version to ${VERSION}"
+          
+          git push --set-upstream origin release/$VERSION
+
+  wrong_branch:
+    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/develop'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ERROR
+        run: echo 'This workflow only runs on develop branch!'

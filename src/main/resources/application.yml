@@ -43,7 +43,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/certs
+          jwk-set-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/certs
       client:
         registration:
           userStoreClient:
@@ -52,7 +52,7 @@ spring:
             client-secret: 89dddc8f-0f25-4faf-a58d-6cda681f6ed3
         provider:
           userStoreClient:
-            token-uri: ${keycloak.url}/auth/realms/crr/protocol/openid-connect/token
+            token-uri: ${keycloak.url}/realms/crr/protocol/openid-connect/token
   mail:
     host: smtp.gmail.com
     port: 587
@@ -93,16 +93,16 @@ springdoc:
       client-secret: num-portal-webapp
 swagger:
   oauth2:
-    token-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/token
-    auth-uri: ${keycloak.url}/auth/realms/Num/protocol/openid-connect/auth
+    token-uri: ${keycloak.url}/realms/Num/protocol/openid-connect/token
+    auth-uri: ${keycloak.url}/realms/Num/protocol/openid-connect
     client-name: num-portal-webapp
     client-secret: num-portal-webapp
 
 userstore:
-  url: ${keycloak.url}/auth/admin/realms/crr
+  url: ${keycloak.url}/admin/realms/crr
 
 keycloak:
-  url: https://keycloak.dev.num-codex.de
+  url: ${keycloak.url}
 
 hapi:
   fhir:
@@ -129,8 +129,9 @@ logging:
   level:
     org.springframework.web: info
     # DEBUG enables keycloak feign logging
-    de.vitagroup.num.web.feign.KeycloakFeign: INFO
-    de.vitagroup.num: INFO
+    org.highmed.numportal.web.feign.KeycloakFeign: INFO
+    org.highmed.numportal: INFO
+
 
 atna:
   enabled: false
@@ -146,6 +147,9 @@ ehrbase:
   rest-api-url: http://localhost:8080/ehrbase/
   username: ehrbase-user
   password: SuperSecretPassword
+  adminUsername: ehrbase-admin
+  adminPassword: EvenMoreSecretPassword
+
 
 cors:
   allowedOrigins:
@@ -156,10 +160,8 @@ privacy:
   pseudonomityChunksSize: 50
 
 num:
-  url: https://dev.num-codex.de/home
+  url: ${NUM_URL}
   locale: en
-  systemStatusUrl: https://health.num-codex.de/
-  statusCakeUrl: https://app.statuscake.com/Workfloor/PublicReportHandler.php?PublicID=
   userManualUrl:
     DE: 'https://num-portal-webapp.readthedocs.io/de/latest/'
     EN: 'https://num-portal-webapp.readthedocs.io/en/latest/'
@@ -189,7 +191,7 @@ fttp:
 requestpsnworkflow:
   params:
     study: num
-    source: codex
+    source: ${PSNWORKFLOW_SOURCE}
     target: extern_
     apikey: iCZdh7ZWuf8ms)vvBgU-IaLi4
     event: num.get_extern_psn

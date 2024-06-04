@@ -17,7 +17,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${KEYCLOAK_ENDPOINT}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
+          jwk-set-uri: ${KEYCLOAK_ENDPOINT}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
       client:
         registration:
           userStoreClient:
@@ -25,7 +25,7 @@ spring:
             client-secret: ${KEYCLOAK_CLIENT_SECRET}
         provider:
           userStoreClient:
-            token-uri: ${KEYCLOAK_ENDPOINT}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
+            token-uri: ${KEYCLOAK_ENDPOINT}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
   mail:
     host: ${EMAIL_HOST}
     port: ${EMAIL_PORT}
@@ -45,12 +45,12 @@ management:
     port: ${MANAGEMENT_PORT}
 
 userstore:
-  url: ${KEYCLOAK_ENDPOINT}/auth/admin/realms/${KEYCLOAK_REALM}
+  url: ${KEYCLOAK_ENDPOINT}/admin/realms/${KEYCLOAK_REALM}
 
 swagger:
   oauth2:
-    token-uri: ${KEYCLOAK_CANONICAL_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
-    auth-uri: ${KEYCLOAK_CANONICAL_URL}/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth
+    token-uri: ${KEYCLOAK_CANONICAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
+    auth-uri: ${KEYCLOAK_CANONICAL_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth
     client-name: ${SWAGGER_OAUTH2_CLIENT-NAME}
     client-secret: ${SWAGGER_OAUTH2_CLIENT-NAME}
 
@@ -58,6 +58,8 @@ ehrbase:
   rest-api-url: ${EHRBASE_ENDPOINT}/ehrbase/
   username: ${EHRBASE_USER}
   password: ${EHRBASE_PASSWORD}
+  adminUsername: ${EHRBASE_ADMIN_USER}
+  adminPassword: ${EHRBASE_ADMIN_PASSWORD}
 
 privacy:
   minHits: ${PRIVACY_MIN_HITS}
@@ -74,7 +76,6 @@ zars:
 num:
   url: ${NUM_URL}
   locale: ${NUM_LOCALE}
-  systemStatusUrl: ${STATUS_URL}
   userManualUrl:
     DE: ${USER_MANUAL_URL_DE}
     EN: ${USER_MANUAL_URL_EN}
@@ -106,3 +107,7 @@ pseudonymity:
 clamAV:
   host: ${CLAMAV_HOST}
   port: ${CLAMAV_PORT}
+
+logging:
+  level:
+    org.highmed.numportal: ${LOG_LEVEL}
