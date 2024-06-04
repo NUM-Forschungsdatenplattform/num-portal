@@ -26,6 +26,6 @@ jobs:
         run: |
           mvn spring-boot:build-image -Dspring-boot.build-image.imageName=${{ secrets.DOCKER_USERNAME }}/num-portal:${{ github.ref_name }} -DskipTests
           docker tag ${{ secrets.DOCKER_USERNAME }}/num-portal ${{ secrets.DOCKER_USERNAME }}/num-portal:${{ github.ref_name }}
-          docker push ${{ secrets.DOCKER_USERNAME }}/num-portal:${{ github.ref_name }}
+          docker push --all-tags ${{ secrets.DOCKER_USERNAME }}/num-portal:${{ github.ref_name }}
           
           echo "### :rocket: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
