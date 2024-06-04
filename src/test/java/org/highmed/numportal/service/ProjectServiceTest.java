@@ -1289,7 +1289,7 @@ public class ProjectServiceTest {
         projectService.executeManagerProject(
             cohortDto, List.of(CORONA_TEMPLATE), userDetails.getUserId());
 
-    assertThat(result, is("[]"));
+    assertThat(result, is("[{\"name\":\"Corona_Anamnese\",\"columns\":null,\"rows\":null}]"));
   }
 
     @Test
