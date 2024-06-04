@@ -102,7 +102,7 @@ userstore:
   url: ${keycloak.url}/admin/realms/crr
 
 keycloak:
-  url: https://keycloak.dev.num-codex.de
+  url: ${keycloak.url}
 
 hapi:
   fhir:
@@ -160,7 +160,7 @@ privacy:
   pseudonomityChunksSize: 50
 
 num:
-  url: https://dev.num-codex.de/home
+  url: ${NUM_URL}
   locale: en
   userManualUrl:
     DE: 'https://num-portal-webapp.readthedocs.io/de/latest/'
@@ -191,7 +191,7 @@ fttp:
 requestpsnworkflow:
   params:
     study: num
-    source: codex
+    source: ${PSNWORKFLOW_SOURCE}
     target: extern_
     apikey: iCZdh7ZWuf8ms)vvBgU-IaLi4
     event: num.get_extern_psn
