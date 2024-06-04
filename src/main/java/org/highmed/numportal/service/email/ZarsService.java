@@ -1,13 +1,13 @@
 package org.highmed.numportal.service.email;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.highmed.numportal.domain.dto.ZarsInfoDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
+import org.highmed.numportal.domain.dto.ZarsInfoDto;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.ClassPathResource;
@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -40,8 +39,7 @@ public class ZarsService {
   @PostConstruct
   public void initialize() {
     try {
-      var resource = new ClassPathResource("ZARSHeaders.json").getFile();
-      var json = new String(Files.readAllBytes(resource.toPath()));
+      var json = new String(new ClassPathResource("ZARSHeaders.json").getInputStream().readAllBytes());
       zarsHeaders = objectMapper.readValue(json, String[].class);
     } catch (IOException e) {
       log.error("Failed to read ZARS headers file, can't send updates to ZARS!");
