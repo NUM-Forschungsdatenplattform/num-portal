@@ -1240,6 +1240,8 @@ public class ProjectService {
                 .firstHypotheses(undef)
                 .secondHypotheses(undef)
                 .description("Temporary project for manager data retrieval")
+                .coordinator(UserDetails.builder().userId(undef).organization(Organization.builder().id(0L).build()).build())
+                .status(ProjectStatus.DENIED)
                 .build();
     }
 
