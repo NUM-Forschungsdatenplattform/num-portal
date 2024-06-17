@@ -29,7 +29,7 @@
     <commons-csv.version>1.11.0</commons-csv.version>
     <jacoco.version>0.8.12</jacoco.version>
     <failsafe.version>3.2.5</failsafe.version>
-    <surefire.version>3.2.5</surefire.version>
+    <surefire.version>3.3.0</surefire.version>
     <ehcache.version>3.10.8</ehcache.version>
     <git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
     <skip.integration.tests>false</skip.integration.tests>
