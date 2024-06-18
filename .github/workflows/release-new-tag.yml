@@ -24,7 +24,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and push docker image
         run: |
-          mvn spring-boot:build-image -Dspring-boot.build-image.imageName=${{ secrets.DOCKER_USERNAME }}/num-portal:${{ github.ref_name }} -DskipTests
-          docker push ${{ secrets.DOCKER_USERNAME }}/num-portal:${{ github.ref_name }}
+          mvn spring-boot:build-image -Dspring-boot.build-image.imageName=numforschungsdatenplattform/num-portal:${{ github.ref_name }} -DskipTests
+          docker push numforschungsdatenplattform/num-portal:${{ github.ref_name }}
           
           echo "### :rocket: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
