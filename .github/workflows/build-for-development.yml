@@ -79,5 +79,5 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and push docker image
         run: |
-          mvn spring-boot:build-image -Dspring-boot.build-image.imageName=${{ secrets.DOCKER_USERNAME }}/num-portal:develop -DskipTests
-          docker push ${{ secrets.DOCKER_USERNAME }}/num-portal:develop
+          mvn spring-boot:build-image -Dspring-boot.build-image.imageName=numforschungsdatenplattform/num-portal:develop -DskipTests
+          docker push numforschungsdatenplattform/num-portal:develop
