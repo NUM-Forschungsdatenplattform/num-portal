@@ -16,7 +16,6 @@ import com.nedap.archie.rm.datavalues.quantity.datetime.DvDateTime;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvDuration;
 import com.nedap.archie.rm.datavalues.quantity.datetime.DvTime;
 import com.nedap.archie.rm.support.identification.ObjectVersionId;
-import org.highmed.numportal.domain.dto.ParameterOptionsDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -31,17 +30,16 @@ import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.TemporalAccessorDeSerializer;
 import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.VersionUidDeSerializer;
 import org.ehrbase.openehr.sdk.serialisation.jsonencoding.ArchieObjectMapperProvider;
-import org.highmed.numportal.service.util.AqlQueryConstants;
+import org.highmed.numportal.domain.dto.ParameterOptionsDto;
 import org.highmed.numportal.service.UserDetailsService;
+import org.highmed.numportal.service.util.AqlQueryConstants;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.temporal.TemporalAccessor;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -170,6 +168,13 @@ public class ParameterService {
 
     parameterOptions.setAqlPath(aqlPath);
     parameterOptions.setArchetypeId(archetypeId);
+
+    Map<String, Object> options = parameterOptions.getOptions();
+    parameterOptions.setOptions(new LinkedHashMap<>());
+    options.keySet().stream()
+            .sorted(String.CASE_INSENSITIVE_ORDER)
+            .forEach(e -> parameterOptions.getOptions().put(e, options.get(e)));
+
     return parameterOptions;
   }
 
@@ -203,12 +208,7 @@ public class ParameterService {
 
     from.setContains(contains);
 
-    var orderByExpressionDto = new OrderByExpression();
-    orderByExpressionDto.setStatement(path);
-    orderByExpressionDto.setSymbol(OrderByExpression.OrderByDirection.ASC);
-
     List<OrderByExpression> orderByList = new LinkedList<>();
-    orderByList.add(orderByExpressionDto);
     aql.setSelect(selectClause);
     aql.setFrom(from);
     aql.setOrderBy(orderByList);
