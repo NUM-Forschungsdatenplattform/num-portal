@@ -107,3 +107,4 @@ user-service:
   delete-users-cron: 0 0 5 * * *
 
 feature:
+  search-with-aql: false

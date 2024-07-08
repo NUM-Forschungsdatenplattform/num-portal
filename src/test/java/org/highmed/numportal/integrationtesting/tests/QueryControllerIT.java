@@ -1,0 +1,75 @@
+package org.highmed.numportal.integrationtesting.tests;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
+import org.highmed.numportal.domain.dto.QueryDto;
+import org.highmed.numportal.integrationtesting.security.WithMockNumUser;
+import org.junit.Test;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
+import org.mockserver.model.HttpStatusCode;
+import org.mockserver.model.StringBody;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.nio.charset.StandardCharsets;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@TestPropertySource(properties = """
+        feature.search-with-aql = true
+        """)
+public class QueryControllerIT extends IntegrationTest {
+
+  @Autowired
+  public MockMvc mockMvc;
+
+  private static final String PATH = "/query/execute";
+
+  @Autowired
+  private ObjectMapper mapper;
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser(roles = {"MANAGER"})
+  public void execute() {
+    var query = "SELECT *";
+    QueryDto queryDto = new QueryDto();
+    queryDto.setAql(query);
+    QueryResponseData queryResponseData = new QueryResponseData();
+    var expectedResult = mapper.writeValueAsString(queryResponseData);
+
+    ehrClient
+            .when(HttpRequest.request().withMethod("POST").withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody(StringBody.subString(query, StandardCharsets.UTF_8)))
+            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(expectedResult, org.mockserver.model.MediaType.JSON_UTF_8));
+
+    var result = mockMvc.perform(post(PATH).with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(queryDto))
+            ).andExpect(status().isOk())
+            .andReturn();
+
+    assertThat(result.getResponse().getContentAsString(), equalTo(expectedResult));
+  }
+
+  @Test
+  @SneakyThrows
+  @WithMockNumUser()
+  public void executeAsNonAuthorizedUser() {
+    var query = "SELECT *";
+    QueryDto queryDto = new QueryDto();
+    queryDto.setAql(query);
+
+    mockMvc.perform(post(PATH).with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsString(queryDto))
+    ).andExpect(status().isForbidden());
+  }
+}
