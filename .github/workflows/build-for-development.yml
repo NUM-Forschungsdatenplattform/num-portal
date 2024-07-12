@@ -103,5 +103,5 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push docker image
         run: |
-          mvn spring-boot:build-image -Dspring-boot.build-image.imageName=num-portal:test -DskipTests
+          mvn spring-boot:build-image -Dspring-boot.build-image.imageName= ghcr.io/num-forschungsdatenplattform/num-portal:test -DskipTests
           docker push ghcr.io/num-forschungsdatenplattform/num-portal:test
