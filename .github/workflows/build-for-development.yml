@@ -95,6 +95,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: NUM-Forschungsdatenplattform
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push docker image
         run: |
           mvn spring-boot:build-image -Dspring-boot.build-image.imageName=num-portal:test -DskipTests
