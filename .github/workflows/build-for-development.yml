@@ -84,7 +84,7 @@ jobs:
 
   registry:
     needs: test_and_scan
-#    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -103,6 +103,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push docker image
         run: |
-          IMAGE_NAME=ghcr.io/num-forschungsdatenplattform/num-portal:test
+          IMAGE_NAME=ghcr.io/num-forschungsdatenplattform/num-portal:develop
           mvn spring-boot:build-image -Dspring-boot.build-image.imageName=$IMAGE_NAME -DskipTests
           docker push $IMAGE_NAME
