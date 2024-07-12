@@ -105,4 +105,4 @@ jobs:
         run: |
           IMAGE_NAME=ghcr.io/num-forschungsdatenplattform/num-portal:test
           mvn spring-boot:build-image -Dspring-boot.build-image.imageName=$IMAGE_NAME -DskipTests
-          docker push $IMAGE_NAMt
+          docker push $IMAGE_NAME
