@@ -81,3 +81,21 @@ jobs:
         run: |
           mvn spring-boot:build-image -Dspring-boot.build-image.imageName=numforschungsdatenplattform/num-portal:develop -DskipTests
           docker push numforschungsdatenplattform/num-portal:develop
+
+  registry:
+    needs: test_and_scan
+#    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Build and push docker image
+        run: |
+          mvn spring-boot:build-image -Dspring-boot.build-image.imageName=num-portal:test -DskipTests
+          docker push ghcr.io/NUM-Forschungsdatenplattform/num-portal:test
