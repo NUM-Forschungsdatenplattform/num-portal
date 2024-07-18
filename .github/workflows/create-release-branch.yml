@@ -71,7 +71,7 @@ jobs:
           
           mvn versions:set -DnewVersion=${VERSION}-SNAPSHOT versions:commit
           git add pom.xml
-          git commit -m "updated project version to ${VERSION}"
+          git commit --allow-empty -m "updated project version to ${VERSION}"
           
           git push --set-upstream origin release/$VERSION
 
