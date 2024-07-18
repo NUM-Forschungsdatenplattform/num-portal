@@ -32,7 +32,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
   pgadmin:
-    image: dpage/pgadmin4:8.5
+    image: dpage/pgadmin4:8.9
     restart: always
     ports:
       - 8888:80
@@ -46,7 +46,7 @@ services:
     depends_on:
       - postgres
   ehrbase:
-    image: ehrbase/ehrbase:0.32.0
+    image: ehrbase/ehrbase:2.5.0
     ports:
       - 8080:8080
     networks:
@@ -55,7 +55,7 @@ services:
       - .env
       - .env.ehrbase
     environment:
-      DB_URL: jdbc:postgresql://postgres:5432/ehrbase
+      DB_URL: jdbc:postgresql://postgres:5432/ehrbase2
       DB_USER_ADMIN: ${DB_USER_ADMIN}
       DB_PASS_ADMIN: ${DB_PASS_ADMIN}
       DB_USER: ${DB_USER}
