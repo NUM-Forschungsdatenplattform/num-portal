@@ -2,6 +2,13 @@ package org.highmed.numportal.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
+import org.ehrbase.aqleditor.dto.aql.Result;
+import org.ehrbase.aqleditor.service.AqlEditorAqlService;
+import org.ehrbase.openehr.sdk.aql.parser.AqlParseException;
 import org.highmed.numportal.domain.dto.Language;
 import org.highmed.numportal.domain.dto.SearchCriteria;
 import org.highmed.numportal.domain.dto.SlimAqlDto;
@@ -14,13 +21,6 @@ import org.highmed.numportal.domain.repository.AqlCategoryRepository;
 import org.highmed.numportal.domain.repository.AqlRepository;
 import org.highmed.numportal.domain.specification.AqlSpecification;
 import org.highmed.numportal.properties.PrivacyProperties;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
-import org.ehrbase.aqleditor.dto.aql.Result;
-import org.ehrbase.aqleditor.service.AqlEditorAqlService;
-import org.ehrbase.openehr.sdk.aql.parser.AqlParseException;
 import org.highmed.numportal.service.ehrbase.EhrBaseService;
 import org.highmed.numportal.service.exception.BadRequestException;
 import org.highmed.numportal.service.exception.ForbiddenException;
@@ -119,7 +119,7 @@ public class AqlService {
     AqlSpecification aqlSpecification = AqlSpecification.builder()
             .filter(searchCriteria.getFilter())
             .loggedInUserId(loggedInUserId)
-            .loggedInUserOrganizationId(userDetails.getOrganization().getId())
+            .loggedInUserOrganizationId((userDetails.getOrganization() != null) ? userDetails.getOrganization().getId() : null)
             .ownersUUID(usersUUID)
             .language(language)
             .sortOrder(sort.getOrderFor(searchCriteria.getSortBy()))
