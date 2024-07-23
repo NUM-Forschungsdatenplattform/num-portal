@@ -42,7 +42,7 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 public class EhrBaseService {
 
   private static final Aql ALL_PATIENTS_IDS =
-          Aql.builder().query("select e/ehr_id/value from ehr e").build();
+          Aql.builder().query("SELECT e/ehr_id/value FROM EHR e").build();
 
   private static final String COMPOSITION_KEY = "_type";
   private static final String NAME = "name";
