@@ -7,23 +7,22 @@
 
   <groupId>org.highmed.num-portal</groupId>
   <artifactId>num-portal</artifactId>
-  <version>1.19.0</version>
-
+  <version>1.20.0</version>
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.3.1</version>
+    <version>3.3.2</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
   <properties>
     <commons-collections4.version>4.4</commons-collections4.version>
     <commons-io.version>2.16.1</commons-io.version>
-    <ehr-sdk.version>2.14.0</ehr-sdk.version>
+    <ehr-sdk.version>2.15.0</ehr-sdk.version>
     <!-- aql-editor-backend-starter repo was archived on August 2023 -->
     <num-aql-editor-backend-starter.version>1.0.5</num-aql-editor-backend-starter.version>
-    <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
-    <modelmapper.version>3.2.0</modelmapper.version>
+    <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
+    <modelmapper.version>3.2.1</modelmapper.version>
     <springdoc.version>2.6.0</springdoc.version>
     <java.version>17</java.version>
     <commons-csv.version>1.11.0</commons-csv.version>
@@ -36,8 +35,8 @@
     <skip.unit.tests>false</skip.unit.tests>
     <postgresql.version>42.7.3</postgresql.version>
     <hapi.version>6.8.3</hapi.version>
-    <wiremock-standalone.version>3.8.0</wiremock-standalone.version>
-    <testcontainers.version>1.19.8</testcontainers.version>
+    <wiremock-standalone.version>3.9.1</wiremock-standalone.version>
+    <testcontainers.version>1.20.0</testcontainers.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
     <spring.cloud-version>2023.0.3</spring.cloud-version>
   </properties>
