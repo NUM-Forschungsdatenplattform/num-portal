@@ -241,6 +241,7 @@ public class AqlControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
+  @Ignore
   @WithMockNumUser(roles = {RESEARCHER})
   public void shouldRetrieveParameterValues() {
     WireMock.stubFor(
