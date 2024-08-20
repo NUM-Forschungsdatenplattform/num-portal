@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
+import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -87,6 +88,7 @@ public class ContentController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(contentService.getLatestProjects(roles));
   }
 
+  @ContextLog(type = "ContentManagement")
   @PostMapping("/navigation")
   @Operation(description = "Retrieves a list of navigation items")
   @PreAuthorize(Role.CONTENT_ADMIN)
@@ -113,6 +115,7 @@ public class ContentController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(contentService.getCards());
   }
 
+  @ContextLog(type = "ContentManagement")
   @PostMapping("/cards")
   @Operation(description = "Retrieves a list of cards")
   @PreAuthorize(Role.CONTENT_ADMIN)

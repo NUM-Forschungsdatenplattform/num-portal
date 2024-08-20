@@ -12,6 +12,7 @@ import org.highmed.numportal.service.logger.AuditLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
+import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -51,6 +52,7 @@ public class AqlController extends CustomizedExceptionHandler {
         mapper.convertToDto(aqlService.getAqlById(id, principal.getSubject())));
   }
 
+  @ContextLog(type = "KriterienManagement")
   @AuditLog(description = "Create AQL criteria")
   @PostMapping()
   @Operation(description = "Creates an aql; the logged in user is assigned as owner of the aql.")
@@ -62,6 +64,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
+  @ContextLog(type = "KriterienManagement")
   @AuditLog(description = "Update AQL criteria")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates an aql; the logged in user is assigned as owner of the aql at creation time")
@@ -75,6 +78,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
+  @ContextLog(type = "KriterienManagement")
   @AuditLog(description = "Delete AQL criteria")
   @DeleteMapping("/{id}")
   @Operation(description = "Delete AQL criteria")
@@ -119,6 +123,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(aqlService.getAqlSize(aql, principal.getSubject()));
   }
 
+  @ContextLog(type = "KriterienManagement")
   @AuditLog(description = "Create AQL category")
   @PostMapping(value = "/category")
   @Operation(description = "Creates a category. If there is an id in the DTO, it is ignored.")
@@ -130,6 +135,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
 
+  @ContextLog(type = "KriterienManagement")
   @AuditLog(description = "Update AQL category")
   @PutMapping(value = "/category/{id}")
   @Operation(description = "Updates a category. If present, the id in the DTO is ignored.")
@@ -145,6 +151,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
 
+  @ContextLog(type = "KriterienManagement")
   @AuditLog(description = "Delete AQL category")
   @DeleteMapping(value = "/category/{id}")
   @Operation(description = "Delete a category")

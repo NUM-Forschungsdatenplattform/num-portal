@@ -1,32 +1,22 @@
 <configuration>
 
-    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <providers>
-                <timestamp>
-                    <timeZone>Europe/Berlin</timeZone>
-                    <fieldName>timestamp</fieldName>
-                    <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSX</pattern>
-                </timestamp>
-                <logLevel>
-                    <fieldName>level</fieldName>
-                </logLevel>
-                <loggerName>
-                    <fieldName>logger</fieldName>
-                </loggerName>
-                <message>
-                    <fieldName>message</fieldName>
-                </message>
-                <mdc>
-                    <fieldName>user_id</fieldName>
-                    <key>user_id</key>
-                </mdc>
-            </providers>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <level>level</level>
+                <logger>logger</logger>
+                <message>message</message>
+                <thread>[ignore]</thread>
+                <levelValue>[ignore]</levelValue>
+            </fieldNames>
+            <timeZone>Europe/Berlin</timeZone>
+            <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSX</timestampPattern>
         </encoder>
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="JSON_CONSOLE" />
+        <appender-ref ref="CONSOLE" />
     </root>
 
 </configuration>

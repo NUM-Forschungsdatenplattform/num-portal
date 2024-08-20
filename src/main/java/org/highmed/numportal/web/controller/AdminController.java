@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
 import org.highmed.numportal.web.feign.KeycloakFeign;
 import org.slf4j.LoggerFactory;
@@ -92,6 +93,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(numLogger.getLevel());
   }
 
+  @ContextLog(type = "UserManagement")
   @AuditLog(description = "Delete user")
   @DeleteMapping("user/{userId}")
   @PreAuthorize(Role.SUPER_ADMIN)
@@ -116,6 +118,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(userService.getUserRoles(userId, principal.getSubject()));
   }
 
+  @ContextLog(type = "UserManagement")
   @AuditLog(description = "Update user's roles")
   @PostMapping("user/{userId}/role")
   @Operation(description = "Updates the users roles to the given set.")
@@ -128,6 +131,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(updatedRoles);
   }
 
+  @ContextLog(type = "UserManagement")
   @AuditLog(description = "Update user's organization")
   @PostMapping("user/{userId}/organization")
   @Operation(description = "Sets the user's organization")
@@ -141,6 +145,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
+  @ContextLog(type = "UserManagement")
   @AuditLog
   @PostMapping("user/{userId}")
   @Operation(description = "Creates user details")
@@ -151,6 +156,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
+  @ContextLog(type = "UserManagement")
   @AuditLog(description = "Update user's name")
   @PostMapping("user/{userId}/name")
   @Operation(description = "Changes user name")
@@ -161,6 +167,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
+  @ContextLog(type = "UserManagement")
   @AuditLog(description = "Approve user")
   @PostMapping("user/{userId}/approve")
   @Operation(description = "Adds the given organization to the user")
@@ -185,6 +192,8 @@ public class AdminController extends CustomizedExceptionHandler {
             userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
   }
 
+
+  @ContextLog(type = "UserManagement")
   @AuditLog(description = "Update user's active field")
   @PostMapping("user/{userId}/status")
   @Operation(description = "Updates user's status for active flag (enabled field in keycloak representation).")
