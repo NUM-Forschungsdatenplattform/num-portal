@@ -10,7 +10,5 @@ import java.lang.annotation.Target;
 public @interface ContextLog {
 
     String type() default "";  // z.B. "UserManagement"
-    String operation() default "";  // z.B. "createUser"
-    String description() default "";
 
 }

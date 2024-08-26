@@ -9,6 +9,7 @@
                 <message>message</message>
                 <thread>[ignore]</thread>
                 <levelValue>[ignore]</levelValue>
+                <version>[ignore]</version>
             </fieldNames>
             <timeZone>Europe/Berlin</timeZone>
             <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSX</timestampPattern>

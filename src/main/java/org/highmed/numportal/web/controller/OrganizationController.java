@@ -106,13 +106,15 @@ public class OrganizationController extends CustomizedExceptionHandler {
   public ResponseEntity<OrganizationDto> updateOrganization(@AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable("id") Long organizationId,
       @Valid @NotNull @RequestBody OrganizationDto organizationDto) {
-    return ResponseEntity.ok(
-        mapper.convertToDto(
+
+    OrganizationDto updatedOrganizationDto = mapper.convertToDto(
             organizationService.update(
-                organizationId,
-                organizationDto,
-                Roles.extractRoles(principal),
-                principal.getSubject())));
+                    organizationId,
+                    organizationDto,
+                    Roles.extractRoles(principal),
+                    principal.getSubject()));
+
+    return ResponseEntity.ok(updatedOrganizationDto);
   }
 
   @ContextLog(type = "OrgaManagement")
