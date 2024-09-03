@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -85,6 +86,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project.get()));
   }
 
+  @ContextLog(type = "ProjektManagement")
   @AuditLog(description = "Create project")
   @PostMapping()
   @Operation(
@@ -101,6 +103,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
+  @ContextLog(type = "ProjektManagement")
   @AuditLog(description = "Create project")
   @PostMapping(path = "/new", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @Operation(
@@ -118,6 +121,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
+  @ContextLog(type = "ProjektManagement")
   @AuditLog(description = "Update project")
   @PutMapping(value = "/{id}")
   @Operation(description =
@@ -135,6 +139,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
+  @ContextLog(type = "ProjektManagement")
   @AuditLog(description = "Update project")
   @PutMapping(value = "/new/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @Operation(description =
@@ -234,6 +239,7 @@ public class ProjectController extends CustomizedExceptionHandler {
             .collect(Collectors.toList()));
   }
 
+  @ContextLog(type = "ProjektManagement")
   @AuditLog(description = "Add comment")
   @PostMapping("/{projectId}/comment")
   @Operation(description = "Adds a comment to a particular project")
@@ -250,6 +256,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(commentMapper.convertToDto(comment));
   }
 
+  @ContextLog(type = "ProjektManagement")
   @AuditLog
   @PutMapping("/{projectId}/comment/{commentId}")
   @Operation(description = "Updates a comment")
@@ -270,6 +277,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(commentMapper.convertToDto(comment));
   }
 
+  @ContextLog(type = "ProjektManagement")
   @AuditLog
   @DeleteMapping("/{projectId}/comment/{commentId}")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -280,6 +288,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     commentService.deleteComment(commentId, projectId, principal.getSubject());
   }
 
+  @ContextLog(type = "ProjektManagement")
   @AuditLog(description = "Delete project")
   @DeleteMapping("/{id}")
   @Operation(description = "Deletes a project")
@@ -289,6 +298,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     projectService.deleteProject(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
+  @ContextLog(type = "ProjektManagement")
   @AuditLog
   @PostMapping("/{id}/archive")
   @Operation(description = "Archive a project")
@@ -298,6 +308,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     projectService.archiveProject(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
+  @ContextLog(type = "ProjektManagement")
   @GetMapping(value = "/{id}/document", produces = MediaType.TEXT_PLAIN_VALUE)
   @Operation(description = "Get the project info as a document")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_APPROVER)

@@ -11,6 +11,7 @@ import org.highmed.numportal.service.logger.AuditLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
+import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -85,6 +86,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(new PageImpl<>(content, pageable, organizationPage.getTotalElements()));
   }
 
+  @ContextLog(type = "OrgaManagement")
   @AuditLog(description = "Create organization")
   @PostMapping()
   @Operation(description = "Creates an organization")
@@ -96,6 +98,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
         mapper.convertToDto(organizationService.create(principal.getSubject(), organizationDto)));
   }
 
+  @ContextLog(type = "OrgaManagement")
   @AuditLog(description = "Update organization")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates an organization")
@@ -103,15 +106,18 @@ public class OrganizationController extends CustomizedExceptionHandler {
   public ResponseEntity<OrganizationDto> updateOrganization(@AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable("id") Long organizationId,
       @Valid @NotNull @RequestBody OrganizationDto organizationDto) {
-    return ResponseEntity.ok(
-        mapper.convertToDto(
+
+    OrganizationDto updatedOrganizationDto = mapper.convertToDto(
             organizationService.update(
-                organizationId,
-                organizationDto,
-                Roles.extractRoles(principal),
-                principal.getSubject())));
+                    organizationId,
+                    organizationDto,
+                    Roles.extractRoles(principal),
+                    principal.getSubject()));
+
+    return ResponseEntity.ok(updatedOrganizationDto);
   }
 
+  @ContextLog(type = "OrgaManagement")
   @AuditLog(description = "Delete organization")
   @Operation(description = "Delete the given organization if no users are assigned to this organization")
   @DeleteMapping(value = "/{id}")
