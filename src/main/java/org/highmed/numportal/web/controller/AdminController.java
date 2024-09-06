@@ -55,11 +55,11 @@ public class AdminController extends CustomizedExceptionHandler {
 
   private static final String SUCCESS_REPLY = "Success";
   private static final String EMAIL_CLAIM = "email";
+  private static final String USER_MANAGEMENT = "UserManagement";
 
   private final UserService userService;
 
   private final UserDetailsService userDetailsService;
-
 
   private final Pseudonymity pseudonymity;
 
@@ -93,8 +93,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(numLogger.getLevel());
   }
 
-  @ContextLog(type = "UserManagement")
-  @AuditLog(description = "Delete user")
+  @ContextLog(type = USER_MANAGEMENT, description = "Delete User")
   @DeleteMapping("user/{userId}")
   @PreAuthorize(Role.SUPER_ADMIN)
   public void deleteUser(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable String userId) {

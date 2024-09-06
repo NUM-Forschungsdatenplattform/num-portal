@@ -9,6 +9,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ContextLog {
 
-    String type() default "";  // z.B. "UserManagement"
+    String type() default "";
+    String description() default "";
 
 }

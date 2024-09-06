@@ -26,10 +26,11 @@ public class ContextLogger {
             String type = contextLog.type();
             Jwt principal = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             String userId = principal.getSubject();
-            logger.info("Logging context",
-                    StructuredArguments.keyValue("method", joinPoint.getSignature().toShortString()),
+            logger.info(contextLog.description(),
+                    //PathVariable (ID),
+                    //DTO -> HIER VLLT MIT BEZEICHNER ARBEITEN
                     StructuredArguments.keyValue("type", type),
-                    StructuredArguments.keyValue("userID", userId)
+                    StructuredArguments.keyValue("loggedInUserId", userId)
             );
         } catch (Exception e) {
             logger.error("Cannot log context log {}", e);
