@@ -3,7 +3,6 @@ package org.highmed.numportal.web.controller;
 import org.highmed.numportal.domain.dto.TemplateMetadataDto;
 import org.highmed.numportal.service.TemplateService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
-import org.highmed.numportal.service.logger.AuditLog;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +22,6 @@ public class TemplateController extends CustomizedExceptionHandler {
 
   private final TemplateService templateService;
 
-  @AuditLog
   @GetMapping("/metadata")
   @Operation(description = "Retrieves a list of template metadata")
   public ResponseEntity<List<TemplateMetadataDto>> getAllTemplatesMetadata(
