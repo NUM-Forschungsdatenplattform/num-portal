@@ -2,16 +2,12 @@ package org.highmed.numportal.web.feign;
 
 import org.highmed.numportal.domain.model.admin.Role;
 import org.highmed.numportal.domain.model.admin.User;
+
 import java.util.Map;
 import java.util.Set;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 @FeignClient(name = "keycloak", url = "${userstore.url}")
 public interface KeycloakFeign {
@@ -24,6 +20,9 @@ public interface KeycloakFeign {
 
   @GetMapping("/users/{userId}/role-mappings/realm")
   Set<Role> getRolesOfUser(@PathVariable String userId);
+
+  @GetMapping("/users/count")
+  Long countUsers( @RequestParam("enabled") boolean enabled);
 
   @PostMapping("/users/{userId}/role-mappings/realm")
   void addRoles(@PathVariable String userId, @RequestBody Role[] role);

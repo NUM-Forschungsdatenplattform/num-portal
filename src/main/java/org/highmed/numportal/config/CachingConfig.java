@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.Arrays;
 
 import static org.highmed.numportal.service.UserService.TRANSLATION_CACHE;
+import static org.highmed.numportal.service.UserService.USERS_CACHE;
 
 @Configuration
 @EnableCaching
@@ -21,7 +22,7 @@ public class CachingConfig {
     SimpleCacheManager cacheManager = new SimpleCacheManager();
 
     Cache aqlParametersCache = new ConcurrentMapCache("aqlParameters", false);
-    Cache usersCache = new ConcurrentMapCache("users", false);
+    Cache usersCache = new ConcurrentMapCache(USERS_CACHE, false);
     Cache translationsCache = new ConcurrentMapCache(TRANSLATION_CACHE, false);
 
     cacheManager.setCaches(Arrays.asList(aqlParametersCache, usersCache, translationsCache));
