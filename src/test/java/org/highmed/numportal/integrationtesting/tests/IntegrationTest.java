@@ -19,8 +19,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
@@ -37,6 +36,7 @@ public abstract class IntegrationTest {
       "/realms/Num/protocol/openid-connect/token";
   private static final String USER_ENDPOINT_USER1 = "/admin/realms/Num/users/user1";
   private static final String USER_ENDPOINT_USER2 = "/admin/realms/Num/users/user2";
+  private static final String USER_COUNT_ENDPOINT = "/admin/realms/Num/users/count";
   private static final String USER_ENDPOINT_ALL_APPROVERS =
       "/admin/realms/Num/roles/STUDY_APPROVER/users";
   private static final String EHR_BASE_URL = "/ehrbase/rest/openehr/v1/definition/template/adl1.4/";
@@ -80,5 +80,6 @@ public abstract class IntegrationTest {
             WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a72")
                     .willReturn(okJson(
                             "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"admin-user\", \"firstname\":\"Admin\", \"email\": \"admin.doe@highmed.org\"}")));
+    stubFor(WireMock.get(USER_COUNT_ENDPOINT).willReturn(okJson("2")));
   }
 }
