@@ -3,8 +3,7 @@ package org.highmed.numportal.service;
 import feign.FeignException;
 import feign.Request;
 import org.highmed.numportal.domain.dto.*;
-import org.highmed.numportal.service.UserDetailsService;
-import org.highmed.numportal.service.UserService;
+import org.highmed.numportal.service.metric.UsersMetrics;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,6 +73,9 @@ public class UserServiceTest {
 
     @Mock
     private CacheManager cacheManager;
+
+    @Mock
+    private UsersMetrics usersMetrics;
 
     @Mock
     private OrganizationMapper organizationMapper;
