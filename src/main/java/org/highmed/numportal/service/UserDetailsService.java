@@ -64,7 +64,7 @@ public class UserDetailsService {
     this.organizationService = organizationService;
     this.organizationRepository = organizationRepository;
     this.userDetailsRepository = userDetailsRepository;
-      this.usersMetrics = usersMetrics;
+    this.usersMetrics = usersMetrics;
   }
 
   protected void deleteUserDetails(String userId) {
