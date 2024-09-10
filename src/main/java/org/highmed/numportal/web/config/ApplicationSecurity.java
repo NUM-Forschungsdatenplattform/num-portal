@@ -41,7 +41,8 @@ public class ApplicationSecurity {
                         .requestMatchers(HttpMethod.GET, "/content/navigation")
                         .requestMatchers(HttpMethod.GET, "/content/cards")
                         .requestMatchers(HttpMethod.GET, "/content/metrics")
-                        .requestMatchers(HttpMethod.GET, "/actuator/health/**")
-                        .requestMatchers(HttpMethod.GET, "/actuator/info**");
+                        .requestMatchers(HttpMethod.GET, "/actuator/health")
+                        .requestMatchers(HttpMethod.GET, "/actuator/info")
+                        .requestMatchers(HttpMethod.GET, "/actuator/prometheus");
     }
 }
