@@ -72,7 +72,7 @@ management:
     enabled-by-default: false
     web:
       exposure:
-        include: health,info
+        include: health, info, prometheus
   endpoint:
     health:
       enabled: true
@@ -80,11 +80,16 @@ management:
         enabled: true
     info:
       enabled: true
+    prometheus:
+      enabled: true
   health:
     mail:
       enabled: false
   server:
     port: 8091
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 springdoc:
   swagger-ui:
