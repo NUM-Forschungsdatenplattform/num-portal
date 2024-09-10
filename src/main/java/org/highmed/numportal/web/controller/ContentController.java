@@ -91,7 +91,7 @@ public class ContentController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(contentService.getLatestProjects(roles));
   }
 
-  @ContextLog(type = "ContentManagement")
+  @ContextLog(type = "ContentManagement", description = "Set the navigation items")
   @PostMapping("/navigation")
   @Operation(description = "Retrieves a list of navigation items")
   @PreAuthorize(Role.CONTENT_ADMIN)
@@ -121,7 +121,7 @@ public class ContentController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(contentService.getCards());
   }
 
-  @ContextLog(type = "ContentManagement")
+  @ContextLog(type = "ContentManagement", description = "Set a list of cards")
   @PostMapping("/cards")
   @Operation(description = "Retrieves a list of cards")
   @PreAuthorize(Role.CONTENT_ADMIN)

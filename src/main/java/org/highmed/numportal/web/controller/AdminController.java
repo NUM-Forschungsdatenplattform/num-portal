@@ -13,7 +13,6 @@ import org.highmed.numportal.service.UserDetailsService;
 import org.highmed.numportal.service.UserService;
 import org.highmed.numportal.service.ehrbase.Pseudonymity;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
-import org.highmed.numportal.service.logger.AuditLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -55,11 +54,11 @@ public class AdminController extends CustomizedExceptionHandler {
 
   private static final String SUCCESS_REPLY = "Success";
   private static final String EMAIL_CLAIM = "email";
+  private static final String USER_MANAGEMENT = "UserManagement";
 
   private final UserService userService;
 
   private final UserDetailsService userDetailsService;
-
 
   private final Pseudonymity pseudonymity;
 
@@ -75,12 +74,14 @@ public class AdminController extends CustomizedExceptionHandler {
   }
 
   @GetMapping("/log-level")
+  @Operation(description = "Returns the set log level")
   public ResponseEntity<Level> getLogLevel() {
     Logger numLogger = (Logger) LoggerFactory.getLogger(NumPortalApplication.class.getPackageName());
     return ResponseEntity.ok(numLogger.getLevel());
   }
 
   @PostMapping("/log-level/{logLevel}")
+  @Operation(description = "Sets the log level for the backend")
   public ResponseEntity<Level> setLogLevel(@NotNull @PathVariable String logLevel) {
     Logger numLogger = (Logger) LoggerFactory.getLogger(NumPortalApplication.class.getPackageName());
     Level level = Level.valueOf(logLevel);
@@ -93,15 +94,14 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(numLogger.getLevel());
   }
 
-  @ContextLog(type = "UserManagement")
-  @AuditLog(description = "Delete user")
+  @ContextLog(type = USER_MANAGEMENT, description = "Delete User")
   @DeleteMapping("user/{userId}")
   @PreAuthorize(Role.SUPER_ADMIN)
+  @Operation(description = "Deletes the user with given id")
   public void deleteUser(@AuthenticationPrincipal @NotNull Jwt principal, @PathVariable String userId) {
     userService.deleteUser(userId, principal.getSubject());
   }
 
-  @AuditLog
   @GetMapping("user/{userId}")
   @Operation(description = "Retrieves the information about the given user")
   public ResponseEntity<User> getUser(
@@ -109,7 +109,6 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(userService.getUserById(userId, true, principal.getSubject()));
   }
 
-  @AuditLog
   @GetMapping("user/{userId}/role")
   @Operation(description = "Retrieves the roles of the given user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -118,8 +117,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(userService.getUserRoles(userId, principal.getSubject()));
   }
 
-  @ContextLog(type = "UserManagement")
-  @AuditLog(description = "Update user's roles")
+  @ContextLog(type = "UserManagement", description = "Update user roles")
   @PostMapping("user/{userId}/role")
   @Operation(description = "Updates the users roles to the given set.")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -131,10 +129,9 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(updatedRoles);
   }
 
-  @ContextLog(type = "UserManagement")
-  @AuditLog(description = "Update user's organization")
+  @ContextLog(type = "UserManagement", description = "Update user organization")
   @PostMapping("user/{userId}/organization")
-  @Operation(description = "Sets the user's organization")
+  @Operation(description = "Sets the user organization")
   @PreAuthorize(Role.SUPER_ADMIN)
   public ResponseEntity<String> setOrganization(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -145,8 +142,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @ContextLog(type = "UserManagement")
-  @AuditLog
+  @ContextLog(type = "UserManagement", description = "Creates user details")
   @PostMapping("user/{userId}")
   @Operation(description = "Creates user details")
   public ResponseEntity<String> createUserOnFirstLogin(
@@ -156,8 +152,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @ContextLog(type = "UserManagement")
-  @AuditLog(description = "Update user's name")
+  @ContextLog(type = "UserManagement", description = "Update user name", dtoPrint = false)
   @PostMapping("user/{userId}/name")
   @Operation(description = "Changes user name")
   public ResponseEntity<String> changeUserName(
@@ -167,8 +162,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @ContextLog(type = "UserManagement")
-  @AuditLog(description = "Approve user")
+  @ContextLog(type = "UserManagement", description = "Approve user")
   @PostMapping("user/{userId}/approve")
   @Operation(description = "Adds the given organization to the user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -177,8 +171,7 @@ public class AdminController extends CustomizedExceptionHandler {
     userDetailsService.approveUser(principal.getSubject(), userId);
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
-
-  @AuditLog
+  
   @GetMapping("user/all")
   @Operation(description = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
@@ -193,18 +186,16 @@ public class AdminController extends CustomizedExceptionHandler {
   }
 
 
-  @ContextLog(type = "UserManagement")
-  @AuditLog(description = "Update user's active field")
+  @ContextLog(type = "UserManagement", description = "Update user active field")
   @PostMapping("user/{userId}/status")
-  @Operation(description = "Updates user's status for active flag (enabled field in keycloak representation).")
+  @Operation(description = "Updates user status for active flag (enabled field in keycloak representation).")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<String> updateUserDetails(@AuthenticationPrincipal @NotNull Jwt principal,
                                                   @NotNull @PathVariable String userId, @NotNull @RequestBody Boolean active) {
     userService.updateUserActiveField(principal.getSubject(), userId, active, Roles.extractRoles(principal));
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
-
-  @AuditLog
+  
   @PostMapping(path = "pseudo/test", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Operation(description = "Endpoint used for testing 3rd party pseudonyms")
   @PreAuthorize(Role.SUPER_ADMIN)
