@@ -1,5 +1,7 @@
 package org.highmed.numportal;
 
+import org.highmed.numportal.listeners.UserCacheInit;
+import org.highmed.numportal.service.atna.AtnaProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

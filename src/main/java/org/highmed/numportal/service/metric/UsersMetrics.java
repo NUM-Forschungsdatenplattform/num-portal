@@ -31,9 +31,14 @@ public class UsersMetrics {
                 .description("Inactive users")
                 .register(registry);
 
+
         Optional<List<UserDetails>> unapproved = userDetailsRepository.findAllByApproved(false);
-        Long inactive = keycloakFeign.countUsers(false);
-        Long active = keycloakFeign.countUsers(true);
+        Long inactive = 0L;
+        Long active = 0L;
+
+            inactive = keycloakFeign.countUsers(false);
+            active = keycloakFeign.countUsers(true);
+
 
         unapproved.ifPresent(userDetails -> this.unapprovedUsers = userDetails.size());
         // decrease because of service account

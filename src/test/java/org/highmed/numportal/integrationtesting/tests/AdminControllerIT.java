@@ -5,6 +5,11 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import lombok.SneakyThrows;
 import org.highmed.numportal.integrationtesting.security.WithMockNumUser;
 import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.mockserver.client.MockServerClient;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
+import org.mockserver.model.HttpStatusCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -35,12 +40,13 @@ public class AdminControllerIT extends IntegrationTest {
           userId = USER_ID,
           roles = {STUDY_COORDINATOR})
   public void shouldCreateUserOnFirstLoginSuccessfully() throws Exception {
-    stubFor(
-            WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a79")
-                    .willReturn(okJson(
-                            "{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a79\",\"username\": \"new-user\"}")));
-    stubFor(WireMock.get("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a79/role-mappings/realm")
-            .willReturn(okJson("[{\"id\":\"12345-2f04-4356-8f34-12345\",\"name\":\"STUDY_COORDINATOR\",\"composite\":false,\"clientRole\":false,\"containerId\":\"Num\"}]")));
+    client
+            .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a79"))
+            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a79\",\"username\": \"new-user\"}", org.mockserver.model.MediaType.JSON_UTF_8));
+    client
+            .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a79/role-mappings/realm"))
+            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("[{\"id\":\"12345-2f04-4356-8f34-12345\",\"name\":\"STUDY_COORDINATOR\",\"composite\":false,\"clientRole\":false,\"containerId\":\"Num\"}]", org.mockserver.model.MediaType.JSON_UTF_8));
+
     mockMvc
             .perform(
                     post(String.format("%s/%s", ADMIN_PATH, USER_ID))
