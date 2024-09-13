@@ -36,7 +36,7 @@
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
     <postgresql.version>42.7.4</postgresql.version>
-    <hapi.version>6.8.3</hapi.version>
+    <hapi.version>7.4.0</hapi.version>
     <testcontainers.version>1.20.1</testcontainers.version>
     <mockserver-client.version>5.15.0</mockserver-client.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
