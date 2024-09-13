@@ -2,18 +2,18 @@ package org.highmed.numportal.integrationtesting.config;
 
 import org.testcontainers.containers.PostgreSQLContainer;
 
-public class NumPostgresqlContainer extends PostgreSQLContainer<NumPostgresqlContainer> {
+public class PostgresqlContainer extends PostgreSQLContainer<PostgresqlContainer> {
   private static final String IMAGE_VERSION = "postgres:12.14";
-  private static NumPostgresqlContainer container;
+  private static PostgresqlContainer container;
 
-  private NumPostgresqlContainer(String databaseName) {
+  private PostgresqlContainer(String databaseName) {
     super(IMAGE_VERSION);
     this.withDatabaseName(databaseName);
   }
 
-  public static NumPostgresqlContainer getInstance(String databaseName) {
+  public static PostgresqlContainer getInstance(String databaseName) {
     if (container == null) {
-      container = new NumPostgresqlContainer(databaseName);
+      container = new PostgresqlContainer(databaseName);
     }
     return container;
   }
