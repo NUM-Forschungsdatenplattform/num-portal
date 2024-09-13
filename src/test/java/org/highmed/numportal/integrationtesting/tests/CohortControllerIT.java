@@ -66,7 +66,6 @@ public class CohortControllerIT extends IntegrationTest {
     }
 
     @Test
-    @Ignore
     @SneakyThrows
     @WithMockNumUser(roles = {STUDY_APPROVER})
     public void shouldAccessCohortApiWithRightRole() {
@@ -91,7 +90,7 @@ public class CohortControllerIT extends IntegrationTest {
                         .researchers(Lists.newArrayList(userOne))
                         .status(ProjectStatus.DRAFT)
                         .build();
-        projectRepository.save(approvedProject);
+        Project saved = projectRepository.save(approvedProject);
         CohortAql cohortAql = CohortAql.builder()
                 .id(aql.getId())
                 .name("Geburtsdatum")
@@ -105,7 +104,7 @@ public class CohortControllerIT extends IntegrationTest {
                 .build();
         Cohort cohort = Cohort.builder()
                 .name("Geburtsdatum cohort")
-                .project(projectRepository.findById(1L).get())
+                .project(projectRepository.findById(saved.getId()).get())
                 .cohortGroup(cohortGroup)
                 .description("just testing")
                 .build();

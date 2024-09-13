@@ -37,8 +37,8 @@
     <skip.unit.tests>false</skip.unit.tests>
     <postgresql.version>42.7.4</postgresql.version>
     <hapi.version>6.8.3</hapi.version>
-    <wiremock-standalone.version>3.9.1</wiremock-standalone.version>
     <testcontainers.version>1.20.1</testcontainers.version>
+    <mockserver-client.version>5.15.0</mockserver-client.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
     <spring.cloud-version>2023.0.3</spring.cloud-version>
   </properties>
@@ -151,7 +151,7 @@
     <dependency>
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-client-java</artifactId>
-      <version>5.15.0</version>
+      <version>${mockserver-client.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -258,12 +258,6 @@
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest</artifactId>
       <version>3.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.wiremock</groupId>
-      <artifactId>wiremock-standalone</artifactId>
-      <version>${wiremock-standalone.version}</version>
       <scope>test</scope>
     </dependency>
 

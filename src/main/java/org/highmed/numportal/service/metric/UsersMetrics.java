@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Custom prometheus metric, to detect number of user in different states, active, inactive or unapproved.
+ */
 @Getter
 @Component
 public class UsersMetrics {
@@ -32,13 +35,11 @@ public class UsersMetrics {
                 .register(registry);
 
         Optional<List<UserDetails>> unapproved = userDetailsRepository.findAllByApproved(false);
-        Long inactive = keycloakFeign.countUsers(false);
-        Long active = keycloakFeign.countUsers(true);
-
         unapproved.ifPresent(userDetails -> this.unapprovedUsers = userDetails.size());
+        this.inactiveUsers = keycloakFeign.countUsers(false);
         // decrease because of service account
-        this.activeUsers = active - 1;
-        this.inactiveUsers = inactive;
+        this.activeUsers = keycloakFeign.countUsers(true) - 1;
+
     }
 
     public void addNewUserAsUnapproved() {
