@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.mockserver.model.HttpStatusCode;
+import org.mockserver.model.StringBody;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -65,7 +66,6 @@ public class CohortControllerIT extends IntegrationTest {
     }
 
     @Test
-    @Ignore
     @SneakyThrows
     @WithMockNumUser(roles = {STUDY_APPROVER})
     public void shouldAccessCohortApiWithRightRole() {
@@ -115,7 +115,6 @@ public class CohortControllerIT extends IntegrationTest {
 
     @Test
     @SneakyThrows
-    @Ignore
     @WithMockNumUser(
             userId = UNAUTHORIZED_USER_ID,
             roles = {STUDY_COORDINATOR})
@@ -210,12 +209,12 @@ public class CohortControllerIT extends IntegrationTest {
                         .build();
 
         String cohortDtoJson = mapper.writeValueAsString(cohortGroupDto);
-        client
-                .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody("[openEHR-EHR-OBSERVATION.height.v2] WHERE (c1/archetype_details/template_id/value = 'Körpergröße'"))
+        ehrClient
+                .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody(StringBody.subString("[openEHR-EHR-OBSERVATION.height.v2] WHERE (c1/archetype_details/template_id/value = 'Körpergröße'")))
                 .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/testdata/height_ehr_ids_result.json")), StandardCharsets.UTF_8), org.mockserver.model.MediaType.JSON_UTF_8));
-        client
-                .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody("SELECT e/ehr_id/value FROM ehr e"))
-                .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(IOUtils.toString(getClass().getResourceAsStream("/testdata/ehr_id_response.json"), StandardCharsets.UTF_8), org.mockserver.model.MediaType.JSON_UTF_8));
+        ehrClient
+                .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody(StringBody.subString("SELECT e/ehr_id/value FROM ehr e")))
+                .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/testdata/ehr_id_response.json")), StandardCharsets.UTF_8), org.mockserver.model.MediaType.JSON_UTF_8));
 
         mockMvc
                 .perform(

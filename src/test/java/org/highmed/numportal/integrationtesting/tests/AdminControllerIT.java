@@ -2,12 +2,8 @@ package org.highmed.numportal.integrationtesting.tests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
-import org.highmed.numportal.integrationtesting.security.TokenGenerator;
 import org.highmed.numportal.integrationtesting.security.WithMockNumUser;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeEach;
-import org.mockserver.client.MockServerClient;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.mockserver.model.HttpStatusCode;

@@ -92,7 +92,7 @@ logging:
     root: debug
 
 ehrbase:
-  rest-api-url: http://localhost:8099/ehrbase/
+  rest-api-url: ${EHRBASE_URL}/ehrbase/
   username: ehrbase-user
   password: SuperSecretPassword
   adminUsername: ehrbase-admin

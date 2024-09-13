@@ -7,18 +7,18 @@ import org.testcontainers.utility.DockerImageName;
 
 import static org.highmed.numportal.integrationtesting.tests.IntegrationTest.IDENTITY_PROVIDER_TOKEN_ENDPOINT;
 
-public class NumKeycloakMockContainer extends MockServerContainer {
+public class KeycloakMockContainer extends MockServerContainer {
     private static final String IMAGE_VERSION = "mockserver/mockserver:5.15.0";
     public static final String USERS_COUNT = "/admin/realms/Num/users/count";
-    private static NumKeycloakMockContainer container;
+    private static KeycloakMockContainer container;
 
-    private NumKeycloakMockContainer() {
+    private KeycloakMockContainer() {
         super(DockerImageName.parse(IMAGE_VERSION));
     }
 
-    public static NumKeycloakMockContainer getInstance() {
+    public static KeycloakMockContainer getInstance() {
         if (container == null) {
-            container = new NumKeycloakMockContainer();
+            container = new KeycloakMockContainer();
         }
         return container;
     }

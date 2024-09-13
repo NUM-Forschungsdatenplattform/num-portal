@@ -3,15 +3,12 @@ package org.highmed.numportal.integrationtesting.tests;
 import lombok.SneakyThrows;
 import org.highmed.numportal.TestNumPortalApplication;
 import org.highmed.numportal.integrationtesting.config.AttachmentPostgresqlContainer;
-import org.highmed.numportal.integrationtesting.config.NumKeycloakMockContainer;
-import org.highmed.numportal.integrationtesting.config.NumPostgresqlContainer;
+import org.highmed.numportal.integrationtesting.config.EhrBaseMockContainer;
+import org.highmed.numportal.integrationtesting.config.KeycloakMockContainer;
+import org.highmed.numportal.integrationtesting.config.PostgresqlContainer;
 import org.highmed.numportal.integrationtesting.security.TokenGenerator;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.*;
@@ -41,23 +38,29 @@ public abstract class IntegrationTest {
   private static final String USER_ENDPOINT_USER2 = "/admin/realms/Num/users/user2";
   private static final String USER_ENDPOINT_ALL_APPROVERS =
       "/admin/realms/Num/roles/STUDY_APPROVER/users";
-  private static final String EHR_BASE_URL = "/ehrbase/rest/openehr/v1/definition/template/adl1.4/";
 
   @ClassRule
-  public static PostgreSQLContainer<NumPostgresqlContainer> postgreSQLContainer = NumPostgresqlContainer.getInstance("numportal");
+  public static PostgreSQLContainer<PostgresqlContainer> postgreSQLContainer = PostgresqlContainer.getInstance("numportal");
 
   @ClassRule
   public static PostgreSQLContainer<AttachmentPostgresqlContainer> attachmentPostgreSQLContainer = AttachmentPostgresqlContainer.getInstance("num-attachment");
 
   @ClassRule
-  public static NumKeycloakMockContainer keycloakMockContainer = NumKeycloakMockContainer.getInstance();
+  public static KeycloakMockContainer keycloakMockContainer = KeycloakMockContainer.getInstance();
 
-  @Autowired public MockMvc mockMvc;
+  @ClassRule
+  public static EhrBaseMockContainer ehrbaseServer = EhrBaseMockContainer.getInstance();
+
+  @Autowired
+  public MockMvc mockMvc;
   protected static MockServerClient client;
+  protected static MockServerClient ehrClient;
 
   @Before
   @SneakyThrows
   public void setup() {
+    ehrbaseServer.start();
+    ehrClient = new MockServerClient("localhost", ehrbaseServer.getServerPort());
     keycloakMockContainer.start();
     client = new MockServerClient("localhost", keycloakMockContainer.getServerPort());
 
@@ -76,9 +79,6 @@ public abstract class IntegrationTest {
     client
             .when(HttpRequest.request().withMethod("GET").withPath(IDENTITY_PROVIDER_URL))
             .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(TokenGenerator.pk, MediaType.JSON_UTF_8));
-    client
-            .when(HttpRequest.request().withMethod("GET").withPath(EHR_BASE_URL))
-            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("[{\"template_id\": \"IDCR - Immunisation summary.v0\",\"concept\": \"IDCR - Immunisation summary.v0\",\"archetype_id\": \"openEHR-EHR-COMPOSITION.health_summary.v1\",\"created_timestamp\": \"2020-11-25T16:19:37.812Z\"}]", MediaType.JSON_UTF_8));
     client
             .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath("/admin/realms/Num/roles/SUPER_ADMIN/users"))
             .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("[]", MediaType.JSON_UTF_8));
