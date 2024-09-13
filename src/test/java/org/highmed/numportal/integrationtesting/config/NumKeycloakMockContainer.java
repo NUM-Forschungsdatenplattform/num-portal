@@ -45,6 +45,6 @@ public class NumKeycloakMockContainer extends MockServerContainer {
 
     @Override
     public void stop() {
-        super.stop();
+        // do nothing, JVM handles shut down
     }
 }

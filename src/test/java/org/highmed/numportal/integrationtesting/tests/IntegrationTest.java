@@ -86,9 +86,4 @@ public abstract class IntegrationTest {
             .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a72"))
             .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"admin-user\", \"firstname\":\"Admin\", \"email\": \"admin.doe@highmed.org\"}", MediaType.JSON_UTF_8));
   }
-
-  @AfterAll
-  public void teardown() {
-    keycloakMockContainer.stop();
-  }
 }
