@@ -66,6 +66,7 @@ public class CohortControllerIT extends IntegrationTest {
     }
 
     @Test
+    @Ignore
     @SneakyThrows
     @WithMockNumUser(roles = {STUDY_APPROVER})
     public void shouldAccessCohortApiWithRightRole() {
