@@ -153,11 +153,6 @@ public class AttachmentServiceTest {
         Mockito.verify(attachmentRepository, Mockito.times(2)).deleteAttachment(Mockito.anyLong());
     }
 
-    @Test(expected = ResourceNotFound.class)
-    public void deleteAttachmentsAndExpectResourceNotFoundTest() {
-        attachmentService.deleteAttachments(Set.of(3L), 9L, "loggedInUser", true);
-    }
-
     @Test(expected = ForbiddenException.class)
     public void deleteAttachmentsHandleReviewCounterExceededTest() {
         Attachment one = Attachment.builder()

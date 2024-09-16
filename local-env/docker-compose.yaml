@@ -14,7 +14,7 @@ services:
     volumes:
       - ./keycloak.conf:/opt/keycloak/conf/keycloak.conf
     ports:
-      - 8180:8080
+      - "8180:8080"
     networks:
       - num-portal
     depends_on:
@@ -23,7 +23,7 @@ services:
     image: postgres:16.2
     restart: always
     ports:
-      - 5432:5432
+      - "5432:5432"
     networks:
       - num-portal
     environment:
@@ -35,7 +35,7 @@ services:
     image: dpage/pgadmin4:8.9
     restart: always
     ports:
-      - 8888:80
+      - "8888:80"
     networks:
       - num-portal
     environment:
@@ -48,7 +48,7 @@ services:
   ehrbase:
     image: ehrbase/ehrbase:2.5.0
     ports:
-      - 8080:8080
+      - "8080:8080"
     networks:
       - num-portal
     env_file:
@@ -62,10 +62,21 @@ services:
       DB_PASS: ${DB_PASS}
     depends_on:
       - postgres
+  clamav:
+    image: clamav/clamav:1.3.2
+    container_name: clamav
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav-db:/var/lib/clamav
+    environment:
+      - CLAMD_CONF_FILE=/etc/clamav/clamd.conf
+      - FRESHCLAM_CONF_FILE=/etc/clamav/freshclam.conf
 
 volumes:
   pgdata:
   pgadmin-data:
+  clamav-db:
 networks:
   num-portal:
     driver: bridge
