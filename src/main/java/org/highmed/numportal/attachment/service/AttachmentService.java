@@ -141,7 +141,8 @@ public class AttachmentService {
         for(Long attachmentId : attachmentsId) {
             Optional<Attachment> attachment = attachmentRepository.findByIdAndProjectId(attachmentId, projectId);
             if(attachment.isEmpty()) {
-                throw new ResourceNotFound(AttachmentService.class, "Attachment not found", String.format("Attachment not found: %s", attachmentId));
+                log.info("Attachment is already deleted, attachment: {}, project: {}", attachmentId, projectId);
+                return;
             }
             Attachment currentAttachment = attachment.get();
             if  (Boolean.FALSE.equals(userIsApprover) && currentAttachment.getReviewCounter() > 1) {
