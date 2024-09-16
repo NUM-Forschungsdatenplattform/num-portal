@@ -18,6 +18,7 @@ import org.highmed.numportal.service.exception.BadRequestException;
 import org.highmed.numportal.service.exception.ForbiddenException;
 import org.highmed.numportal.service.exception.ResourceNotFound;
 import org.highmed.numportal.service.exception.SystemException;
+import org.highmed.numportal.service.metric.UsersMetrics;
 import org.highmed.numportal.service.notification.NotificationService;
 import org.highmed.numportal.service.notification.dto.Notification;
 import org.highmed.numportal.service.notification.dto.account.RolesUpdateNotification;
@@ -71,9 +72,11 @@ public class UserService {
 
   private final TranslationRepository translationRepository;
 
+  private UsersMetrics usersMetrics;
+
   public static final String TRANSLATION_CACHE = "translation";
 
-  private static final String USERS_CACHE = "users";
+  public static final String USERS_CACHE = "users";
 
   private static final String KEYCLOACK_DEFAULT_ROLES_PREFIX = "default-roles-";
 
@@ -642,6 +645,7 @@ public class UserService {
       log.debug("Keycloak call to update user's {} 'enabled' field", userId);
       keycloakFeign.updateUser(userId, userRaw);
       userDetailsService.sendAccountStatusChangedNotification(userId, loggedInUserId, active);
+      usersMetrics.updateCountStatus(active);
     }
     return getUserById(userId, true);
   }

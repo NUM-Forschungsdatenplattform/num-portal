@@ -12,13 +12,13 @@ import org.highmed.numportal.service.CommentService;
 import org.highmed.numportal.service.ProjectService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
 import org.highmed.numportal.service.exception.ResourceNotFound;
-import org.highmed.numportal.service.logger.AuditLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -57,7 +57,6 @@ public class ProjectController extends CustomizedExceptionHandler {
 
   private final ProjectViewMapper projectViewMapper;
 
-  @AuditLog
   @GetMapping("/all")
   @Operation(description = "Retrieves a list of projects the user is allowed to see")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -70,7 +69,6 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(new PageImpl<>(content, pageable, projectPage.getTotalElements()));
   }
 
-  @AuditLog
   @GetMapping("/{id}")
   @Operation(description = "Retrieves a project by id")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -85,7 +83,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project.get()));
   }
 
-  @AuditLog(description = "Create project")
+  @ContextLog(type = "ProjektManagement", description = "Create project")
   @PostMapping()
   @Operation(
       description = "Creates a project; the logged in user is assigned as coordinator of the project")
@@ -101,7 +99,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
-  @AuditLog(description = "Create project")
+  @ContextLog(type = "ProjektManagement", description = "Create multipart project")
   @PostMapping(path = "/new", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @Operation(
           description = "Creates a project; the logged in user is assigned as coordinator of the project")
@@ -118,7 +116,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
-  @AuditLog(description = "Update project")
+  @ContextLog(type = "ProjektManagement", description = "Update project")
   @PutMapping(value = "/{id}")
   @Operation(description =
           "Updates a project; the logged in user is assigned as coordinator of the project at creation time")
@@ -135,7 +133,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
-  @AuditLog(description = "Update project")
+  @ContextLog(type = "ProjektManagement", description = "Update multipart project")
   @PutMapping(value = "/new/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
   @Operation(description =
           "Updates a project; the logged in user is assigned as coordinator of the project at creation time")
@@ -153,7 +151,6 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(projectMapper.convertToDto(project));
   }
 
-  @AuditLog(description = "Retrieve/download project data")
   @PostMapping("/{projectId}/execute")
   @Operation(description = "Executes the aql")
   @PreAuthorize(Role.RESEARCHER)
@@ -167,7 +164,6 @@ public class ProjectController extends CustomizedExceptionHandler {
             query.getQuery(), projectId, principal.getSubject(), defaultConfiguration));
   }
 
-  @AuditLog
   @PostMapping("/manager/execute")
   @Operation(
       description = "Executes the manager project aql in the cohort returning medical data matching the templates")
@@ -182,7 +178,6 @@ public class ProjectController extends CustomizedExceptionHandler {
             principal.getSubject()));
   }
 
-  @AuditLog
   @PostMapping(value = "/{projectId}/export")
   @Operation(description = "Executes the aql and returns the result as a csv file attachment")
   @PreAuthorize(Role.RESEARCHER)
@@ -202,7 +197,6 @@ public class ProjectController extends CustomizedExceptionHandler {
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }
 
-  @AuditLog
   @PostMapping(value = "/manager/export")
   @Operation(description = "Executes the cohort default configuration returns the result as a csv file attachment")
   @PreAuthorize(Role.MANAGER)
@@ -221,7 +215,6 @@ public class ProjectController extends CustomizedExceptionHandler {
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }
 
-  @AuditLog
   @GetMapping("/{projectId}/comment")
   @Operation(description = "Retrieves the list of attached comments to a particular project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -234,7 +227,7 @@ public class ProjectController extends CustomizedExceptionHandler {
             .collect(Collectors.toList()));
   }
 
-  @AuditLog(description = "Add comment")
+  @ContextLog(type = "ProjektManagement", description = "Add comment")
   @PostMapping("/{projectId}/comment")
   @Operation(description = "Adds a comment to a particular project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -250,7 +243,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(commentMapper.convertToDto(comment));
   }
 
-  @AuditLog
+  @ContextLog(type = "ProjektManagement", description = "Update comment")
   @PutMapping("/{projectId}/comment/{commentId}")
   @Operation(description = "Updates a comment")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -270,9 +263,10 @@ public class ProjectController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(commentMapper.convertToDto(comment));
   }
 
-  @AuditLog
+  @ContextLog(type = "ProjektManagement", description = "Delete comment")
   @DeleteMapping("/{projectId}/comment/{commentId}")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
+  @Operation(description = "Delete a comment")
   public void deleteComment(
       @AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable Long projectId,
@@ -280,7 +274,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     commentService.deleteComment(commentId, projectId, principal.getSubject());
   }
 
-  @AuditLog(description = "Delete project")
+  @ContextLog(type = "ProjektManagement", description = "Delete project")
   @DeleteMapping("/{id}")
   @Operation(description = "Deletes a project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)
@@ -289,7 +283,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     projectService.deleteProject(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
-  @AuditLog
+  @ContextLog(type = "ProjektManagement", description = "Archive project")
   @PostMapping("/{id}/archive")
   @Operation(description = "Archive a project")
   @PreAuthorize(Role.STUDY_COORDINATOR_OR_SUPER_ADMIN)

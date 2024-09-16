@@ -7,10 +7,10 @@ import org.highmed.numportal.domain.dto.SearchCriteria;
 import org.highmed.numportal.mapper.OrganizationMapper;
 import org.highmed.numportal.service.OrganizationService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
-import org.highmed.numportal.service.logger.AuditLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
+import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -36,26 +36,18 @@ public class OrganizationController extends CustomizedExceptionHandler {
   private final OrganizationService organizationService;
   private final OrganizationMapper mapper;
 
-  @AuditLog
   @GetMapping("/domains")
   @Operation(description = "Retrieves a list of all active existing organization email domains")
   public ResponseEntity<List<String>> getAllMailDomainsForActiveOrganizations() {
     return ResponseEntity.ok(organizationService.getMailDomainsByActiveOrganizations());
   }
 
-  @AuditLog
   @GetMapping("/{id}")
   @Operation(description = "Retrieves an organization by external id")
   public ResponseEntity<OrganizationDto> getOrganizationById(@NotNull @PathVariable Long id) {
     return ResponseEntity.ok(mapper.convertToDto(organizationService.getOrganizationById(id)));
   }
 
-  /**
-   * used when edit user
-   * @param principal
-   * @return
-   */
-  @AuditLog
   @GetMapping
   @Operation(description = "Retrieves a list of available organizations")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -68,7 +60,6 @@ public class OrganizationController extends CustomizedExceptionHandler {
                     .collect(Collectors.toList()));
   }
 
-  @AuditLog
   @GetMapping("/all")
   @Operation(description = "Retrieves a list of available organizations")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -85,7 +76,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(new PageImpl<>(content, pageable, organizationPage.getTotalElements()));
   }
 
-  @AuditLog(description = "Create organization")
+  @ContextLog(type = "OrgaManagement", description = "Create organization")
   @PostMapping()
   @Operation(description = "Creates an organization")
   @PreAuthorize(Role.SUPER_ADMIN)
@@ -96,23 +87,25 @@ public class OrganizationController extends CustomizedExceptionHandler {
         mapper.convertToDto(organizationService.create(principal.getSubject(), organizationDto)));
   }
 
-  @AuditLog(description = "Update organization")
+  @ContextLog(type = "OrgaManagement", description = "Update organization")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates an organization")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<OrganizationDto> updateOrganization(@AuthenticationPrincipal @NotNull Jwt principal,
       @NotNull @PathVariable("id") Long organizationId,
       @Valid @NotNull @RequestBody OrganizationDto organizationDto) {
-    return ResponseEntity.ok(
-        mapper.convertToDto(
+
+    OrganizationDto updatedOrganizationDto = mapper.convertToDto(
             organizationService.update(
-                organizationId,
-                organizationDto,
-                Roles.extractRoles(principal),
-                principal.getSubject())));
+                    organizationId,
+                    organizationDto,
+                    Roles.extractRoles(principal),
+                    principal.getSubject()));
+
+    return ResponseEntity.ok(updatedOrganizationDto);
   }
 
-  @AuditLog(description = "Delete organization")
+  @ContextLog(type = "OrgaManagement", description = "Delete organization")
   @Operation(description = "Delete the given organization if no users are assigned to this organization")
   @DeleteMapping(value = "/{id}")
   @PreAuthorize(Role.SUPER_ADMIN)

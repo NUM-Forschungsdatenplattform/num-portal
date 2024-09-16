@@ -7,8 +7,10 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AuditLog {
+public @interface ContextLog {
 
+    String type() default "";
     String description() default "";
+    boolean dtoPrint() default true;
 
 }

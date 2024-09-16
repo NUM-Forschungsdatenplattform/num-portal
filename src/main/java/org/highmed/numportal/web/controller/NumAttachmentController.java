@@ -5,10 +5,10 @@ import org.highmed.numportal.attachment.domain.dto.LightAttachmentDto;
 import org.highmed.numportal.attachment.domain.model.Attachment;
 import org.highmed.numportal.attachment.service.AttachmentService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
-import org.highmed.numportal.service.logger.AuditLog;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -36,7 +36,8 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
     private final ModelMapper modelMapper;
     private final AttachmentService attachmentService;
 
-    @AuditLog(description = "Create a new attachment")
+    @ContextLog(type = "AttachmentManagement", description = "Create a new attachment")
+    @Operation(description = "Create a new attachment")
     @PreAuthorize(Role.SUPER_ADMIN)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> createAttachment(@AuthenticationPrincipal @NotNull Jwt principal, @RequestParam Long projectId,
@@ -46,7 +47,7 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
         return ResponseEntity.ok("ok");
     }
 
-    @AuditLog(description = "Create multiple attachments for a project with given ID")
+    @ContextLog(type = "AttachmentManagement", description = "Create multiple attachments for a project with given ID")
     @Operation(description = "Create multiple attachments for a project with given ID")
     @PreAuthorize(Role.STUDY_COORDINATOR)
     @PostMapping(path = "/{projectId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -57,27 +58,24 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
         return ResponseEntity.ok("ok");
     }
 
-    @AuditLog(description = "Get a list of all attachments for one project (by projectId)")
     @Operation(description = "Get a list of all attachments for one project (by projectId)")
     @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<AttachmentDto>> listAllAttachments(@NotNull @PathVariable Long projectId) {
+    public ResponseEntity<List<AttachmentDto>> getAllAttachments(@NotNull @PathVariable Long projectId) {
         return ResponseEntity.ok(attachmentService.getAttachmentsBy(projectId).stream()
                 .map(attachment -> modelMapper.map(attachment, AttachmentDto.class))
                 .collect(Collectors.toList()));
     }
 
-
-    @AuditLog(description = "Retrieves a list of existing attachments")
     @Operation(description = "Retrieves a list of existing attachments")
     @GetMapping("/all")
     @PreAuthorize(Role.SUPER_ADMIN)
-    public ResponseEntity<List<AttachmentDto>> listAttachments() {
+    public ResponseEntity<List<AttachmentDto>> getAttachments() {
         return ResponseEntity.ok(attachmentService.listAttachments().stream()
                 .map(attachment -> modelMapper.map(attachment, AttachmentDto.class))
                 .collect(Collectors.toList()));
     }
 
-    @AuditLog(description = "Delete attachment")
+    @ContextLog(type = "AttachmentManagement", description = "Delete attachment")
     @DeleteMapping("/{attachmentId}")
     @Operation(description = "Delete attachment")
     @PreAuthorize(Role.SUPER_ADMIN)
@@ -85,7 +83,7 @@ public class NumAttachmentController extends CustomizedExceptionHandler {
         attachmentService.deleteById(attachmentId, principal.getSubject());
     }
 
-    @AuditLog(description = "Download attachment")
+    @ContextLog(type = "AttachmentManagement", description = "Download attachment")
     @Operation(description = "Download attachment with given id")
     @GetMapping("/{attachmentId}")
     public ResponseEntity<StreamingResponseBody> downloadAttachment(@NotNull @PathVariable Long attachmentId) {

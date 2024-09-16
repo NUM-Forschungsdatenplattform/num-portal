@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.highmed.numportal.service.exception.ForbiddenException;
 import org.highmed.numportal.service.exception.ResourceNotFound;
 import org.highmed.numportal.service.exception.SystemException;
+import org.highmed.numportal.service.metric.UsersMetrics;
 import org.highmed.numportal.service.notification.NotificationService;
 import org.highmed.numportal.service.notification.dto.NewUserNotification;
 import org.highmed.numportal.service.notification.dto.NewUserWithoutOrganizationNotification;
@@ -35,14 +36,14 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 
 @Slf4j
 @Service
-//@org.springframework.transaction.annotation.Transactional(value = "numTransactionManager")
 public class UserDetailsService {
 
-  private UserDetailsRepository userDetailsRepository;
-  private OrganizationRepository organizationRepository;
-  private OrganizationService organizationService;
-  private NotificationService notificationService;
-  private UserService userService;
+  private final UserDetailsRepository userDetailsRepository;
+  private final OrganizationRepository organizationRepository;
+  private final OrganizationService organizationService;
+  private final NotificationService notificationService;
+  private final UserService userService;
+  private final UsersMetrics usersMetrics;
 
   private static final String USER_ATTRIBUTE_DEPARTMENT = "department";
   private static final String USER_ATTRIBUTE_REQUESTED_ROLE = "requested-role";
@@ -52,16 +53,18 @@ public class UserDetailsService {
 
   @Autowired
   public UserDetailsService(
-      @Lazy UserService userService,
-      UserDetailsRepository userDetailsRepository,
-      OrganizationRepository organizationRepository,
-      @Lazy OrganizationService organizationService,
-      NotificationService notificationService) {
+          @Lazy UserService userService,
+          UserDetailsRepository userDetailsRepository,
+          OrganizationRepository organizationRepository,
+          @Lazy OrganizationService organizationService,
+          NotificationService notificationService,
+          UsersMetrics usersMetrics) {
     this.userService = userService;
     this.notificationService = notificationService;
     this.organizationService = organizationService;
     this.organizationRepository = organizationRepository;
     this.userDetailsRepository = userDetailsRepository;
+    this.usersMetrics = usersMetrics;
   }
 
   protected void deleteUserDetails(String userId) {
@@ -92,6 +95,7 @@ public class UserDetailsService {
       }
       // trigger cache update
       userService.addUserToCache(userId);
+      usersMetrics.addNewUserAsUnapproved();
       return saved;
     }
   }
@@ -146,6 +150,7 @@ public class UserDetailsService {
     UserDetails saved = userDetailsRepository.save(userDetails);
 
     notificationService.send(collectAccountApprovalNotification(userId, loggedInUserId));
+    usersMetrics.approveUser();
     log.info("User {} was approved by {}", userId, loggedInUserId);
     return saved;
   }

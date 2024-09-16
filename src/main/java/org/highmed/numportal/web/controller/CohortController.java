@@ -10,13 +10,13 @@ import org.highmed.numportal.mapper.CohortMapper;
 import org.highmed.numportal.service.CohortService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
 import org.highmed.numportal.service.exception.dto.ErrorDetails;
-import org.highmed.numportal.service.logger.AuditLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -43,7 +43,6 @@ public class CohortController extends CustomizedExceptionHandler {
 
   private final CohortMapper cohortMapper;
 
-  @AuditLog
   @GetMapping("{cohortId}")
   @Operation(description = "Retrieves a single cohort.")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -53,9 +52,9 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohort));
   }
 
-  @AuditLog(description = "Create cohort")
+  @ContextLog(type = "CohortManagement", description = "Create cohort")
   @PostMapping
-  @Operation(description = "Stores a cohort")
+  @Operation(description = "Create a cohort")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
   public ResponseEntity<CohortDto> createCohort(
       @AuthenticationPrincipal @NotNull Jwt principal,
@@ -64,7 +63,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
-  @AuditLog(description = "Update cohort")
+  @ContextLog(type = "CohortManagement", description = "Update cohort")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates a cohort")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
@@ -76,7 +75,6 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
-  @AuditLog(description = "Read cohort size")
   @PostMapping("/size")
   @Operation(description = "Retrieves the cohort group size without saving")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
@@ -95,7 +93,6 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortGroupSize);
   }
 
-  @AuditLog
   @PostMapping("/size/template")
   @Operation(description = "Retrieves the size of the templates")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
@@ -117,7 +114,6 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(sizePerTemplate);
   }
 
-  @AuditLog(description = "Read cohort group size with age distribution and patients number per hospital")
   @PostMapping("/size/distribution")
   @Operation(
       description =
@@ -132,14 +128,6 @@ public class CohortController extends CustomizedExceptionHandler {
             cohortGroupDto, principal.getSubject(), allowUsageOutsideEu));
   }
 
-  /**
-   * Note : is on controller level to avoid overriding behaviour for all controllers
-   * @param ex
-   * @param headers
-   * @param status
-   * @param request
-   * @return
-   */
   @Override
   protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
     log.warn("Request for {} failed with error message {} ", request.getDescription(false), ex.getMessage());

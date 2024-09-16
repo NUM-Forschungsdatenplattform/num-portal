@@ -66,7 +66,7 @@ userstore:
   url: ${keycloak.url}/admin/realms/Num
 
 keycloak:
-  url: http://localhost:8099
+  url: ${KEYCLOAK_URL}
 
 hapi:
   fhir:
@@ -92,7 +92,7 @@ logging:
     root: debug
 
 ehrbase:
-  rest-api-url: http://localhost:8099/ehrbase/
+  rest-api-url: ${EHRBASE_URL}/ehrbase/
   username: ehrbase-user
   password: SuperSecretPassword
   adminUsername: ehrbase-admin

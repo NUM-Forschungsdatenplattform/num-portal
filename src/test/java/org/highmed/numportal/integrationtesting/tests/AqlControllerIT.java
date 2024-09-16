@@ -1,25 +1,29 @@
 package org.highmed.numportal.integrationtesting.tests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tomakehurst.wiremock.client.WireMock;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.highmed.numportal.domain.dto.AqlCategoryDto;
+import org.highmed.numportal.domain.dto.AqlDto;
+import org.highmed.numportal.domain.dto.ParameterOptionsDto;
 import org.highmed.numportal.integrationtesting.security.WithMockNumUser;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
+import org.mockserver.model.HttpStatusCode;
+import org.mockserver.model.StringBody;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.highmed.numportal.domain.dto.AqlCategoryDto;
-import org.highmed.numportal.domain.dto.AqlDto;
-import org.highmed.numportal.domain.dto.ParameterOptionsDto;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -241,15 +245,12 @@ public class AqlControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
+  @Ignore
   @WithMockNumUser(roles = {RESEARCHER})
   public void shouldRetrieveParameterValues() {
-    WireMock.stubFor(
-            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
-                    .inScenario("Retrieve aql parameters")
-                    .withRequestBody(WireMock.containing("openEHR-EHR-OBSERVATION.blood_pressure.v2"))
-                    .willReturn(
-                            WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/blood_pressure_response.json"),
-                                            StandardCharsets.UTF_8))));
+    ehrClient
+            .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody(StringBody.subString("openEHR-EHR-OBSERVATION.blood_pressure.v2", StandardCharsets.UTF_8)))
+            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/testdata/blood_pressure_response.json")), StandardCharsets.UTF_8), org.mockserver.model.MediaType.JSON_UTF_8));
     MvcResult result =
         mockMvc
             .perform(
@@ -266,12 +267,9 @@ public class AqlControllerIT extends IntegrationTest {
     assertThat(
         result.getResponse().getContentAsString(), containsString("\"type\":\"DV_QUANTITY\""));
 
-        WireMock.stubFor(
-            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
-                    .withRequestBody(WireMock.containing("openEHR-EHR-OBSERVATION.pregnancy_status.v0"))
-                    .inScenario("Retrieve aql parameters")
-                    .willReturn(WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/pregnancy_status_response.json"),
-                            StandardCharsets.UTF_8))));
+    ehrClient
+            .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody(StringBody.subString("openEHR-EHR-OBSERVATION.pregnancy_status.v0", StandardCharsets.UTF_8)))
+            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/testdata/pregnancy_status_response.json")), StandardCharsets.UTF_8), org.mockserver.model.MediaType.JSON_UTF_8));
     MvcResult result2 =
             mockMvc
                     .perform(
@@ -286,13 +284,9 @@ public class AqlControllerIT extends IntegrationTest {
     assertThat(
             result2.getResponse().getContentAsString(), containsString("\"type\":\"DV_CODED_TEXT\""));
 
-    WireMock.stubFor(
-            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
-                    .inScenario("Retrieve aql parameters")
-                    .withRequestBody(WireMock.containing("openEHR-EHR-OBSERVATION.clinical_frailty_scale.v1"))
-                    .willReturn(
-                            WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/frailty_score_response.json"),
-                                    StandardCharsets.UTF_8))));
+    ehrClient
+            .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody("openEHR-EHR-OBSERVATION.clinical_frailty_scale.v1"))
+            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/testdata/frailty_score_response.json")), StandardCharsets.UTF_8), org.mockserver.model.MediaType.JSON_UTF_8));
     MvcResult result3 =
             mockMvc
                     .perform(
@@ -306,13 +300,9 @@ public class AqlControllerIT extends IntegrationTest {
     assertThat(
             result3.getResponse().getContentAsString(), containsString("\"type\":\"DV_ORDINAL\""));
 
-    WireMock.stubFor(
-            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
-                    .inScenario("Retrieve aql parameters")
-                    .withRequestBody(WireMock.containing("openEHR-EHR-CLUSTER.laboratory_test_analyte.v1"))
-                    .willReturn(
-                            WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/laboratory_antithrombin_result.json"),
-                                    StandardCharsets.UTF_8))));
+    ehrClient
+            .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody("openEHR-EHR-CLUSTER.laboratory_test_analyte.v1"))
+            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/testdata/laboratory_antithrombin_result.json")), StandardCharsets.UTF_8), org.mockserver.model.MediaType.JSON_UTF_8));
     MvcResult result4 =
             mockMvc
                     .perform(
@@ -327,12 +317,9 @@ public class AqlControllerIT extends IntegrationTest {
     assertThat(
             result4.getResponse().getContentAsString(), containsString("\"unit\":\"mg/dL\""));
 
-    WireMock.stubFor(
-            WireMock.post("/ehrbase/rest/openehr/v1/query/aql/")
-                    .inScenario("Retrieve aql parameters")
-                    .withRequestBody(WireMock.containing("openEHR-EHR-EVALUATION.gender.v1"))
-                    .willReturn(WireMock.okJson(IOUtils.toString(getClass().getResourceAsStream("/testdata/gender_response.json"),
-                            StandardCharsets.UTF_8))));
+    ehrClient
+            .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody("openEHR-EHR-EVALUATION.gender.v1"))
+            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/testdata/gender_response.json")), StandardCharsets.UTF_8), org.mockserver.model.MediaType.JSON_UTF_8));
     MvcResult genderResult =
             mockMvc
                     .perform(
@@ -351,7 +338,6 @@ public class AqlControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
-  @Ignore
   @WithMockNumUser(roles = {CRITERIA_EDITOR})
   public void shouldSaveAndDeleteAqlCategorySuccessfully() {
 

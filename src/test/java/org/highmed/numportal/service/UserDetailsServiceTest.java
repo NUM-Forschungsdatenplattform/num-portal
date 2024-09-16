@@ -1,8 +1,6 @@
 package org.highmed.numportal.service;
 
-import org.highmed.numportal.service.OrganizationService;
-import org.highmed.numportal.service.UserDetailsService;
-import org.highmed.numportal.service.UserService;
+import org.highmed.numportal.service.metric.UsersMetrics;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,15 +39,23 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class UserDetailsServiceTest {
 
-  @Mock private UserDetailsRepository userDetailsRepository;
+  @Mock
+  private UserDetailsRepository userDetailsRepository;
 
-  @Mock private UserService userService;
+  @Mock
+  private UserService userService;
 
-  @Mock private NotificationService notificationService;
+  @Mock
+  private NotificationService notificationService;
 
-  @Mock private OrganizationService organizationService;
+  @Mock
+  private OrganizationService organizationService;
 
-  @Mock private OrganizationRepository organizationRepository;
+  @Mock
+  private OrganizationRepository organizationRepository;
+
+  @Mock
+  private UsersMetrics usersMetrics;
 
   @Captor ArgumentCaptor<List<Notification>> notificationCaptor;
 

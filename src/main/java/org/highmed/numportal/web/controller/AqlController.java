@@ -8,10 +8,10 @@ import org.highmed.numportal.mapper.AqlMapper;
 import org.highmed.numportal.service.AqlService;
 import org.highmed.numportal.service.ehrbase.ParameterService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
-import org.highmed.numportal.service.logger.AuditLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
+import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -41,7 +41,6 @@ public class AqlController extends CustomizedExceptionHandler {
   private final AqlMapper mapper;
   private final ModelMapper modelMapper;
 
-  @AuditLog
   @GetMapping("/{id}")
   @Operation(description = "Retrieves public or owned aql query by id.")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
@@ -51,7 +50,7 @@ public class AqlController extends CustomizedExceptionHandler {
         mapper.convertToDto(aqlService.getAqlById(id, principal.getSubject())));
   }
 
-  @AuditLog(description = "Create AQL criteria")
+  @ContextLog(type = "KriterienManagement", description = "Create AQL criteria")
   @PostMapping()
   @Operation(description = "Creates an aql; the logged in user is assigned as owner of the aql.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
@@ -62,7 +61,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
-  @AuditLog(description = "Update AQL criteria")
+  @ContextLog(type = "KriterienManagement", description = "Update AQL criteria")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates an aql; the logged in user is assigned as owner of the aql at creation time")
   @PreAuthorize(Role.CRITERIA_EDITOR)
@@ -75,7 +74,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
-  @AuditLog(description = "Delete AQL criteria")
+  @ContextLog(type = "KriterienManagement", description = "Delete AQL criteria")
   @DeleteMapping("/{id}")
   @Operation(description = "Delete AQL criteria")
   @PreAuthorize(Role.CRITERIA_EDITOR_OR_SUPER_ADMIN)
@@ -83,12 +82,6 @@ public class AqlController extends CustomizedExceptionHandler {
     aqlService.deleteById(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
-  /**
-   * endpoint required in search area
-   * @param principal
-   * @return
-   */
-  @AuditLog
   @GetMapping()
   @Operation(description = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
@@ -98,7 +91,6 @@ public class AqlController extends CustomizedExceptionHandler {
                     .collect(Collectors.toList()));
   }
 
-  @AuditLog
   @GetMapping("/all")
   @Operation(description = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
@@ -111,7 +103,6 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
 
-  @AuditLog
   @PostMapping("/size")
   @Operation(description = "Executes an aql and returns the count of matching ehr ids")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
@@ -119,7 +110,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(aqlService.getAqlSize(aql, principal.getSubject()));
   }
 
-  @AuditLog(description = "Create AQL category")
+  @ContextLog(type = "KriterienManagement", description = "Create AQL category")
   @PostMapping(value = "/category")
   @Operation(description = "Creates a category. If there is an id in the DTO, it is ignored.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
@@ -130,7 +121,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
 
-  @AuditLog(description = "Update AQL category")
+  @ContextLog(type = "KriterienManagement", description = "Update AQL category")
   @PutMapping(value = "/category/{id}")
   @Operation(description = "Updates a category. If present, the id in the DTO is ignored.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
@@ -145,7 +136,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
 
-  @AuditLog(description = "Delete AQL category")
+  @ContextLog(type = "KriterienManagement", description = "Delete AQL category")
   @DeleteMapping(value = "/category/{id}")
   @Operation(description = "Delete a category")
   @PreAuthorize(Role.CRITERIA_EDITOR)
@@ -153,11 +144,6 @@ public class AqlController extends CustomizedExceptionHandler {
     aqlService.deleteCategoryById(principal.getSubject(), id);
   }
 
-  /**
-   * endpoint used in search area
-   * @return
-   */
-  @AuditLog
   @GetMapping(value = "/category")
   @Operation(description = "Retrieves the list of categories.")
   public ResponseEntity<List<AqlCategoryDto>> getAqlCategories() {
@@ -167,7 +153,6 @@ public class AqlController extends CustomizedExceptionHandler {
                     .collect(Collectors.toList()));
   }
 
-  @AuditLog
   @GetMapping(value = "/category/all")
   @Operation(description = "Retrieves the list of categories.")
   public ResponseEntity<Page<AqlCategoryDto>> getAqlCategories(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
@@ -182,7 +167,6 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
 
-  @AuditLog
   @GetMapping("/parameter/values")
   @Operation(description = "Retrieves a list of possible values for an aql path")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
