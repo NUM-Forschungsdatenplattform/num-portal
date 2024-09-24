@@ -2,10 +2,15 @@ name: Build for development
 
 on:
   push:
-    branches: [ 'feature/**', 'dependabot/**' ]
+    branches: [ 'feature/**' ]  # Removed dependabot from here
+  pull_request:
+    branches: [ develop, main ]
+    types: [ ready_for_review, closed ]
   pull_request_target:
     branches: [ develop, main ]
     types: [ ready_for_review, closed ]
+  # Add pull_request trigger for Dependabot
+  workflow_dispatch:
 
 jobs:
   test_and_scan:
@@ -54,6 +59,7 @@ jobs:
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
       - name: Upload Trivy scan results to GitHub Security tab
+        if: github.event_name == 'pull_request'  # Ensure this runs only on PRs
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
