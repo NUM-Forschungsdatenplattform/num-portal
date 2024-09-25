@@ -5,10 +5,7 @@ on:
     branches: [ 'feature/**' ]  
   pull_request:
     branches: [ develop, main ]
-    types: [ ready_for_review, closed ]
-  pull_request_target:
-    branches: [ develop, main ]
-    types: [ ready_for_review, closed ]
+    types: [ open, ready_for_review, closed ]
   workflow_dispatch:
 
 jobs:
