@@ -435,7 +435,7 @@ public class ProjectControllerIT extends IntegrationTest {
             .endDate(LocalDate.now())
             .coordinator(user1)
             .researchers(Lists.newArrayList(user1))
-            .status(ProjectStatus.APPROVED)
+            .status(ProjectStatus.DRAFT)
             .build();
     Project project = projectRepository.save(createProject);
 
