@@ -31,6 +31,7 @@ import org.highmed.numportal.service.ehrbase.ResponseFilter;
 import org.highmed.numportal.service.email.ZarsService;
 import org.highmed.numportal.service.exception.*;
 import org.highmed.numportal.service.executors.CohortQueryLister;
+import org.highmed.numportal.service.metric.ProjectsMetrics;
 import org.highmed.numportal.service.notification.NotificationService;
 import org.highmed.numportal.service.notification.dto.*;
 import org.highmed.numportal.service.policy.*;
@@ -127,6 +128,8 @@ public class ProjectService {
 
     private final AttachmentService attachmentService;
 
+    private final ProjectsMetrics projectsMetrics;
+
 
     @Transactional
     public boolean deleteProject(Long projectId, String userId, List<String> roles) throws ForbiddenException {
@@ -144,6 +147,7 @@ public class ProjectService {
         if (project.isDeletable()) {
             attachmentService.deleteAllProjectAttachments(projectId, userId);
             projectRepository.deleteById(projectId);
+            projectsMetrics.decreaseTotalNumber();
             log.info("Project {} was deleted by {}", projectId, userId);
         } else {
             throw new ForbiddenException(ProjectService.class, CANNOT_DELETE_PROJECT_INVALID_STATUS,
@@ -164,12 +168,13 @@ public class ProjectService {
         if (project.hasEmptyOrDifferentOwner(userId) && !roles.contains(Roles.SUPER_ADMIN)) {
             throw new ForbiddenException(ProjectService.class, CANNOT_ARCHIVE_PROJECT, String.format(CANNOT_ARCHIVE_PROJECT, projectId));
         }
-
+        ProjectStatus before = project.getStatus();
         validateStatus(project.getStatus(), ProjectStatus.ARCHIVED, roles);
         persistTransition(project, project.getStatus(), ProjectStatus.ARCHIVED, user);
 
         project.setStatus(ProjectStatus.ARCHIVED);
         projectRepository.save(project);
+        projectsMetrics.changeStatus(before, ProjectStatus.ARCHIVED);
         return true;
     }
 
@@ -488,7 +493,7 @@ public class ProjectService {
         project.setFinanced(projectDto.isFinanced());
 
         var savedProject = projectRepository.save(project);
-
+        projectsMetrics.increaseTotalNumber();
         if (savedProject.getStatus() == ProjectStatus.PENDING) {
             registerToZars(project);
         }
@@ -582,9 +587,8 @@ public class ProjectService {
         validateStatus(projectToEdit.getStatus(), projectDto.getStatus(), roles);
         persistTransition(projectToEdit, projectToEdit.getStatus(), projectDto.getStatus(), user);
         projectToEdit.setStatus(projectDto.getStatus());
-
         var savedProject = projectRepository.save(projectToEdit);
-
+        projectsMetrics.changeStatus(oldProjectStatus, savedProject.getStatus());
         registerToZarsIfNecessary(
                 savedProject,
                 oldProjectStatus,
@@ -624,7 +628,7 @@ public class ProjectService {
                 || ProjectStatus.PUBLISHED.equals(projectToEdit.getStatus())) {
             projectToEdit.setStatus(projectDto.getStatus());
             var savedProject = projectRepository.save(projectToEdit);
-
+            projectsMetrics.changeStatus(oldStatus, savedProject.getStatus());
             registerToZarsIfNecessary(savedProject, oldStatus, oldResearchers, newResearchers);
 
             List<Notification> notifications =
@@ -660,6 +664,7 @@ public class ProjectService {
         projectToEdit.setFinanced(projectDto.isFinanced());
 
         var savedProject = projectRepository.save(projectToEdit);
+        projectsMetrics.changeStatus(oldStatus, savedProject.getStatus());
         if (ProjectStatus.REVIEWING.equals(savedProject.getStatus())) {
             attachmentService.updateStatusChangeCounter(projectToEdit.getId());
         }

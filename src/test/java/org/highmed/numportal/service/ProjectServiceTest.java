@@ -25,6 +25,7 @@ import org.highmed.numportal.service.atna.AtnaService;
 import org.highmed.numportal.service.ehrbase.EhrBaseService;
 import org.highmed.numportal.service.ehrbase.ResponseFilter;
 import org.highmed.numportal.service.exception.*;
+import org.highmed.numportal.service.metric.ProjectsMetrics;
 import org.highmed.numportal.service.notification.NotificationService;
 import org.highmed.numportal.service.notification.dto.Notification;
 import org.highmed.numportal.service.notification.dto.ProjectCloseNotification;
@@ -122,7 +123,10 @@ public class ProjectServiceTest {
 
   @Mock private PrivacyProperties privacyProperties;
 
-  @Mock
+    @Mock
+    private ProjectsMetrics projectsMetrics;
+
+    @Mock
   private ConsentProperties consentProperties;
 
   @Mock private UserService userService;
