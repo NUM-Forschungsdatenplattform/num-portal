@@ -23,4 +23,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, CustomP
   @Query(value = "SELECT new Project(pr.id, pr.name, pr.createDate, pr.coordinator) FROM Project pr " +
           "WHERE pr.status IN (:statuses) ORDER BY pr.createDate DESC ")
   List<Project> findByStatusInOrderByCreateDateDesc(List<ProjectStatus> statuses, Pageable pageable);
+
+  long countByStatus(ProjectStatus projectStatus);
 }

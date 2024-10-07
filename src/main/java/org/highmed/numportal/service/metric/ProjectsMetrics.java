@@ -3,6 +3,7 @@ package org.highmed.numportal.service.metric;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Getter;
+import org.highmed.numportal.domain.model.ProjectStatus;
 import org.highmed.numportal.domain.repository.ProjectRepository;
 import org.springframework.stereotype.Component;
 
@@ -14,8 +15,8 @@ import org.springframework.stereotype.Component;
 public class ProjectsMetrics {
     private double totalNumberOfProjects;
     private double approvedProjects;
-    private double ongoingProjects;
-    private double finishedProjects;
+    private double publishedProjects;
+    private double closedProjects;
     private double archivedProjects;
 
     public ProjectsMetrics(MeterRegistry registry, ProjectRepository projectRepository) {
@@ -25,19 +26,48 @@ public class ProjectsMetrics {
         Gauge.builder("custom.metric.project.approved.counter", this::getApprovedProjects)
                 .description("Approved projects")
                 .register(registry);
-        Gauge.builder("custom.metric.project.ongoing.counter", this::getOngoingProjects)
-                .description("Ongoing projects")
+        Gauge.builder("custom.metric.project.published.counter", this::getPublishedProjects)
+                .description("Published projects")
                 .register(registry);
-        Gauge.builder("custom.metric.project.finished.counter", this::getFinishedProjects)
-                .description("Finished projects")
+        Gauge.builder("custom.metric.project.closed.counter", this::getClosedProjects)
+                .description("Closed projects")
                 .register(registry);
         Gauge.builder("custom.metric.project.archived.counter", this::getArchivedProjects)
                 .description("Archived projects")
                 .register(registry);
 
-        totalNumberOfProjects = projectRepository.findAll().size();
-
-        //hier fehlen noch 4 stati der projekte
-
+        totalNumberOfProjects = projectRepository.count();
+        approvedProjects = projectRepository.countByStatus(ProjectStatus.APPROVED);
+        publishedProjects = projectRepository.countByStatus(ProjectStatus.PUBLISHED);
+        closedProjects = projectRepository.countByStatus(ProjectStatus.CLOSED);
+        archivedProjects = projectRepository.countByStatus(ProjectStatus.ARCHIVED);
     }
+
+    public void increaseTotalNumber(){
+        totalNumberOfProjects++;
+    }
+
+    public void decreaseTotalNumber(){
+        totalNumberOfProjects--;
+    }
+
+    public void changeStatus(ProjectStatus before, ProjectStatus after){
+        if(before.equals(after)){
+            return;
+        }
+        switch (before){
+            case APPROVED -> approvedProjects --;
+            case PUBLISHED -> publishedProjects --;
+            case CLOSED -> closedProjects --;
+            case ARCHIVED -> archivedProjects --;
+        }
+
+        switch (after){
+            case APPROVED -> approvedProjects ++;
+            case PUBLISHED -> publishedProjects ++;
+            case CLOSED -> closedProjects ++;
+            case ARCHIVED -> archivedProjects ++;
+        }
+    }
+
 }
