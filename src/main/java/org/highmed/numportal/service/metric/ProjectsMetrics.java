@@ -3,6 +3,7 @@ package org.highmed.numportal.service.metric;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.highmed.numportal.domain.model.ProjectStatus;
 import org.highmed.numportal.domain.repository.ProjectRepository;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
  */
 @Getter
 @Component
+@Slf4j
 public class ProjectsMetrics {
     private double totalNumberOfProjects;
     private double approvedProjects;
@@ -52,6 +54,10 @@ public class ProjectsMetrics {
     }
 
     public void changeStatus(ProjectStatus before, ProjectStatus after){
+        if(before == null){
+           log.error("The project status cannot be null!");
+           return;
+        }
         if(before.equals(after)){
             return;
         }
