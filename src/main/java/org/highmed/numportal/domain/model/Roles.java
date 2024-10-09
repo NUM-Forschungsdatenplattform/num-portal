@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Roles {
+
   public static final String SUPER_ADMIN = "SUPER_ADMIN";
   public static final String CONTENT_ADMIN = "CONTENT_ADMIN";
   public static final String ORGANIZATION_ADMIN = "ORGANIZATION_ADMIN";
@@ -33,7 +34,8 @@ public class Roles {
   private static final String REALM_ACCESS_CLAIM = "realm_access";
   private static final String ROLES_CLAIM = "roles";
 
-  private Roles() {}
+  private Roles() {
+  }
 
   public static List<String> extractRoles(Jwt principal) {
     Map<String, Object> access = principal.getClaimAsMap(REALM_ACCESS_CLAIM);

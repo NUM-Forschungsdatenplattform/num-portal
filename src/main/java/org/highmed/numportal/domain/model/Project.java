@@ -1,18 +1,37 @@
 package org.highmed.numportal.domain.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.highmed.numportal.domain.model.admin.UserDetails;
 import org.highmed.numportal.domain.repository.CategorySetConverter;
 import org.highmed.numportal.domain.repository.MapConverter;
 import org.highmed.numportal.domain.repository.StringSetConverter;
-import lombok.*;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.hibernate.annotations.JoinColumnOrFormula;
-
-import jakarta.persistence.*;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -27,7 +46,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(exclude = {"cohort", "transitions","translations"})
+@EqualsAndHashCode(exclude = {"cohort", "transitions", "translations"})
 public class Project implements Serializable {
 
   @Id

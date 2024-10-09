@@ -17,7 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.highmed.numportal.domain.dto.ProjectDto;
-import org.highmed.numportal.domain.dto.ProjectViewTO;
+import org.highmed.numportal.domain.dto.ProjectViewDto;
 import org.highmed.numportal.domain.dto.TemplateInfoDto;
 import org.highmed.numportal.domain.model.Organization;
 import org.highmed.numportal.domain.model.Project;
@@ -243,7 +243,7 @@ public class ProjectControllerIT extends IntegrationTest {
 
     MvcResult result =
         mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
-    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    Page<ProjectViewDto> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
     assertEquals(8, projectsPage.getContent().size());
   }
 
@@ -262,9 +262,9 @@ public class ProjectControllerIT extends IntegrationTest {
                     .with(csrf()))
                     .andExpect(status().isOk())
                     .andReturn();
-    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    Page<ProjectViewDto> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
     assertEquals(8, projectsPage.getContent().size());
-    List<ProjectViewTO> projects = projectsPage.getContent();
+    List<ProjectViewDto> projects = projectsPage.getContent();
     assertEquals("approved", projects.get(0).getName());
 
   }
@@ -281,11 +281,11 @@ public class ProjectControllerIT extends IntegrationTest {
                 .param("page","0")
                 .param("size", "10")
                 .with(csrf())).andExpect(status().isOk()).andReturn();
-    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    Page<ProjectViewDto> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
     assertEquals(1, projectsPage.getContent().size());
     assertNotNull(
             projectsPage.getContent().stream()
-            .filter(projectViewTO -> projectViewTO.getName().equals("published"))
+            .filter(projectViewDto -> projectViewDto.getName().equals("published"))
             .findFirst()
             .orElse(null));
   }
@@ -299,7 +299,7 @@ public class ProjectControllerIT extends IntegrationTest {
 
     MvcResult result =
             mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
-    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    Page<ProjectViewDto> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
     assertEquals(0, projectsPage.getContent().size());
   }
 
@@ -312,7 +312,7 @@ public class ProjectControllerIT extends IntegrationTest {
 
     MvcResult result =
         mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
-    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    Page<ProjectViewDto> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
     assertEquals(7, projectsPage.getContent().size());
     assertNotNull(projectsPage.getContent().stream()
             .filter(projectDto -> projectDto.getName().equals("pending"))
@@ -373,7 +373,7 @@ public class ProjectControllerIT extends IntegrationTest {
 
     MvcResult result =
             mockMvc.perform(get(PROJECT_PATH + "/all").with(csrf())).andExpect(status().isOk()).andReturn();
-    Page<ProjectViewTO> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+    Page<ProjectViewDto> projectsPage = mapper.readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
     assertEquals(3, projectsPage.getContent().size());
   }
 

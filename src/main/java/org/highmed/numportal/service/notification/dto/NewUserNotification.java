@@ -1,7 +1,8 @@
 package org.highmed.numportal.service.notification.dto;
 
-import lombok.Builder;
 import org.highmed.numportal.service.email.MessageSourceWrapper;
+
+import lombok.Builder;
 
 import java.time.Year;
 import java.util.Iterator;
@@ -24,13 +25,13 @@ public class NewUserNotification extends Notification {
 
   @Builder
   public NewUserNotification(
-          String newUserEmail,
-          String newUserFirstName,
-          String newUserLastName,
-          List<String> requestedRoles, String department,
-          String notes, String recipientEmail,
-          String recipientFirstName,
-          String recipientLastName) {
+      String newUserEmail,
+      String newUserFirstName,
+      String newUserLastName,
+      List<String> requestedRoles, String department,
+      String notes, String recipientEmail,
+      String recipientFirstName,
+      String recipientLastName) {
 
     this.newUserEmail = newUserEmail;
     this.newUserFirstName = newUserFirstName;

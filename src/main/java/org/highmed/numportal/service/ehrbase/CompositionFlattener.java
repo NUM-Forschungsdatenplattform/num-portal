@@ -1,5 +1,7 @@
 package org.highmed.numportal.service.ehrbase;
 
+import org.highmed.numportal.service.exception.SystemException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nedap.archie.rm.composition.Composition;
@@ -11,10 +13,11 @@ import org.ehrbase.openehr.sdk.serialisation.flatencoding.FlatJson;
 import org.ehrbase.openehr.sdk.util.exception.SdkException;
 import org.ehrbase.openehr.sdk.webtemplate.model.WebTemplate;
 import org.ehrbase.openehr.sdk.webtemplate.templateprovider.CachedTemplateProvider;
-import org.highmed.numportal.service.exception.SystemException;
 import org.openehr.schemas.v1.OPERATIONALTEMPLATE;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.cache.Cache;
@@ -24,8 +27,6 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.spi.CachingProvider;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_PARSE_RESULTS_COMPOSITION_MISSING_TEMPLATE_ID;
@@ -34,16 +35,13 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_P
 @RequiredArgsConstructor
 public class CompositionFlattener {
 
-  private final ObjectMapper objectMapper =  new ObjectMapper();
-
-  private CachedTemplateProvider cachedTemplateProvider;
-  private final ClientTemplateProvider clientTemplateProvider;
-
-  private Cache<String, FlatJson> flatJsonCache;
-
   private static final String FLAT_JSON_CACHE = "flatJsonCache";
   private static final String OPERATIONAL_TEMPLATE_CACHE = "operationalTemplateCache";
   private static final String WEB_TEMPLATE_CACHE = "webTemplateCache";
+  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ClientTemplateProvider clientTemplateProvider;
+  private CachedTemplateProvider cachedTemplateProvider;
+  private Cache<String, FlatJson> flatJsonCache;
 
   public Map<String, Object> flatten(Composition composition) {
 
@@ -54,7 +52,7 @@ public class CompositionFlattener {
       return objectMapper.readValue(getFlatJson(templateId).marshal(composition), Map.class);
     } catch (JsonProcessingException e) {
       throw new SystemException(CompositionFlattener.class, CANNOT_PARSE_RESULTS,
-              String.format(CANNOT_PARSE_RESULTS, e.getMessage()));
+          String.format(CANNOT_PARSE_RESULTS, e.getMessage()));
     } catch (SdkException e) {
       throw new SystemException(SdkException.class, e.getMessage());
     }
@@ -65,8 +63,8 @@ public class CompositionFlattener {
 
     if (cachedFlatJson.isEmpty()) {
       FlatJson flatJson =
-              (FlatJson) new FlatJasonProvider(cachedTemplateProvider)
-                  .buildFlatJson(FlatFormat.SIM_SDT, templateId);
+          (FlatJson) new FlatJasonProvider(cachedTemplateProvider)
+              .buildFlatJson(FlatFormat.SIM_SDT, templateId);
 
       flatJsonCache.put(templateId, flatJson);
       return flatJson;

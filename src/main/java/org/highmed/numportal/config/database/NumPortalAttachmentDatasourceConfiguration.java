@@ -19,53 +19,54 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import javax.sql.DataSource;
 import java.util.Objects;
+import javax.sql.DataSource;
 
 @ConditionalOnProperty(prefix = "num", name = "enableAttachmentDatabase", havingValue = "true")
 @Configuration
 @EnableJpaRepositories(basePackages = "org.highmed.numportal.attachment",
-        entityManagerFactoryRef = "attachmentEntityManagerFactory",
-        transactionManagerRef = "attachmentTransactionManager")
+    entityManagerFactoryRef = "attachmentEntityManagerFactory",
+    transactionManagerRef = "attachmentTransactionManager")
 @EnableTransactionManagement
 public class NumPortalAttachmentDatasourceConfiguration {
 
-    @Value("${spring.jpa.show-sql}")
-    private boolean showSql;
+  @Value("${spring.jpa.show-sql}")
+  private boolean showSql;
 
 
-    @Bean(name = "numAttachmentProperties")
-    @ConfigurationProperties(prefix = "spring.datasource.numportal-attachment")
-    public DataSourceProperties dataSourceProperties(){
-        return new DataSourceProperties();
-    }
+  @Bean(name = "numAttachmentProperties")
+  @ConfigurationProperties(prefix = "spring.datasource.numportal-attachment")
+  public DataSourceProperties dataSourceProperties() {
+    return new DataSourceProperties();
+  }
 
-    @Bean("numAttachmentDatasource")
-    public DataSource dataSource(@Qualifier("numAttachmentProperties") DataSourceProperties dataSourceProperties) {
-        return dataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
-    }
+  @Bean("numAttachmentDatasource")
+  public DataSource dataSource(@Qualifier("numAttachmentProperties") DataSourceProperties dataSourceProperties) {
+    return dataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
+  }
 
-    @Bean
-    public LocalContainerEntityManagerFactoryBean attachmentEntityManagerFactory(EntityManagerFactoryBuilder builder,
-                                                                                 @Qualifier("numAttachmentDatasource") DataSource dataSource) {
-        LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = builder
-                .dataSource(dataSource)
-                .packages("org.highmed.numportal.attachment")
-                .persistenceUnit("numAttachment")
-                .build();
-        localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.IMPLICIT_NAMING_STRATEGY, new SpringImplicitNamingStrategy());
-        localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.PHYSICAL_NAMING_STRATEGY, new CamelCaseToUnderscoresNamingStrategy());
-        HibernateJpaVendorAdapter hibernateJpaVendorAdapter = new HibernateJpaVendorAdapter();
-        hibernateJpaVendorAdapter.setGenerateDdl(false);
-        hibernateJpaVendorAdapter.setShowSql(showSql);
+  @Bean
+  public LocalContainerEntityManagerFactoryBean attachmentEntityManagerFactory(EntityManagerFactoryBuilder builder,
+      @Qualifier("numAttachmentDatasource") DataSource dataSource) {
+    LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = builder
+        .dataSource(dataSource)
+        .packages("org.highmed.numportal.attachment")
+        .persistenceUnit("numAttachment")
+        .build();
+    localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.IMPLICIT_NAMING_STRATEGY, new SpringImplicitNamingStrategy());
+    localContainerEntityManagerFactoryBean.getJpaPropertyMap()
+                                          .put(AvailableSettings.PHYSICAL_NAMING_STRATEGY, new CamelCaseToUnderscoresNamingStrategy());
+    HibernateJpaVendorAdapter hibernateJpaVendorAdapter = new HibernateJpaVendorAdapter();
+    hibernateJpaVendorAdapter.setGenerateDdl(false);
+    hibernateJpaVendorAdapter.setShowSql(showSql);
 
-        localContainerEntityManagerFactoryBean.setJpaVendorAdapter(hibernateJpaVendorAdapter);
-        return localContainerEntityManagerFactoryBean;
-    }
+    localContainerEntityManagerFactoryBean.setJpaVendorAdapter(hibernateJpaVendorAdapter);
+    return localContainerEntityManagerFactoryBean;
+  }
 
-    @Bean
-    public PlatformTransactionManager attachmentTransactionManager(
-            @Qualifier("attachmentEntityManagerFactory") LocalContainerEntityManagerFactoryBean entityManagerFactoryBean) {
-        return new JpaTransactionManager(Objects.requireNonNull(entityManagerFactoryBean.getObject()));
-    }
+  @Bean
+  public PlatformTransactionManager attachmentTransactionManager(
+      @Qualifier("attachmentEntityManagerFactory") LocalContainerEntityManagerFactoryBean entityManagerFactoryBean) {
+    return new JpaTransactionManager(Objects.requireNonNull(entityManagerFactoryBean.getObject()));
+  }
 }

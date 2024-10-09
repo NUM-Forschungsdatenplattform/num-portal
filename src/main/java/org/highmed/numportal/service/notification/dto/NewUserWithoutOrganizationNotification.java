@@ -1,7 +1,8 @@
 package org.highmed.numportal.service.notification.dto;
 
-import lombok.Builder;
 import org.highmed.numportal.service.email.MessageSourceWrapper;
+
+import lombok.Builder;
 
 import java.time.Year;
 
@@ -21,7 +22,7 @@ public class NewUserWithoutOrganizationNotification extends Notification {
       String userLastName,
       String recipientEmail,
       String recipientFirstName,
-      String recipientLastName){
+      String recipientLastName) {
     this.userEmail = userEmail;
     this.userFirstName = userFirstName;
     this.userLastName = userLastName;

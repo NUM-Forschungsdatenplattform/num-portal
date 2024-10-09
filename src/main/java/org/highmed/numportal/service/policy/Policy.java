@@ -1,5 +1,7 @@
 package org.highmed.numportal.service.policy;
 
+import org.highmed.numportal.service.util.AqlQueryConstants;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.ehrbase.openehr.sdk.aql.dto.condition.LogicalOperatorCondition;
@@ -16,13 +18,19 @@ import org.ehrbase.openehr.sdk.aql.dto.operand.StringPrimitive;
 import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
 import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
 import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
-import org.highmed.numportal.service.util.AqlQueryConstants;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
-/** Defines a certain project policy to be applied to an aql query */
+/**
+ * Defines a certain project policy to be applied to an aql query
+ */
 public abstract class Policy {
 
   public abstract boolean apply(AqlQuery aql);
@@ -85,15 +93,15 @@ public abstract class Policy {
     List<WhereCondition> whereConditions = new ArrayList<>();
 
     selectExpressions.forEach(
-            selectFieldDto -> {
-              MatchesCondition matches = new MatchesCondition();
-              matches.setStatement((IdentifiedPath) selectFieldDto.getColumnExpression());
-              List<MatchesOperand> operands = values.stream()
-                      .map(v -> new StringPrimitive(v.getValue().toString()))
-                      .collect(Collectors.toList());
-              matches.setValues(operands);
-              whereConditions.add(matches);
-            });
+        selectFieldDto -> {
+          MatchesCondition matches = new MatchesCondition();
+          matches.setStatement((IdentifiedPath) selectFieldDto.getColumnExpression());
+          List<MatchesOperand> operands = values.stream()
+                                                .map(v -> new StringPrimitive(v.getValue().toString()))
+                                                .collect(Collectors.toList());
+          matches.setValues(operands);
+          whereConditions.add(matches);
+        });
 
     LogicalOperatorCondition newWhere = new LogicalOperatorCondition();
     newWhere.setValues(new ArrayList<>());
@@ -110,7 +118,8 @@ public abstract class Policy {
     aql.setWhere(newWhere);
   }
 
-  protected void extendContainsClause(AqlQuery aql, List<SelectExpression> whereClauseSelectFields, Containment contains, int nextContainmentId,  String attrPath) {
+  protected void extendContainsClause(AqlQuery aql, List<SelectExpression> whereClauseSelectFields, Containment contains, int nextContainmentId,
+      String attrPath) {
     IdentifiedPath path = new IdentifiedPath();
     path.setPath(AqlObjectPath.parse(attrPath));
 
@@ -120,7 +129,6 @@ public abstract class Policy {
 
     ContainmentSetOperator newContains = new ContainmentSetOperator();
     newContains.setValues(new ArrayList<>());
-
 
     ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
     containmentClassExpression.setType(AqlQueryConstants.COMPOSITION_TYPE);
@@ -136,8 +144,8 @@ public abstract class Policy {
 
   protected List<Primitive> toSimpleValueList(Collection<String> list) {
     return list.stream()
-        .map(StringPrimitive::new)
-        .collect(Collectors.toList());
+               .map(StringPrimitive::new)
+               .collect(Collectors.toList());
   }
 
   protected List<String> findCompositionsIdentifier(Containment dto) {
@@ -207,8 +215,9 @@ public abstract class Policy {
   protected void logAqlQuery(Logger log, AqlQuery aql, String logMessage) {
     try {
       log.debug(
-              String.format(logMessage,
-                      AqlRenderer.render(aql)));
+          String.format(
+              logMessage,
+              AqlRenderer.render(aql)));
     } catch (Exception e) {
       log.error("Cannot parse aql query while logging", e);
     }

@@ -1,17 +1,17 @@
 package org.highmed.numportal.service.notification.dto;
 
 import org.highmed.numportal.domain.model.ProjectStatus;
-import lombok.Builder;
 import org.highmed.numportal.service.email.MessageSourceWrapper;
+
+import lombok.Builder;
 
 import java.time.Year;
 
 public class ProjectStatusChangeNotification extends Notification {
 
+  protected static final String PROJECT_STATUS_CHANGE_BODY_KEY = "mail.project-status-change.body";
   private static final String PROJECT_STATUS_CHANGE_SUBJECT_KEY =
       "mail.project-status-change.subject";
-  protected static final String PROJECT_STATUS_CHANGE_BODY_KEY = "mail.project-status-change.body";
-
   protected final String approverFirstName;
   protected final String approverLastName;
   protected final String approverEmail;

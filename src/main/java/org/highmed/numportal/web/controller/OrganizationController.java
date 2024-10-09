@@ -1,17 +1,20 @@
 package org.highmed.numportal.web.controller;
 
-import org.highmed.numportal.domain.model.Organization;
-import org.highmed.numportal.domain.model.Roles;
 import org.highmed.numportal.domain.dto.OrganizationDto;
 import org.highmed.numportal.domain.dto.SearchCriteria;
+import org.highmed.numportal.domain.model.Organization;
+import org.highmed.numportal.domain.model.Roles;
 import org.highmed.numportal.mapper.OrganizationMapper;
 import org.highmed.numportal.service.OrganizationService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import lombok.AllArgsConstructor;
 import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -20,10 +23,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,27 +60,27 @@ public class OrganizationController extends CustomizedExceptionHandler {
   @Operation(description = "Retrieves a list of available organizations")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<List<OrganizationDto>> getAllOrganizations(
-          @AuthenticationPrincipal @NotNull Jwt principal) {
+      @AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(organizationService
-                    .getAllOrganizations(Roles.extractRoles(principal), principal.getSubject())
-                    .stream()
-                    .map(mapper::convertToDto)
-                    .collect(Collectors.toList()));
+        .getAllOrganizations(Roles.extractRoles(principal), principal.getSubject())
+        .stream()
+        .map(mapper::convertToDto)
+        .collect(Collectors.toList()));
   }
 
   @GetMapping("/all")
   @Operation(description = "Retrieves a list of available organizations")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
   public ResponseEntity<Page<OrganizationDto>> getOrganizations(@AuthenticationPrincipal @NotNull Jwt principal,
-                                                                @PageableDefault(size = 20) Pageable pageable,
-                                                                SearchCriteria criteria) {
+      @PageableDefault(size = 20) Pageable pageable,
+      SearchCriteria criteria) {
 
     Page<Organization> organizationPage = organizationService
-            .getAllOrganizations(Roles.extractRoles(principal), principal.getSubject(), criteria, pageable);
+        .getAllOrganizations(Roles.extractRoles(principal), principal.getSubject(), criteria, pageable);
     List<OrganizationDto> content = organizationPage.getContent()
-            .stream()
-            .map(mapper::convertToDto)
-            .collect(Collectors.toList());
+                                                    .stream()
+                                                    .map(mapper::convertToDto)
+                                                    .collect(Collectors.toList());
     return ResponseEntity.ok(new PageImpl<>(content, pageable, organizationPage.getTotalElements()));
   }
 
@@ -96,11 +104,11 @@ public class OrganizationController extends CustomizedExceptionHandler {
       @Valid @NotNull @RequestBody OrganizationDto organizationDto) {
 
     OrganizationDto updatedOrganizationDto = mapper.convertToDto(
-            organizationService.update(
-                    organizationId,
-                    organizationDto,
-                    Roles.extractRoles(principal),
-                    principal.getSubject()));
+        organizationService.update(
+            organizationId,
+            organizationDto,
+            Roles.extractRoles(principal),
+            principal.getSubject()));
 
     return ResponseEntity.ok(updatedOrganizationDto);
   }
@@ -110,7 +118,7 @@ public class OrganizationController extends CustomizedExceptionHandler {
   @DeleteMapping(value = "/{id}")
   @PreAuthorize(Role.SUPER_ADMIN)
   public void deleteOrganization(@AuthenticationPrincipal @NotNull Jwt principal,
-                                 @NotNull @PathVariable("id") Long organizationId) {
+      @NotNull @PathVariable("id") Long organizationId) {
     organizationService.deleteOrganization(organizationId, principal.getSubject());
   }
 }

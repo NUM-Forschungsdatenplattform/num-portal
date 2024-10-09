@@ -1,5 +1,11 @@
 package org.highmed.numportal.service.ehrbase;
 
+import org.highmed.numportal.domain.model.Aql;
+import org.highmed.numportal.properties.EhrBaseProperties;
+import org.highmed.numportal.service.exception.BadRequestException;
+import org.highmed.numportal.service.exception.SystemException;
+import org.highmed.numportal.service.util.AqlQueryConstants;
+
 import com.nedap.archie.rm.support.identification.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -20,19 +26,24 @@ import org.ehrbase.openehr.sdk.response.dto.TemplatesResponseData;
 import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
 import org.ehrbase.openehr.sdk.util.exception.ClientException;
 import org.ehrbase.openehr.sdk.util.exception.WrongStatusCodeException;
-import org.highmed.numportal.domain.model.Aql;
-import org.highmed.numportal.properties.EhrBaseProperties;
-import org.highmed.numportal.service.exception.BadRequestException;
-import org.highmed.numportal.service.exception.SystemException;
-import org.highmed.numportal.service.util.AqlQueryConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.AN_ERROR_HAS_OCCURRED_CANNOT_GET_TEMPLATES;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.ERROR_MESSAGE;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.INVALID_AQL_QUERY;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.NO_DATA_COLUMNS_IN_THE_QUERY_RESULT;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.QUERY_RESULT_DOESN_T_CONTAIN_EHR_STATUS_COLUMN;
 
 /**
  * Service using the EhrBaseSDK to talk to the EhrBaseAPI
@@ -42,7 +53,7 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
 public class EhrBaseService {
 
   private static final Aql ALL_PATIENTS_IDS =
-          Aql.builder().query("SELECT e/ehr_id/value FROM EHR e").build();
+      Aql.builder().query("SELECT e/ehr_id/value FROM EHR e").build();
 
   private static final String COMPOSITION_KEY = "_type";
   private static final String NAME = "name";
@@ -56,10 +67,10 @@ public class EhrBaseService {
 
   @Autowired
   public EhrBaseService(
-          DefaultRestClient restClient,
-          CompositionResponseDataBuilder compositionResponseDataBuilder,
-          @Lazy Pseudonymity pseudonymity,
-          EhrBaseProperties ehrBaseProperties) {
+      DefaultRestClient restClient,
+      CompositionResponseDataBuilder compositionResponseDataBuilder,
+      @Lazy Pseudonymity pseudonymity,
+      EhrBaseProperties ehrBaseProperties) {
     this.restClient = restClient;
     this.compositionResponseDataBuilder = compositionResponseDataBuilder;
     this.pseudonymity = pseudonymity;
@@ -103,12 +114,13 @@ public class EhrBaseService {
     } catch (ClientException e) {
       log.error(ERROR_MESSAGE, e.getMessage(), e);
       throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
-              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
+          String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
     }
   }
 
   /**
    * Executes a raw aql query
+   *
    * @param aqlDto The aql query
    * @return QueryResponseData
    */
@@ -120,8 +132,8 @@ public class EhrBaseService {
     try {
       try {
         log.info(
-                String.format(
-                        "[AQL QUERY] EHR request query: %s ", query));
+            String.format(
+                "[AQL QUERY] EHR request query: %s ", query));
       } catch (Exception e) {
         log.error("Error parsing query while logging", e);
       }
@@ -136,7 +148,7 @@ public class EhrBaseService {
     } catch (ClientException e) {
       log.error(ERROR_MESSAGE, e.getMessage(), e);
       throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
-              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
+          String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
     }
   }
 
@@ -153,7 +165,7 @@ public class EhrBaseService {
     } catch (ClientException e) {
       log.error(ERROR_MESSAGE, e.getMessage(), e);
       throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
-              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
+          String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
     }
   }
 
@@ -186,7 +198,7 @@ public class EhrBaseService {
     } catch (ClientException e) {
       log.error(ERROR_MESSAGE, e.getMessage(), e);
       throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_GET_TEMPLATES,
-              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_GET_TEMPLATES, e.getMessage()));
+          String.format(AN_ERROR_HAS_OCCURRED_CANNOT_GET_TEMPLATES, e.getMessage()));
     }
   }
 
@@ -267,14 +279,14 @@ public class EhrBaseService {
     }
     columns.remove(0);
     return compositions.getRows().stream()
-            .map(row -> row.remove(0))
-            .map(String.class::cast)
-            .collect(Collectors.toList());
+                       .map(row -> row.remove(0))
+                       .map(String.class::cast)
+                       .collect(Collectors.toList());
   }
 
   private boolean isComposition(Object object) {
     return object instanceof Map
-            && ((Map<String, String>) object).containsKey(COMPOSITION_KEY)
-            && ((Map<String, String>) object).get(COMPOSITION_KEY).equals(AqlQueryConstants.COMPOSITION_TYPE);
+        && ((Map<String, String>) object).containsKey(COMPOSITION_KEY)
+        && ((Map<String, String>) object).get(COMPOSITION_KEY).equals(AqlQueryConstants.COMPOSITION_TYPE);
   }
 }

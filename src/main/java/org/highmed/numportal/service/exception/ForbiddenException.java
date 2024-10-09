@@ -24,10 +24,10 @@ public class ForbiddenException extends RuntimeException {
     entity = null;
   }
 
-    public ForbiddenException(Class<?> entity, String message) {
-      super(message);
-      this.entity = entity;
-      this.paramValue = message;
-      this.message = message;
-    }
+  public ForbiddenException(Class<?> entity, String message) {
+    super(message);
+    this.entity = entity;
+    this.paramValue = message;
+    this.message = message;
+  }
 }

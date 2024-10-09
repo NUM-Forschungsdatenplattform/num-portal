@@ -18,8 +18,11 @@ import java.util.List;
 @AllArgsConstructor
 public class TemplateSizeRequestDto {
 
-  @NotNull @Valid public CohortDto cohortDto;
+  @NotNull
+  @Valid
+  public CohortDto cohortDto;
 
-  @NotNull @NotEmpty
+  @NotNull
+  @NotEmpty
   public List<String> templateIds;
 }

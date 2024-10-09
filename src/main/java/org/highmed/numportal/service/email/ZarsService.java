@@ -1,5 +1,7 @@
 package org.highmed.numportal.service.email;
 
+import org.highmed.numportal.domain.dto.ZarsInfoDto;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -7,20 +9,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
-import org.highmed.numportal.domain.dto.ZarsInfoDto;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 
 @Service
 @Slf4j
@@ -77,9 +78,9 @@ public class ZarsService {
     }
     var writer = new StringWriter();
     try (CSVPrinter printer = CSVFormat.EXCEL.builder()
-            .setHeader(zarsHeaders)
-            .build()
-            .print(writer)) {
+                                             .setHeader(zarsHeaders)
+                                             .build()
+                                             .print(writer)) {
 
       printer.printRecord(generateProjectRow(zarsInfoDto));
       printer.flush();
@@ -104,8 +105,8 @@ public class ZarsService {
     values.add(String.join(", ", zarsInfoDto.getKeywords())); // Keywords
     values.add(
         zarsInfoDto.getCategories().stream()
-            .map(category -> translate("category", category.toString()))
-            .collect(Collectors.joining(", "))); // Categories
+                   .map(category -> translate("category", category.toString()))
+                   .collect(Collectors.joining(", "))); // Categories
     values.add(zarsInfoDto.getQueries()); // One or more queries
     values.add(zarsInfoDto.getApprovalDate()); // Approval date
     values.add("NA"); // Contract end date

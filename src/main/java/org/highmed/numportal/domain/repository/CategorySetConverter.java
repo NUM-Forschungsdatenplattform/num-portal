@@ -1,16 +1,17 @@
 package org.highmed.numportal.domain.repository;
 
+import org.highmed.numportal.domain.model.ProjectCategories;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.highmed.numportal.domain.model.ProjectCategories;
-import java.io.IOException;
-import java.util.Set;
-
 import jakarta.persistence.AttributeConverter;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+
+import java.io.IOException;
+import java.util.Set;
 
 @Slf4j
 @AllArgsConstructor

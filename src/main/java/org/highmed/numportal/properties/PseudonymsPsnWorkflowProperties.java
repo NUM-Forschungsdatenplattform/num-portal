@@ -9,13 +9,13 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "requestpsnworkflow.params")
 public class PseudonymsPsnWorkflowProperties {
 
-    private String study;
+  private String study;
 
-    private String source;
+  private String source;
 
-    private String target;
+  private String target;
 
-    private String apiKey;
+  private String apiKey;
 
-    private String event;
+  private String event;
 }

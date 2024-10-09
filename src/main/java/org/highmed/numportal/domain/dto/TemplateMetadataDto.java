@@ -8,7 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
 
-/** Dto for template metadata retrieved from ehr base */
+/**
+ * Dto for template metadata retrieved from ehr base
+ */
 @Data
 @Builder
 @Schema

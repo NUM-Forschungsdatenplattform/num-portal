@@ -4,6 +4,7 @@ import org.highmed.numportal.domain.dto.OrganizationDto;
 import org.highmed.numportal.domain.model.MailDomain;
 import org.highmed.numportal.domain.model.Organization;
 import org.highmed.numportal.service.OrganizationService;
+
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
@@ -22,8 +23,8 @@ public class OrganizationMapper {
     OrganizationDto organizationDto = modelMapper.map(organization, OrganizationDto.class);
     organizationDto.setMailDomains(
         organization.getDomains().stream()
-            .map(MailDomain::getName)
-            .collect(Collectors.toSet()));
+                    .map(MailDomain::getName)
+                    .collect(Collectors.toSet()));
     organizationDto.setAllowedToBeDeleted(organizationService.isAllowedToBeDeleted(organization.getId()));
 
     return organizationDto;
