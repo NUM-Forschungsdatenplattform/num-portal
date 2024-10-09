@@ -24,6 +24,7 @@
       <package name="" withSubpackages="true" static="false" />
       <emptyLine />
       <package name="java" withSubpackages="true" static="false" />
+      <package name="javax" withSubpackages="true" static="false" />
       <emptyLine />
       <package name="static org.highmed" withSubpackages="true" static="false" />
       <emptyLine />
@@ -72,7 +73,7 @@
     <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
     <option name="KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER" value="0" />
     <option name="BLANK_LINES_AFTER_CLASS_HEADER" value="1" />
-    <option name="ALIGN_MULTILINE_CHAINED_METHODS" value="true" />
+    <option name="ALIGN_MULTILINE_CHAINED_METHODS" value="false" />
     <option name="ALIGN_MULTILINE_PARAMETERS" value="false" />
     <option name="ALIGN_MULTILINE_FOR" value="false" />
     <option name="CALL_PARAMETERS_WRAP" value="1" />
