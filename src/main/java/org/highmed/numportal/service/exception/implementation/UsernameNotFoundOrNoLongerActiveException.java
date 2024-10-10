@@ -5,8 +5,8 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class UsernameNotFoundOrNoLongerActiveException extends RuntimeException  {
+public class UsernameNotFoundOrNoLongerActiveException extends RuntimeException {
 
-    private final Class<?> entity;
-    private final String parameter;
+  private final Class<?> entity;
+  private final String parameter;
 }

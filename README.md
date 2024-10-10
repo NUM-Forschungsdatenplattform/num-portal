@@ -1,25 +1,46 @@
 # Num-portal
+The num-portal repository includes the backend for the Routine Data Platform (RDP). 
 
 ## Building and running locally
+To get the backend running first a postgres instance needs to be running.
 
-1. Postgres should be up and running, instructions below
+To start a local instance of PostgreSQL:
+
+```
+docker run --name postgres -e POSTGRES_PASSWORD=postgres -d -p 5432:5432 postgres
+```
+Then you can start the project with the setting for the application-local.yml:
 
 In the root folder of the project, open cmd and run:
 
 1. Build app: `mvn clean install`
 2. Run: `spring_profiles_active=local mvn spring-boot:run`
 
-## Database 
+After that you can visit the swagger website: 
 
-Start a local instance of PostgreSQL: 
-
-```
-docker run --name postgres -e POSTGRES_PASSWORD=postgres -d -p 5432:5432 postgres
-```
-
-## Swagger
+### Swagger 
 
 http://localhost:8090/swagger-ui/index.html
+
+## Contributing
+
+Pull requests are welcome.
+For major changes, please open an issue first to discuss what you would like to change.
+After that and the approval of HiGHmed e.V. (rdp-support@highmed.org) you can add the code in a Branch. 
+1. Create a branch named 'feature/name-of-branch' because of pipeline requirements
+2. Check you code with our provided [checkstyle](/.config/checkstyle.xml)
+3. Update the previously tests
+4. PRs can only be merged once the [build_for_development pipeline](/.github/workflows/build-for-development.yml) has been successfully completed
+
+### Checkstyle 
+
+To integrate checkstyle in your IDE (IntelliJ) you need the checkstyle-plugin. 
+And for intelliJ we include a [intellij-codestyle.xml](/.config/intellij-codestyle.xml) file
+
+#### IntelliJ Steps
+
+1. Add the file in Settings -> Editor -> Code Style -> Java 
+2. For the checkstyle-plugin you can add the file [checkstyle](/.config/checkstyle.xml) under Settings -> Tools -> Checkstyle -> Configuration File
 
 
 ## License

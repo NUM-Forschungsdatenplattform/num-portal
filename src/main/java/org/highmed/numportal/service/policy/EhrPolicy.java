@@ -1,5 +1,8 @@
 package org.highmed.numportal.service.policy;
 
+import org.highmed.numportal.service.exception.SystemException;
+import org.highmed.numportal.service.util.AqlQueryConstants;
+
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -8,8 +11,6 @@ import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentClassExpression;
 import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
 import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
 import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
-import org.highmed.numportal.service.exception.SystemException;
-import org.highmed.numportal.service.util.AqlQueryConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,12 +19,14 @@ import java.util.Set;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.COHORT_SIZE_CANNOT_BE_0;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.INVALID_AQL;
 
-/** Restricts the aql to a set of ehr ids defined by the project cohort */
+/**
+ * Restricts the aql to a set of ehr ids defined by the project cohort
+ */
 @Slf4j
 public class EhrPolicy extends Policy {
 
 
-  private Set<String> cohortEhrIds;
+  private final Set<String> cohortEhrIds;
 
   @Builder
   public EhrPolicy(Set<String> cohortEhrIds) {

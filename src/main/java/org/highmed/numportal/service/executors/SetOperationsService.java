@@ -1,8 +1,9 @@
 package org.highmed.numportal.service.executors;
 
 import org.highmed.numportal.domain.model.Operator;
-import org.apache.commons.collections4.CollectionUtils;
 import org.highmed.numportal.service.exception.IllegalArgumentException;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;

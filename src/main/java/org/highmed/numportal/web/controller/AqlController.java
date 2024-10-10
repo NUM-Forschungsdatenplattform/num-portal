@@ -1,6 +1,10 @@
 package org.highmed.numportal.web.controller;
 
-import org.highmed.numportal.domain.dto.*;
+import org.highmed.numportal.domain.dto.AqlCategoryDto;
+import org.highmed.numportal.domain.dto.AqlDto;
+import org.highmed.numportal.domain.dto.ParameterOptionsDto;
+import org.highmed.numportal.domain.dto.SearchCriteria;
+import org.highmed.numportal.domain.dto.SlimAqlDto;
 import org.highmed.numportal.domain.model.Aql;
 import org.highmed.numportal.domain.model.AqlCategory;
 import org.highmed.numportal.domain.model.Roles;
@@ -8,11 +12,15 @@ import org.highmed.numportal.mapper.AqlMapper;
 import org.highmed.numportal.service.AqlService;
 import org.highmed.numportal.service.ehrbase.ParameterService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import lombok.AllArgsConstructor;
 import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -22,11 +30,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -87,19 +100,19 @@ public class AqlController extends CustomizedExceptionHandler {
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<List<AqlDto>> getAqls(@AuthenticationPrincipal @NotNull Jwt principal) {
     return ResponseEntity.ok(aqlService.getVisibleAqls(principal.getSubject()).stream()
-                    .map(mapper::convertToDto)
-                    .collect(Collectors.toList()));
+                                       .map(mapper::convertToDto)
+                                       .collect(Collectors.toList()));
   }
 
   @GetMapping("/all")
   @Operation(description = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
   public ResponseEntity<Page<AqlDto>> getAqls(@AuthenticationPrincipal @NotNull Jwt principal,
-                                              @PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
+      @PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
     Page<Aql> searchResult = aqlService.getVisibleAqls(principal.getSubject(), pageable, searchCriteria);
     List<AqlDto> content = searchResult.getContent().stream()
-            .map(mapper::convertToDto)
-            .collect(Collectors.toList());
+                                       .map(mapper::convertToDto)
+                                       .collect(Collectors.toList());
     return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
 
@@ -115,7 +128,7 @@ public class AqlController extends CustomizedExceptionHandler {
   @Operation(description = "Creates a category. If there is an id in the DTO, it is ignored.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlCategoryDto> createCategory(@AuthenticationPrincipal @NotNull Jwt principal,
-                                                       @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
+      @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
     var aqlCategory =
         aqlService.createAqlCategory(principal.getSubject(), AqlCategory.builder().name(aqlCategoryDto.getName()).build());
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
@@ -126,8 +139,8 @@ public class AqlController extends CustomizedExceptionHandler {
   @Operation(description = "Updates a category. If present, the id in the DTO is ignored.")
   @PreAuthorize(Role.CRITERIA_EDITOR)
   public ResponseEntity<AqlCategoryDto> updateCategory(@AuthenticationPrincipal @NotNull Jwt principal,
-                                                       @PathVariable("id") Long categoryId,
-                                                       @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
+      @PathVariable("id") Long categoryId,
+      @Valid @NotNull @RequestBody AqlCategoryDto aqlCategoryDto) {
 
     var aqlCategory =
         aqlService.updateAqlCategory(principal.getSubject(),
@@ -148,9 +161,9 @@ public class AqlController extends CustomizedExceptionHandler {
   @Operation(description = "Retrieves the list of categories.")
   public ResponseEntity<List<AqlCategoryDto>> getAqlCategories() {
     return ResponseEntity.ok(
-            aqlService.getAqlCategories().stream()
-                    .map(category -> modelMapper.map(category, AqlCategoryDto.class))
-                    .collect(Collectors.toList()));
+        aqlService.getAqlCategories().stream()
+                  .map(category -> modelMapper.map(category, AqlCategoryDto.class))
+                  .collect(Collectors.toList()));
   }
 
   @GetMapping(value = "/category/all")
@@ -158,12 +171,12 @@ public class AqlController extends CustomizedExceptionHandler {
   public ResponseEntity<Page<AqlCategoryDto>> getAqlCategories(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
     Page<AqlCategory> searchResult = aqlService.getAqlCategories(pageable, searchCriteria);
     List<AqlCategoryDto> content = searchResult.getContent().stream()
-            .map(category -> {
-              AqlCategoryDto categoryDto = modelMapper.map(category, AqlCategoryDto.class);
-              categoryDto.setAllowedToBeDeleted(aqlService.aqlCategoryIsAllowedToBeDeleted(category.getId()));
-              return categoryDto;
-            })
-            .collect(Collectors.toList());
+                                               .map(category -> {
+                                                 AqlCategoryDto categoryDto = modelMapper.map(category, AqlCategoryDto.class);
+                                                 categoryDto.setAllowedToBeDeleted(aqlService.aqlCategoryIsAllowedToBeDeleted(category.getId()));
+                                                 return categoryDto;
+                                               })
+                                               .collect(Collectors.toList());
     return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
 

@@ -2,6 +2,10 @@ package org.highmed.numportal.service.executors;
 
 import org.highmed.numportal.domain.model.CohortAql;
 import org.highmed.numportal.properties.ConsentProperties;
+import org.highmed.numportal.service.ehrbase.EhrBaseService;
+import org.highmed.numportal.service.policy.EuropeanConsentPolicy;
+import org.highmed.numportal.service.policy.ProjectPolicyService;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
@@ -13,12 +17,13 @@ import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
 import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 import org.ehrbase.openehr.sdk.aql.util.AqlUtil;
 import org.ehrbase.openehr.sdk.generator.commons.aql.parameter.ParameterValue;
-import org.highmed.numportal.service.ehrbase.EhrBaseService;
-import org.highmed.numportal.service.policy.EuropeanConsentPolicy;
-import org.highmed.numportal.service.policy.ProjectPolicyService;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -54,8 +59,8 @@ public class AqlExecutor {
         aql,
         List.of(
             EuropeanConsentPolicy.builder()
-                .oid(consentProperties.getAllowUsageOutsideEuOid())
-                .build()));
+                                 .oid(consentProperties.getAllowUsageOutsideEuOid())
+                                 .build()));
 
     cohortAql.setQuery(AqlRenderer.render(aql));
   }

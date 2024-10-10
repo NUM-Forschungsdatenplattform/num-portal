@@ -4,13 +4,14 @@ import org.highmed.numportal.domain.dto.AqlCategoryDto;
 import org.highmed.numportal.domain.dto.AqlDto;
 import org.highmed.numportal.domain.model.Aql;
 import org.highmed.numportal.service.UserService;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.Objects;
+import javax.annotation.PostConstruct;
 
 @Slf4j
 @Component

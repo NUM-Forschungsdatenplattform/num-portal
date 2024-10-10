@@ -1,8 +1,10 @@
 package org.highmed.numportal.service.notification.dto.account;
 
-import lombok.Builder;
+
 import org.highmed.numportal.service.email.MessageSourceWrapper;
 import org.highmed.numportal.service.notification.dto.Notification;
+
+import lombok.Builder;
 
 import java.time.Year;
 

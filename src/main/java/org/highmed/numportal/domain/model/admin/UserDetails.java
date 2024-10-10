@@ -1,15 +1,19 @@
 package org.highmed.numportal.domain.model.admin;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.highmed.numportal.domain.model.Organization;
-import java.io.Serializable;
-import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -31,14 +35,14 @@ public class UserDetails implements Serializable {
 
   private LocalDateTime createdDate;
 
-  public boolean isNotApproved() {
-    return !approved;
-  }
-
   public UserDetails(String userId, Organization organization, boolean approved) {
     this.userId = userId;
     this.organization = organization;
     this.approved = approved;
+  }
+
+  public boolean isNotApproved() {
+    return !approved;
   }
 
 }

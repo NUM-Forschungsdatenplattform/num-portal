@@ -1,6 +1,5 @@
 package org.highmed.numportal.mapper;
 
-import org.highmed.numportal.mapper.ProjectViewMapper;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,7 +9,7 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.modelmapper.ModelMapper;
-import org.highmed.numportal.domain.dto.ProjectViewTO;
+import org.highmed.numportal.domain.dto.ProjectViewDto;
 import org.highmed.numportal.domain.model.Project;
 import org.highmed.numportal.domain.model.ProjectStatus;
 import org.highmed.numportal.domain.model.admin.UserDetails;
@@ -43,14 +42,14 @@ public class ProjectViewMapperTest {
                 .endDate(LocalDate.now())
                 .coordinator(UserDetails.builder().userId("userId").build())
                 .build();
-        ProjectViewTO projectViewTO = projectViewMapper.convertToDto(project);
+        ProjectViewDto projectViewDto = projectViewMapper.convertToDto(project);
 
-        Assert.assertNotNull(projectViewTO);
-        assertThat(projectViewTO.getId(), is(project.getId()));
-        assertThat(projectViewTO.getName(), is(project.getName()));
-        assertThat(projectViewTO.getStatus(), is(project.getStatus()));
-        assertThat(projectViewTO.getStartDate(), is(project.getStartDate()));
-        assertThat(projectViewTO.getEndDate(), is(project.getEndDate()));
+        Assert.assertNotNull(projectViewDto);
+        assertThat(projectViewDto.getId(), is(project.getId()));
+        assertThat(projectViewDto.getName(), is(project.getName()));
+        assertThat(projectViewDto.getStatus(), is(project.getStatus()));
+        assertThat(projectViewDto.getStartDate(), is(project.getStartDate()));
+        assertThat(projectViewDto.getEndDate(), is(project.getEndDate()));
         Mockito.verify(userService, Mockito.times(1)).getOwner("userId");
     }
 }

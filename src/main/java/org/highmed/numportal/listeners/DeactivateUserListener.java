@@ -2,6 +2,7 @@ package org.highmed.numportal.listeners;
 
 import org.highmed.numportal.events.DeactivateUserEvent;
 import org.highmed.numportal.service.UserDetailsService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
@@ -13,12 +14,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class DeactivateUserListener implements ApplicationListener<DeactivateUserEvent> {
 
-    private final UserDetailsService userDetailsService;
+  private final UserDetailsService userDetailsService;
 
-    @Async
-    @Override
-    public void onApplicationEvent(DeactivateUserEvent event) {
-        log.info("Deactivate users for organization {} was triggered by {} ", event.getOrganizationId(), event.getLoggedInUserId());
-        userDetailsService.deactivateUsers(event.getLoggedInUserId(), event.getOrganizationId());
-    }
+  @Async
+  @Override
+  public void onApplicationEvent(DeactivateUserEvent event) {
+    log.info("Deactivate users for organization {} was triggered by {} ", event.getOrganizationId(), event.getLoggedInUserId());
+    userDetailsService.deactivateUsers(event.getLoggedInUserId(), event.getOrganizationId());
+  }
 }

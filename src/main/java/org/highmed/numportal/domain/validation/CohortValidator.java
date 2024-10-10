@@ -1,11 +1,12 @@
 package org.highmed.numportal.domain.validation;
 
-import jakarta.validation.ConstraintValidator;
-import jakarta.validation.ConstraintValidatorContext;
-import org.apache.commons.collections4.CollectionUtils;
 import org.highmed.numportal.domain.dto.CohortGroupDto;
 import org.highmed.numportal.domain.model.Operator;
 import org.highmed.numportal.domain.model.Type;
+
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayDeque;
 import java.util.Queue;

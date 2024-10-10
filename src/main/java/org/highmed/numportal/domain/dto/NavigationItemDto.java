@@ -20,7 +20,7 @@ public class NavigationItemDto {
 
   @Schema(description = "The tile of the navigation item", example = "Link 4")
   @NotBlank
-  @Size(min=1, max = 20)
+  @Size(min = 1, max = 20)
   private String title;
 
   @Schema(description = "The URL of the navigation item", example = "https://www.google.de/")

@@ -2,6 +2,11 @@ package org.highmed.numportal.service;
 
 import org.highmed.numportal.domain.dto.TemplateMetadataDto;
 import org.highmed.numportal.mapper.TemplateMapper;
+import org.highmed.numportal.service.ehrbase.EhrBaseService;
+import org.highmed.numportal.service.exception.BadRequestException;
+import org.highmed.numportal.service.exception.SystemException;
+import org.highmed.numportal.service.util.AqlQueryConstants;
+
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.aqleditor.dto.containment.ContainmentDto;
@@ -16,10 +21,6 @@ import org.ehrbase.openehr.sdk.aql.dto.path.ComparisonOperatorPredicate;
 import org.ehrbase.openehr.sdk.aql.dto.select.SelectClause;
 import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
 import org.ehrbase.openehr.sdk.response.dto.ehrscape.TemplateMetaDataDto;
-import org.highmed.numportal.service.ehrbase.EhrBaseService;
-import org.highmed.numportal.service.exception.BadRequestException;
-import org.highmed.numportal.service.exception.SystemException;
-import org.highmed.numportal.service.util.AqlQueryConstants;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -51,8 +52,8 @@ public class TemplateService {
 
     List<TemplateMetaDataDto> templateMetaDataDtos = ehrBaseService.getAllTemplatesMetadata();
     return templateMetaDataDtos.stream()
-        .map(templateMapper::convertToTemplateMetadataDto)
-        .collect(Collectors.toList());
+                               .map(templateMapper::convertToTemplateMetadataDto)
+                               .collect(Collectors.toList());
   }
 
   public AqlQuery createSelectCompositionQuery(String templateId) {
@@ -66,7 +67,7 @@ public class TemplateService {
       }
     } catch (SystemException e) {
       throw new SystemException(TemplateService.class, CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID,
-              String.format(CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID, templateId));
+          String.format(CANNOT_CREATE_QUERY_FOR_TEMPLATE_WITH_ID, templateId));
     }
   }
 
@@ -95,7 +96,7 @@ public class TemplateService {
 
     List<AndOperatorPredicate> fromPredList = new ArrayList<>();
     ComparisonOperatorPredicate fromPred = new ComparisonOperatorPredicate(AqlObjectPathUtil.ARCHETYPE_NODE_ID,
-            ComparisonOperatorPredicate.PredicateComparisonOperator.EQ, new StringPrimitive(archetypeId));
+        ComparisonOperatorPredicate.PredicateComparisonOperator.EQ, new StringPrimitive(archetypeId));
     fromPredList.add(new AndOperatorPredicate(List.of(fromPred)));
     contains.setPredicates(fromPredList);
     from.setContains(contains);

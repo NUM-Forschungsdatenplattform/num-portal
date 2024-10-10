@@ -11,22 +11,21 @@ import javax.sql.DataSource;
 @Configuration
 public class NumPortalFlywayConfig {
 
-    @Value("${spring.flyway.numportal.locations}")
-    private String flywayLocations;
+  private final DataSource dataSource;
+  @Value("${spring.flyway.numportal.locations}")
+  private String flywayLocations;
 
-    private final DataSource dataSource;
+  public NumPortalFlywayConfig(@Qualifier("numPortalDatasource") DataSource dataSource) {
+    this.dataSource = dataSource;
+  }
 
-    public NumPortalFlywayConfig(@Qualifier("numPortalDatasource") DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    @PostConstruct
-    public void executeMigration() {
-        Flyway.configure()
-                .dataSource(dataSource)
-                .locations(flywayLocations)
-                .baselineOnMigrate(true)
-                .load()
-                .migrate();
-    }
+  @PostConstruct
+  public void executeMigration() {
+    Flyway.configure()
+          .dataSource(dataSource)
+          .locations(flywayLocations)
+          .baselineOnMigrate(true)
+          .load()
+          .migrate();
+  }
 }

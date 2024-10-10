@@ -1,5 +1,9 @@
 package org.highmed.numportal.domain.dto;
 
+import org.highmed.numportal.domain.model.Operator;
+import org.highmed.numportal.domain.model.Type;
+import org.highmed.numportal.domain.repository.AqlConverter;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Convert;
@@ -8,9 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.highmed.numportal.domain.model.Operator;
-import org.highmed.numportal.domain.model.Type;
-import org.highmed.numportal.domain.repository.AqlConverter;
 
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ public class CohortGroupDto {
   private Type type;
 
   @Schema(description =
-          "Children of the cohort group in case the type of the group is: GROUP; can be other groups or aqls")
+      "Children of the cohort group in case the type of the group is: GROUP; can be other groups or aqls")
   private List<CohortGroupDto> children;
 
   @Convert(converter = AqlConverter.class)

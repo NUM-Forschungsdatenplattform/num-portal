@@ -1,11 +1,12 @@
 package org.highmed.numportal.service.notification.dto.account;
 
 import org.highmed.numportal.domain.model.Roles;
+import org.highmed.numportal.service.email.MessageSourceWrapper;
+import org.highmed.numportal.service.notification.dto.Notification;
+
 import lombok.Builder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.highmed.numportal.service.email.MessageSourceWrapper;
-import org.highmed.numportal.service.notification.dto.Notification;
 
 import java.time.Year;
 import java.util.HashMap;
