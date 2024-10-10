@@ -336,9 +336,7 @@
         value="^@return the *|^This method returns |^A [{]@code [a-zA-Z0-9]+[}]( is a )" />
       <property name="period" value="" />
     </module>
-    <module name="JavadocParagraph">
-      <property name="allowNewlineParagraph" value="false" />
-    </module>
+    <module name="JavadocParagraph" />
     <module name="RequireEmptyLineBeforeBlockTagGroup" />
     <module name="AtclauseOrder">
       <property name="tagOrder" value="@param, @return, @throws, @deprecated" />
