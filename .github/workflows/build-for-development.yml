@@ -25,7 +25,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Run Checkstyle
-        run: mvn checkstyle:check
+        run: mvn validate
       - name: Run unit tests
         run: mvn clean test
       - name: Run integration tests
