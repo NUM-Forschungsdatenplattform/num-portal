@@ -1,6 +1,7 @@
 package org.highmed.numportal;
 
 import org.highmed.numportal.listeners.UserCacheInit;
+import org.highmed.numportal.properties.FeatureProperties;
 import org.highmed.numportal.service.atna.AtnaProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -8,11 +9,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.highmed.numportal.listeners.UserCacheInit;
-import org.highmed.numportal.service.atna.AtnaProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties({AtnaProperties.class})
+@EnableConfigurationProperties({AtnaProperties.class, FeatureProperties.class})
 @EnableAsync
 @ComponentScan(excludeFilters = @ComponentScan.Filter(
         type = FilterType.ASSIGNABLE_TYPE,
