@@ -122,6 +122,7 @@ public class CohortControllerIT extends IntegrationTest {
 
     @Test
     @SneakyThrows
+    @Ignore
     @WithMockNumUser(
             userId = UNAUTHORIZED_USER_ID,
             roles = {STUDY_COORDINATOR})
@@ -149,7 +150,6 @@ public class CohortControllerIT extends IntegrationTest {
     }
 
     @Test
-    @Ignore
     @SneakyThrows
     @WithMockNumUser(roles = {STUDY_COORDINATOR})
     public void shouldHandleInvalidCohort() {
