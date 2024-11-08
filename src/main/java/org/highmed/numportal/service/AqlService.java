@@ -250,19 +250,19 @@ public class AqlService {
 
     validateQuery(aql.getQuery());
 
-    Set<String> ehrIds;
+    int numberOfPatients;
     try {
-      ehrIds =
-          ehrBaseService.retrieveEligiblePatientIds(Aql.builder().query(aql.getQuery()).build());
+      numberOfPatients =
+          ehrBaseService.retrieveNumberOfPatients(Aql.builder().query(aql.getQuery()).build());
     } catch (AqlParseException e) {
       throw new BadRequestException(AqlParseException.class, e.getLocalizedMessage(), e.getMessage());
     }
 
-    if (ehrIds.size() < privacyProperties.getMinHits()) {
+    if (numberOfPatients < privacyProperties.getMinHits()) {
       log.warn(TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
       throw new PrivacyException(AqlService.class, TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
-    return ehrIds.size();
+    return numberOfPatients;
   }
 
   public List<AqlCategory> getAqlCategories() {

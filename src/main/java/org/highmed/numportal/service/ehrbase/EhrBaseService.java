@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.ehrbase.openehr.sdk.aql.dto.containment.ContainmentClassExpression;
+import org.ehrbase.openehr.sdk.aql.dto.operand.CountDistinctAggregateFunction;
 import org.ehrbase.openehr.sdk.aql.dto.operand.IdentifiedPath;
 import org.ehrbase.openehr.sdk.aql.dto.path.AqlObjectPath;
 import org.ehrbase.openehr.sdk.aql.dto.select.SelectExpression;
@@ -115,6 +116,51 @@ public class EhrBaseService {
       log.error(ERROR_MESSAGE, e.getMessage(), e);
       throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
           String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
+    }
+  }
+
+  /**
+   * Retrieves the number of patients for the given aql
+   *
+   * @param aql The aql to retrieve patient ids for
+   * @return number of patients
+   * @throws WrongStatusCodeException in case if a malformed aql
+   */
+  public int retrieveNumberOfPatients(Aql aql) {
+    return retrieveNumberOfPatients(aql.getQuery());
+  }
+
+  public int retrieveNumberOfPatients(String query) {
+    log.debug("EhrBase retrieve number of patients for query: {} ", query);
+    AqlQuery dto = AqlQueryParser.parse(query);
+    SelectExpression selectExpression = new SelectExpression();
+
+    var count = new CountDistinctAggregateFunction();
+    selectExpression.setColumnExpression(count);
+
+    IdentifiedPath ehrIdPath = new IdentifiedPath();
+    ehrIdPath.setPath(AqlObjectPath.parse(AqlQueryConstants.EHR_ID_PATH));
+
+    ContainmentClassExpression containmentClassExpression = new ContainmentClassExpression();
+    containmentClassExpression.setType(AqlQueryConstants.EHR_TYPE);
+    containmentClassExpression.setIdentifier(AqlQueryConstants.EHR_CONTAINMENT_IDENTIFIER);
+    ehrIdPath.setRoot(containmentClassExpression);
+
+    count.setIdentifiedPath(ehrIdPath);
+
+    dto.getSelect().setStatement(List.of(selectExpression));
+    log.info("Generated query for retrieveNumberOfPatients {} ", AqlRenderer.render(dto));
+
+    try {
+      List<Record1<Integer>> results = restClient.aqlEndpoint().execute(Query.buildNativeQuery(AqlRenderer.render(dto), Integer.class));
+      return results.get(0).value1();
+    } catch (WrongStatusCodeException e) {
+      log.error(INVALID_AQL_QUERY, e.getMessage(), e);
+      throw new WrongStatusCodeException("EhrBaseService.class", 93, 1);
+    } catch (ClientException e) {
+      log.error(ERROR_MESSAGE, e.getMessage(), e);
+      throw new SystemException(EhrBaseService.class, AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL,
+              String.format(AN_ERROR_HAS_OCCURRED_CANNOT_EXECUTE_AQL, e.getMessage()));
     }
   }
 
