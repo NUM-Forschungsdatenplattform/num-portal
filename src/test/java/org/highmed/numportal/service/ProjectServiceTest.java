@@ -32,6 +32,8 @@ import org.highmed.numportal.service.notification.dto.ProjectCloseNotification;
 import org.highmed.numportal.service.notification.dto.ProjectStartNotification;
 import org.highmed.numportal.service.notification.dto.ProjectStatusChangeRequestNotification;
 import org.highmed.numportal.service.policy.ProjectPolicyService;
+import org.highmed.numportal.service.util.ExportUtil;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -123,11 +125,9 @@ public class ProjectServiceTest {
 
   @Mock private PrivacyProperties privacyProperties;
 
-    @Mock
-    private ProjectsMetrics projectsMetrics;
+  @Mock private ProjectsMetrics projectsMetrics;
 
-    @Mock
-  private ConsentProperties consentProperties;
+  @Mock private ConsentProperties consentProperties;
 
   @Mock private UserService userService;
 
@@ -150,6 +150,8 @@ public class ProjectServiceTest {
   @Spy private ObjectMapper mapper;
 
   @InjectMocks private ProjectService projectService;
+
+  @InjectMocks private ExportUtil exportUtil;
 
   @Spy private AqlEditorAqlService aqlEditorAqlService;
 
@@ -266,12 +268,6 @@ public class ProjectServiceTest {
     projectService.retrieveData("query", 8L, "researcher2", Boolean.TRUE);
   }
 
-  @Test(expected = SystemException.class)
-  public void executeManagerProjectSystemException() throws JsonProcessingException {
-    CohortDto cohortDto = CohortDto.builder().name("Cohort name").id(2L).build();
-    when(mapper.writeValueAsString(any(Object.class))).thenThrow(new JsonProcessingException("Error"){});
-    projectService.executeManagerProject(cohortDto, Arrays.asList("1", "2"), "ownerCoordinatorId");
-  }
 
   @Test(expected = BadRequestException.class)
   public void getResearchersBadRequestException() {
@@ -1283,40 +1279,6 @@ public class ProjectServiceTest {
   }
 
   @Test
-  public void shouldSuccessfullyExecuteManagerProject() {
-    CohortDto cohortDto = CohortDto.builder().name("Cohort name").id(2L).build();
-
-    UserDetails userDetails =
-        UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
-
-    String result =
-        projectService.executeManagerProject(
-            cohortDto, List.of(CORONA_TEMPLATE), userDetails.getUserId());
-
-    assertThat(result, is("[{\"name\":\"Corona_Anamnese\",\"columns\":null,\"rows\":null}]"));
-  }
-
-    @Test
-    public void shouldHandleExecuteManagerProjectWithEmptyTemplates() {
-        executeManagerProjectWithoutTemplates(Collections.EMPTY_LIST);
-    }
-
-    @Test
-    public void shouldHandleExecuteManagerProjectWithNullTemplates() {
-        executeManagerProjectWithoutTemplates(null);
-    }
-
-    private void executeManagerProjectWithoutTemplates(List<String> templates) {
-        CohortDto cohortDto = CohortDto.builder().name("Cohort name").id(2L).build();
-        UserDetails userDetails =
-                UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
-        String result =
-                projectService.executeManagerProject(
-                        cohortDto, templates, userDetails.getUserId());
-        assertThat(result, is("[]"));
-    }
-
-  @Test
   public void shouldSendNotificationWhenProjectStarts() {
     Project projectToEdit =
         Project.builder()
@@ -1585,7 +1547,7 @@ public class ProjectServiceTest {
   public void getExportFilenameBodyTest() {
     String currentDate = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).format(DateTimeFormatter.ISO_LOCAL_DATE);
     String expected = "Project_3_" + currentDate.replace("-","_");
-    String projectFilename = projectService.getExportFilenameBody(3L);
+    String projectFilename = exportUtil.getExportFilenameBody(3L);
     Assert.assertEquals(expected, projectFilename);
   }
 
@@ -1598,13 +1560,13 @@ public class ProjectServiceTest {
 
   @Test
   public void getExportHeadersAsJsonTest() {
-    MultiValueMap<String, String> headers = projectService.getExportHeaders(ExportType.json, 3L);
+    MultiValueMap<String, String> headers = exportUtil.getExportHeaders(ExportType.json, 3L);
     Assert.assertEquals(MediaType.APPLICATION_JSON_VALUE, headers.getFirst(HttpHeaders.CONTENT_TYPE));
   }
 
   @Test
   public void getExportHeadersAsCSVTest() {
-    MultiValueMap<String, String> headers = projectService.getExportHeaders(ExportType.csv, 3L);
+    MultiValueMap<String, String> headers = exportUtil.getExportHeaders(ExportType.csv, 3L);
     Assert.assertEquals("application/zip", headers.getFirst(HttpHeaders.CONTENT_TYPE));
   }
 
@@ -1622,30 +1584,7 @@ public class ProjectServiceTest {
         Mockito.verify(cohortService, times(1)).executeCohort(Mockito.eq(2L), Mockito.eq(false));
     }
 
-  @Test
-  public void streamResponseBody() throws IOException {
-    QueryResponseData response = new QueryResponseData();
-    response.setName("response-one");
-    response.setColumns(new ArrayList<>(List.of(Map.of("path", "/ehr_id/value"), Map.of("uuid", "c/uuid"))));
-    response.setRows(  List.of(
-            new ArrayList<>(List.of("ehr-id-1", Map.of("_type", "OBSERVATION", "uuid", "12345"))),
-            new ArrayList<>(List.of("ehr-id-2", Map.of("_type", "SECTION", "uuid", "bla")))));
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    projectService.streamResponseAsZip(List.of(response), "testFile", out);
 
-    ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
-    ZipEntry expectedFile = zipInputStream.getNextEntry();
-    Assert.assertEquals("testFile_response-one.csv", expectedFile.getName());
-  }
-
-  @Test
-  public void getManagerExportResponseBodyTest() {
-    CohortDto cohortDto = CohortDto.builder()
-            .name("alter cohort")
-            .projectId(2L).build();
-    projectService.getManagerExportResponseBody(cohortDto, List.of("Alter"), "approvedCoordinatorId", ExportType.json);
-    Mockito.verify(cohortService, Mockito.times(1)).toCohort(Mockito.any(CohortDto.class));
-  }
 
   @Test
   public void existsTest() {
