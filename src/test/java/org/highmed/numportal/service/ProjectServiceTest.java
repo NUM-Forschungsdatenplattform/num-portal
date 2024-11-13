@@ -307,9 +307,6 @@ public class ProjectServiceTest {
     when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
     when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
     when(cohortService.executeCohort(5L, true)).thenReturn(Set.of(EHR_ID_2, EHR_ID_3));
-    when(cohortService.executeCohort(any(), any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
-    when(privacyProperties.getMinHits()).thenReturn(0);
-    when(consentProperties.getAllowUsageOutsideEuOid()).thenReturn("1937.777.24.5.1.37");
 
     //project without template
     when(projectRepository.findById(22L))
@@ -448,7 +445,6 @@ public class ProjectServiceTest {
 
   @Test(expected = PrivacyException.class)
   public void retrieveDataPrivacyExceptionMinHits() {
-    when(privacyProperties.getMinHits()).thenReturn(10);
     when(exportUtil.executeDefaultConfiguration(8L, new Cohort(8L, null, null, null , null), Map.of("1","1"))).thenThrow(new PrivacyException(ProjectService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS));
     projectService.retrieveData("query", 8L, "researcher2", Boolean.TRUE);
   }
@@ -1754,23 +1750,7 @@ public class ProjectServiceTest {
   @Test
   public void getExportResponseBodyAsJsonTest() throws JsonProcessingException {
     ObjectMapper mapper = new ObjectMapper();
-    AqlQuery aqlDto = AqlQueryParser.parse(QUERY_5);
-    when(templateService.createSelectCompositionQuery(Mockito.any())).thenReturn(aqlDto);
-    QueryResponseData queryResponseData = new QueryResponseData();
-    queryResponseData.setName(CORONA_TEMPLATE);
-    queryResponseData.setRows(null);
-    queryResponseData.setColumns(null);
-    List<QueryResponseData> response = new ArrayList<>();
-    response.add(queryResponseData);
-    String json;
-    json = mapper.writeValueAsString(response);
-    StreamingResponseBody streamingResponseBody =
-        outputStream -> {
-          outputStream.write(json.getBytes());
-          outputStream.flush();
-          outputStream.close();
-        };
-    when(exportUtil.exportJson(response)).thenReturn(streamingResponseBody);
+    AqlQueryParser.parse(QUERY_5);
     projectService.getExportResponseBody("select * from dummy", 2L, "approvedCoordinatorId", ExportType.json, true);
   }
 
