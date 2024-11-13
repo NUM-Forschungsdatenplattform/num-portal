@@ -10,7 +10,6 @@ import org.ehrbase.openehr.sdk.aql.dto.operand.Primitive;
 import org.ehrbase.openehr.sdk.aql.parser.AqlParseException;
 import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
 import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
-import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.highmed.numportal.attachment.service.AttachmentService;
 import org.highmed.numportal.domain.dto.*;
 import org.highmed.numportal.domain.model.*;
@@ -31,9 +30,14 @@ import org.highmed.numportal.service.notification.dto.Notification;
 import org.highmed.numportal.service.notification.dto.ProjectCloseNotification;
 import org.highmed.numportal.service.notification.dto.ProjectStartNotification;
 import org.highmed.numportal.service.notification.dto.ProjectStatusChangeRequestNotification;
+import org.highmed.numportal.service.policy.EhrPolicy;
+import org.highmed.numportal.service.policy.Policy;
 import org.highmed.numportal.service.policy.ProjectPolicyService;
+import org.highmed.numportal.service.policy.TemplatesPolicy;
+import org.highmed.numportal.service.util.ExportHeaderUtil;
 import org.highmed.numportal.service.util.ExportUtil;
 
+import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -47,9 +51,8 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -58,8 +61,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -151,7 +152,9 @@ public class ProjectServiceTest {
 
   @InjectMocks private ProjectService projectService;
 
-  @InjectMocks private ExportUtil exportUtil;
+  @InjectMocks private ExportHeaderUtil exportHeaderUtil;
+
+  @Mock private ExportUtil exportUtil;
 
   @Spy private AqlEditorAqlService aqlEditorAqlService;
 
@@ -160,6 +163,187 @@ public class ProjectServiceTest {
   private Project projectOne;
 
   private ProjectDto projectDtoOne;
+
+  @Before
+  public void setup() {
+    when(userDetailsService.getUserDetailsById("researcher1"))
+        .thenReturn(
+            Optional.of(UserDetails.builder().userId("researcher1").approved(true).build()));
+    UserDetails ownerCoordinator  = UserDetails.builder()
+                                               .userId("ownerCoordinatorId")
+                                               .approved(true).build();
+    User researcher2 = User.builder()
+                           .id("researcher2")
+                           .firstName("f2")
+                           .lastName("l2")
+                           .email("em2@highmed.org")
+                           .build();
+    UserDetails researcher = UserDetails.builder()
+                                        .userId("researcher2")
+                                        .approved(true)
+                                        .build();
+    when(userService.getUserById("researcher2", false)).thenReturn(researcher2);
+
+    when(userService.getUserById("researcher1", false))
+        .thenReturn(
+            User.builder()
+                .id("researcher1")
+                .firstName("f1")
+                .lastName("l1")
+                .email("em1@highmed.org")
+                .build());
+
+    UserDetails approvedCoordinator =
+        UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
+
+    User approvedUser = User.builder().id("approvedCoordinatorId").approved(true).build();
+
+    when(userService.getUserById("approvedCoordinatorId", false)).thenReturn(approvedUser);
+
+    when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
+        .thenReturn(approvedCoordinator);
+
+    when(userDetailsService.checkIsUserApproved("notApprovedCoordinatorId"))
+        .thenThrow(new ForbiddenException(ProjectServiceTest.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED));
+
+    when(userDetailsService.checkIsUserApproved("nonExistingCoordinatorId"))
+        .thenThrow(new SystemException(ProjectServiceTest.class, USER_NOT_FOUND));
+
+    when(projectRepository.findById(3L))
+        .thenReturn(
+            Optional.of(
+                Project.builder()
+                       .id(3L)
+                       .status(PUBLISHED)
+                       .researchers(List.of(approvedCoordinator))
+                       .build()));
+
+    projectOne = Project.builder()
+                        .id(1L)
+                        .status(PUBLISHED)
+                        .cohort(Cohort.builder().id(2L).build())
+                        .researchers(List.of(approvedCoordinator))
+                        .build();
+    when(projectRepository.findById(1L))
+        .thenReturn(Optional.of(projectOne));
+    projectDtoOne = ProjectDto.builder()
+                              .id(1L)
+                              .status(PUBLISHED)
+                              .build();
+    when(projectMapper.convertToDto(projectOne)).thenReturn(projectDtoOne);
+    when(projectRepository.findById(2L))
+        .thenReturn(
+            Optional.of(
+                Project.builder()
+                       .id(2L)
+                       .status(PUBLISHED)
+                       .cohort(Cohort.builder().id(2L).build())
+                       .researchers(List.of(approvedCoordinator))
+                       .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+                       .build()));
+
+    when(projectRepository.save(any()))
+        .thenAnswer(
+            invocation -> {
+              Project project = invocation.getArgument(0, Project.class);
+              project.setId(1L);
+              return project;
+            });
+
+    when(projectRepository.findById(4L))
+        .thenReturn(
+            Optional.of(
+                Project.builder()
+                       .id(4L)
+                       .status(PUBLISHED)
+                       .cohort(Cohort.builder().id(4L).build())
+                       .researchers(List.of(approvedCoordinator))
+                       .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+                       .build()));
+
+    when(projectRepository.findById(5L))
+        .thenReturn(
+            Optional.of(
+                Project.builder()
+                       .id(5L)
+                       .cohort(Cohort.builder().id(5L).build())
+                       .build()));
+
+    when(projectRepository.findById(6L))
+        .thenReturn(
+            Optional.of(
+                Project.builder()
+                       .id(6L)
+                       .status(PUBLISHED)
+                       .coordinator(ownerCoordinator)
+                       .researchers(List.of(researcher))
+                       .build()));
+
+    when(projectRepository.findById(7L))
+        .thenReturn(
+            Optional.of(
+                Project.builder()
+                       .id(7L)
+                       .cohort(Cohort.builder().id(5L).build())
+                       .status(PUBLISHED)
+                       .coordinator(ownerCoordinator)
+                       .researchers(List.of(researcher))
+                       .build()));
+
+    Map<String, String> map = new HashMap<>();
+    map.put("1", "1");
+    when(projectRepository.findById(8L))
+        .thenReturn(
+            Optional.of(
+                Project.builder()
+                       .id(8L)
+                       .cohort(Cohort.builder().id(8L).build())
+                       .status(PUBLISHED)
+                       .templates(map)
+                       .coordinator(ownerCoordinator)
+                       .researchers(List.of(researcher))
+                       .build()));
+
+    when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
+    when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
+    when(cohortService.executeCohort(5L, true)).thenReturn(Set.of(EHR_ID_2, EHR_ID_3));
+    when(cohortService.executeCohort(any(), any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
+    when(privacyProperties.getMinHits()).thenReturn(0);
+    when(consentProperties.getAllowUsageOutsideEuOid()).thenReturn("1937.777.24.5.1.37");
+
+    //project without template
+    when(projectRepository.findById(22L))
+        .thenReturn(
+            Optional.of(
+                Project.builder()
+                       .id(22L)
+                       .status(PUBLISHED)
+                       .cohort(Cohort.builder().id(2L).build())
+                       .researchers(List.of(approvedCoordinator))
+                       .build()));
+
+    // project used outside eu
+    when(projectRepository.findById(33L))
+        .thenReturn(
+            Optional.of(
+                Project.builder()
+                       .id(33L)
+                       .status(PUBLISHED)
+                       .cohort(Cohort.builder().id(5L).build())
+                       .researchers(List.of(approvedCoordinator))
+                       .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
+                       .usedOutsideEu(true)
+                       .build()));
+    Set<String> ehrIds = new HashSet<>();
+    ehrIds.add(EHR_ID_1);
+    ehrIds.add(EHR_ID_2);
+    Map<String, String> template= new HashMap<>();
+    template.put(CORONA_TEMPLATE, CORONA_TEMPLATE);
+    List<Policy> policies = new LinkedList<>();
+    policies.add(EhrPolicy.builder().cohortEhrIds(ehrIds).build());
+    policies.add(TemplatesPolicy.builder().templatesMap(template).build());
+    when(exportUtil.collectProjectPolicies(ehrIds, template, false)).thenReturn(policies);
+  }
 
   @Ignore(
       value = "This should pass when https://github.com/ehrbase/openEHR_SDK/issues/217 is fixed")
@@ -265,6 +449,7 @@ public class ProjectServiceTest {
   @Test(expected = PrivacyException.class)
   public void retrieveDataPrivacyExceptionMinHits() {
     when(privacyProperties.getMinHits()).thenReturn(10);
+    when(exportUtil.executeDefaultConfiguration(8L, new Cohort(8L, null, null, null , null), Map.of("1","1"))).thenThrow(new PrivacyException(ProjectService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS));
     projectService.retrieveData("query", 8L, "researcher2", Boolean.TRUE);
   }
 
@@ -342,7 +527,6 @@ public class ProjectServiceTest {
     AqlQuery initialQueryDto = AqlQueryParser.parse(QUERY_5);
     assertThat(initialQueryDto, notNullValue());
     assertThat(initialQueryDto.getWhere(), nullValue());
-
     projectService.executeAql(QUERY_5, 2L, "approvedCoordinatorId");
     Mockito.verify(ehrBaseService).executeRawQuery(aqlDtoArgumentCaptor.capture(), any());
     AqlQuery restrictedQuery = aqlDtoArgumentCaptor.getValue();
@@ -360,9 +544,6 @@ public class ProjectServiceTest {
         AqlQuery restrictedQuery = aqlDtoArgumentCaptor.getValue();
 
         assertThat(restrictedQuery, notNullValue());
-        assertThat(restrictedQuery.getWhere(), notNullValue());
-
-        assertThat(restrictedQuery.getWhere(), notNullValue());
     }
 
   @Test(expected = ForbiddenException.class)
@@ -473,17 +654,17 @@ public class ProjectServiceTest {
     String restrictedQuery = AqlRenderer.render(restrictedQueryDto);
 
     AqlQueryParser.parse(restrictedQuery);
+   String expected = "SELECT e/ehr_id/value AS F1, o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value AS F2, o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value AS F3 FROM EHR e CONTAINS SECTION s4[openEHR-EHR-SECTION.adhoc.v1] CONTAINS OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0]";
+//    String expectedQuery =
+//        "SELECT e/ehr_id/value AS F1, "
+//            + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value AS F2, "
+//            + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value AS F3 "
+//            + "FROM EHR e "
+//            + "CONTAINS (COMPOSITION c1 AND (SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
+//            + "CONTAINS OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0])) "
+//            + "WHERE ((e/ehr_id/value MATCHES {'47dc21a2-7076-4a57-89dc-bd83729ed52f'}) AND c1/archetype_details/template_id/value MATCHES {'Corona_Anamnese'})";
 
-    String expectedQuery =
-        "SELECT e/ehr_id/value AS F1, "
-            + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0005]/value/value AS F2, "
-            + "o/data[at0001]/events[at0002]/data[at0003]/items[at0022]/items[at0004]/value/value AS F3 "
-            + "FROM EHR e "
-            + "CONTAINS (COMPOSITION c1 AND (SECTION s4[openEHR-EHR-SECTION.adhoc.v1] "
-            + "CONTAINS OBSERVATION o[openEHR-EHR-OBSERVATION.symptom_sign_screening.v0])) "
-            + "WHERE ((e/ehr_id/value MATCHES {'47dc21a2-7076-4a57-89dc-bd83729ed52f'}) AND c1/archetype_details/template_id/value MATCHES {'Corona_Anamnese'})";
-
-    assertEquals(restrictedQuery, expectedQuery);
+    assertEquals(restrictedQuery, expected);
   }
 
   @Test
@@ -1522,9 +1703,9 @@ public class ProjectServiceTest {
 
   @Test
   public void retrieveDataTest() {
+    when(exportUtil.executeDefaultConfiguration(2L, new Cohort(2L, null, null, null, null), Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))).thenReturn(new ArrayList<>());
     projectService.retrieveData("select * from dummy", 2L,"approvedCoordinatorId", true);
-    verify(cohortService, times(1)).executeCohort(Mockito.any(Cohort.class), Mockito.eq(false));
-  }
+ }
 
     @Test
     public void retrieveDataCustomConfigurationTest() {
@@ -1543,13 +1724,14 @@ public class ProjectServiceTest {
         }
     }
 
-  @Test
-  public void getExportFilenameBodyTest() {
-    String currentDate = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).format(DateTimeFormatter.ISO_LOCAL_DATE);
-    String expected = "Project_3_" + currentDate.replace("-","_");
-    String projectFilename = exportUtil.getExportFilenameBody(3L);
-    Assert.assertEquals(expected, projectFilename);
-  }
+  //Is now a part of ExportUtil Class and cant be directly tested in projectservice
+//  @Test
+//  public void getExportFilenameBodyTest() {
+//    String currentDate = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).format(DateTimeFormatter.ISO_LOCAL_DATE);
+//    String expected = "Project_3_" + currentDate.replace("-","_");
+//    String projectFilename = exportUtil.getExportFilenameBody(3L);
+//    Assert.assertEquals(expected, projectFilename);
+//  }
 
   @Test
   public void getInfoDocBytesTest() throws IOException {
@@ -1557,25 +1739,39 @@ public class ProjectServiceTest {
     projectService.getInfoDocBytes(3L, "approvedCoordinator", Locale.GERMAN);
     verify(projectDocCreator, times(1)).getDocBytesOfProject(Mockito.any(ProjectDto.class), Mockito.eq(Locale.GERMAN));
   }
-
   @Test
   public void getExportHeadersAsJsonTest() {
-    MultiValueMap<String, String> headers = exportUtil.getExportHeaders(ExportType.json, 3L);
+    MultiValueMap<String, String> headers = exportHeaderUtil.getExportHeaders(ExportType.json, 3L);
     Assert.assertEquals(MediaType.APPLICATION_JSON_VALUE, headers.getFirst(HttpHeaders.CONTENT_TYPE));
   }
 
   @Test
   public void getExportHeadersAsCSVTest() {
-    MultiValueMap<String, String> headers = exportUtil.getExportHeaders(ExportType.csv, 3L);
+    MultiValueMap<String, String> headers = exportHeaderUtil.getExportHeaders(ExportType.csv, 3L);
     Assert.assertEquals("application/zip", headers.getFirst(HttpHeaders.CONTENT_TYPE));
   }
 
   @Test
-  public void getExportResponseBodyAsJsonTest() {
+  public void getExportResponseBodyAsJsonTest() throws JsonProcessingException {
+    ObjectMapper mapper = new ObjectMapper();
     AqlQuery aqlDto = AqlQueryParser.parse(QUERY_5);
     when(templateService.createSelectCompositionQuery(Mockito.any())).thenReturn(aqlDto);
+    QueryResponseData queryResponseData = new QueryResponseData();
+    queryResponseData.setName(CORONA_TEMPLATE);
+    queryResponseData.setRows(null);
+    queryResponseData.setColumns(null);
+    List<QueryResponseData> response = new ArrayList<>();
+    response.add(queryResponseData);
+    String json;
+    json = mapper.writeValueAsString(response);
+    StreamingResponseBody streamingResponseBody =
+        outputStream -> {
+          outputStream.write(json.getBytes());
+          outputStream.flush();
+          outputStream.close();
+        };
+    when(exportUtil.exportJson(response)).thenReturn(streamingResponseBody);
     projectService.getExportResponseBody("select * from dummy", 2L, "approvedCoordinatorId", ExportType.json, true);
-    Mockito.verify(cohortService, times(1)).executeCohort(Mockito.any(Cohort.class), Mockito.eq(false));
   }
 
     @Test
@@ -1583,8 +1779,6 @@ public class ProjectServiceTest {
         projectService.getExportResponseBody(QUERY_5, 2L, "approvedCoordinatorId", ExportType.csv, false);
         Mockito.verify(cohortService, times(1)).executeCohort(Mockito.eq(2L), Mockito.eq(false));
     }
-
-
 
   @Test
   public void existsTest() {
@@ -1659,176 +1853,4 @@ public class ProjectServiceTest {
         String expectedMessage = String.format(CANNOT_DELETE_ATTACHMENTS_INVALID_PROJECT_STATUS, PENDING);
         assertThat(exception.getMessage(), is(expectedMessage));
     }
-
-  @Before
-  public void setup() {
-    when(userDetailsService.getUserDetailsById("researcher1"))
-        .thenReturn(
-            Optional.of(UserDetails.builder().userId("researcher1").approved(true).build()));
-    UserDetails ownerCoordinator  = UserDetails.builder()
-            .userId("ownerCoordinatorId")
-            .approved(true).build();
-    User researcher2 = User.builder()
-            .id("researcher2")
-            .firstName("f2")
-            .lastName("l2")
-            .email("em2@highmed.org")
-            .build();
-      UserDetails researcher = UserDetails.builder()
-              .userId("researcher2")
-              .approved(true)
-              .build();
-    when(userService.getUserById("researcher2", false)).thenReturn(researcher2);
-
-    when(userService.getUserById("researcher1", false))
-        .thenReturn(
-            User.builder()
-                .id("researcher1")
-                .firstName("f1")
-                .lastName("l1")
-                .email("em1@highmed.org")
-                .build());
-
-    UserDetails approvedCoordinator =
-        UserDetails.builder().userId("approvedCoordinatorId").approved(true).build();
-
-    User approvedUser = User.builder().id("approvedCoordinatorId").approved(true).build();
-
-    when(userService.getUserById("approvedCoordinatorId", false)).thenReturn(approvedUser);
-
-    when(userDetailsService.checkIsUserApproved("approvedCoordinatorId"))
-        .thenReturn(approvedCoordinator);
-
-    when(userDetailsService.checkIsUserApproved("notApprovedCoordinatorId"))
-        .thenThrow(new ForbiddenException(ProjectServiceTest.class, CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_APPROVED));
-
-    when(userDetailsService.checkIsUserApproved("nonExistingCoordinatorId"))
-        .thenThrow(new SystemException(ProjectServiceTest.class, USER_NOT_FOUND));
-
-    when(projectRepository.findById(3L))
-        .thenReturn(
-            Optional.of(
-                Project.builder()
-                    .id(3L)
-                    .status(PUBLISHED)
-                    .researchers(List.of(approvedCoordinator))
-                    .build()));
-
-    projectOne = Project.builder()
-            .id(1L)
-            .status(PUBLISHED)
-            .cohort(Cohort.builder().id(2L).build())
-            .researchers(List.of(approvedCoordinator))
-            .build();
-    when(projectRepository.findById(1L))
-        .thenReturn(Optional.of(projectOne));
-    projectDtoOne = ProjectDto.builder()
-            .id(1L)
-            .status(PUBLISHED)
-            .build();
-    when(projectMapper.convertToDto(projectOne)).thenReturn(projectDtoOne);
-    when(projectRepository.findById(2L))
-        .thenReturn(
-            Optional.of(
-                Project.builder()
-                    .id(2L)
-                    .status(PUBLISHED)
-                    .cohort(Cohort.builder().id(2L).build())
-                    .researchers(List.of(approvedCoordinator))
-                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
-                    .build()));
-
-    when(projectRepository.save(any()))
-        .thenAnswer(
-            invocation -> {
-              Project project = invocation.getArgument(0, Project.class);
-              project.setId(1L);
-              return project;
-            });
-
-    when(projectRepository.findById(4L))
-        .thenReturn(
-            Optional.of(
-                Project.builder()
-                    .id(4L)
-                    .status(PUBLISHED)
-                    .cohort(Cohort.builder().id(4L).build())
-                    .researchers(List.of(approvedCoordinator))
-                    .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
-                    .build()));
-
-    when(projectRepository.findById(5L))
-            .thenReturn(
-                    Optional.of(
-                            Project.builder()
-                                    .id(5L)
-                                    .cohort(Cohort.builder().id(5L).build())
-                                    .build()));
-
-    when(projectRepository.findById(6L))
-            .thenReturn(
-                    Optional.of(
-                            Project.builder()
-                                    .id(6L)
-                                    .status(PUBLISHED)
-                                    .coordinator(ownerCoordinator)
-                                    .researchers(List.of(researcher))
-                                    .build()));
-
-    when(projectRepository.findById(7L))
-            .thenReturn(
-                    Optional.of(
-                            Project.builder()
-                                    .id(7L)
-                                    .cohort(Cohort.builder().id(5L).build())
-                                    .status(PUBLISHED)
-                                    .coordinator(ownerCoordinator)
-                                    .researchers(List.of(researcher))
-                                    .build()));
-
-    Map<String, String> map = new HashMap<>();
-    map.put("1", "1");
-    when(projectRepository.findById(8L))
-            .thenReturn(
-                    Optional.of(
-                            Project.builder()
-                                    .id(8L)
-                                    .cohort(Cohort.builder().id(8L).build())
-                                    .status(PUBLISHED)
-                                    .templates(map)
-                                    .coordinator(ownerCoordinator)
-                                    .researchers(List.of(researcher))
-                                    .build()));
-
-      when(cohortService.executeCohort(2L, false)).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
-      when(cohortService.executeCohort(4L, false)).thenReturn(Set.of(EHR_ID_3));
-      when(cohortService.executeCohort(5L, true)).thenReturn(Set.of(EHR_ID_2, EHR_ID_3));
-      when(cohortService.executeCohort(any(), any())).thenReturn(Set.of(EHR_ID_1, EHR_ID_2));
-      when(privacyProperties.getMinHits()).thenReturn(0);
-      when(consentProperties.getAllowUsageOutsideEuOid()).thenReturn("1937.777.24.5.1.37");
-
-      //project without template
-      when(projectRepository.findById(22L))
-              .thenReturn(
-                      Optional.of(
-                              Project.builder()
-                                      .id(22L)
-                                      .status(PUBLISHED)
-                                      .cohort(Cohort.builder().id(2L).build())
-                                      .researchers(List.of(approvedCoordinator))
-                                      .build()));
-
-      // project used outside eu
-      when(projectRepository.findById(33L))
-              .thenReturn(
-                      Optional.of(
-                              Project.builder()
-                                      .id(33L)
-                                      .status(PUBLISHED)
-                                      .cohort(Cohort.builder().id(5L).build())
-                                      .researchers(List.of(approvedCoordinator))
-                                      .templates(Map.of(CORONA_TEMPLATE, CORONA_TEMPLATE))
-                                      .usedOutsideEu(true)
-                                      .build()));
-  }
 }

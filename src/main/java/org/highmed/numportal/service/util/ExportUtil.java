@@ -1,7 +1,6 @@
 package org.highmed.numportal.service.util;
 
 import org.highmed.numportal.domain.model.Cohort;
-import org.highmed.numportal.domain.model.ExportType;
 import org.highmed.numportal.properties.ConsentProperties;
 import org.highmed.numportal.properties.PrivacyProperties;
 import org.highmed.numportal.service.CohortService;
@@ -27,10 +26,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
 import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
@@ -55,12 +51,10 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.RESULTS_
 
 @Slf4j
 @AllArgsConstructor
+@Component
 public class ExportUtil {
 
   private static final String CSV_FILE_PATTERN = "%s_%s.csv";
-  private static final String ZIP_FILE_ENDING = ".zip";
-  private static final String JSON_FILE_ENDING = ".json";
-  private static final String ZIP_MEDIA_TYPE = "application/zip";
 
   private final CohortService cohortService;
 
@@ -78,22 +72,6 @@ public class ExportUtil {
 
   private final ObjectMapper mapper;
 
-  public MultiValueMap<String, String> getExportHeaders(ExportType format, Long projectId) {
-    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-    String fileEnding;
-    if (format == ExportType.json) {
-      fileEnding = JSON_FILE_ENDING;
-      headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-    } else {
-      fileEnding = ZIP_FILE_ENDING;
-      headers.add(HttpHeaders.CONTENT_TYPE, ZIP_MEDIA_TYPE);
-    }
-    headers.add(
-        HttpHeaders.CONTENT_DISPOSITION,
-        "attachment; filename=" + getExportFilenameBody(projectId) + fileEnding);
-    return headers;
-  }
-
   public String getExportFilenameBody(Long projectId) {
     return String.format(
                      "Project_%d_%s",
@@ -105,11 +83,9 @@ public class ExportUtil {
   }
 
   public List<QueryResponseData> executeDefaultConfiguration(Long projectId, Cohort cohort, Map<String, String> templates) {
-
     if (templates == null || templates.isEmpty()) {
       return List.of();
     }
-
     Set<String> ehrIds = cohortService.executeCohort(cohort, false);
 
     if (ehrIds.size() < privacyProperties.getMinHits()) {

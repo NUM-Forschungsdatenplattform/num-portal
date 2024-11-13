@@ -6,7 +6,7 @@ import org.highmed.numportal.domain.model.ExportType;
 import org.highmed.numportal.service.ManagerService;
 import org.highmed.numportal.service.ehrbase.EhrBaseService;
 import org.highmed.numportal.service.logger.ContextLog;
-import org.highmed.numportal.service.util.ExportUtil;
+import org.highmed.numportal.service.util.ExportHeaderUtil;
 import org.highmed.numportal.web.config.Role;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,7 +39,7 @@ public class ManagerController {
 
   private final EhrBaseService ehrBaseService;
   private final ManagerService managerService;
-  private final ExportUtil exportUtil;
+  private final ExportHeaderUtil exportHeaderUtil;
 
   @ContextLog(type = "Manager", description = "Execute AQL queries")
   @PostMapping("execute")
@@ -79,7 +79,7 @@ public class ManagerController {
         managerService.getManagerExportResponseBody(
             managerProjectDto.getCohort(), managerProjectDto.getTemplates(), principal.getSubject(),
             format);
-    MultiValueMap<String, String> headers = exportUtil.getExportHeaders(format, 0L);
+    MultiValueMap<String, String> headers = exportHeaderUtil.getExportHeaders(format, 0L);
 
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }

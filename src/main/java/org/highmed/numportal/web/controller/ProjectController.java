@@ -17,7 +17,7 @@ import org.highmed.numportal.service.ProjectService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
 import org.highmed.numportal.service.exception.ResourceNotFound;
 import org.highmed.numportal.service.logger.ContextLog;
-import org.highmed.numportal.service.util.ExportUtil;
+import org.highmed.numportal.service.util.ExportHeaderUtil;
 import org.highmed.numportal.web.config.Role;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,7 +69,7 @@ public class ProjectController extends CustomizedExceptionHandler {
   private final CommentService commentService;
   private final ProjectMapper projectMapper;
   private final CommentMapper commentMapper;
-  private final ExportUtil exportUtil;
+  private final ExportHeaderUtil exportHeaderUtil;
 
   private final ProjectViewMapper projectViewMapper;
 
@@ -196,7 +196,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     StreamingResponseBody streamingResponseBody =
         projectService.getExportResponseBody(
             query.getQuery(), projectId, principal.getSubject(), format, defaultConfiguration);
-    MultiValueMap<String, String> headers = exportUtil.getExportHeaders(format, projectId);
+    MultiValueMap<String, String> headers = exportHeaderUtil.getExportHeaders(format, projectId);
 
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }

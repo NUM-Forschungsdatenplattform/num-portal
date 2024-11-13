@@ -250,7 +250,6 @@ public class ProjectService {
     }
   }
 
-
   private List<QueryResponseData> executeCustomConfiguration(String query, Long projectId, String userId) {
     List<QueryResponseData> response = executeAql(query, projectId, userId);
     return responseFilter.filterResponse(response);
