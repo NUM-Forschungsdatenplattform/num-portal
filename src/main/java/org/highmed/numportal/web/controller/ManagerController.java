@@ -32,7 +32,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 @RestController
 @AllArgsConstructor
-@RequestMapping(value = "/query", produces = "application/json")
+@RequestMapping(value = "/manager", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
 @ConditionalOnProperty(value = "feature.search-with-aql", havingValue = "true")
 public class ManagerController {
@@ -42,7 +42,7 @@ public class ManagerController {
   private final ExportHeaderUtil exportHeaderUtil;
 
   @ContextLog(type = "Manager", description = "Execute AQL queries")
-  @PostMapping("execute")
+  @PostMapping("execute/query")
   @Operation(description = "Executes an AQL query")
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<QueryResponseData> executeManagerQuery(
@@ -52,7 +52,7 @@ public class ManagerController {
     );
   }
 
-  @PostMapping("/manager/execute")
+  @PostMapping("/execute/project")
   @Operation(
       description = "Executes the manager project aql in the cohort returning medical data matching the templates")
   @PreAuthorize(Role.MANAGER)
@@ -66,7 +66,7 @@ public class ManagerController {
             principal.getSubject()));
   }
 
-  @PostMapping(value = "/manager/export")
+  @PostMapping(value = "/export")
   @Operation(description = "Executes the cohort default configuration returns the result as a csv file attachment")
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<StreamingResponseBody> exportManagerResults(

@@ -22,7 +22,7 @@ public class ManagerControllerFeatureDisabledIT extends IntegrationTest {
   @Autowired
   public MockMvc mockMvc;
 
-  private static final String PATH = "/query/execute";
+  private static final String PATH = "/manager/execute/query";
   @Autowired
   private ObjectMapper mapper;
 
