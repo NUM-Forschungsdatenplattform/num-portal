@@ -48,7 +48,7 @@ public class ManagerControllerIT extends IntegrationTest {
     var expectedResult = mapper.writeValueAsString(queryResponseData);
 
     ehrClient
-        .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody(StringBody.subString(query, StandardCharsets.UTF_8)))
+        .when(HttpRequest.request().withMethod("POST").withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody(StringBody.subString(query, StandardCharsets.UTF_8)))
         .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(expectedResult, org.mockserver.model.MediaType.JSON_UTF_8));
 
     MvcResult result =

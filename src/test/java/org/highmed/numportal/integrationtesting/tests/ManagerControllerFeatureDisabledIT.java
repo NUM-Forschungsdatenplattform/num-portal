@@ -19,20 +19,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         """)
 public class ManagerControllerFeatureDisabledIT extends IntegrationTest {
 
+  private static final String MANAGER_PATH = "/manager";
+
   @Autowired
   public MockMvc mockMvc;
 
-  private static final String PATH = "/manager/execute/query";
   @Autowired
   private ObjectMapper mapper;
 
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {"MANAGER"})
-  public void execute() {
+  public void executeQuery() {
     QueryDto queryDto = new QueryDto();
 
-    mockMvc.perform(post(PATH).with(csrf())
+    mockMvc.perform(post(MANAGER_PATH + "/execute/query").with(csrf())
                               .contentType(MediaType.APPLICATION_JSON)
                               .content(mapper.writeValueAsString(queryDto))
     ).andExpect(status().isNotFound());
@@ -41,10 +42,10 @@ public class ManagerControllerFeatureDisabledIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser()
-  public void executeAsNonAuthorizedUser() {
+  public void executeQueryAsNonAuthorizedUser() {
     QueryDto queryDto = new QueryDto();
 
-    mockMvc.perform(post(PATH).with(csrf())
+    mockMvc.perform(post(MANAGER_PATH + "/execute/query").with(csrf())
                               .contentType(MediaType.APPLICATION_JSON)
                               .content(mapper.writeValueAsString(queryDto))
     ).andExpect(status().isNotFound());

@@ -37,7 +37,6 @@ import org.highmed.numportal.service.policy.TemplatesPolicy;
 import org.highmed.numportal.service.util.ExportHeaderUtil;
 import org.highmed.numportal.service.util.ExportUtil;
 
-import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -51,13 +50,9 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

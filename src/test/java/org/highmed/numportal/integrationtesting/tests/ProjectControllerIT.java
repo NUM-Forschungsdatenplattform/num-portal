@@ -27,9 +27,6 @@ import org.highmed.numportal.domain.model.admin.UserDetails;
 import org.highmed.numportal.domain.repository.OrganizationRepository;
 import org.highmed.numportal.domain.repository.ProjectRepository;
 import org.highmed.numportal.domain.repository.UserDetailsRepository;
-import org.highmed.numportal.service.ProjectService;
-import org.highmed.numportal.service.util.ExportHeaderUtil;
-import org.highmed.numportal.service.util.ExportUtil;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -56,8 +53,7 @@ public class ProjectControllerIT extends IntegrationTest {
           .registerModule(new PageJacksonModule())
           .registerModule(new SortJacksonModule())
           .registerModule(new JavaTimeModule());
-  @Autowired private ExportUtil exportUtil;
-  @Autowired private ExportHeaderUtil exportHeaderUtil;
+
   @Autowired private ProjectRepository projectRepository;
   @Autowired private UserDetailsRepository userDetailsRepository;
   @Autowired
