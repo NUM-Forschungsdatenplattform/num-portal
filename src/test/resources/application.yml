@@ -122,6 +122,3 @@ requestpsnworkflow:
     event: num.get_extern_psn
 pseudonymity:
   fake3rdPartyPseudonymEnabled: true
-
-feature:
-  search-with-aql: false

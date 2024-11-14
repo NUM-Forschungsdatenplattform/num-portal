@@ -135,6 +135,3 @@ num:
     EN: 'user-manual-en'
   enableAttachmentDatabase: true
   fileVirusScanEnabled: false
-
-feature:
-  search-with-aql: false
