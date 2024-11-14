@@ -1,20 +1,27 @@
 package org.highmed.numportal.integrationtesting.tests;
 
-import lombok.SneakyThrows;
 import org.highmed.numportal.TestNumPortalApplication;
 import org.highmed.numportal.integrationtesting.config.AttachmentPostgresqlContainer;
 import org.highmed.numportal.integrationtesting.config.EhrBaseMockContainer;
 import org.highmed.numportal.integrationtesting.config.KeycloakMockContainer;
 import org.highmed.numportal.integrationtesting.config.PostgresqlContainer;
 import org.highmed.numportal.integrationtesting.security.TokenGenerator;
+
+import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.mockserver.client.MockServerClient;
-import org.mockserver.model.*;
+import org.mockserver.model.Header;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
+import org.mockserver.model.HttpStatusCode;
+import org.mockserver.model.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +32,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
     webEnvironment = SpringBootTest.WebEnvironment.MOCK,
     classes = TestNumPortalApplication.class)
 @AutoConfigureMockMvc
+@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @ActiveProfiles("itest")
 public abstract class IntegrationTest {
 
@@ -65,25 +73,26 @@ public abstract class IntegrationTest {
     client = new MockServerClient("localhost", keycloakMockContainer.getServerPort());
 
     client
-            .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath(USER_ENDPOINT_ALL_APPROVERS))
-            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("[]", MediaType.JSON_UTF_8));
+        .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath(USER_ENDPOINT_ALL_APPROVERS))
+        .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("[]", MediaType.JSON_UTF_8));
     client
-            .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath(USER_ENDPOINT_USER1))
-            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"User1\"}", MediaType.JSON_UTF_8));
+        .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath(USER_ENDPOINT_USER1))
+        .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"User1\"}", MediaType.JSON_UTF_8));
     client
-            .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath(USER_ENDPOINT_USER2))
-            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"User2\"}", MediaType.JSON_UTF_8));
+        .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath(USER_ENDPOINT_USER2))
+        .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"User2\"}", MediaType.JSON_UTF_8));
     client
-            .when(HttpRequest.request().withMethod("POST").withPath(IDENTITY_PROVIDER_TOKEN_ENDPOINT))
-            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("{\"token_type\": \"Bearer\",\"access_token\":\"{{randomValue length=20 type='ALPHANUMERIC'}}\"}", MediaType.JSON_UTF_8));
+        .when(HttpRequest.request().withMethod("POST").withPath(IDENTITY_PROVIDER_TOKEN_ENDPOINT))
+        .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("{\"token_type\": \"Bearer\",\"access_token\":\"{{randomValue length=20 type='ALPHANUMERIC'}}\"}", MediaType.JSON_UTF_8));
     client
-            .when(HttpRequest.request().withMethod("GET").withPath(IDENTITY_PROVIDER_URL))
-            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(TokenGenerator.pk, MediaType.JSON_UTF_8));
+        .when(HttpRequest.request().withMethod("GET").withPath(IDENTITY_PROVIDER_URL))
+        .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(TokenGenerator.pk, MediaType.JSON_UTF_8));
     client
-            .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath("/admin/realms/Num/roles/SUPER_ADMIN/users"))
-            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("[]", MediaType.JSON_UTF_8));
+        .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath("/admin/realms/Num/roles/SUPER_ADMIN/users"))
+        .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("[]", MediaType.JSON_UTF_8));
     client
-            .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a72"))
-            .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"admin-user\", \"firstname\":\"Admin\", \"email\": \"admin.doe@highmed.org\"}", MediaType.JSON_UTF_8));
+        .when(HttpRequest.request().withMethod("GET").withHeaders(AUTH_HEADER).withPath("/admin/realms/Num/users/b59e5edb-3121-4e0a-8ccb-af6798207a72"))
+        .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody("{\"id\": \"b59e5edb-3121-4e0a-8ccb-af6798207a72\",\"username\": \"admin-user\", \"firstname\":\"Admin\", \"email\": \"admin.doe@highmed.org\"}", MediaType.JSON_UTF_8));
   }
 }
+
