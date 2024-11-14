@@ -3,16 +3,23 @@ package org.highmed.numportal.integrationtesting.tests;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
+
+import org.highmed.numportal.TestNumPortalApplication;
 import org.highmed.numportal.domain.dto.QueryDto;
 import org.highmed.numportal.integrationtesting.security.WithMockNumUser;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 import org.mockserver.model.HttpStatusCode;
 import org.mockserver.model.StringBody;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -24,6 +31,12 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.MOCK,
+    classes = TestNumPortalApplication.class)
+@AutoConfigureMockMvc
+@ActiveProfiles("itest")
 @TestPropertySource(properties = """
         feature.search-with-aql = true
         """)
