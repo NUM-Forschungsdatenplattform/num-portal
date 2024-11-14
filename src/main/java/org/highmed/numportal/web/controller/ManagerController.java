@@ -42,7 +42,7 @@ public class ManagerController {
   private final ExportHeaderUtil exportHeaderUtil;
 
   @ContextLog(type = "Manager", description = "Execute AQL queries")
-  @PostMapping("execute/query")
+  @PostMapping("/execute/query")
   @Operation(description = "Executes an AQL query")
   @PreAuthorize(Role.MANAGER)
   public ResponseEntity<QueryResponseData> executeManagerQuery(
