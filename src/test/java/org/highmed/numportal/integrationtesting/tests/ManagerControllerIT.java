@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.nio.charset.StandardCharsets;
 
@@ -28,10 +29,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         """)
 public class ManagerControllerIT extends IntegrationTest {
 
+  private static final String MANAGER_PATH = "/manager";
+
   @Autowired
   public MockMvc mockMvc;
-
-  private static final String PATH = "/manager/execute/query";
 
   @Autowired
   private ObjectMapper mapper;
@@ -39,22 +40,25 @@ public class ManagerControllerIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser(roles = {"MANAGER"})
-  public void execute() {
-    var query = "SELECT *";
+  public void executeQuery() {
+    String query = "SELECT *";
     QueryDto queryDto = new QueryDto();
     queryDto.setAql(query);
     QueryResponseData queryResponseData = new QueryResponseData();
     var expectedResult = mapper.writeValueAsString(queryResponseData);
 
     ehrClient
-        .when(HttpRequest.request().withMethod("POST").withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody(StringBody.subString(query, StandardCharsets.UTF_8)))
+        .when(HttpRequest.request().withMethod("POST").withHeaders(AUTH_HEADER).withPath("/ehrbase/rest/openehr/v1/query/aql/").withBody(StringBody.subString(query, StandardCharsets.UTF_8)))
         .respond(HttpResponse.response().withStatusCode(HttpStatusCode.OK_200.code()).withBody(expectedResult, org.mockserver.model.MediaType.JSON_UTF_8));
 
-    var result = mockMvc.perform(post(PATH).with(csrf())
-                                           .contentType(MediaType.APPLICATION_JSON)
-                                           .content(mapper.writeValueAsString(queryDto))
-                        ).andExpect(status().isOk())
-                        .andReturn();
+    MvcResult result =
+        mockMvc
+            .perform(
+                post(MANAGER_PATH + "/execute/query").with(csrf())
+                          .contentType(MediaType.APPLICATION_JSON)
+                          .content(mapper.writeValueAsString(queryDto)))
+            .andExpect(status().isOk())
+            .andReturn();
 
     assertThat(result.getResponse().getContentAsString(), equalTo(expectedResult));
   }
@@ -62,12 +66,12 @@ public class ManagerControllerIT extends IntegrationTest {
   @Test
   @SneakyThrows
   @WithMockNumUser()
-  public void executeAsNonAuthorizedUser() {
+  public void executeQueryAsNonAuthorizedUser() {
     var query = "SELECT *";
     QueryDto queryDto = new QueryDto();
     queryDto.setAql(query);
 
-    mockMvc.perform(post(PATH).with(csrf())
+    mockMvc.perform(post(MANAGER_PATH + "/execute/query").with(csrf())
                               .contentType(MediaType.APPLICATION_JSON)
                               .content(mapper.writeValueAsString(queryDto))
     ).andExpect(status().isForbidden());
