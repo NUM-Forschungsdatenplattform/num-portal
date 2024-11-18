@@ -8,6 +8,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "feature")
 public class FeatureProperties {
 
-  private boolean searchWithAql = false;
+  private boolean searchByManager = false;
 
 }

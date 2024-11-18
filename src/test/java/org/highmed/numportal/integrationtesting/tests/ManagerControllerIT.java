@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("itest")
 @TestPropertySource(properties = """
-        feature.search-with-aql = true
+        feature.search-by-manager = true
         """)
 public class ManagerControllerIT extends IntegrationTest {
 

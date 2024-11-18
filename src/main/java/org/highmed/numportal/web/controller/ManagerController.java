@@ -34,7 +34,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @AllArgsConstructor
 @RequestMapping(value = "/manager", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.search-with-aql", havingValue = "true")
+@ConditionalOnProperty(value = "feature.search-by-manager", havingValue = "true")
 public class ManagerController {
 
   private final EhrBaseService ehrBaseService;
