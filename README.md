@@ -42,6 +42,16 @@ And for intelliJ we include a [intellij-codestyle.xml](/.config/intellij-codesty
 1. Add the file in Settings -> Editor -> Code Style -> Java 
 2. For the checkstyle-plugin you can add the file [checkstyle](/.config/checkstyle.xml) under Settings -> Tools -> Checkstyle -> Configuration File
 
+### Feature 
+
+Within the backend, controllers that are defined as Featurable can be activated and deactivated.
+
+Example: 
+
+```
+(@ConditionalOnProperty(value = “feature.search-by-manager”, havingValue = “true”) 
+```
+They are defined within the application.yml. This configuration is then picked up in the frontend and deactivated features are not displayed there.
 
 ## License
 
