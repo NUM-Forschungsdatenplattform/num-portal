@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.nedap.archie.rm.RMObject;
 import com.nedap.archie.rm.datavalues.DvBoolean;
 import com.nedap.archie.rm.datavalues.DvCodedText;
+import com.nedap.archie.rm.datavalues.DvText;
 import com.nedap.archie.rm.datavalues.SingleValuedDataValue;
 import com.nedap.archie.rm.datavalues.quantity.DvCount;
 import com.nedap.archie.rm.datavalues.quantity.DvOrdinal;
@@ -141,27 +142,29 @@ public class ParameterService {
                       (SingleValuedDataValue<?>)
                           buildAqlObjectMapper().readValue(rowString, RMObject.class);
                   if (Objects.nonNull(element.getValue())) {
-                    if (element.getValue().getClass().isAssignableFrom(DvCodedText.class)) {
+                    if (element.getValue() instanceof DvCodedText) {
                       convertDvCodedText((DvCodedText) element.getValue(), parameterOptions, postfix);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvQuantity.class)) {
+                    } else if (element.getValue() instanceof DvText) {
+                      convertDvText((DvText) element.getValue(), parameterOptions, postfix);
+                    } else if (element.getValue() instanceof DvQuantity) {
                       convertDvQuantity((DvQuantity) element.getValue(), parameterOptions, postfix);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvOrdinal.class)) {
+                    } else if (element.getValue() instanceof DvOrdinal) {
                       convertDvOrdinal((DvOrdinal) element.getValue(), parameterOptions, postfix);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvBoolean.class)) {
+                    } else if (element.getValue() instanceof DvBoolean) {
                       convertDvBoolean(parameterOptions);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvDate.class)) {
+                    } else if (element.getValue() instanceof DvDate) {
                       convertDvDate(parameterOptions);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvDateTime.class)) {
+                    } else if (element.getValue() instanceof DvDateTime) {
                       convertDvDateTime(parameterOptions);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvTime.class)) {
+                    } else if (element.getValue() instanceof DvTime) {
                       convertTime(parameterOptions);
-                    } else if (element.getClass().isAssignableFrom(DvDateTime.class)) {
+                    } else if (element instanceof DvDateTime) {
                       // workaround for openEHR-EHR-OBSERVATION.blood_pressure.v2 and aqlPath:
                       ///data[at0001]/events[at0006]/time/value
                       convertDvDateTime(parameterOptions);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvCount.class)) {
+                    } else if (element.getValue() instanceof DvCount) {
                       parameterOptions.setType("DV_COUNT");
-                    } else if (element.getValue().getClass().isAssignableFrom(DvDuration.class)) {
+                    } else if (element.getValue() instanceof DvDuration) {
                       parameterOptions.setType("DV_DURATION");
                     }
                   }
@@ -229,6 +232,14 @@ public class ParameterService {
     }
     dto.setType("DV_CODED_TEXT");
     dto.getOptions().put(data.getDefiningCode().getCodeString(), data.getValue());
+  }
+
+  private void convertDvText(DvText data, ParameterOptionsDto dto, String postfix) {
+    if (VALUE_MAGNITUDE.equals(postfix)) {
+      return;
+    }
+    dto.setType("DV_TEXT");
+    dto.getOptions().put(data.getValue(), data.getValue());
   }
 
   private void convertDvQuantity(DvQuantity data, ParameterOptionsDto dto, String postfix) {
