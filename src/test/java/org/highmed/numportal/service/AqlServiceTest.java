@@ -171,7 +171,7 @@ public class AqlServiceTest {
     SlimAqlDto aqlDto = SlimAqlDto.builder()
             .query("select * from dummy_table")
             .build();
-    Mockito.when(ehrBaseService.retrieveEligiblePatientIds(Mockito.any(Aql.class))).thenReturn(new HashSet<>(Arrays.asList("id1", "id2", "id3", "id4")));
+    Mockito.when(ehrBaseService.retrieveNumberOfPatients(Mockito.any(Aql.class))).thenReturn(4);
     aqlService.getAqlSize(aqlDto, "4");
   }
 
@@ -180,7 +180,7 @@ public class AqlServiceTest {
     SlimAqlDto aqlDto = SlimAqlDto.builder()
             .query("select * from dummy_table")
             .build();
-    Mockito.when(ehrBaseService.retrieveEligiblePatientIds(Mockito.any(Aql.class))).thenReturn(new HashSet<>(Arrays.asList("id1")));
+    Mockito.when(ehrBaseService.retrieveNumberOfPatients(Mockito.any(Aql.class))).thenReturn(1);
     aqlService.getAqlSize(aqlDto, "4");
   }
 
