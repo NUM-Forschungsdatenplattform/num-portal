@@ -1,7 +1,6 @@
 package org.highmed.numportal.web.controller;
 
 import org.highmed.numportal.domain.dto.CommentDto;
-import org.highmed.numportal.domain.dto.ManagerProjectDto;
 import org.highmed.numportal.domain.dto.ProjectDto;
 import org.highmed.numportal.domain.dto.ProjectViewDto;
 import org.highmed.numportal.domain.dto.RawQueryDto;
@@ -18,6 +17,7 @@ import org.highmed.numportal.service.ProjectService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
 import org.highmed.numportal.service.exception.ResourceNotFound;
 import org.highmed.numportal.service.logger.ContextLog;
+import org.highmed.numportal.service.util.ExportHeaderUtil;
 import org.highmed.numportal.web.config.Role;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,6 +69,7 @@ public class ProjectController extends CustomizedExceptionHandler {
   private final CommentService commentService;
   private final ProjectMapper projectMapper;
   private final CommentMapper commentMapper;
+  private final ExportHeaderUtil exportHeaderUtil;
 
   private final ProjectViewMapper projectViewMapper;
 
@@ -180,19 +181,6 @@ public class ProjectController extends CustomizedExceptionHandler {
             query.getQuery(), projectId, principal.getSubject(), defaultConfiguration));
   }
 
-  @PostMapping("/manager/execute")
-  @Operation(
-      description = "Executes the manager project aql in the cohort returning medical data matching the templates")
-  @PreAuthorize(Role.MANAGER)
-  public ResponseEntity<String> executeManagerProject(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @RequestBody @Valid ManagerProjectDto managerProjectDto) {
-    return ResponseEntity.ok(
-        projectService.executeManagerProject(
-            managerProjectDto.getCohort(),
-            managerProjectDto.getTemplates(),
-            principal.getSubject()));
-  }
 
   @PostMapping(value = "/{projectId}/export")
   @Operation(description = "Executes the aql and returns the result as a csv file attachment")
@@ -208,25 +196,7 @@ public class ProjectController extends CustomizedExceptionHandler {
     StreamingResponseBody streamingResponseBody =
         projectService.getExportResponseBody(
             query.getQuery(), projectId, principal.getSubject(), format, defaultConfiguration);
-    MultiValueMap<String, String> headers = projectService.getExportHeaders(format, projectId);
-
-    return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
-  }
-
-  @PostMapping(value = "/manager/export")
-  @Operation(description = "Executes the cohort default configuration returns the result as a csv file attachment")
-  @PreAuthorize(Role.MANAGER)
-  public ResponseEntity<StreamingResponseBody> exportManagerResults(
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @RequestBody @Valid ManagerProjectDto managerProjectDto,
-      @RequestParam(required = false)
-      @Parameter(description = "A string defining the output format. Valid values are 'csv' and 'json'. Default is csv.")
-      ExportType format) {
-    StreamingResponseBody streamingResponseBody =
-        projectService.getManagerExportResponseBody(
-            managerProjectDto.getCohort(), managerProjectDto.getTemplates(), principal.getSubject(),
-            format);
-    MultiValueMap<String, String> headers = projectService.getExportHeaders(format, 0L);
+    MultiValueMap<String, String> headers = exportHeaderUtil.getExportHeaders(format, projectId);
 
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }

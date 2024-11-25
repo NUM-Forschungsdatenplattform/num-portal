@@ -44,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class ProjectControllerIT extends IntegrationTest {
 
   private static final String PROJECT_PATH = "/project";
+
   @Autowired public MockMvc mockMvc;
   UserDetails user1;
   UserDetails user2;
@@ -52,6 +53,7 @@ public class ProjectControllerIT extends IntegrationTest {
           .registerModule(new PageJacksonModule())
           .registerModule(new SortJacksonModule())
           .registerModule(new JavaTimeModule());
+
   @Autowired private ProjectRepository projectRepository;
   @Autowired private UserDetailsRepository userDetailsRepository;
   @Autowired

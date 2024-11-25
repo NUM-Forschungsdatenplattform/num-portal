@@ -2,7 +2,6 @@ package org.highmed.numportal.service;
 
 import org.highmed.numportal.attachment.domain.dto.LightAttachmentDto;
 import org.highmed.numportal.attachment.service.AttachmentService;
-import org.highmed.numportal.domain.dto.CohortDto;
 import org.highmed.numportal.domain.dto.Language;
 import org.highmed.numportal.domain.dto.ProjectDto;
 import org.highmed.numportal.domain.dto.ProjectInfoDto;
@@ -10,7 +9,6 @@ import org.highmed.numportal.domain.dto.SearchCriteria;
 import org.highmed.numportal.domain.dto.TemplateInfoDto;
 import org.highmed.numportal.domain.dto.UserDetailsDto;
 import org.highmed.numportal.domain.dto.ZarsInfoDto;
-import org.highmed.numportal.domain.model.Cohort;
 import org.highmed.numportal.domain.model.ExportType;
 import org.highmed.numportal.domain.model.Organization;
 import org.highmed.numportal.domain.model.Project;
@@ -23,15 +21,12 @@ import org.highmed.numportal.domain.repository.ProjectRepository;
 import org.highmed.numportal.domain.repository.ProjectTransitionRepository;
 import org.highmed.numportal.domain.specification.ProjectSpecification;
 import org.highmed.numportal.mapper.ProjectMapper;
-import org.highmed.numportal.properties.ConsentProperties;
-import org.highmed.numportal.properties.PrivacyProperties;
 import org.highmed.numportal.service.atna.AtnaService;
 import org.highmed.numportal.service.ehrbase.EhrBaseService;
 import org.highmed.numportal.service.ehrbase.ResponseFilter;
 import org.highmed.numportal.service.email.ZarsService;
 import org.highmed.numportal.service.exception.BadRequestException;
 import org.highmed.numportal.service.exception.ForbiddenException;
-import org.highmed.numportal.service.exception.PrivacyException;
 import org.highmed.numportal.service.exception.ResourceNotFound;
 import org.highmed.numportal.service.exception.SystemException;
 import org.highmed.numportal.service.executors.CohortQueryLister;
@@ -43,11 +38,9 @@ import org.highmed.numportal.service.notification.dto.ProjectCloseNotification;
 import org.highmed.numportal.service.notification.dto.ProjectStartNotification;
 import org.highmed.numportal.service.notification.dto.ProjectStatusChangeNotification;
 import org.highmed.numportal.service.notification.dto.ProjectStatusChangeRequestNotification;
-import org.highmed.numportal.service.policy.EhrPolicy;
-import org.highmed.numportal.service.policy.EuropeanConsentPolicy;
 import org.highmed.numportal.service.policy.Policy;
 import org.highmed.numportal.service.policy.ProjectPolicyService;
-import org.highmed.numportal.service.policy.TemplatesPolicy;
+import org.highmed.numportal.service.util.ExportUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,8 +48,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ehrbase.openehr.sdk.aql.dto.AqlQuery;
@@ -68,25 +59,15 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -100,8 +81,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static java.util.Objects.nonNull;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.AN_ISSUE_HAS_OCCURRED_CANNOT_EXECUTE_AQL;
@@ -113,10 +92,7 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_D
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_DELETE_PROJECT_INVALID_STATUS;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_UPDATE_PROJECT_INVALID_PROJECT_STATUS;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY;
-import static org.highmed.numportal.domain.templates.ExceptionsTemplate.ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.ERROR_CREATING_THE_PROJECT_PDF;
-import static org.highmed.numportal.domain.templates.ExceptionsTemplate.ERROR_WHILE_CREATING_THE_CSV_FILE;
-import static org.highmed.numportal.domain.templates.ExceptionsTemplate.ERROR_WHILE_RETRIEVING_DATA;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.INVALID_PROJECT_STATUS;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.INVALID_PROJECT_STATUS_PARAM;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.MORE_THAN_ONE_TRANSITION_FROM_PUBLISHED_TO_CLOSED_FOR_PROJECT;
@@ -128,17 +104,12 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.PROJECT_
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.PROJECT_TEMPLATES_CANNOT_BE_NULL;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.RESEARCHER_NOT_APPROVED;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.RESEARCHER_NOT_FOUND;
-import static org.highmed.numportal.domain.templates.ExceptionsTemplate.RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
 
 @Service
 @Slf4j
 @AllArgsConstructor
 public class ProjectService {
 
-  private static final String ZIP_FILE_ENDING = ".zip";
-  private static final String JSON_FILE_ENDING = ".json";
-  private static final String ZIP_MEDIA_TYPE = "application/zip";
-  private static final String CSV_FILE_PATTERN = "%s_%s.csv";
   private static final String AUTHOR_NAME = "author";
   private static final String ORGANIZATION_NAME = "organization";
   private static final String PROJECT_NAME = "name";
@@ -172,13 +143,9 @@ public class ProjectService {
 
   private final CohortService cohortService;
 
-  private final ConsentProperties consentProperties;
+  private final ExportUtil exportUtil;
 
   private final ResponseFilter responseFilter;
-
-  private final PrivacyProperties privacyProperties;
-
-  private final TemplateService templateService;
 
   private final ProjectDocCreator projectDocCreator;
 
@@ -271,7 +238,7 @@ public class ProjectService {
     List<QueryResponseData> responseData;
     if (BooleanUtils.isTrue(defaultConfiguration)) {
       responseData =
-          executeDefaultConfiguration(projectId, project.getCohort(), project.getTemplates());
+          exportUtil.executeDefaultConfiguration(projectId, project.getCohort(), project.getTemplates());
     } else {
       responseData = executeCustomConfiguration(query, projectId, userId);
     }
@@ -283,55 +250,11 @@ public class ProjectService {
     }
   }
 
-  private List<QueryResponseData> executeDefaultConfiguration(Long projectId, Cohort cohort, Map<String, String> templates) {
-
-    if (templates == null || templates.isEmpty()) {
-      return List.of();
-    }
-
-    Set<String> ehrIds = cohortService.executeCohort(cohort, false);
-
-    if (ehrIds.size() < privacyProperties.getMinHits()) {
-      log.warn(RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
-      throw new PrivacyException(ProjectService.class, RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
-    }
-
-    List<QueryResponseData> response = new LinkedList<>();
-
-    templates.forEach(
-        (templateId, v) ->
-            response.addAll(retrieveTemplateData(ehrIds, templateId, projectId, false)));
-    return responseFilter.filterResponse(response);
-  }
-
   private List<QueryResponseData> executeCustomConfiguration(String query, Long projectId, String userId) {
     List<QueryResponseData> response = executeAql(query, projectId, userId);
     return responseFilter.filterResponse(response);
   }
 
-  private List<QueryResponseData> retrieveTemplateData(
-      Set<String> ehrIds, String templateId, Long projectId, Boolean usedOutsideEu) {
-    try {
-      AqlQuery aql = templateService.createSelectCompositionQuery(templateId);
-
-      List<Policy> policies =
-          collectProjectPolicies(ehrIds, Map.of(templateId, templateId), usedOutsideEu);
-      projectPolicyService.apply(aql, policies);
-
-      List<QueryResponseData> response = ehrBaseService.executeRawQuery(aql, projectId);
-      response.forEach(data -> data.setName(templateId));
-      return response;
-
-    } catch (ResourceNotFound e) {
-      log.error("Could not retrieve data for template {} and project {}. Failed with message {} ", templateId, projectId, e.getMessage(), e);
-      log.error(e.getMessage(), e);
-    } catch (Exception e) {
-      log.error(e.getMessage(), e);
-    }
-    QueryResponseData response = new QueryResponseData();
-    response.setName(templateId);
-    return List.of(response);
-  }
 
   public List<QueryResponseData> executeAql(String query, Long projectId, String userId) {
     List<QueryResponseData> queryResponseData;
@@ -347,7 +270,7 @@ public class ProjectService {
       AqlQuery aql = AqlQueryParser.parse(query);
 
       List<Policy> policies =
-          collectProjectPolicies(ehrIds, project.getTemplates(), project.isUsedOutsideEu());
+          exportUtil.collectProjectPolicies(ehrIds, project.getTemplates(), project.isUsedOutsideEu());
       projectPolicyService.apply(aql, policies);
 
       queryResponseData = ehrBaseService.executeRawQuery(aql, projectId);
@@ -358,80 +281,6 @@ public class ProjectService {
     }
     atnaService.logDataExport(userId, projectId, project, true);
     return queryResponseData;
-  }
-
-  public String executeManagerProject(CohortDto cohortDto, List<String> templates, String userId) {
-    var queryResponse = StringUtils.EMPTY;
-    var project = createManagerProject();
-    try {
-      userDetailsService.checkIsUserApproved(userId);
-      var templateMap = CollectionUtils.isNotEmpty(templates) ? templates.stream().collect(Collectors.toMap(k -> k, v -> v)) : Collections.emptyMap();
-
-      List<QueryResponseData> responseData =
-          executeDefaultConfiguration(
-              project.getId(), cohortService.toCohort(cohortDto), (Map<String, String>) templateMap);
-
-      queryResponse = mapper.writeValueAsString(responseData);
-
-    } catch (Exception e) {
-      atnaService.logDataExport(userId, project.getId(), project, false);
-      throw new SystemException(ProjectService.class, ERROR_WHILE_RETRIEVING_DATA,
-          String.format(ERROR_WHILE_RETRIEVING_DATA, e.getLocalizedMessage()));
-    }
-    atnaService.logDataExport(userId, project.getId(), project, true);
-    return queryResponse;
-  }
-
-  public boolean streamResponseAsZip(
-      List<QueryResponseData> queryResponseDataList,
-      String filenameStart,
-      OutputStream outputStream) {
-
-    try (var zipOutputStream = new ZipOutputStream(outputStream, StandardCharsets.UTF_8)) {
-
-      var index = 0;
-      for (QueryResponseData queryResponseData : queryResponseDataList) {
-
-        String responseName = queryResponseData.getName();
-        if (StringUtils.isEmpty(responseName)) {
-          responseName = String.valueOf(index);
-        }
-        zipOutputStream.putNextEntry(
-            new ZipEntry(String.format(CSV_FILE_PATTERN, filenameStart, responseName)));
-        addResponseAsCsv(zipOutputStream, queryResponseData);
-        zipOutputStream.closeEntry();
-        index++;
-      }
-    } catch (IOException e) {
-      log.error("Error creating a zip file for data export.", e);
-      throw new SystemException(ProjectService.class, ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT,
-          String.format(ERROR_CREATING_A_ZIP_FILE_FOR_DATA_EXPORT, e.getLocalizedMessage()));
-    }
-    return true;
-  }
-
-  private void addResponseAsCsv(ZipOutputStream zipOutputStream, QueryResponseData queryResponseData) {
-    List<String> paths = new ArrayList<>();
-
-    for (Map<String, String> column : queryResponseData.getColumns()) {
-      paths.add(column.get("path"));
-    }
-    CSVPrinter printer;
-    try {
-      printer =
-          CSVFormat.EXCEL.builder()
-                         .setHeader(paths.toArray(new String[]{}))
-                         .build()
-                         .print(new OutputStreamWriter(zipOutputStream, StandardCharsets.UTF_8));
-
-      for (List<Object> row : queryResponseData.getRows()) {
-        printer.printRecord(row);
-      }
-      printer.flush();
-    } catch (IOException e) {
-      throw new SystemException(ProjectService.class, ERROR_WHILE_CREATING_THE_CSV_FILE,
-          String.format(ERROR_WHILE_CREATING_THE_CSV_FILE, e.getMessage()));
-    }
   }
 
   public StreamingResponseBody getExportResponseBody(
@@ -447,68 +296,16 @@ public class ProjectService {
 
     if (BooleanUtils.isTrue(defaultConfiguration)) {
       response =
-          executeDefaultConfiguration(projectId, project.getCohort(), project.getTemplates());
+          exportUtil.executeDefaultConfiguration(projectId, project.getCohort(), project.getTemplates());
     } else {
       response = executeCustomConfiguration(query, projectId, userId);
     }
 
     if (format == ExportType.json) {
-      return exportJson(response);
+      return exportUtil.exportJson(response);
     } else {
-      return exportCsv(response, projectId);
+      return exportUtil.exportCsv(response, projectId);
     }
-  }
-
-  public StreamingResponseBody getManagerExportResponseBody(CohortDto cohortDto, List<String> templates, String userId, ExportType format) {
-    userDetailsService.checkIsUserApproved(userId);
-    var project = createManagerProject();
-
-    var templateMap = templates.stream().collect(Collectors.toMap(k -> k, v -> v));
-
-    List<QueryResponseData> response =
-        executeDefaultConfiguration(
-            project.getId(), cohortService.toCohort(cohortDto), templateMap);
-
-    if (format == ExportType.json) {
-      return exportJson(response);
-    } else {
-      return exportCsv(response, project.getId());
-    }
-  }
-
-  private StreamingResponseBody exportCsv(List<QueryResponseData> response, Long projectId) {
-    return outputStream ->
-        streamResponseAsZip(response, getExportFilenameBody(projectId), outputStream);
-  }
-
-  private StreamingResponseBody exportJson(List<QueryResponseData> response) {
-    String json;
-    try {
-      json = mapper.writeValueAsString(response);
-    } catch (JsonProcessingException e) {
-      throw new SystemException(ProjectService.class, AN_ISSUE_HAS_OCCURRED_CANNOT_EXECUTE_AQL);
-    }
-    return outputStream -> {
-      outputStream.write(json.getBytes());
-      outputStream.flush();
-      outputStream.close();
-    };
-  }
-
-  public MultiValueMap<String, String> getExportHeaders(ExportType format, Long projectId) {
-    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-    String fileEnding;
-    if (format == ExportType.json) {
-      fileEnding = JSON_FILE_ENDING;
-      headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-    } else {
-      fileEnding = ZIP_FILE_ENDING;
-      headers.add(HttpHeaders.CONTENT_TYPE, ZIP_MEDIA_TYPE);
-    }
-    headers.add(
-        HttpHeaders.CONTENT_DISPOSITION,
-        "attachment; filename=" + getExportFilenameBody(projectId) + fileEnding);
-    return headers;
   }
 
   public Optional<Project> getProjectById(String loggedInUserId, Long projectId) {
@@ -769,22 +566,6 @@ public class ProjectService {
         throw new ForbiddenException(ProjectService.class, NO_PERMISSIONS_TO_DELETE_ATTACHMENTS);
       }
     }
-  }
-
-  private List<Policy> collectProjectPolicies(
-      Set<String> ehrIds, Map<String, String> templates, boolean usedOutsideEu) {
-    List<Policy> policies = new LinkedList<>();
-    policies.add(EhrPolicy.builder().cohortEhrIds(ehrIds).build());
-    policies.add(TemplatesPolicy.builder().templatesMap(templates).build());
-
-    if (usedOutsideEu) {
-      policies.add(
-          EuropeanConsentPolicy.builder()
-                               .oid(consentProperties.getAllowUsageOutsideEuOid())
-                               .build());
-    }
-
-    return policies;
   }
 
   private List<Notification> collectNotifications(Project project, ProjectStatus newStatus,
@@ -1054,16 +835,6 @@ public class ProjectService {
     }
   }
 
-  public String getExportFilenameBody(Long projectId) {
-    return String.format(
-                     "Project_%d_%s",
-                     projectId,
-                     LocalDateTime.now()
-                                  .truncatedTo(ChronoUnit.MINUTES)
-                                  .format(DateTimeFormatter.ISO_LOCAL_DATE))
-                 .replace('-', '_');
-  }
-
   private void setTemplates(Project project, ProjectDto projectDto) {
     if (projectDto.getTemplates() != null) {
       Map<String, String> map =
@@ -1294,24 +1065,6 @@ public class ProjectService {
           String.format(PROJECT_TEMPLATES_CANNOT_BE_NULL, project.getId()));
     }
     return project;
-  }
-
-  private Project createManagerProject() {
-    var undef = "undef";
-    return Project.builder()
-                  .id(0L)
-                  .name("Manager data retrieval project")
-                  .createDate(OffsetDateTime.now())
-                  .startDate(LocalDate.now())
-                  .description("Adhoc temp project for manager data retrieval")
-                  .goal(undef)
-                  .usedOutsideEu(false)
-                  .firstHypotheses(undef)
-                  .secondHypotheses(undef)
-                  .description("Temporary project for manager data retrieval")
-                  .coordinator(UserDetails.builder().userId(undef).organization(Organization.builder().id(0L).build()).build())
-                  .status(ProjectStatus.DENIED)
-                  .build();
   }
 
   public byte[] getInfoDocBytes(Long id, String userId, Locale locale) {
