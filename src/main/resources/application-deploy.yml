@@ -111,3 +111,6 @@ clamAV:
 logging:
   level:
     org.highmed.numportal: ${LOG_LEVEL}
+
+feature:
+  search-by-manager: ${FEATURE_SEARCH_BY_MANAGER}
