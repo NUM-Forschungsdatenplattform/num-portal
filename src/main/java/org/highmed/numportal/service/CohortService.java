@@ -315,6 +315,7 @@ public class CohortService {
     userDetailsService.checkIsUserApproved(userId);
     Set<String> ehrIds = getCohortGroupEhrIds(cohortGroupDto, allowUsageOutsideEu);
     int count = ehrIds.size();
+
     if (count == 0) {
       return CohortSizeDto.builder().build();
     }
