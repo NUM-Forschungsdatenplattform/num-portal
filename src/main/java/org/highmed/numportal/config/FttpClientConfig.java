@@ -1,7 +1,8 @@
 package org.highmed.numportal.config;
 
-import ca.uhn.fhir.context.FhirContext;
 import org.highmed.numportal.properties.FttpProperties;
+
+import ca.uhn.fhir.context.FhirContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.auth.AuthScope;
@@ -15,9 +16,9 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.security.KeyStore;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import java.security.KeyStore;
 
 @Slf4j
 @Configuration
@@ -38,7 +39,8 @@ public class FttpClientConfig {
     try {
       var keyStore = KeyStore.getInstance(CERTIFICATE_TYPE);
 
-      keyStore.load(getClass().getResourceAsStream(fttpProperties.getCertificatePath()),
+      keyStore.load(
+          getClass().getResourceAsStream(fttpProperties.getCertificatePath()),
           fttpProperties.getCertificateKey().toCharArray());
 
       SSLContext sslContext =
@@ -52,7 +54,8 @@ public class FttpClientConfig {
 
       if (fttpProperties.isUseBasicAuth()) {
         var provider = new BasicCredentialsProvider();
-        provider.setCredentials(AuthScope.ANY,
+        provider.setCredentials(
+            AuthScope.ANY,
             new UsernamePasswordCredentials(fttpProperties.getUsername(), fttpProperties.getPassword())
         );
 

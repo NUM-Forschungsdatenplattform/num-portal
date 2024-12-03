@@ -1,7 +1,5 @@
 package org.highmed.numportal.attachment.service;
 
-import org.highmed.numportal.attachment.service.ClamAVService;
-import org.highmed.numportal.attachment.service.FileScanService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

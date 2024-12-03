@@ -1,12 +1,13 @@
 package org.highmed.numportal.service.notification;
 
 import org.highmed.numportal.properties.NumProperties;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.highmed.numportal.service.email.EmailService;
 import org.highmed.numportal.service.email.MessageSourceWrapper;
 import org.highmed.numportal.service.notification.dto.Notification;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 

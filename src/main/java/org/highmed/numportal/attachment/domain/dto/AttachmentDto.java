@@ -16,24 +16,24 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 public class AttachmentDto {
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    private Long id;
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+  private Long id;
 
-    private String name;
+  private String name;
 
-    private String description;
+  private String description;
 
-    private String type;
+  private String type;
 
-    private byte[] content;
+  private byte[] content;
 
-    private Long projectId;
+  private Long projectId;
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    private OffsetDateTime uploadDate;
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+  private OffsetDateTime uploadDate;
 
-    private String authorId;
+  private String authorId;
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    private int reviewCounter;
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+  private int reviewCounter;
 }

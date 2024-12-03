@@ -5,13 +5,14 @@ import org.highmed.numportal.domain.dto.CohortGroupDto;
 import org.highmed.numportal.domain.model.Cohort;
 import org.highmed.numportal.domain.model.CohortGroup;
 import org.highmed.numportal.domain.model.Type;
+
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 
 @Component
 @AllArgsConstructor
@@ -43,8 +44,8 @@ public class CohortMapper {
     if (cohortGroup.getType().equals(Type.GROUP)) {
       dto.setChildren(
           cohortGroup.getChildren().stream()
-              .map(this::convertToCohortGroupDto)
-              .collect(Collectors.toList()));
+                     .map(this::convertToCohortGroupDto)
+                     .collect(Collectors.toList()));
     }
     return dto;
   }

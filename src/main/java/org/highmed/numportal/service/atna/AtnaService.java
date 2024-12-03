@@ -1,8 +1,9 @@
 package org.highmed.numportal.service.atna;
 
+import org.highmed.numportal.domain.model.Project;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.highmed.numportal.domain.model.Project;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openehealth.ipf.commons.audit.AuditException;
@@ -16,9 +17,9 @@ import org.openehealth.ipf.commons.audit.model.TypeValuePairType;
 import org.openehealth.ipf.commons.audit.types.EventType;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
-import java.util.List;
 
 @Service
 @Slf4j
@@ -26,9 +27,9 @@ public class AtnaService {
 
   private static final String EVENT_CODE_DATA_EXPORT = "110106";
   private static final String SYSTEM_NAME = "Num portal";
-  private DefaultAuditContext auditContext;
   private final AtnaProperties properties;
   private final ObjectMapper mapper;
+  private DefaultAuditContext auditContext;
 
   public AtnaService(AtnaProperties properties, ObjectMapper mapper) {
     this.properties = properties;
@@ -47,9 +48,9 @@ public class AtnaService {
       String userId, Long projectId, @Nullable Project project, boolean successful) {
     AuditMessage auditMessage =
         new DataExportBuilder(
-                successful ? EventOutcomeIndicator.Success : EventOutcomeIndicator.MajorFailure,
-                EventType.of(EVENT_CODE_DATA_EXPORT, SYSTEM_NAME, "Export"),
-                XspaPoUCode.Research)
+            successful ? EventOutcomeIndicator.Success : EventOutcomeIndicator.MajorFailure,
+            EventType.of(EVENT_CODE_DATA_EXPORT, SYSTEM_NAME, "Export"),
+            XspaPoUCode.Research)
             .addActiveParticipant(new ActiveParticipantType(userId, true))
             .addStudyParticipantObject(String.valueOf(projectId), getProjectDetails(project))
             .setAuditSource(auditContext)

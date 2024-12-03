@@ -1,8 +1,9 @@
 package org.highmed.numportal.service.notification.dto;
 
+import org.highmed.numportal.service.email.MessageSourceWrapper;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.highmed.numportal.service.email.MessageSourceWrapper;
 
 import java.net.MalformedURLException;
 import java.net.URL;

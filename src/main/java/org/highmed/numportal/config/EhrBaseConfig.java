@@ -1,6 +1,7 @@
 package org.highmed.numportal.config;
 
 import org.highmed.numportal.properties.EhrBaseProperties;
+
 import lombok.RequiredArgsConstructor;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;

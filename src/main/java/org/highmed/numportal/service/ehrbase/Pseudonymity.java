@@ -1,9 +1,11 @@
 package org.highmed.numportal.service.ehrbase;
 
-import ca.uhn.fhir.context.FhirContext;
 import org.highmed.numportal.properties.FttpProperties;
 import org.highmed.numportal.properties.PrivacyProperties;
 import org.highmed.numportal.properties.PseudonymsPsnWorkflowProperties;
+import org.highmed.numportal.service.exception.ResourceNotFound;
+
+import ca.uhn.fhir.context.FhirContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -17,14 +19,17 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.highmed.numportal.service.exception.ResourceNotFound;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Parameters;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -39,7 +44,7 @@ public class Pseudonymity {
   private static final String PSEUDONYMS_COULD_NOT_BE_RETRIEVED_MESSAGE =
       "Pseudonyms could not be retrieved";
   private static final String REQUEST_FAILED_RETRIEVED_MESSAGE =
-          "Request to retrieve pseudonyms failed";
+      "Request to retrieve pseudonyms failed";
 
   // is just a guessing...because there are also codes that start with codex_ but we do not receive the pseudonym back (example codex_A12CB2)
   private static final String EXTERNAL_REF_ID_REGEX_GREIFSWALD_COMPLIANT = "codex_[A-Z0-9-]{6}";
@@ -89,8 +94,8 @@ public class Pseudonymity {
       }
       Map<String, Parameters.ParametersParameterComponent> paramsData = groupPseudonyms(params);
       return secondLevelPseudonyms.stream()
-              .map(original -> findPseudonymForOriginal(paramsData, original, projectId).get())
-              .collect(Collectors.toList());
+                                  .map(original -> findPseudonymForOriginal(paramsData, original, projectId).get())
+                                  .collect(Collectors.toList());
     } else {
       if (Boolean.TRUE.equals(fake3rdPartyPseudonymEnabled)) {
         // something did not work on Greisfwald side, so generate fake 3rd party pseudonyms
@@ -118,7 +123,7 @@ public class Pseudonymity {
           return Optional.of(fhirContext.newXmlParser().parseResource(Parameters.class, resp));
         } else {
           log.error("Could not retrieve pseudonyms. Expected status code 200, received {} with response body: {} ",
-                  response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
+              response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity()));
           throw new ResourceNotFound(Pseudonymity.class, REQUEST_FAILED_RETRIEVED_MESSAGE);
         }
       } catch (Exception e) {
@@ -139,6 +144,7 @@ public class Pseudonymity {
 
   /**
    * <a> https://simplifier.net/guide/ttp-fhir-gateway-ig/markdown-WorkflowBasierteVerwaltung-Operations-requestPsnWorkflow?version=current </a>
+   *
    * @param projectId
    * @return
    */
@@ -148,11 +154,12 @@ public class Pseudonymity {
     parameters.addParameter("source", pseudonymsPsnWorkflowProperties.getSource());
     parameters.addParameter("target", pseudonymsPsnWorkflowProperties.getTarget() + projectId);
     parameters.addParameter("apikey", pseudonymsPsnWorkflowProperties.getApiKey());
-    parameters.addParameter("event",  pseudonymsPsnWorkflowProperties.getEvent());
+    parameters.addParameter("event", pseudonymsPsnWorkflowProperties.getEvent());
     return parameters;
   }
 
-  private Optional<String> findPseudonymForOriginal(Map<String, Parameters.ParametersParameterComponent> parameters, String original, Long projectId) {
+  private Optional<String> findPseudonymForOriginal(Map<String, Parameters.ParametersParameterComponent> parameters, String original,
+      Long projectId) {
     if (Pattern.matches(EXTERNAL_REF_ID_REGEX_GREIFSWALD_COMPLIANT, original) && parameters.containsKey(original)) {
       var param = parameters.get(original);
       String pseudonym = getPartValue(PSEUDONYM, param);
@@ -176,14 +183,14 @@ public class Pseudonymity {
 
   private List<String> generateNumThirdLevelPseudonym(List<String> secondLevelPseudonyms, Long projectId) {
     return secondLevelPseudonyms.stream()
-            .map(original -> generateNumThirdLevelPseudonym(original, projectId))
-            .collect(Collectors.toList());
+                                .map(original -> generateNumThirdLevelPseudonym(original, projectId))
+                                .collect(Collectors.toList());
   }
 
   private String generateNumThirdLevelPseudonym(String original, Long projectId) {
     log.debug("For id {} was generated fake 3rd level pseudonym", original);
     return new DigestUtils(DIGEST_ALGORITHM)
-            .digestAsHex(original + projectId + privacyProperties.getPseudonymitySecret());
+        .digestAsHex(original + projectId + privacyProperties.getPseudonymitySecret());
   }
 
   private String getPartValue(String value, Parameters.ParametersParameterComponent param) {

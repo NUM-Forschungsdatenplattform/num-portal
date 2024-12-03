@@ -5,7 +5,7 @@ on:
     branches: [ 'feature/**' ]  
   pull_request:
     branches: [ develop, main ]
-    types: [ opened, ready_for_review]
+    types: [ opened, ready_for_review ]
   pull_request_target:
     branches: [ develop, main ]
     types: [ closed ]
@@ -24,6 +24,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
+      - name: Run Checkstyle
+        run: mvn validate
       - name: Run unit tests
         run: mvn clean test
       - name: Run integration tests

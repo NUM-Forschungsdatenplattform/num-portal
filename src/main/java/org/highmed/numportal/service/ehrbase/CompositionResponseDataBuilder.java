@@ -9,17 +9,22 @@ import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.ehrbase.openehr.sdk.serialisation.jsonencoding.CanonicalJson;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 @AllArgsConstructor
 @Slf4j
 public class CompositionResponseDataBuilder {
-  private final ObjectMapper mapper;
-  private final CompositionFlattener compositionFlattener;
 
   private static final String COLUMN_NAME = "name";
   private static final String COLUMN_PATH = "path";
+  private final ObjectMapper mapper;
+  private final CompositionFlattener compositionFlattener;
 
   public QueryResponseData build(List<Map<String, Object>> compositions) {
     List<Map<String, Object>> flatCompositionsList = createCompositionsMap(compositions);

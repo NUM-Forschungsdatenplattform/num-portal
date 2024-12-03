@@ -22,73 +22,75 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import javax.sql.DataSource;
 import java.util.Objects;
 import java.util.Properties;
+import javax.sql.DataSource;
 
 @Configuration
 @EnableJpaRepositories(basePackages = {"org.highmed.numportal.domain", "org.highmed.numportal.service"},
-        entityManagerFactoryRef = "numEntityManagerFactory",
-        transactionManagerRef = "numTransactionManager")
+    entityManagerFactoryRef = "numEntityManagerFactory",
+    transactionManagerRef = "numTransactionManager")
 @EnableTransactionManagement
 public class NumPortalDatasourceConfiguration {
 
-    @Value("${spring.jpa.show-sql}")
-    private boolean showSql;
+  @Value("${spring.jpa.show-sql}")
+  private boolean showSql;
 
-    @Primary
-    @Bean(name = "numPortalProperties")
-    @ConfigurationProperties(prefix = "spring.datasource.numportal")
-    public DataSourceProperties dataSourceProperties(){
-        return new DataSourceProperties();
-    }
+  @Primary
+  @Bean(name = "numPortalProperties")
+  @ConfigurationProperties(prefix = "spring.datasource.numportal")
+  public DataSourceProperties dataSourceProperties() {
+    return new DataSourceProperties();
+  }
 
-    @Primary
-    @ConfigurationProperties(prefix = "spring.datasource.hikari.data-source-properties")
-    @Bean(name = "hikariProps")
-    public Properties hikaryProperties() {
-      return new Properties();
-    }
+  @Primary
+  @ConfigurationProperties(prefix = "spring.datasource.hikari.data-source-properties")
+  @Bean(name = "hikariProps")
+  public Properties hikaryProperties() {
+    return new Properties();
+  }
 
-    @Primary
-    @Bean("numPortalDatasource")
-    @FlywayDataSource
-    public DataSource dataSource(@Qualifier("numPortalProperties") DataSourceProperties dataSourceProperties, @Qualifier("hikariProps") Properties hikaryProps) {
-        HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setDriverClassName(dataSourceProperties().getDriverClassName());
-        hikariConfig.setJdbcUrl(dataSourceProperties.getUrl());
-        hikariConfig.setUsername(dataSourceProperties.getUsername());
-        hikariConfig.setPassword(dataSourceProperties.getPassword());
-        hikariConfig.getDataSourceProperties().putAll(hikaryProps);
-        return new HikariDataSource(hikariConfig);
-    }
+  @Primary
+  @Bean("numPortalDatasource")
+  @FlywayDataSource
+  public DataSource dataSource(@Qualifier("numPortalProperties") DataSourceProperties dataSourceProperties,
+      @Qualifier("hikariProps") Properties hikaryProps) {
+    HikariConfig hikariConfig = new HikariConfig();
+    hikariConfig.setDriverClassName(dataSourceProperties().getDriverClassName());
+    hikariConfig.setJdbcUrl(dataSourceProperties.getUrl());
+    hikariConfig.setUsername(dataSourceProperties.getUsername());
+    hikariConfig.setPassword(dataSourceProperties.getPassword());
+    hikariConfig.getDataSourceProperties().putAll(hikaryProps);
+    return new HikariDataSource(hikariConfig);
+  }
 
-    @Primary
-    @Bean
-    public LocalContainerEntityManagerFactoryBean numEntityManagerFactory(ConfigurableListableBeanFactory beanFactory,
-                                                                          @Qualifier("numPortalDatasource") DataSource dataSource) {
-        LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
-        localContainerEntityManagerFactoryBean.setDataSource(dataSource);
-        localContainerEntityManagerFactoryBean.setPackagesToScan("org.highmed.numportal.domain", "org.highmed.numportal.service");
-        localContainerEntityManagerFactoryBean.setPersistenceUnitName("numPortal");
-        localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.BEAN_CONTAINER, new SpringBeanContainer(beanFactory));
-        localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.IMPLICIT_NAMING_STRATEGY, new SpringImplicitNamingStrategy());
-        localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.PHYSICAL_NAMING_STRATEGY, new CamelCaseToUnderscoresNamingStrategy());
-        localContainerEntityManagerFactoryBean.getJpaPropertyMap().put("hibernate.order_by.default_null_ordering", "last");
-        HibernateJpaVendorAdapter hibernateJpaVendorAdapter = new HibernateJpaVendorAdapter();
-        hibernateJpaVendorAdapter.setGenerateDdl(false);
-        hibernateJpaVendorAdapter.setShowSql(showSql);
+  @Primary
+  @Bean
+  public LocalContainerEntityManagerFactoryBean numEntityManagerFactory(ConfigurableListableBeanFactory beanFactory,
+      @Qualifier("numPortalDatasource") DataSource dataSource) {
+    LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
+    localContainerEntityManagerFactoryBean.setDataSource(dataSource);
+    localContainerEntityManagerFactoryBean.setPackagesToScan("org.highmed.numportal.domain", "org.highmed.numportal.service");
+    localContainerEntityManagerFactoryBean.setPersistenceUnitName("numPortal");
+    localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.BEAN_CONTAINER, new SpringBeanContainer(beanFactory));
+    localContainerEntityManagerFactoryBean.getJpaPropertyMap().put(AvailableSettings.IMPLICIT_NAMING_STRATEGY, new SpringImplicitNamingStrategy());
+    localContainerEntityManagerFactoryBean.getJpaPropertyMap()
+                                          .put(AvailableSettings.PHYSICAL_NAMING_STRATEGY, new CamelCaseToUnderscoresNamingStrategy());
+    localContainerEntityManagerFactoryBean.getJpaPropertyMap().put("hibernate.order_by.default_null_ordering", "last");
+    HibernateJpaVendorAdapter hibernateJpaVendorAdapter = new HibernateJpaVendorAdapter();
+    hibernateJpaVendorAdapter.setGenerateDdl(false);
+    hibernateJpaVendorAdapter.setShowSql(showSql);
 
-        localContainerEntityManagerFactoryBean.setJpaVendorAdapter(hibernateJpaVendorAdapter);
-        return localContainerEntityManagerFactoryBean;
-    }
+    localContainerEntityManagerFactoryBean.setJpaVendorAdapter(hibernateJpaVendorAdapter);
+    return localContainerEntityManagerFactoryBean;
+  }
 
-    @Primary
-    @Bean
-    @ConfigurationProperties("spring.jpa")
-    public PlatformTransactionManager numTransactionManager(
-            @Qualifier("numEntityManagerFactory") LocalContainerEntityManagerFactoryBean entityManagerFactoryBean) {
-        return new JpaTransactionManager(Objects.requireNonNull(entityManagerFactoryBean.getObject()));
-    }
+  @Primary
+  @Bean
+  @ConfigurationProperties("spring.jpa")
+  public PlatformTransactionManager numTransactionManager(
+      @Qualifier("numEntityManagerFactory") LocalContainerEntityManagerFactoryBean entityManagerFactoryBean) {
+    return new JpaTransactionManager(Objects.requireNonNull(entityManagerFactoryBean.getObject()));
+  }
 
 }

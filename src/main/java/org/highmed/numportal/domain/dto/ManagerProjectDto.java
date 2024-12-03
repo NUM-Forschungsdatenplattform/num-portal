@@ -11,7 +11,10 @@ import java.util.List;
 @Schema
 public class ManagerProjectDto {
 
-  @NotNull private CohortDto cohort;
+  @NotNull
+  private CohortDto cohort;
 
-  @NotNull @NotEmpty private List<String> templates;
+  @NotNull
+  @NotEmpty
+  private List<String> templates;
 }

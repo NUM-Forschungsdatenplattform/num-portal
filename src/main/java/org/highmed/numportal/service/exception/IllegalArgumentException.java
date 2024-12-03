@@ -5,17 +5,17 @@ import lombok.Getter;
 @Getter
 public class IllegalArgumentException extends RuntimeException {
 
-    private final Class<?> entity;
+  private final Class<?> entity;
 
-    private final String paramValue;
+  private final String paramValue;
 
-    private final String message;
+  private final String message;
 
-    public IllegalArgumentException(Class<?> entity, String message) {
-        super(message);
-        this.entity = entity;
-        this.paramValue = message;
-        this.message = message;
-    }
+  public IllegalArgumentException(Class<?> entity, String message) {
+    super(message);
+    this.entity = entity;
+    this.paramValue = message;
+    this.message = message;
+  }
 
 }

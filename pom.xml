@@ -7,36 +7,36 @@
 
   <groupId>org.highmed.num-portal</groupId>
   <artifactId>num-portal</artifactId>
-  <version>1.21.0</version>
+  <version>1.22.0</version>
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.3.3</version>
+    <version>3.3.5</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
   <properties>
     <commons-collections4.version>4.4</commons-collections4.version>
-    <commons-io.version>2.16.1</commons-io.version>
-    <ehr-sdk.version>2.17.0</ehr-sdk.version>
+    <commons-io.version>2.18.0</commons-io.version>
+    <ehr-sdk.version>2.20.0</ehr-sdk.version>
     <!-- aql-editor-backend-starter repo was archived on August 2023 -->
     <num-aql-editor-backend-starter.version>1.0.5</num-aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
-    <logback-classic.version>1.5.7</logback-classic.version>
+    <logback-classic.version>1.5.12</logback-classic.version>
     <modelmapper.version>3.2.1</modelmapper.version>
     <springdoc.version>2.6.0</springdoc.version>
     <java.version>17</java.version>
-    <commons-csv.version>1.11.0</commons-csv.version>
+    <commons-csv.version>1.12.0</commons-csv.version>
     <jacoco.version>0.8.12</jacoco.version>
-    <failsafe.version>3.5.0</failsafe.version>
-    <surefire.version>3.5.0</surefire.version>
+    <failsafe.version>3.5.2</failsafe.version>
+    <surefire.version>3.5.2</surefire.version>
     <ehcache.version>3.10.8</ehcache.version>
     <git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
     <postgresql.version>42.7.4</postgresql.version>
     <hapi.version>6.8.3</hapi.version>
-    <testcontainers.version>1.20.1</testcontainers.version>
+    <testcontainers.version>1.20.4</testcontainers.version>
     <mockserver-client.version>5.15.0</mockserver-client.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
     <spring.cloud-version>2023.0.3</spring.cloud-version>
@@ -277,7 +277,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.8.0</version>
+        <version>3.8.1</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -464,6 +464,33 @@
           </includeOnlyProperties>
           <commitIdGenerationMode>full</commitIdGenerationMode>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.6.0</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>10.20.2</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <configLocation>.config/checkstyle.xml</configLocation>
+          <consoleOutput>true</consoleOutput>
+          <failsOnError>true</failsOnError>
+          <failOnViolation>true</failOnViolation>
+        </configuration>
+        <executions>
+          <execution>
+            <id>validate</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

@@ -1,7 +1,6 @@
 package org.highmed.numportal.domain.specification;
 
 import jakarta.persistence.criteria.*;
-import org.highmed.numportal.domain.specification.AqlSpecification;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

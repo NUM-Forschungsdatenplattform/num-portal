@@ -10,14 +10,15 @@ import org.highmed.numportal.mapper.CohortMapper;
 import org.highmed.numportal.service.CohortService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
 import org.highmed.numportal.service.exception.dto.ErrorDetails;
+import org.highmed.numportal.service.logger.ContextLog;
+import org.highmed.numportal.web.config.Role;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.highmed.numportal.service.logger.ContextLog;
-import org.highmed.numportal.web.config.Role;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,14 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.Map;
@@ -106,9 +114,9 @@ public class CohortController extends CustomizedExceptionHandler {
     if (!Roles.extractRoles(principal).contains(Roles.MANAGER)) {
       sizePerTemplate =
           sizePerTemplate.entrySet().stream()
-              .collect(
-                  Collectors.toMap(
-                      Entry::getKey, entry -> cohortService.getRoundedSize(entry.getValue())));
+                         .collect(
+                             Collectors.toMap(
+                                 Entry::getKey, entry -> cohortService.getRoundedSize(entry.getValue())));
     }
 
     return ResponseEntity.ok(sizePerTemplate);
@@ -129,14 +137,15 @@ public class CohortController extends CustomizedExceptionHandler {
   }
 
   @Override
-  protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+  protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status,
+      WebRequest request) {
     log.warn("Request for {} failed with error message {} ", request.getDescription(false), ex.getMessage());
-    Map<String,String> errors = Map.of("Error", "error.missing_request_body");
+    Map<String, String> errors = Map.of("Error", "error.missing_request_body");
     ErrorDetails errorDetails = ErrorDetails
-            .builder()
-            .message( "Request body is required" )
-            .details( errors )
-            .build();
-    return ResponseEntity.status(status).body( errorDetails );
+        .builder()
+        .message("Request body is required")
+        .details(errors)
+        .build();
+    return ResponseEntity.status(status).body(errorDetails);
   }
 }

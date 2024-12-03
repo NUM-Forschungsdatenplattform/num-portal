@@ -4,17 +4,23 @@ import org.highmed.numportal.domain.model.Comment;
 import org.highmed.numportal.domain.model.Project;
 import org.highmed.numportal.domain.model.admin.UserDetails;
 import org.highmed.numportal.domain.repository.CommentRepository;
-import lombok.AllArgsConstructor;
 import org.highmed.numportal.service.exception.BadRequestException;
 import org.highmed.numportal.service.exception.ForbiddenException;
 import org.highmed.numportal.service.exception.ResourceNotFound;
+
+import lombok.AllArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_DELETE_COMMENT;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.COMMENT_EDIT_FOR_COMMENT_WITH_ID_IS_NOT_ALLOWED_COMMENT_HAS_DIFFERENT_AUTHOR;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.COMMENT_NOT_FOUND;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.INVALID_COMMENT_ID;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.PROJECT_DOES_NOT_EXIST;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
 
 @Service
 @AllArgsConstructor

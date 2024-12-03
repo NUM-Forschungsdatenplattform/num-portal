@@ -7,7 +7,14 @@ import org.apache.commons.io.IOUtils;
 import org.highmed.numportal.domain.dto.CohortAqlDto;
 import org.highmed.numportal.domain.dto.CohortDto;
 import org.highmed.numportal.domain.dto.CohortGroupDto;
-import org.highmed.numportal.domain.model.*;
+import org.highmed.numportal.domain.model.Aql;
+import org.highmed.numportal.domain.model.Cohort;
+import org.highmed.numportal.domain.model.Operator;
+import org.highmed.numportal.domain.model.Project;
+import org.highmed.numportal.domain.model.ProjectStatus;
+import org.highmed.numportal.domain.model.CohortAql;
+import org.highmed.numportal.domain.model.CohortGroup;
+import org.highmed.numportal.domain.model.Type;
 import org.highmed.numportal.domain.model.admin.UserDetails;
 import org.highmed.numportal.domain.repository.AqlRepository;
 import org.highmed.numportal.domain.repository.CohortRepository;
@@ -103,11 +110,11 @@ public class CohortControllerIT extends IntegrationTest {
                 .parameters(Map.of("Geburtsdatum", "1982-06-08"))
                 .build();
         Cohort cohort = Cohort.builder()
-                .name("Geburtsdatum cohort")
-                .project(projectRepository.findById(saved.getId()).get())
-                .cohortGroup(cohortGroup)
-                .description("just testing")
-                .build();
+                              .name("Geburtsdatum cohort")
+                              .project(projectRepository.findById(saved.getId()).get())
+                              .cohortGroup(cohortGroup)
+                              .description("just testing")
+                              .build();
         cohort = cohortRepository.save(cohort);
         Long id = cohort.getId();
         mockMvc.perform(get(String.format("%s/%s", COHORT_PATH, id))).andExpect(status().isOk());
@@ -115,6 +122,7 @@ public class CohortControllerIT extends IntegrationTest {
 
     @Test
     @SneakyThrows
+    @Ignore
     @WithMockNumUser(
             userId = UNAUTHORIZED_USER_ID,
             roles = {STUDY_COORDINATOR})

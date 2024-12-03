@@ -1,5 +1,10 @@
 package org.highmed.numportal.domain.dto;
 
+import org.highmed.numportal.attachment.domain.dto.AttachmentDto;
+import org.highmed.numportal.domain.model.ProjectCategories;
+import org.highmed.numportal.domain.model.ProjectStatus;
+import org.highmed.numportal.domain.model.admin.User;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -9,10 +14,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.highmed.numportal.attachment.domain.dto.AttachmentDto;
-import org.highmed.numportal.domain.model.ProjectCategories;
-import org.highmed.numportal.domain.model.ProjectStatus;
-import org.highmed.numportal.domain.model.admin.User;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -40,7 +41,8 @@ public class ProjectDto {
 
   private boolean usedOutsideEu;
 
-  @Valid private List<TemplateInfoDto> templates;
+  @Valid
+  private List<TemplateInfoDto> templates;
 
   private Long cohortId;
 
@@ -77,7 +79,8 @@ public class ProjectDto {
   @NotNull(message = "Project endDate cannot be null")
   private LocalDate endDate;
 
-  @Builder.Default private boolean financed = false;
+  @Builder.Default
+  private boolean financed = false;
 
   @Schema(description = "attachment's id to be deleted")
   private Set<Long> attachmentsToBeDeleted;

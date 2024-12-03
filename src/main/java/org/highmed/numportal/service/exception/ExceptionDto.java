@@ -8,6 +8,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 public class ExceptionDto {
-    int id;
-    List<String> argumentsList;
+
+  int id;
+  List<String> argumentsList;
 }

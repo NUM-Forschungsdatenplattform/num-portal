@@ -9,10 +9,11 @@ import org.highmed.numportal.domain.model.ProjectCategories;
 import org.highmed.numportal.domain.model.Type;
 import org.highmed.numportal.domain.model.admin.User;
 import org.highmed.numportal.domain.repository.CohortRepository;
+import org.highmed.numportal.service.exception.SystemException;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.highmed.numportal.service.exception.SystemException;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +40,8 @@ public class ProjectDocCreator {
   public byte[] getDocBytesOfProject(ProjectDto projectInfo, Locale locale)
       throws IOException {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream,
+    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
+        outputStream,
         StandardCharsets.UTF_8);
     writeDocument(projectInfo, outputStreamWriter, locale);
     outputStreamWriter.close();
@@ -71,8 +73,8 @@ public class ProjectDocCreator {
     String categoriesString = StringUtils.EMPTY;
     if (categories != null) {
       categoriesString = categories.stream().map(category -> messageSource.getMessage(
-              "category." + category.toString().toLowerCase(Locale.ROOT), null, locale))
-          .collect(Collectors.joining(", "));
+                                       "category." + category.toString().toLowerCase(Locale.ROOT), null, locale))
+                                   .collect(Collectors.joining(", "));
     }
     addSection("category", categoriesString, outputStreamWriter, locale);
     addSection("start_date",
@@ -91,7 +93,7 @@ public class ProjectDocCreator {
     List<TemplateInfoDto> templates = project.getTemplates();
     if (templates != null) {
       templatesString = templates.stream().map(TemplateInfoDto::getName)
-          .collect(Collectors.joining("\n"));
+                                 .collect(Collectors.joining("\n"));
     }
     addSection("templates", templatesString, outputStreamWriter, locale);
     addSection("cohort", getCohort(project), outputStreamWriter, locale);
@@ -103,8 +105,8 @@ public class ProjectDocCreator {
       return StringUtils.EMPTY;
     }
     Cohort cohort = cohortRepository.findById(cohortId)
-        .orElseThrow(() -> new SystemException(ProjectDocCreator.class, CAN_T_FIND_THE_COHORT_BY_ID,
-                String.format(CAN_T_FIND_THE_COHORT_BY_ID, cohortId)));
+                                    .orElseThrow(() -> new SystemException(ProjectDocCreator.class, CAN_T_FIND_THE_COHORT_BY_ID,
+                                        String.format(CAN_T_FIND_THE_COHORT_BY_ID, cohortId)));
     CohortGroup group = cohort.getCohortGroup();
     if (group == null) {
       return StringUtils.EMPTY;
@@ -139,7 +141,7 @@ public class ProjectDocCreator {
     }
     builder.append(
         parameters.entrySet().stream().map(entry -> entry.getKey() + ":" + entry.getValue())
-            .collect(Collectors.joining(", ")));
+                  .collect(Collectors.joining(", ")));
   }
 
   private String getYesNo(boolean yesNo, Locale locale) {

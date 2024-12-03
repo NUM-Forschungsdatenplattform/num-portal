@@ -9,7 +9,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** Dto for template information linked to a project */
+/**
+ * Dto for template information linked to a project
+ */
 @Data
 @Builder
 @Schema

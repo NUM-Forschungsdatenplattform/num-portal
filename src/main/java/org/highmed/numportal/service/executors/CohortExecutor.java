@@ -3,11 +3,12 @@ package org.highmed.numportal.service.executors;
 import org.highmed.numportal.domain.model.Cohort;
 import org.highmed.numportal.domain.model.CohortGroup;
 import org.highmed.numportal.domain.model.Type;
+import org.highmed.numportal.service.ehrbase.EhrBaseService;
+import org.highmed.numportal.service.exception.IllegalArgumentException;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.SetUtils;
-import org.highmed.numportal.service.ehrbase.EhrBaseService;
-import org.highmed.numportal.service.exception.IllegalArgumentException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,8 +42,8 @@ public class CohortExecutor {
 
       List<Set<String>> sets =
           cohortGroup.getChildren().stream()
-              .map(e -> executeGroup(e, allowUsageOutsideEu))
-              .collect(Collectors.toList());
+                     .map(e -> executeGroup(e, allowUsageOutsideEu))
+                     .collect(Collectors.toList());
 
       return setOperations.apply(
           cohortGroup.getOperator(), sets, ehrBaseService.getAllPatientIds());

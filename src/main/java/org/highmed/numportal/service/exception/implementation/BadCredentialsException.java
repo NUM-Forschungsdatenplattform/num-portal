@@ -5,9 +5,9 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class BadCredentialsException extends RuntimeException  {
+public class BadCredentialsException extends RuntimeException {
 
-    private final Class<?> entity;
+  private final Class<?> entity;
 
-    private final String parameter;
+  private final String parameter;
 }

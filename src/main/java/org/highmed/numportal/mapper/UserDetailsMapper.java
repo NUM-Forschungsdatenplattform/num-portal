@@ -2,6 +2,7 @@ package org.highmed.numportal.mapper;
 
 import org.highmed.numportal.domain.dto.UserDetailsDto;
 import org.highmed.numportal.domain.model.admin.UserDetails;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;

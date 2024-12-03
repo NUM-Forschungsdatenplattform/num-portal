@@ -1,7 +1,5 @@
 package org.highmed.numportal.web.feign.config;
 
-import java.util.Collection;
-
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -10,6 +8,8 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Component;
+
+import java.util.Collection;
 
 @Component
 @AllArgsConstructor

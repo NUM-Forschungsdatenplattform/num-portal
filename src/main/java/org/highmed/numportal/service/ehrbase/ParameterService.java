@@ -1,5 +1,9 @@
 package org.highmed.numportal.service.ehrbase;
 
+import org.highmed.numportal.domain.dto.ParameterOptionsDto;
+import org.highmed.numportal.service.UserDetailsService;
+import org.highmed.numportal.service.util.AqlQueryConstants;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +11,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.nedap.archie.rm.RMObject;
 import com.nedap.archie.rm.datavalues.DvBoolean;
 import com.nedap.archie.rm.datavalues.DvCodedText;
+import com.nedap.archie.rm.datavalues.DvText;
 import com.nedap.archie.rm.datavalues.SingleValuedDataValue;
 import com.nedap.archie.rm.datavalues.quantity.DvCount;
 import com.nedap.archie.rm.datavalues.quantity.DvOrdinal;
@@ -30,16 +35,17 @@ import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.TemporalAccessorDeSerializer;
 import org.ehrbase.openehr.sdk.client.openehrclient.defaultrestclient.VersionUidDeSerializer;
 import org.ehrbase.openehr.sdk.serialisation.jsonencoding.ArchieObjectMapperProvider;
-import org.highmed.numportal.domain.dto.ParameterOptionsDto;
-import org.highmed.numportal.service.UserDetailsService;
-import org.highmed.numportal.service.util.AqlQueryConstants;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.temporal.TemporalAccessor;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -106,12 +112,12 @@ public class ParameterService {
 
   private ParameterOptionsDto getParameters(String aqlPath, String archetypeId, String postfix) {
     String query;
-    if(aqlPath.startsWith("/")) {
+    if (aqlPath.startsWith("/")) {
       query =
-              createQueryString(aqlPath.substring(1, aqlPath.length() - postfix.length()), archetypeId);
+          createQueryString(aqlPath.substring(1, aqlPath.length() - postfix.length()), archetypeId);
     } else {
       query =
-              createQueryString(aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
+          createQueryString(aqlPath.substring(0, aqlPath.length() - postfix.length()), archetypeId);
     }
     try {
       log.info(
@@ -133,30 +139,32 @@ public class ParameterService {
                   var rowString = buildAqlObjectMapper().writeValueAsString(row.get(0));
                   log.debug("[AQL parameter] query response data row {} ", rowString);
                   var element =
-                          (SingleValuedDataValue<?>)
-                                  buildAqlObjectMapper().readValue(rowString, RMObject.class);
+                      (SingleValuedDataValue<?>)
+                          buildAqlObjectMapper().readValue(rowString, RMObject.class);
                   if (Objects.nonNull(element.getValue())) {
-                    if (element.getValue().getClass().isAssignableFrom(DvCodedText.class)) {
+                    if (element.getValue() instanceof DvCodedText) {
                       convertDvCodedText((DvCodedText) element.getValue(), parameterOptions, postfix);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvQuantity.class)) {
+                    } else if (element.getValue() instanceof DvText) {
+                      convertDvText((DvText) element.getValue(), parameterOptions, postfix);
+                    } else if (element.getValue() instanceof DvQuantity) {
                       convertDvQuantity((DvQuantity) element.getValue(), parameterOptions, postfix);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvOrdinal.class)) {
+                    } else if (element.getValue() instanceof DvOrdinal) {
                       convertDvOrdinal((DvOrdinal) element.getValue(), parameterOptions, postfix);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvBoolean.class)) {
+                    } else if (element.getValue() instanceof DvBoolean) {
                       convertDvBoolean(parameterOptions);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvDate.class)) {
+                    } else if (element.getValue() instanceof DvDate) {
                       convertDvDate(parameterOptions);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvDateTime.class)) {
+                    } else if (element.getValue() instanceof DvDateTime) {
                       convertDvDateTime(parameterOptions);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvTime.class)) {
+                    } else if (element.getValue() instanceof DvTime) {
                       convertTime(parameterOptions);
-                    } else if (element.getClass().isAssignableFrom(DvDateTime.class)) {
+                    } else if (element instanceof DvDateTime) {
                       // workaround for openEHR-EHR-OBSERVATION.blood_pressure.v2 and aqlPath:
                       ///data[at0001]/events[at0006]/time/value
                       convertDvDateTime(parameterOptions);
-                    } else if (element.getValue().getClass().isAssignableFrom(DvCount.class)) {
+                    } else if (element.getValue() instanceof DvCount) {
                       parameterOptions.setType("DV_COUNT");
-                    } else if (element.getValue().getClass().isAssignableFrom(DvDuration.class)) {
+                    } else if (element.getValue() instanceof DvDuration) {
                       parameterOptions.setType("DV_DURATION");
                     }
                   }
@@ -172,13 +180,15 @@ public class ParameterService {
     Map<String, Object> options = parameterOptions.getOptions();
     parameterOptions.setOptions(new LinkedHashMap<>());
     options.keySet().stream()
-            .sorted(String.CASE_INSENSITIVE_ORDER)
-            .forEach(e -> parameterOptions.getOptions().put(e, options.get(e)));
+           .sorted(String.CASE_INSENSITIVE_ORDER)
+           .forEach(e -> parameterOptions.getOptions().put(e, options.get(e)));
 
     return parameterOptions;
   }
 
-  /** Create the aql query for retrieving all distinct existing values of a certain aql path */
+  /**
+   * Create the aql query for retrieving all distinct existing values of a certain aql path
+   */
   private String createQueryString(String aqlPath, String archetypeId) {
     var aql = new AqlQuery();
 
@@ -204,7 +214,7 @@ public class ParameterService {
     // generate contains expression
     ContainmentClassExpression contains = new ContainmentClassExpression();
     contains.setType(StringUtils.substringBetween(archetypeId, "openEHR-EHR-", "."));
-    contains.setIdentifier("c0"+"[" + archetypeId + "]");
+    contains.setIdentifier("c0" + "[" + archetypeId + "]");
 
     from.setContains(contains);
 
@@ -222,6 +232,14 @@ public class ParameterService {
     }
     dto.setType("DV_CODED_TEXT");
     dto.getOptions().put(data.getDefiningCode().getCodeString(), data.getValue());
+  }
+
+  private void convertDvText(DvText data, ParameterOptionsDto dto, String postfix) {
+    if (VALUE_MAGNITUDE.equals(postfix)) {
+      return;
+    }
+    dto.setType("DV_TEXT");
+    dto.getOptions().put(data.getValue(), data.getValue());
   }
 
   private void convertDvQuantity(DvQuantity data, ParameterOptionsDto dto, String postfix) {

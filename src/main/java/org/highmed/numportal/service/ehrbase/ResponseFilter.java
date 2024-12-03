@@ -6,7 +6,6 @@ import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,11 +16,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 
 @Component
 @NoArgsConstructor
 @Slf4j
 public class ResponseFilter {
+
   private HashSet<String> pathFilters;
   private List<Pattern> regexpFilters;
 
@@ -29,19 +30,19 @@ public class ResponseFilter {
   public void initialize() {
     try {
       BufferedReader pathResource = new BufferedReader(new InputStreamReader(
-              new ClassPathResource("resultfilters/pathfilters.txt").getInputStream(), StandardCharsets.UTF_8));
+          new ClassPathResource("resultfilters/pathfilters.txt").getInputStream(), StandardCharsets.UTF_8));
       pathFilters = new HashSet<>(pathResource.lines().toList());
       BufferedReader regexpResource = new BufferedReader(new InputStreamReader(
-              new ClassPathResource("resultfilters/regexpfilters.txt").getInputStream(), StandardCharsets.UTF_8));
+          new ClassPathResource("resultfilters/regexpfilters.txt").getInputStream(), StandardCharsets.UTF_8));
       regexpFilters = regexpResource.lines().map(Pattern::compile).collect(
-              Collectors.toList());
+          Collectors.toList());
     } catch (IOException e) {
       log.error("Failed to read project data filters, can't filter results.");
     }
   }
 
   public List<QueryResponseData> filterResponse(List<QueryResponseData> queryResponseDataList) {
-    if(pathFilters == null){
+    if (pathFilters == null) {
       return queryResponseDataList;
     }
     List<QueryResponseData> resultList = new ArrayList<>();
@@ -49,7 +50,7 @@ public class ResponseFilter {
       List<Map<String, String>> filteredColumns = new ArrayList<>();
       List<List<Object>> filteredRows = new ArrayList<>();
       QueryResponseData filteredResponse = new QueryResponseData();
-      if(isValidQueryResponseData(queryResponseData)) {
+      if (isValidQueryResponseData(queryResponseData)) {
         for (int i = 0; i < queryResponseData.getRows().size(); i++) {
           filteredRows.add(new ArrayList<>());
         }
@@ -77,7 +78,7 @@ public class ResponseFilter {
 
   private boolean keepColumn(Map<String, String> column) {
     String path = column.get("path");
-    if(pathFilters.contains(path)){
+    if (pathFilters.contains(path)) {
       return false;
     }
     return regexpFilters.stream().filter(regexp -> regexp.matcher(path).matches()).findFirst().isEmpty();

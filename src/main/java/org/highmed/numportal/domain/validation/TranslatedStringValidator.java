@@ -1,10 +1,10 @@
 package org.highmed.numportal.domain.validation;
 
-import java.util.Map;
-
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.apache.logging.log4j.util.Strings;
+
+import java.util.Map;
 
 public class TranslatedStringValidator
     implements ConstraintValidator<ValidTranslatedString, Map<String, String>> {

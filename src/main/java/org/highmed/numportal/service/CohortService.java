@@ -11,6 +11,17 @@ import org.highmed.numportal.domain.model.ProjectStatus;
 import org.highmed.numportal.domain.repository.CohortRepository;
 import org.highmed.numportal.domain.repository.ProjectRepository;
 import org.highmed.numportal.properties.PrivacyProperties;
+import org.highmed.numportal.service.ehrbase.EhrBaseService;
+import org.highmed.numportal.service.exception.BadRequestException;
+import org.highmed.numportal.service.exception.ForbiddenException;
+import org.highmed.numportal.service.exception.PrivacyException;
+import org.highmed.numportal.service.exception.ResourceNotFound;
+import org.highmed.numportal.service.executors.CohortExecutor;
+import org.highmed.numportal.service.policy.EhrPolicy;
+import org.highmed.numportal.service.policy.Policy;
+import org.highmed.numportal.service.policy.ProjectPolicyService;
+import org.highmed.numportal.service.policy.TemplatesPolicy;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -25,40 +36,35 @@ import org.ehrbase.openehr.sdk.aql.dto.operand.QueryParameter;
 import org.ehrbase.openehr.sdk.aql.parser.AqlQueryParser;
 import org.ehrbase.openehr.sdk.aql.render.AqlRenderer;
 import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
-import org.highmed.numportal.service.ehrbase.EhrBaseService;
-import org.highmed.numportal.service.exception.BadRequestException;
-import org.highmed.numportal.service.exception.ForbiddenException;
-import org.highmed.numportal.service.exception.PrivacyException;
-import org.highmed.numportal.service.exception.ResourceNotFound;
-import org.highmed.numportal.service.executors.CohortExecutor;
-import org.highmed.numportal.service.policy.EhrPolicy;
-import org.highmed.numportal.service.policy.Policy;
-import org.highmed.numportal.service.policy.ProjectPolicyService;
-import org.highmed.numportal.service.policy.TemplatesPolicy;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CHANGING_COHORT_ONLY_ALLOWED_BY_THE_OWNER_OF_THE_PROJECT;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.COHORT_CHANGE_ONLY_ALLOWED_ON_PROJECT_STATUS_DRAFT_OR_PENDING;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.COHORT_GROUP_CANNOT_BE_EMPTY;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.COHORT_NOT_FOUND;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.INVALID_AQL_ID;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.INVALID_COHORT_GROUP_AQL_MISSING;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.INVALID_COHORT_GROUP_AQL_MISSING_PARAMETERS;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.INVALID_COHORT_GROUP_CHILDREN_MISSING;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.PROJECT_NOT_FOUND;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class CohortService {
-
-  private final CohortRepository cohortRepository;
-  private final CohortExecutor cohortExecutor;
-  private final UserDetailsService userDetailsService;
-  private final ModelMapper modelMapper;
-  private final AqlService aqlService;
-  private final ProjectRepository projectRepository;
-  private final PrivacyProperties privacyProperties;
-  private final ProjectPolicyService policyService;
-  private final EhrBaseService ehrBaseService;
-  private final ContentService contentService;
-  private final TemplateService templateService;
 
   public static final String GET_PATIENTS_PER_CLINIC =
       "SELECT e/ehr_id/value as patient_id "
@@ -74,11 +80,22 @@ public class CohortService {
   private static final String AGE_INTERVAL_LABEL = "%d-%d";
   private static final int MAX_AGE = 122;
   private static final int AGE_INTERVAL = 10;
+  private final CohortRepository cohortRepository;
+  private final CohortExecutor cohortExecutor;
+  private final UserDetailsService userDetailsService;
+  private final ModelMapper modelMapper;
+  private final AqlService aqlService;
+  private final ProjectRepository projectRepository;
+  private final PrivacyProperties privacyProperties;
+  private final ProjectPolicyService policyService;
+  private final EhrBaseService ehrBaseService;
+  private final ContentService contentService;
+  private final TemplateService templateService;
 
   public Cohort getCohort(Long cohortId, String userId) {
     userDetailsService.checkIsUserApproved(userId);
     return cohortRepository.findById(cohortId).orElseThrow(
-            () -> new ResourceNotFound(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId)));
+        () -> new ResourceNotFound(CohortService.class, COHORT_NOT_FOUND, String.format(COHORT_NOT_FOUND, cohortId)));
   }
 
   public Cohort createCohort(CohortDto cohortDto, String userId) {
@@ -94,11 +111,11 @@ public class CohortService {
 
     Cohort cohort =
         Cohort.builder()
-            .name(cohortDto.getName())
-            .description(cohortDto.getDescription())
-            .project(project)
-            .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()))
-            .build();
+              .name(cohortDto.getName())
+              .description(cohortDto.getDescription())
+              .project(project)
+              .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()))
+              .build();
 
     project.setCohort(cohort);
     log.info("Cohort created by user {}", userId);
@@ -107,10 +124,10 @@ public class CohortService {
 
   public Cohort toCohort(CohortDto cohortDto) {
     return Cohort.builder()
-        .name(cohortDto.getName())
-        .description(cohortDto.getDescription())
-        .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()))
-        .build();
+                 .name(cohortDto.getName())
+                 .description(cohortDto.getDescription())
+                 .cohortGroup(convertToCohortGroupEntity(cohortDto.getCohortGroup()))
+                 .build();
   }
 
   public Set<String> executeCohort(long cohortId, Boolean allowUsageOutsideEu) {
@@ -140,8 +157,8 @@ public class CohortService {
 
     Cohort cohort =
         Cohort.builder()
-            .cohortGroup(convertToCohortGroupEntity(requestDto.getCohortDto().getCohortGroup()))
-            .build();
+              .cohortGroup(convertToCohortGroupEntity(requestDto.getCohortDto().getCohortGroup()))
+              .build();
 
     Set<String> ehrIds = cohortExecutor.execute(cohort, false);
     if (ehrIds.size() < privacyProperties.getMinHits()) {
@@ -253,7 +270,7 @@ public class CohortService {
     }
     if (CollectionUtils.isNotEmpty(cohortGroupDto.getChildren())) {
       cohortGroupDto.getChildren()
-              .forEach(this::validateCohortParameters);
+                    .forEach(this::validateCohortParameters);
     }
   }
 
@@ -269,7 +286,7 @@ public class CohortService {
       if (cohortGroupDto.getQuery() != null && cohortGroupDto.getQuery().getId() != null) {
         if (!aqlService.existsById(cohortGroupDto.getQuery().getId())) {
           throw new BadRequestException(CohortGroup.class, INVALID_AQL_ID,
-                  String.format("%s: %s", INVALID_AQL_ID, cohortGroupDto.getQuery().getId()));
+              String.format("%s: %s", INVALID_AQL_ID, cohortGroupDto.getQuery().getId()));
         }
       } else {
         throw new BadRequestException(CohortGroup.class, INVALID_COHORT_GROUP_AQL_MISSING);
@@ -279,14 +296,14 @@ public class CohortService {
     if (cohortGroupDto.isGroup()) {
       if (CollectionUtils.isNotEmpty(cohortGroup.getChildren())) {
         cohortGroup.setChildren(
-                cohortGroupDto.getChildren().stream()
-                        .map(
-                                child -> {
-                                  CohortGroup cohortGroupChild = convertToCohortGroupEntity(child);
-                                  cohortGroupChild.setParent(cohortGroup);
-                                  return cohortGroupChild;
-                                })
-                        .collect(Collectors.toList()));
+            cohortGroupDto.getChildren().stream()
+                          .map(
+                              child -> {
+                                CohortGroup cohortGroupChild = convertToCohortGroupEntity(child);
+                                cohortGroupChild.setParent(cohortGroup);
+                                return cohortGroupChild;
+                              })
+                          .collect(Collectors.toList()));
       } else {
         throw new BadRequestException(CohortService.class, INVALID_COHORT_GROUP_CHILDREN_MISSING);
       }
@@ -348,7 +365,7 @@ public class CohortService {
       for (String clinic : clinics) {
         if (Objects.nonNull(clinic)) {
           QueryResponseData queryResponseData =
-                  ehrBaseService.executePlainQuery(String.format(GET_PATIENTS_PER_CLINIC, clinic, idsString));
+              ehrBaseService.executePlainQuery(String.format(GET_PATIENTS_PER_CLINIC, clinic, idsString));
           List<List<Object>> rows = queryResponseData.getRows();
           if (rows == null) {
             sizes.put(clinic, 0);

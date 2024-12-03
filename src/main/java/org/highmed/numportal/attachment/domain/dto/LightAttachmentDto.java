@@ -1,14 +1,13 @@
 package org.highmed.numportal.attachment.domain.dto;
 
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -17,8 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 @AllArgsConstructor
 public class LightAttachmentDto {
 
-    private List<String> description;
+  private List<String> description;
 
-    private MultipartFile[] files;
+  private MultipartFile[] files;
 
 }

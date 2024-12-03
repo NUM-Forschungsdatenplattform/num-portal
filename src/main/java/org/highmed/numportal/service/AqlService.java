@@ -1,14 +1,5 @@
 package org.highmed.numportal.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
-import org.ehrbase.aqleditor.dto.aql.Result;
-import org.ehrbase.aqleditor.service.AqlEditorAqlService;
-import org.ehrbase.openehr.sdk.aql.parser.AqlParseException;
 import org.highmed.numportal.domain.dto.Language;
 import org.highmed.numportal.domain.dto.SearchCriteria;
 import org.highmed.numportal.domain.dto.SlimAqlDto;
@@ -26,17 +17,48 @@ import org.highmed.numportal.service.exception.BadRequestException;
 import org.highmed.numportal.service.exception.ForbiddenException;
 import org.highmed.numportal.service.exception.PrivacyException;
 import org.highmed.numportal.service.exception.ResourceNotFound;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.ehrbase.aqleditor.dto.aql.QueryValidationResponse;
+import org.ehrbase.aqleditor.dto.aql.Result;
+import org.ehrbase.aqleditor.service.AqlEditorAqlService;
+import org.ehrbase.openehr.sdk.aql.parser.AqlParseException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.highmed.numportal.domain.templates.ExceptionsTemplate.*;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.AQL_NOT_FOUND;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_AQL;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_DELETE_AQL;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_FIND_AQL;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CATEGORY_BY_ID_NOT_FOUND;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CATEGORY_ID_CANT_BE_NULL;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CATEGORY_WITH_ID_DOES_NOT_EXIST;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.INVALID_AQL_ID;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.THE_CATEGORY_IS_NOT_EMPTY_CANT_DELETE_IT;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS;
 
 @Slf4j
 @Service
@@ -52,7 +74,8 @@ public class AqlService {
 
   private static final String AQL_CATEGORY = "category";
   private static final List<String> AQL_CATEGORY_SORT_FIELDS = Arrays.asList("name-de", "name-en");
-  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList(AQL_NAME_GERMAN, AQL_NAME_ENGLISH, AUTHOR_NAME, ORGANIZATION_NAME, AQL_CREATE_DATE, AQL_CATEGORY);
+  private static final List<String> AQL_QUERY_SORT_FIELDS = Arrays.asList(
+      AQL_NAME_GERMAN, AQL_NAME_ENGLISH, AUTHOR_NAME, ORGANIZATION_NAME, AQL_CREATE_DATE, AQL_CATEGORY);
   private final AqlRepository aqlRepository;
   private final AqlCategoryRepository aqlCategoryRepository;
   private final EhrBaseService ehrBaseService;
@@ -64,7 +87,7 @@ public class AqlService {
   private final UserService userService;
 
   /**
-   * Counts the number of aql queries existing in the platform
+   * Counts the number of aql queries existing in the platform.
    *
    * @return The number of existing AQL queries in the platform
    */
@@ -77,7 +100,7 @@ public class AqlService {
 
     var aql =
         aqlRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFound(AqlService.class, AQL_NOT_FOUND, String.format(AQL_NOT_FOUND, id)));
+            () -> new ResourceNotFound(AqlService.class, AQL_NOT_FOUND, String.format(AQL_NOT_FOUND, id)));
 
     if (aql.isViewable(loggedInUserId)) {
       return aql;
@@ -94,12 +117,12 @@ public class AqlService {
   public Page<Aql> getVisibleAqls(String loggedInUserId, Pageable pageable, SearchCriteria searchCriteria) {
     UserDetails userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
-    Sort sort = validateAndGetSortForAQLQuery(searchCriteria);
+    Sort sort = validateAndGetSortForAqlQuery(searchCriteria);
     Pageable pageRequest;
     Page<Aql> aqlPage;
     List<Aql> aqlQueries;
     if (!searchCriteria.isSortByAuthor()) {
-      if(AQL_CATEGORY.equals(searchCriteria.getSortBy())) {
+      if (AQL_CATEGORY.equals(searchCriteria.getSortBy())) {
         // sort send on page request messes up the generated query for order by and ignores what is inside aql specification
         pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
       } else {
@@ -117,22 +140,23 @@ public class AqlService {
     }
     Language language = Objects.nonNull(searchCriteria.getLanguage()) ? searchCriteria.getLanguage() : Language.de;
     AqlSpecification aqlSpecification = AqlSpecification.builder()
-            .filter(searchCriteria.getFilter())
-            .loggedInUserId(loggedInUserId)
-            .loggedInUserOrganizationId((userDetails.getOrganization() != null) ? userDetails.getOrganization().getId() : null)
-            .ownersUUID(usersUUID)
-            .language(language)
-            .sortOrder(sort.getOrderFor(searchCriteria.getSortBy()))
-            .build();
+                                                        .filter(searchCriteria.getFilter())
+                                                        .loggedInUserId(loggedInUserId)
+                                                        .loggedInUserOrganizationId(
+                                                            (userDetails.getOrganization() != null) ? userDetails.getOrganization().getId() : null)
+                                                        .ownersUUID(usersUUID)
+                                                        .language(language)
+                                                        .sortOrder(sort.getOrderFor(searchCriteria.getSortBy()))
+                                                        .build();
     aqlPage = aqlRepository.findAll(aqlSpecification, pageRequest);
     aqlQueries = new ArrayList<>(aqlPage.getContent());
 
     if (searchCriteria.isSortByAuthor()) {
       sortAqlQueries(aqlQueries, sort);
       aqlQueries = aqlQueries.stream()
-              .skip((long) pageable.getPageNumber() * pageable.getPageSize())
-              .limit(pageable.getPageSize())
-              .collect(Collectors.toList());
+                             .skip((long) pageable.getPageNumber() * pageable.getPageSize())
+                             .limit(pageable.getPageSize())
+                             .collect(Collectors.toList());
     }
     return new PageImpl<>(aqlQueries, pageable, aqlPage.getTotalElements());
   }
@@ -154,13 +178,14 @@ public class AqlService {
       }
     }
   }
+
   public Aql createAql(Aql aql, String loggedInUserId, Long aqlCategoryId) {
     var userDetails = userDetailsService.checkIsUserApproved(loggedInUserId);
 
     if (Objects.nonNull(aqlCategoryId)) {
       AqlCategory aqlCategory = aqlCategoryRepository.findById(aqlCategoryId).orElseThrow(() ->
-              new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND,
-                      String.format(CATEGORY_BY_ID_NOT_FOUND, aqlCategoryId)));
+          new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND,
+              String.format(CATEGORY_BY_ID_NOT_FOUND, aqlCategoryId)));
       aql.setCategory(aqlCategory);
     }
 
@@ -180,13 +205,13 @@ public class AqlService {
             .orElseThrow(() -> new ResourceNotFound(AqlService.class, CANNOT_FIND_AQL, String.format(CANNOT_FIND_AQL, aqlId)));
     if (Objects.nonNull(aqlCategoryId)) {
       AqlCategory aqlCategory = aqlCategoryRepository.findById(aqlCategoryId).orElseThrow(() ->
-              new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND,
-                      String.format(CATEGORY_BY_ID_NOT_FOUND, aqlCategoryId)));
+          new ResourceNotFound(AqlService.class, CATEGORY_BY_ID_NOT_FOUND,
+              String.format(CATEGORY_BY_ID_NOT_FOUND, aqlCategoryId)));
       aqlToEdit.setCategory(aqlCategory);
     }
 
     if (aqlToEdit.hasEmptyOrDifferentOwner(loggedInUserId)) {
-      throw new ForbiddenException( AqlService.class, AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER,
+      throw new ForbiddenException(AqlService.class, AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER,
           String.format(AQL_EDIT_FOR_AQL_WITH_ID_IS_NOT_ALLOWED_AQL_HAS_DIFFERENT_OWNER, aqlId));
     }
 
@@ -225,19 +250,19 @@ public class AqlService {
 
     validateQuery(aql.getQuery());
 
-    Set<String> ehrIds;
+    int numberOfPatients;
     try {
-      ehrIds =
-          ehrBaseService.retrieveEligiblePatientIds(Aql.builder().query(aql.getQuery()).build());
+      numberOfPatients =
+          ehrBaseService.retrieveNumberOfPatients(Aql.builder().query(aql.getQuery()).build());
     } catch (AqlParseException e) {
       throw new BadRequestException(AqlParseException.class, e.getLocalizedMessage(), e.getMessage());
     }
 
-    if (ehrIds.size() < privacyProperties.getMinHits()) {
+    if (numberOfPatients < privacyProperties.getMinHits()) {
       log.warn(TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
       throw new PrivacyException(AqlService.class, TOO_FEW_MATCHES_RESULTS_WITHHELD_FOR_PRIVACY_REASONS);
     }
-    return ehrIds.size();
+    return numberOfPatients;
   }
 
   public List<AqlCategory> getAqlCategories() {
@@ -281,6 +306,7 @@ public class AqlService {
       throw new BadRequestException(AqlService.class, THE_CATEGORY_IS_NOT_EMPTY_CANT_DELETE_IT);
     }
   }
+
   public boolean existsById(Long aqlId) {
     return aqlRepository.existsById(aqlId);
   }
@@ -300,7 +326,7 @@ public class AqlService {
       try {
         log.error("AQL validation for query '{}' failed: {}", query, response.getMessage());
         throw new BadRequestException(QueryValidationResponse.class, COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE,
-                String.format(COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE, mapper.writeValueAsString(response)));
+            String.format(COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE, mapper.writeValueAsString(response)));
       } catch (JsonProcessingException e) {
         log.error(COULD_NOT_SERIALIZE_AQL_VALIDATION_RESPONSE, e);
       }
@@ -329,7 +355,7 @@ public class AqlService {
     return Optional.of(JpaSort.unsafe(Sort.Direction.ASC, "name->>'de'"));
   }
 
-  private Sort validateAndGetSortForAQLQuery(SearchCriteria searchCriteria) {
+  private Sort validateAndGetSortForAqlQuery(SearchCriteria searchCriteria) {
     if (searchCriteria.isValid() && StringUtils.isNotEmpty(searchCriteria.getSortBy())) {
       if (!AQL_QUERY_SORT_FIELDS.contains(searchCriteria.getSortBy())) {
         throw new BadRequestException(AqlService.class, String.format("Invalid %s sortBy field for aql queries", searchCriteria.getSortBy()));

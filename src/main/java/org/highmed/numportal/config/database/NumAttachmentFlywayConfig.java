@@ -13,22 +13,21 @@ import javax.sql.DataSource;
 @Configuration
 public class NumAttachmentFlywayConfig {
 
-    @Value("${spring.flyway.numportal-attachment.locations}")
-    private String flywayLocations;
+  private final DataSource dataSource;
+  @Value("${spring.flyway.numportal-attachment.locations}")
+  private String flywayLocations;
 
-    private final DataSource dataSource;
+  public NumAttachmentFlywayConfig(@Qualifier("numAttachmentDatasource") DataSource dataSource) {
+    this.dataSource = dataSource;
+  }
 
-    public NumAttachmentFlywayConfig(@Qualifier("numAttachmentDatasource") DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    @PostConstruct
-    public void executeMigration() {
-        Flyway.configure()
-                .dataSource(dataSource)
-                .locations(flywayLocations)
-                .baselineOnMigrate(true)
-                .load()
-                .migrate();
-    }
+  @PostConstruct
+  public void executeMigration() {
+    Flyway.configure()
+          .dataSource(dataSource)
+          .locations(flywayLocations)
+          .baselineOnMigrate(true)
+          .load()
+          .migrate();
+  }
 }
