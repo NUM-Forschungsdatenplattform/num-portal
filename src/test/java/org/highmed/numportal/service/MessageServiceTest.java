@@ -1,13 +1,14 @@
 package org.highmed.numportal.service;
 
 import org.highmed.numportal.domain.dto.MessageDto;
-import org.highmed.numportal.domain.dto.OrganizationDto;
 import org.highmed.numportal.domain.model.Message;
 import org.highmed.numportal.domain.model.MessageType;
 import org.highmed.numportal.domain.repository.MessageRepository;
 import org.highmed.numportal.mapper.MessageMapper;
+import org.highmed.numportal.service.exception.ResourceNotFound;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -16,7 +17,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.MESSAGE_NOT_FOUND;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -34,21 +37,41 @@ public class MessageServiceTest {
   @InjectMocks
   private MessageService messageService;
 
-  @Test
-  public void createUserMessageTest() {
-    MessageDto messageDto = MessageDto.builder()
+  private MessageDto messageDto;
+  private MessageDto updateMessageDto;
+  private Message message;
+  private Message messageToEdit;
+
+  @Before
+  public void setup() {
+     messageDto = MessageDto.builder()
                                       .title("Other title")
                                       .text("Hier koennte deine Nachricht stehen")
-                                      .startDate(LocalDateTime.now())
                                       .endDate(LocalDateTime.MAX)
                                       .type(MessageType.INFO).build();
-    Message message = Message.builder()
-                                   .title("Other title")
-                                   .text("Hier koennte deine Nachricht stehen")
-                                   .startDate(LocalDateTime.now())
-                                   .endDate(LocalDateTime.MAX)
-                                   .type(MessageType.INFO).build();
+     message = Message.builder()
+                             .title("Other title")
+                             .text("Hier koennte deine Nachricht stehen")
+                             .endDate(LocalDateTime.MAX)
+                             .type(MessageType.INFO).build();
 
+    updateMessageDto = MessageDto.builder()
+                     .title("Neue Serverzeiten")
+                     .text("Serverzeit: 00:00 Uhr - 24:00 Uhr")
+                     .endDate(LocalDateTime.MAX)
+                     .type(MessageType.INFO).build();
+
+    messageToEdit = Message.builder()
+                                  .title("Neue Serverzeiten")
+                                  .text("Serverzeit: 06:00 Uhr - 23:00 Uhr")
+                                  .endDate(LocalDateTime.MAX)
+                                  .type(MessageType.INFO).build();
+
+
+  }
+
+  @Test
+  public void createUserMessageTest() {
     when(messageMapper.convertToEntity(messageDto)).thenReturn(message);
     when(messageRepository.save(message)).thenReturn(message);
     when(messageMapper.convertToDTO(message)).thenReturn(messageDto);
@@ -60,5 +83,13 @@ public class MessageServiceTest {
     Mockito.verify(messageMapper, Mockito.times(1)).convertToDTO(message);
     Mockito.verify(messageRepository, Mockito.times(1)).save(message);
     Mockito.verify(userDetailsService, Mockito.times(1)).checkIsUserApproved(USER_ID);
+  }
+
+  @Test
+  public void updateUserMessageTest() {
+    when(messageRepository.findById(2L)).thenReturn(Optional.ofNullable(messageToEdit));
+    messageService.updateUserMessage(2L, updateMessageDto, USER_ID);
+    Mockito.verify(userDetailsService, Mockito.times(1)).checkIsUserApproved(USER_ID);
+    Mockito.verify(messageRepository, Mockito.times(1)).save(Mockito.any(Message.class));
   }
 }

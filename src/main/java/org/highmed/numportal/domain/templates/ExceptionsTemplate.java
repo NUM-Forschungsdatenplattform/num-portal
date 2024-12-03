@@ -67,6 +67,7 @@ public class ExceptionsTemplate {
   public static final String PROJECT_COHORT_CANNOT_BE_NULL = "Project: %s cohort cannot be null";
   public static final String PROJECT_TEMPLATES_CANNOT_BE_NULL = "Project: %s templates cannot be null";
   public static final String PROJECT_NOT_FOUND = "Project not found: %s";
+  public static final String MESSAGE_NOT_FOUND = "Message not found: %s";
   public static final String CAN_T_FIND_THE_COHORT_BY_ID = "Can't find the cohort by id: %s";
   public static final String AN_ISSUE_HAS_OCCURRED_CANNOT_EXECUTE_AQL = "An issue has occurred, cannot execute aql";
   public static final String ERROR_WHILE_RETRIEVING_DATA = "Error while retrieving data: %s";
@@ -84,6 +85,7 @@ public class ExceptionsTemplate {
   public static final String CANNOT_DELETE_PROJECT = "Cannot delete project: %s";
   public static final String CANNOT_DELETE_PROJECT_INVALID_STATUS = "Cannot delete project: %s, invalid status: %s";
   public static final String CANNOT_UPDATE_PROJECT_INVALID_PROJECT_STATUS = "Cannot update project: %s, invalid project status: %s";
+  public static final String CANNOT_UPDATE_MESSAGE_INVALID = "Cannot update message: %s, invalid: %s";
   public static final String NO_PERMISSIONS_TO_EDIT_THIS_PROJECT = "No permissions to edit this project";
   public static final String CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_OWNER = "Cannot access this resource. User is not owner.";
   public static final String DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY = "Data explorer available for published projects only";

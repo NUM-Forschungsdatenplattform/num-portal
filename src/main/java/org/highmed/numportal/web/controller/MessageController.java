@@ -14,7 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,5 +38,17 @@ public class MessageController {
       @AuthenticationPrincipal @NotNull Jwt principal,
       @Valid @NotNull @RequestBody MessageDto messageDto) {
     return ResponseEntity.ok(messageService.createUserMessage(messageDto, principal.getSubject()));
+  }
+
+  @ContextLog(type = "MessageManagement", description = "Update a message")
+  @PutMapping(value = "/{id}")
+  @Operation(
+      description = "Update a message")
+  @PreAuthorize(Role.CONTENT_ADMIN)
+  public ResponseEntity<MessageDto> updateUserMessage(
+      @PathVariable("id") Long id,
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @Valid @NotNull @RequestBody MessageDto messageDto) {
+    return ResponseEntity.ok(messageService.updateUserMessage(id, messageDto, principal.getSubject()));
   }
 }
