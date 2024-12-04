@@ -86,6 +86,8 @@ public class ExceptionsTemplate {
   public static final String CANNOT_DELETE_PROJECT_INVALID_STATUS = "Cannot delete project: %s, invalid status: %s";
   public static final String CANNOT_UPDATE_PROJECT_INVALID_PROJECT_STATUS = "Cannot update project: %s, invalid project status: %s";
   public static final String CANNOT_UPDATE_MESSAGE_INVALID = "Cannot update message: %s, invalid: %s";
+  public static final String CANNOT_HANDLE_DATE = "Cannot handle date: %s";
+  public static final String CANNOT_DELETE_MESSAGE = "Cannot delete this message: %s";
   public static final String NO_PERMISSIONS_TO_EDIT_THIS_PROJECT = "No permissions to edit this project";
   public static final String CANNOT_ACCESS_THIS_RESOURCE_USER_IS_NOT_OWNER = "Cannot access this resource. User is not owner.";
   public static final String DATA_EXPLORER_AVAILABLE_FOR_PUBLISHED_PROJECTS_ONLY = "Data explorer available for published projects only";

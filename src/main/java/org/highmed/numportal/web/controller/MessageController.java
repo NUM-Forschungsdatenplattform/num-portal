@@ -1,6 +1,7 @@
 package org.highmed.numportal.web.controller;
 
 import org.highmed.numportal.domain.dto.MessageDto;
+import org.highmed.numportal.mapper.MessageMapper;
 import org.highmed.numportal.service.MessageService;
 import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
@@ -10,16 +11,26 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
 
 @RestController
 @AllArgsConstructor
@@ -28,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MessageController {
 
   private final MessageService messageService;
+  private final MessageMapper messageMapper;
 
   @ContextLog(type = "MessageManagement", description = "Create user message")
   @PostMapping()
@@ -40,10 +52,20 @@ public class MessageController {
     return ResponseEntity.ok(messageService.createUserMessage(messageDto, principal.getSubject()));
   }
 
-  @ContextLog(type = "MessageManagement", description = "Update a message")
+  @GetMapping()
+  @Operation(
+      description = "Get list of all pageable user messages sorted default by startdate")
+  @PreAuthorize(Role.CONTENT_ADMIN)
+  public ResponseEntity<Page<MessageDto>> getUserMessages(
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @PageableDefault(size = 100, sort = "startDate") Pageable pageable) {
+    return ResponseEntity.ok(messageService.getMessages(principal.getSubject(), pageable));
+  }
+
+  @ContextLog(type = "MessageManagement", description = "Update a user message")
   @PutMapping(value = "/{id}")
   @Operation(
-      description = "Update a message")
+      description = "Update a user message")
   @PreAuthorize(Role.CONTENT_ADMIN)
   public ResponseEntity<MessageDto> updateUserMessage(
       @PathVariable("id") Long id,
@@ -51,4 +73,30 @@ public class MessageController {
       @Valid @NotNull @RequestBody MessageDto messageDto) {
     return ResponseEntity.ok(messageService.updateUserMessage(id, messageDto, principal.getSubject()));
   }
+
+  @ContextLog(type = "MessageManagement", description = "Extend End date of a user message")
+  @PatchMapping(value = "/{id}")
+  @Operation(
+      description = "Extend End date of a user message")
+  @PreAuthorize(Role.CONTENT_ADMIN)
+  public ResponseEntity<MessageDto> partialUpdateUserMessage(
+      @PathVariable("id") Long id,
+      @AuthenticationPrincipal @NotNull Jwt principal,
+      @Valid @NotNull @RequestParam LocalDateTime endDate) {
+    return ResponseEntity.ok(messageService.partialUpdateUserMessage(id, endDate, principal.getSubject()));
+  }
+
+  @ContextLog(type = "MessageManagement", description = "Delete a user message")
+  @DeleteMapping(value = "/{id}")
+  @Operation(
+      description = "Delete a user message")
+  @PreAuthorize(Role.CONTENT_ADMIN)
+  public ResponseEntity<Void> deleteUserMessage(
+      @PathVariable("id") Long id,
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    messageService.deleteUserMessage(id, principal.getSubject());
+    return ResponseEntity.ok().build();
+  }
 }
+
+

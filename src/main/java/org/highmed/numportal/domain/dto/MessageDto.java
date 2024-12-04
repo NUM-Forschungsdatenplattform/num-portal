@@ -19,17 +19,18 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class MessageDto {
 
-  @NotNull
   Long id;
-
-  private String title;
 
   @NotNull
   @NotEmpty
+  private String title;
+
   private String text;
 
+  @NotNull
   private LocalDateTime startDate;
 
+  @NotNull
   private LocalDateTime endDate;
 
   @NotNull
