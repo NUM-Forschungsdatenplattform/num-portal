@@ -1,21 +1,17 @@
 package org.highmed.numportal.integrationtesting.tests;
 
-import org.highmed.numportal.TestNumPortalApplication;
 import org.highmed.numportal.domain.model.Message;
 import org.highmed.numportal.domain.model.MessageType;
+import org.highmed.numportal.domain.model.admin.UserDetails;
 import org.highmed.numportal.domain.repository.MessageRepository;
+import org.highmed.numportal.domain.repository.UserDetailsRepository;
 import org.highmed.numportal.integrationtesting.security.WithMockNumUser;
 
 import lombok.SneakyThrows;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -25,12 +21,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-    classes = TestNumPortalApplication.class)
-@AutoConfigureMockMvc
-@ActiveProfiles("itest")
 public class MessageControllerIT extends IntegrationTest{
 
   private static final String MESSAGE_PATH = "/message";
