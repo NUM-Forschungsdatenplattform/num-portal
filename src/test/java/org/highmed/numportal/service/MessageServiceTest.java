@@ -6,7 +6,6 @@ import org.highmed.numportal.domain.model.MessageType;
 import org.highmed.numportal.domain.repository.MessageRepository;
 import org.highmed.numportal.mapper.MessageMapper;
 import org.highmed.numportal.service.exception.BadRequestException;
-import org.highmed.numportal.service.exception.ResourceNotFound;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,7 +40,6 @@ public class MessageServiceTest {
   private MessageDto updateMessageDto;
   private Message message;
   private Message messageToEditPlanned;
-  private Message messageToEditActive;
 
   @Before
   public void setup() {
@@ -72,14 +70,6 @@ public class MessageServiceTest {
                                   .startDate(LocalDateTime.now().plusHours(3))
                                   .endDate(LocalDateTime.MAX)
                                   .type(MessageType.INFO).build();
-
-    messageToEditActive = Message.builder()
-                                 .id(3L)
-                                 .title("Neue Serverzeiten")
-                                 .text("Serverzeit: 06:00 Uhr - 23:00 Uhr")
-                                 .startDate(LocalDateTime.now().minusHours(1))
-                                 .endDate(LocalDateTime.MAX.minusHours(1))
-                                 .type(MessageType.INFO).build();
   }
 
   @Test

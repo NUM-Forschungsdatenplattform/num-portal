@@ -42,7 +42,7 @@ public class MessageService {
 
   public Page<MessageDto> getMessages(String userId, Pageable pageable) {
     userDetailsService.checkIsUserApproved(userId);
-    Page<Message> messagePage = messageRepository.findMessages(pageable);
+    Page<Message> messagePage = messageRepository.findAll(pageable);
     return messagePage.map(message -> messageMapper.convertToDTO(message));
   }
 

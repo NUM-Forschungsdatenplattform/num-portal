@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class MessageDto {
 
+  @Schema(accessMode = Schema.AccessMode.READ_ONLY)
   Long id;
 
   @NotNull
