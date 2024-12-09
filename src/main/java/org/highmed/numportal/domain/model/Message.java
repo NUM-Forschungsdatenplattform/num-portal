@@ -32,4 +32,6 @@ public class Message {
 
   private MessageType type;
 
+  private boolean toDelete;
+
 }

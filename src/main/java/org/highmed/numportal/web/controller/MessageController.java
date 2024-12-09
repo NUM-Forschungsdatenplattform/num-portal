@@ -79,11 +79,11 @@ public class MessageController {
   @Operation(
       description = "Extend End date of a user message")
   @PreAuthorize(Role.CONTENT_ADMIN)
-  public ResponseEntity<MessageDto> partialUpdateUserMessage(
+  public ResponseEntity<MessageDto> deleteActiveUserMessage(
       @PathVariable("id") Long id,
-      @AuthenticationPrincipal @NotNull Jwt principal,
-      @Valid @NotNull @RequestParam LocalDateTime endDate) {
-    return ResponseEntity.ok(messageService.partialUpdateUserMessage(id, endDate, principal.getSubject()));
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    messageService.deleteActiveUserMessage(id, principal.getSubject());
+    return ResponseEntity.ok().build();
   }
 
   @ContextLog(type = "MessageManagement", description = "Delete a user message")

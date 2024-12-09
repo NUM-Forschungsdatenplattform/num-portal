@@ -73,19 +73,20 @@ public class MessageService {
     return messageMapper.convertToDTO(savedMessage);
   }
 
-  public MessageDto partialUpdateUserMessage(Long id, LocalDateTime endDate, String userId) {
-    userDetailsService.checkIsUserApproved(userId);
+  public void deleteActiveUserMessage(Long id, String userId) {
     LocalDateTime now = LocalDateTime.now().minusMinutes(5);
-    Message messageToUpdate = messageRepository.findById(id)
+    userDetailsService.checkIsUserApproved(userId);
+    Message messageToDelete = messageRepository.findById(id)
                                                .orElseThrow(() -> new ResourceNotFound(MessageService.class, MESSAGE_NOT_FOUND,
                                                    String.format(MESSAGE_NOT_FOUND, id)));
-    if (isInactiveMessage(messageToUpdate, now) && isPlannedMessage(messageToUpdate, now)) {
-      throw new BadRequestException(MessageService.class, CANNOT_UPDATE_MESSAGE_INVALID,
-          String.format(CANNOT_UPDATE_MESSAGE_INVALID, messageToUpdate, "Message is not active"));
+    // active messages should be marked as deleted
+    if (messageToDelete.getStartDate().isBefore(now) && messageToDelete.getEndDate().isAfter(now)) {
+      messageToDelete.setToDelete(true);
+      messageRepository.save(messageToDelete);
+    } else {
+      throw new BadRequestException(MessageService.class, CANNOT_DELETE_MESSAGE,
+          String.format(CANNOT_DELETE_MESSAGE, messageToDelete.getId()));
     }
-    messageToUpdate.setEndDate(endDate);
-    Message savedMessage = messageRepository.save(messageToUpdate);
-    return messageMapper.convertToDTO(savedMessage);
   }
 
   public void deleteUserMessage(Long id, String userId) {
@@ -109,10 +110,6 @@ public class MessageService {
 
   private static boolean isActiveMessage(MessageDto messageDto, Message messageToUpdate, LocalDateTime now) {
     return messageToUpdate.getStartDate().isBefore(now) && messageDto.getEndDate().isAfter(now);
-  }
-
-  private static boolean isPlannedMessage(Message messageToUpdate, LocalDateTime now) {
-    return messageToUpdate.getStartDate().isAfter(now);
   }
 
   private void validateDates(LocalDateTime startDate, LocalDateTime endDate, LocalDateTime now) {
