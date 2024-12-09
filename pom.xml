@@ -41,6 +41,7 @@
     <mockserver-client.version>5.15.0</mockserver-client.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
     <spring.cloud-version>2023.0.3</spring.cloud-version>
+    <jsoup.version>1.18.3</jsoup.version>
   </properties>
 
   <repositories>
@@ -194,6 +195,11 @@
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>hapi-fhir-jaxrsserver-base</artifactId>
       <version>${hapi.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>${jsoup.version}</version>
     </dependency>
     <dependency>
       <groupId>org.assertj</groupId>
