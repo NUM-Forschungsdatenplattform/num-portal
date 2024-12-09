@@ -9,6 +9,8 @@ import org.highmed.numportal.service.exception.ResourceNotFound;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,24 +28,28 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.MESSAGE_
 @AllArgsConstructor
 public class MessageService {
 
+  private static final Safelist safeList = Safelist.simpleText().addTags("br");
+
   private MessageMapper messageMapper;
   private UserDetailsService userDetailsService;
 
   private MessageRepository messageRepository;
 
   public MessageDto createUserMessage(MessageDto messageDto, String userId) {
-    Message message = messageMapper.convertToEntity(messageDto);
     userDetailsService.checkIsUserApproved(userId);
+    Message message = messageMapper.convertToEntity(messageDto);
+    message.setText(Jsoup.clean(message.getText(), safeList));
     validateDates(message.getStartDate(), message.getEndDate(), LocalDateTime.now().minusMinutes(5));
+
     Message savedMessage = messageRepository.save(message);
 
-    return messageMapper.convertToDTO(savedMessage);
+    return messageMapper.convertToDto(savedMessage);
   }
 
   public Page<MessageDto> getMessages(String userId, Pageable pageable) {
     userDetailsService.checkIsUserApproved(userId);
     Page<Message> messagePage = messageRepository.findAll(pageable);
-    return messagePage.map(message -> messageMapper.convertToDTO(message));
+    return messagePage.map(message -> messageMapper.convertToDto(message));
   }
 
   public MessageDto updateUserMessage(Long id, MessageDto messageDto, String userId) {
@@ -63,14 +69,14 @@ public class MessageService {
       validateDates(messageDto.getStartDate(), messageDto.getEndDate(), now);
 
       messageToUpdate.setTitle(messageDto.getTitle());
-      messageToUpdate.setText(messageDto.getText());
+      messageToUpdate.setText(Jsoup.clean(messageDto.getText(), safeList));
       messageToUpdate.setStartDate(messageDto.getStartDate());
       messageToUpdate.setEndDate(messageDto.getEndDate());
       messageToUpdate.setType(messageDto.getType());
 
     }
     Message savedMessage = messageRepository.save(messageToUpdate);
-    return messageMapper.convertToDTO(savedMessage);
+    return messageMapper.convertToDto(savedMessage);
   }
 
   public void deleteActiveUserMessage(Long id, String userId) {
@@ -81,7 +87,7 @@ public class MessageService {
                                                    String.format(MESSAGE_NOT_FOUND, id)));
     // active messages should be marked as deleted
     if (messageToDelete.getStartDate().isBefore(now) && messageToDelete.getEndDate().isAfter(now)) {
-      messageToDelete.setToDelete(true);
+      messageToDelete.setMarkAsDeleted(true);
       messageRepository.save(messageToDelete);
     } else {
       throw new BadRequestException(MessageService.class, CANNOT_DELETE_MESSAGE,

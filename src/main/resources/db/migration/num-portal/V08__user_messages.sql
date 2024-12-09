@@ -7,5 +7,5 @@ CREATE TABLE message(
                            start_date timestamp NOT NULL,
                            end_date timestamp NOT NULL,
                            type varchar(125) NOT NULL ,
-                           to_delete boolean
+                           mark_as_deleted boolean
 );

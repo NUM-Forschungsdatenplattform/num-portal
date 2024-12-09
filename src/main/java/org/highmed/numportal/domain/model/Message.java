@@ -35,6 +35,6 @@ public class Message implements Serializable {
 
   private MessageType type;
 
-  private boolean toDelete;
+  private boolean markAsDeleted;
 
 }

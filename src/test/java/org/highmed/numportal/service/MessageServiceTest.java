@@ -76,13 +76,13 @@ public class MessageServiceTest {
   public void createUserMessageTest() {
     when(messageMapper.convertToEntity(messageDto)).thenReturn(message);
     when(messageRepository.save(message)).thenReturn(message);
-    when(messageMapper.convertToDTO(message)).thenReturn(messageDto);
+    when(messageMapper.convertToDto(message)).thenReturn(messageDto);
     MessageDto returnMessage = messageService.createUserMessage(messageDto, USER_ID);
 
     Assert.assertEquals(messageDto, returnMessage);
 
     Mockito.verify(messageMapper, Mockito.times(1)).convertToEntity(messageDto);
-    Mockito.verify(messageMapper, Mockito.times(1)).convertToDTO(message);
+    Mockito.verify(messageMapper, Mockito.times(1)).convertToDto(message);
     Mockito.verify(messageRepository, Mockito.times(1)).save(message);
     Mockito.verify(userDetailsService, Mockito.times(1)).checkIsUserApproved(USER_ID);
   }
