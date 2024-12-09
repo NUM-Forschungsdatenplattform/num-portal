@@ -94,11 +94,13 @@ public class MessageService {
     Message messageToDelete = messageRepository.findById(id)
                                                .orElseThrow(() -> new ResourceNotFound(MessageService.class, MESSAGE_NOT_FOUND,
                                                    String.format(MESSAGE_NOT_FOUND, id)));
-    if (messageToDelete.getStartDate().isBefore(now) || messageToDelete.getEndDate().isAfter(now)) {
+    //just planned messages can be deleted
+    if (messageToDelete.getStartDate().isAfter(now)) {
+      messageRepository.deleteById(id);
+    } else {
       throw new BadRequestException(MessageService.class, CANNOT_DELETE_MESSAGE,
           String.format(CANNOT_DELETE_MESSAGE, messageToDelete.getId()));
     }
-    messageRepository.deleteById(id);
   }
 
   private static boolean isInactiveMessage(Message messageToUpdate, LocalDateTime now) {
