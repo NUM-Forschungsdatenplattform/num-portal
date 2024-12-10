@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS message;
-
 CREATE TABLE message
 (
     id              serial PRIMARY KEY,
@@ -9,7 +7,7 @@ CREATE TABLE message
     end_date        timestamp    NOT NULL,
     type            varchar(125) NOT NULL,
     mark_as_deleted boolean,
-    sessionBased    boolean
+    session_based    boolean
 );
 
 CREATE TABLE read_message_by_users

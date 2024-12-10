@@ -47,7 +47,9 @@ public class MessageService {
   public MessageDto createUserMessage(MessageDto messageDto, String userId) {
     userDetailsService.checkIsUserApproved(userId);
     Message message = messageMapper.convertToEntity(messageDto);
-    message.setText(Jsoup.clean(message.getText(), safeList));
+    if (message.getText() != null && !message.getText().isBlank()) {
+      message.setText(Jsoup.clean(message.getText(), safeList));
+    }
     validateDates(message.getStartDate(), message.getEndDate(), LocalDateTime.now().minusMinutes(5));
 
     Message savedMessage = messageRepository.save(message);
@@ -78,7 +80,9 @@ public class MessageService {
       validateDates(messageDto.getStartDate(), messageDto.getEndDate(), now);
 
       messageToUpdate.setTitle(messageDto.getTitle());
-      messageToUpdate.setText(Jsoup.clean(messageDto.getText(), safeList));
+      if (messageToUpdate.getText() != null && !messageToUpdate.getText().isBlank()) {
+        messageToUpdate.setText(Jsoup.clean(messageToUpdate.getText(), safeList));
+      }
       messageToUpdate.setStartDate(messageDto.getStartDate());
       messageToUpdate.setEndDate(messageDto.getEndDate());
       messageToUpdate.setType(messageDto.getType());
@@ -130,6 +134,7 @@ public class MessageService {
                                                     .orElseThrow(() -> new ResourceNotFound(MessageService.class, USER_NOT_FOUND,
                                                         String.format(USER_NOT_FOUND, userId)));
       readMessage.getReadByUsers().add(userDetails);
+      messageRepository.save(readMessage);
     } else {
       throw new ForbiddenException(MessageService.class, CANNOT_ACCESS_THIS_RESOURCE);
     }
