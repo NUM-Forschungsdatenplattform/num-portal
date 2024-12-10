@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @AllArgsConstructor
 @RequestMapping(value = "/message", produces = "application/json")
@@ -90,6 +92,24 @@ public class MessageController {
       @AuthenticationPrincipal @NotNull Jwt principal) {
     messageService.deleteUserMessage(id, principal.getSubject());
     return ResponseEntity.ok().build();
+  }
+
+  @PostMapping(value = "/read/{id}")
+  @Operation(
+      description = "Marked a user message as read by logged in user")
+  public ResponseEntity<Void> markUserMessageAsRead(
+      @PathVariable("id") Long id,
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    messageService.markUserMessageAsRead(id, principal.getSubject());
+    return ResponseEntity.ok().build();
+  }
+
+  @GetMapping(value = "/read")
+  @Operation(
+      description = "Get a list of all not marked and session based user messages that are currently active")
+  public ResponseEntity<List<MessageDto>> getAllDisplayedUserMessages(
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(messageService.getAllDisplayedUserMessages(principal.getSubject()));
   }
 }
 
