@@ -35,6 +35,8 @@ public class Message implements Serializable {
 
   private MessageType type;
 
+  private boolean sessionBased;
+
   private boolean markAsDeleted;
 
 }

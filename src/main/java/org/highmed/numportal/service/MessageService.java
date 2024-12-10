@@ -73,6 +73,7 @@ public class MessageService {
       messageToUpdate.setStartDate(messageDto.getStartDate());
       messageToUpdate.setEndDate(messageDto.getEndDate());
       messageToUpdate.setType(messageDto.getType());
+      messageToUpdate.setSessionBased(messageDto.isSessionBased());
 
     }
     Message savedMessage = messageRepository.save(messageToUpdate);
