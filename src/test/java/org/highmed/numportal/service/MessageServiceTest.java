@@ -3,7 +3,10 @@ package org.highmed.numportal.service;
 import org.highmed.numportal.domain.dto.MessageDto;
 import org.highmed.numportal.domain.model.Message;
 import org.highmed.numportal.domain.model.MessageType;
+import org.highmed.numportal.domain.model.Organization;
+import org.highmed.numportal.domain.model.admin.UserDetails;
 import org.highmed.numportal.domain.repository.MessageRepository;
+import org.highmed.numportal.domain.repository.UserDetailsRepository;
 import org.highmed.numportal.mapper.MessageMapper;
 import org.highmed.numportal.service.exception.BadRequestException;
 
@@ -17,6 +20,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
@@ -28,6 +32,8 @@ public class MessageServiceTest {
 
   @Mock
   private MessageRepository messageRepository;
+  @Mock
+  private UserDetailsRepository userDetailsRepository;
   @Mock
   private MessageMapper messageMapper;
   @Mock
@@ -54,7 +60,8 @@ public class MessageServiceTest {
                      .text("Hier koennte deine Nachricht stehen")
                      .startDate(LocalDateTime.now())
                      .endDate(LocalDateTime.MAX)
-                     .type(MessageType.INFO).build();
+                     .type(MessageType.INFO)
+                     .readByUsers(new ArrayList<>()).build();
 
     updateMessageDto = MessageDto.builder()
                                  .title("Neue Serverzeiten")
@@ -156,6 +163,27 @@ public class MessageServiceTest {
     when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
 
     Assert.assertThrows(BadRequestException.class, () -> messageService.deleteUserMessage(messageId, userId));
+  }
+
+  @Test
+  public void markMessageAsReadTest() {
+    Message readMessage = Message.builder()
+                                 .title("Other title")
+                                 .text("Hier koennte deine Nachricht stehen")
+                                 .startDate(message.getStartDate())
+                                 .endDate(LocalDateTime.MAX)
+                                 .type(MessageType.INFO)
+                                 .readByUsers(new ArrayList<>()).build();
+    UserDetails userDetails = new UserDetails();
+    readMessage.getReadByUsers().add(userDetails);
+    when(messageRepository.findById(1L)).thenReturn(Optional.ofNullable(message));
+    when(userDetailsRepository.findByUserId(USER_ID)).thenReturn(Optional.of(userDetails));
+    when(messageRepository.save(readMessage)).thenReturn(readMessage);
+    messageService.markUserMessageAsRead(1L, USER_ID);
+
+    Mockito.verify(messageRepository, Mockito.times(1)).findById(1L);
+    Mockito.verify(userDetailsRepository, Mockito.times(1)).findByUserId(USER_ID);
+    Mockito.verify(messageRepository, Mockito.times(1)).save(readMessage);
   }
 }
 

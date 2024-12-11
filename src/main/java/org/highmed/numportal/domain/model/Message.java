@@ -1,6 +1,5 @@
 package org.highmed.numportal.domain.model;
 
-import org.highmed.numportal.domain.model.admin.User;
 import org.highmed.numportal.domain.model.admin.UserDetails;
 
 import jakarta.persistence.Entity;
@@ -18,6 +17,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -51,6 +51,6 @@ public class Message implements Serializable {
       name = "read_message_by_users",
       joinColumns = @JoinColumn(name = "message_id"),
       inverseJoinColumns = @JoinColumn(name = "user_details_id"))
-  private List<UserDetails> readByUsers;
+  private List<UserDetails> readByUsers = new ArrayList<>();
 
 }
