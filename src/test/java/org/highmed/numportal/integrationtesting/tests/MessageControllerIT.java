@@ -67,7 +67,7 @@ public class MessageControllerIT extends IntegrationTest {
             .title("Active message")
             .type(MessageType.INFO)
             .startDate(now.minusHours(10))
-            .endDate(now.plusMinutes(5))
+            .endDate(now.plusHours(5))
             .build();
     messageRepository.save(activeMessage);
     Message plannedMessage =
@@ -169,17 +169,20 @@ public class MessageControllerIT extends IntegrationTest {
 
   @Test
   @SneakyThrows
+  @WithMockNumUser(roles = {"RESEARCHER"})
   public void markUserMessageAsReadTest(){
     mockMvc.perform(post(MESSAGE_PATH + "/read/{id}", 2).with(csrf()))
            .andExpect(status().isNoContent());
   }
 
+  @SuppressWarnings("rawtypes")
   @Test
   @SneakyThrows
+  @WithMockNumUser(roles = {"RESEARCHER"})
   public void getAllDisplayedUserMessagesTest(){
     MvcResult result = mockMvc.perform(get(MESSAGE_PATH + "/read").with(csrf()))
            .andExpect(status().isOk()).andReturn();
-    List<UserDetails> readUserMessageList = mapper.readValue(result.getResponse().getContentAsString(), List.class);
+    List readUserMessageList = mapper.readValue(result.getResponse().getContentAsString(), List.class);
     Assert.assertEquals(1, readUserMessageList.size());
   }
 }
