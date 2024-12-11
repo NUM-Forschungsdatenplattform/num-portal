@@ -1,9 +1,14 @@
 package org.highmed.numportal.domain.model;
 
+import org.highmed.numportal.domain.model.admin.UserDetails;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +17,8 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Builder
@@ -35,6 +42,15 @@ public class Message implements Serializable {
 
   private MessageType type;
 
+  private boolean sessionBased;
+
   private boolean markAsDeleted;
+
+  @OneToMany
+  @JoinTable(
+      name = "read_message_by_users",
+      joinColumns = @JoinColumn(name = "message_id"),
+      inverseJoinColumns = @JoinColumn(name = "user_details_id"))
+  private List<UserDetails> readByUsers = new ArrayList<>();
 
 }

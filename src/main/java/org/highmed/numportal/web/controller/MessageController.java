@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,6 +27,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @AllArgsConstructor
@@ -89,7 +92,25 @@ public class MessageController {
       @PathVariable("id") Long id,
       @AuthenticationPrincipal @NotNull Jwt principal) {
     messageService.deleteUserMessage(id, principal.getSubject());
-    return ResponseEntity.ok().build();
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping(value = "/read/{id}")
+  @Operation(
+      description = "Marked a user message as read by logged in user")
+  public ResponseEntity<Void> markUserMessageAsRead(
+      @PathVariable("id") Long id,
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    messageService.markUserMessageAsRead(id, principal.getSubject());
+    return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping(value = "/read")
+  @Operation(
+      description = "Get a list of all not marked and session based user messages that are currently active")
+  public ResponseEntity<List<MessageDto>> getAllDisplayedUserMessages(
+      @AuthenticationPrincipal @NotNull Jwt principal) {
+    return ResponseEntity.ok(messageService.getAllDisplayedUserMessages(principal.getSubject()));
   }
 }
 

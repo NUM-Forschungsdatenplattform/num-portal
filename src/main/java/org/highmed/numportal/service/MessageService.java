@@ -2,9 +2,12 @@ package org.highmed.numportal.service;
 
 import org.highmed.numportal.domain.dto.MessageDto;
 import org.highmed.numportal.domain.model.Message;
+import org.highmed.numportal.domain.model.admin.UserDetails;
 import org.highmed.numportal.domain.repository.MessageRepository;
+import org.highmed.numportal.domain.repository.UserDetailsRepository;
 import org.highmed.numportal.mapper.MessageMapper;
 import org.highmed.numportal.service.exception.BadRequestException;
+import org.highmed.numportal.service.exception.ForbiddenException;
 import org.highmed.numportal.service.exception.ResourceNotFound;
 
 import lombok.AllArgsConstructor;
@@ -16,11 +19,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_ACCESS_THIS_RESOURCE;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_DELETE_MESSAGE;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_HANDLE_DATE;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.CANNOT_UPDATE_MESSAGE_INVALID;
 import static org.highmed.numportal.domain.templates.ExceptionsTemplate.MESSAGE_NOT_FOUND;
+import static org.highmed.numportal.domain.templates.ExceptionsTemplate.USER_NOT_FOUND;
 
 
 @Slf4j
@@ -29,6 +37,7 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.MESSAGE_
 public class MessageService {
 
   private static final Safelist safeList = Safelist.simpleText().addTags("br");
+  private final UserDetailsRepository userDetailsRepository;
 
   private MessageMapper messageMapper;
   private UserDetailsService userDetailsService;
@@ -38,7 +47,9 @@ public class MessageService {
   public MessageDto createUserMessage(MessageDto messageDto, String userId) {
     userDetailsService.checkIsUserApproved(userId);
     Message message = messageMapper.convertToEntity(messageDto);
-    message.setText(Jsoup.clean(message.getText(), safeList));
+    if (message.getText() != null && !message.getText().isBlank()) {
+      message.setText(Jsoup.clean(message.getText(), safeList));
+    }
     validateDates(message.getStartDate(), message.getEndDate(), LocalDateTime.now().minusMinutes(5));
 
     Message savedMessage = messageRepository.save(message);
@@ -69,10 +80,13 @@ public class MessageService {
       validateDates(messageDto.getStartDate(), messageDto.getEndDate(), now);
 
       messageToUpdate.setTitle(messageDto.getTitle());
-      messageToUpdate.setText(Jsoup.clean(messageDto.getText(), safeList));
+      if (messageToUpdate.getText() != null && !messageToUpdate.getText().isBlank()) {
+        messageToUpdate.setText(Jsoup.clean(messageToUpdate.getText(), safeList));
+      }
       messageToUpdate.setStartDate(messageDto.getStartDate());
       messageToUpdate.setEndDate(messageDto.getEndDate());
       messageToUpdate.setType(messageDto.getType());
+      messageToUpdate.setSessionBased(messageDto.isSessionBased());
 
     }
     Message savedMessage = messageRepository.save(messageToUpdate);
@@ -108,6 +122,35 @@ public class MessageService {
       throw new BadRequestException(MessageService.class, CANNOT_DELETE_MESSAGE,
           String.format(CANNOT_DELETE_MESSAGE, messageToDelete.getId()));
     }
+  }
+
+  public void markUserMessageAsRead(Long id, String userId) {
+    LocalDateTime now = LocalDateTime.now();
+    Message readMessage = messageRepository.findById(id)
+                                           .orElseThrow(() -> new ResourceNotFound(MessageService.class, MESSAGE_NOT_FOUND,
+                                               String.format(MESSAGE_NOT_FOUND, id)));
+    if (readMessage.getStartDate().isBefore(now) && readMessage.getEndDate().isAfter(now) && !readMessage.isSessionBased()) {
+      UserDetails userDetails = userDetailsRepository.findByUserId(userId)
+                                                    .orElseThrow(() -> new ResourceNotFound(MessageService.class, USER_NOT_FOUND,
+                                                        String.format(USER_NOT_FOUND, userId)));
+      readMessage.getReadByUsers().add(userDetails);
+      messageRepository.save(readMessage);
+    } else {
+      throw new ForbiddenException(MessageService.class, CANNOT_ACCESS_THIS_RESOURCE);
+    }
+  }
+
+  public List<MessageDto> getAllDisplayedUserMessages(String userId) {
+    UserDetails userDetails = userDetailsRepository.findByUserId(userId)
+                                                   .orElseThrow(() -> new ResourceNotFound(MessageService.class, USER_NOT_FOUND,
+                                                       String.format(USER_NOT_FOUND, userId)));
+    List<Message> notReadByUserMessages = messageRepository.findAllActiveMessagesNotReadByUser(userDetails, LocalDateTime.now());
+    List<MessageDto> notReadByUserMessagesDto = new ArrayList<>();
+    for (Message message : notReadByUserMessages) {
+      MessageDto messageDto = messageMapper.convertToDto(message);
+      notReadByUserMessagesDto.add(messageDto);
+    }
+    return notReadByUserMessagesDto;
   }
 
   private static boolean isInactiveMessage(Message messageToUpdate, LocalDateTime now) {

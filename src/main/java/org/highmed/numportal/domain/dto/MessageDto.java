@@ -37,4 +37,7 @@ public class MessageDto {
   @NotNull
   private MessageType type;
 
+  @NotNull
+  @Schema(description = "Set this value, so that a user message is readable during each session")
+  private boolean sessionBased;
 }
