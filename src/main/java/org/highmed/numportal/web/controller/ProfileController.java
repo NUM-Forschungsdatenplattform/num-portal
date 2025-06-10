@@ -7,6 +7,7 @@ import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/profile", produces = "application/json")
 @AllArgsConstructor
+@ConditionalOnProperty(value = "feature.handle-user", havingValue = "true")
 public class ProfileController extends CustomizedExceptionHandler {
 
   private final UserService userService;

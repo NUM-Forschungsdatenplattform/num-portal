@@ -24,6 +24,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -66,6 +67,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Tag(description = "admin controller operations", name = "admin-controller")
 @SecurityRequirement(name = "security_auth")
+@ConditionalOnProperty(value = "feature.handle-user", havingValue = "true")
 public class AdminController extends CustomizedExceptionHandler {
 
   private static final String SUCCESS_REPLY = "Success";

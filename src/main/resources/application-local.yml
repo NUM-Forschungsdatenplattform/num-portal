@@ -100,7 +100,7 @@ zars:
 num:
   url: http://localhost:8180
   locale: en
-  # if true a second database is configured for attachments - check configs for numportal-attachment
+  # if true, a second database is configured for attachments - check configs for numportal-attachment
   enableAttachmentDatabase: true
 
 user-service:
@@ -108,3 +108,10 @@ user-service:
 
 feature:
   search-by-manager: true
+  handle-user: true
+  working-with-aql: true
+  cohort-explorer: true
+  handle-content: true
+  handle-user-messages: true
+  handle-organization: true
+  handle-project: true

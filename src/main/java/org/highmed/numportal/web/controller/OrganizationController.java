@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/organization", produces = "application/json")
 @AllArgsConstructor
 @SecurityRequirement(name = "security_auth")
+@ConditionalOnProperty(value = "feature.handle-organization", havingValue = "true")
 public class OrganizationController extends CustomizedExceptionHandler {
 
   private final OrganizationService organizationService;

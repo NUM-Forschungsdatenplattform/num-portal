@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -63,6 +64,7 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.PROJECT_
 @AllArgsConstructor
 @RequestMapping(value = "/project", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
+@ConditionalOnProperty(value = "feature.handle-project", havingValue = "true")
 public class ProjectController extends CustomizedExceptionHandler {
 
   private final ProjectService projectService;

@@ -114,3 +114,10 @@ logging:
 
 feature:
   search-by-manager: ${FEATURE_SEARCH_BY_MANAGER}
+  handle-user: ${FEATURE_HANDLE_USER}
+  working-with-aql: ${FEATURE_WORKING_WITH_AQL}
+  cohort-explorer: ${FEATURE_COHORT_EXPLORER}
+  handle-content: ${FEATURE_HANDLE_CONTENT}
+  handle-user-messages: ${FEATURE_HANDLE_USER_MESSAGES}
+  handle-organization: ${FEATURE_HANDLE_ORGANIZATION}
+  handle-project: ${FEATURE_HANDLE_PROJECT}
