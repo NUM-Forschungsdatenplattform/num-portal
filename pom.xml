@@ -17,7 +17,7 @@
   </parent>
 
   <properties>
-    <commons-collections4.version>4.4</commons-collections4.version>
+    <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-io.version>2.18.0</commons-io.version>
     <ehr-sdk.version>2.21.0</ehr-sdk.version>
     <!-- aql-editor-backend-starter repo was archived on August 2023 -->
