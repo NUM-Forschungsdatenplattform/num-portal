@@ -9,11 +9,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class FeatureProperties {
 
   private boolean searchByManager = false;
-  private boolean handleUser = false;
-  private boolean workingWithAql = false;
+  private boolean handleUser = true;
+  private boolean workingWithAql = true;
   private boolean cohortExplorer = true;
-  private boolean handleContent = false;
-  private boolean handleUserMessages = false;
-  private boolean handleOrganization = false;
-  private boolean handleProject = false;
+  private boolean handleContent = true;
+  private boolean handleUserMessages = true;
+  private boolean handleOrganization = true;
+  private boolean handleProject = true;
 }
