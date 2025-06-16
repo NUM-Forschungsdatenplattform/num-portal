@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RequestMapping(value = "/cohort", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
+@ConditionalOnProperty(value = "feature.cohort-explorer", havingValue = "true")
 public class CohortController extends CustomizedExceptionHandler {
 
   private final CohortService cohortService;

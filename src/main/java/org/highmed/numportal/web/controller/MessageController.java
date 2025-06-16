@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -34,6 +35,7 @@ import java.util.List;
 @AllArgsConstructor
 @RequestMapping(value = "/message", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
+@ConditionalOnProperty(value = "feature.handle-user-messages", havingValue = "true")
 public class MessageController {
 
   private final MessageService messageService;

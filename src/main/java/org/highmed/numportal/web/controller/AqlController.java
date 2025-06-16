@@ -22,6 +22,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @RequestMapping(value = "/aql", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
+@ConditionalOnProperty(value = "feature.working-with-aql", havingValue = "true")
 public class AqlController extends CustomizedExceptionHandler {
 
   private final AqlService aqlService;

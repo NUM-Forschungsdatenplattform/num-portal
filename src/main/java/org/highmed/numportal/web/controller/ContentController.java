@@ -22,6 +22,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -43,6 +44,7 @@ import java.util.Map;
 @AllArgsConstructor
 @RequestMapping(value = "/content", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
+@ConditionalOnProperty(value = "feature.handle-content", havingValue = "true")
 public class ContentController extends CustomizedExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(ContentController.class);

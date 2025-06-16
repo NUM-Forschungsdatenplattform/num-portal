@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @TestPropertySource(properties = """
         feature.search-by-manager = false
+
         """)
 public class ManagerControllerFeatureDisabledIT extends IntegrationTest {
 
