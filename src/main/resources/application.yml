@@ -209,10 +209,10 @@ user-service:
 
 feature:
   search-by-manager: false
-  handle-user: false
-  working-with-aql: false
+  handle-user: true
+  working-with-aql: true
   cohort-explorer: true
-  handle-content: false
-  handle-user-messages: false
-  handle-organization: false
-  handle-project: false
+  handle-content: true
+  handle-user-messages: true
+  handle-organization: true
+  handle-project: true
