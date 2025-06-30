@@ -64,7 +64,7 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.PROJECT_
 @AllArgsConstructor
 @RequestMapping(value = "/project", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.handle-project", havingValue = "true")
+@ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
 public class ProjectController extends CustomizedExceptionHandler {
 
   private final ProjectService projectService;

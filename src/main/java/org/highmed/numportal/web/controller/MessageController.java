@@ -35,7 +35,7 @@ import java.util.List;
 @AllArgsConstructor
 @RequestMapping(value = "/message", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.handle-user-messages", havingValue = "true")
+@ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
 public class MessageController {
 
   private final MessageService messageService;

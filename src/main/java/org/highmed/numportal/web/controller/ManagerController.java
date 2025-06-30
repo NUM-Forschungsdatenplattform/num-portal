@@ -3,6 +3,7 @@ package org.highmed.numportal.web.controller;
 import org.highmed.numportal.domain.dto.ManagerProjectDto;
 import org.highmed.numportal.domain.dto.QueryDto;
 import org.highmed.numportal.domain.model.ExportType;
+import org.highmed.numportal.feature.ConditionalOnAnyProperty;
 import org.highmed.numportal.service.ManagerService;
 import org.highmed.numportal.service.ehrbase.EhrBaseService;
 import org.highmed.numportal.service.logger.ContextLog;
@@ -34,13 +35,13 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @AllArgsConstructor
 @RequestMapping(value = "/manager", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.search-by-manager", havingValue = "true")
 public class ManagerController {
 
   private final EhrBaseService ehrBaseService;
   private final ManagerService managerService;
   private final ExportHeaderUtil exportHeaderUtil;
 
+  @ConditionalOnAnyProperty({"feature.search-by-manager", "feature.cohort-explorer"})
   @ContextLog(type = "Manager", description = "Execute AQL queries")
   @PostMapping("/execute/query")
   @Operation(description = "Executes an AQL query")
@@ -52,6 +53,7 @@ public class ManagerController {
     );
   }
 
+  @ConditionalOnAnyProperty({"feature.search-by-manager", "feature.cohort-explorer"})
   @PostMapping("/execute/project")
   @Operation(
       description = "Executes the manager project aql in the cohort returning medical data matching the templates")
@@ -66,6 +68,7 @@ public class ManagerController {
             principal.getSubject()));
   }
 
+  @ConditionalOnAnyProperty({"feature.search-by-manager", "feature.cohort-explorer"})
   @PostMapping(value = "/export")
   @Operation(description = "Executes the cohort default configuration returns the result as a csv file attachment")
   @PreAuthorize(Role.MANAGER)

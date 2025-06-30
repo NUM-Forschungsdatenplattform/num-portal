@@ -107,11 +107,6 @@ user-service:
   delete-users-cron: 0 0 5 * * *
 
 feature:
-  search-by-manager: true
-  handle-user: true
-  working-with-aql: true
+  search-by-manager: false
+  num-portal: true
   cohort-explorer: true
-  handle-content: true
-  handle-user-messages: true
-  handle-organization: true
-  handle-project: true

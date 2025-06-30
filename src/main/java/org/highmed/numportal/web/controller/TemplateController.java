@@ -1,6 +1,7 @@
 package org.highmed.numportal.web.controller;
 
 import org.highmed.numportal.domain.dto.TemplateMetadataDto;
+import org.highmed.numportal.feature.ConditionalOnAnyProperty;
 import org.highmed.numportal.service.TemplateService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
 

@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/organization", produces = "application/json")
 @AllArgsConstructor
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.handle-organization", havingValue = "true")
+@ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
 public class OrganizationController extends CustomizedExceptionHandler {
 
   private final OrganizationService organizationService;

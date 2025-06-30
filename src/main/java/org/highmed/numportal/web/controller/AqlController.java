@@ -8,6 +8,7 @@ import org.highmed.numportal.domain.dto.SlimAqlDto;
 import org.highmed.numportal.domain.model.Aql;
 import org.highmed.numportal.domain.model.AqlCategory;
 import org.highmed.numportal.domain.model.Roles;
+import org.highmed.numportal.feature.ConditionalOnAnyProperty;
 import org.highmed.numportal.mapper.AqlMapper;
 import org.highmed.numportal.service.AqlService;
 import org.highmed.numportal.service.ehrbase.ParameterService;
@@ -48,7 +49,6 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @RequestMapping(value = "/aql", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.working-with-aql", havingValue = "true")
 public class AqlController extends CustomizedExceptionHandler {
 
   private final AqlService aqlService;
@@ -56,6 +56,7 @@ public class AqlController extends CustomizedExceptionHandler {
   private final AqlMapper mapper;
   private final ModelMapper modelMapper;
 
+  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
   @GetMapping("/{id}")
   @Operation(description = "Retrieves public or owned aql query by id.")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
@@ -65,6 +66,7 @@ public class AqlController extends CustomizedExceptionHandler {
         mapper.convertToDto(aqlService.getAqlById(id, principal.getSubject())));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @ContextLog(type = "KriterienManagement", description = "Create AQL criteria")
   @PostMapping()
   @Operation(description = "Creates an aql; the logged in user is assigned as owner of the aql.")
@@ -76,6 +78,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @ContextLog(type = "KriterienManagement", description = "Update AQL criteria")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates an aql; the logged in user is assigned as owner of the aql at creation time")
@@ -89,6 +92,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(mapper.convertToDto(aql));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @ContextLog(type = "KriterienManagement", description = "Delete AQL criteria")
   @DeleteMapping("/{id}")
   @Operation(description = "Delete AQL criteria")
@@ -97,6 +101,7 @@ public class AqlController extends CustomizedExceptionHandler {
     aqlService.deleteById(id, principal.getSubject(), Roles.extractRoles(principal));
   }
 
+  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
   @GetMapping()
   @Operation(description = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
@@ -106,6 +111,7 @@ public class AqlController extends CustomizedExceptionHandler {
                                        .collect(Collectors.toList()));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @GetMapping("/all")
   @Operation(description = "Retrieves a list of visible aqls, all owned by logged in user and all public")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
@@ -118,6 +124,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
 
+  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
   @PostMapping("/size")
   @Operation(description = "Executes an aql and returns the count of matching ehr ids")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)
@@ -125,6 +132,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(aqlService.getAqlSize(aql, principal.getSubject()));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @ContextLog(type = "KriterienManagement", description = "Create AQL category")
   @PostMapping(value = "/category")
   @Operation(description = "Creates a category. If there is an id in the DTO, it is ignored.")
@@ -136,6 +144,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @ContextLog(type = "KriterienManagement", description = "Update AQL category")
   @PutMapping(value = "/category/{id}")
   @Operation(description = "Updates a category. If present, the id in the DTO is ignored.")
@@ -151,6 +160,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(modelMapper.map(aqlCategory, AqlCategoryDto.class));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @ContextLog(type = "KriterienManagement", description = "Delete AQL category")
   @DeleteMapping(value = "/category/{id}")
   @Operation(description = "Delete a category")
@@ -159,6 +169,7 @@ public class AqlController extends CustomizedExceptionHandler {
     aqlService.deleteCategoryById(principal.getSubject(), id);
   }
 
+  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
   @GetMapping(value = "/category")
   @Operation(description = "Retrieves the list of categories.")
   public ResponseEntity<List<AqlCategoryDto>> getAqlCategories() {
@@ -168,6 +179,7 @@ public class AqlController extends CustomizedExceptionHandler {
                   .collect(Collectors.toList()));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @GetMapping(value = "/category/all")
   @Operation(description = "Retrieves the list of categories.")
   public ResponseEntity<Page<AqlCategoryDto>> getAqlCategories(@PageableDefault(size = 50) Pageable pageable, SearchCriteria searchCriteria) {
@@ -182,6 +194,7 @@ public class AqlController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(new PageImpl<>(content, pageable, searchResult.getTotalElements()));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @GetMapping("/parameter/values")
   @Operation(description = "Retrieves a list of possible values for an aql path")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_CRITERIA_EDITOR)

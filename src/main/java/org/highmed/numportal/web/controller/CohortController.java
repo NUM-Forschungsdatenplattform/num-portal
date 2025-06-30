@@ -6,6 +6,7 @@ import org.highmed.numportal.domain.dto.CohortSizeDto;
 import org.highmed.numportal.domain.dto.TemplateSizeRequestDto;
 import org.highmed.numportal.domain.model.Cohort;
 import org.highmed.numportal.domain.model.Roles;
+import org.highmed.numportal.feature.ConditionalOnAnyProperty;
 import org.highmed.numportal.mapper.CohortMapper;
 import org.highmed.numportal.service.CohortService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
@@ -46,13 +47,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RequestMapping(value = "/cohort", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.cohort-explorer", havingValue = "true")
 public class CohortController extends CustomizedExceptionHandler {
 
   private final CohortService cohortService;
 
   private final CohortMapper cohortMapper;
 
+  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
   @GetMapping("{cohortId}")
   @Operation(description = "Retrieves a single cohort.")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -62,6 +63,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohort));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @ContextLog(type = "CohortManagement", description = "Create cohort")
   @PostMapping
   @Operation(description = "Create a cohort")
@@ -73,6 +75,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
+  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
   @ContextLog(type = "CohortManagement", description = "Update cohort")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates a cohort")
@@ -85,6 +88,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
+  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
   @PostMapping("/size")
   @Operation(description = "Retrieves the cohort group size without saving")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
@@ -103,6 +107,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortGroupSize);
   }
 
+  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
   @PostMapping("/size/template")
   @Operation(description = "Retrieves the size of the templates")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
@@ -124,6 +129,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(sizePerTemplate);
   }
 
+  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
   @PostMapping("/size/distribution")
   @Operation(
       description =

@@ -1,6 +1,6 @@
 package org.highmed.numportal.web.controller;
 
-import org.highmed.numportal.properties.FeatureProperties;
+import org.highmed.numportal.feature.FeatureBundles;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/feature", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
 public class FeatureController {
-  FeatureProperties featureProperties;
+  FeatureBundles featureBundles;
 
   @GetMapping
-  @Operation(description = "Get feature flags")
-  public ResponseEntity<FeatureProperties> getFeatureFlags() {
-    return ResponseEntity.ok(featureProperties);
+  @Operation(description = "Get feature bundles")
+  public ResponseEntity<FeatureBundles> getFeatureBundles() {
+    return ResponseEntity.ok(featureBundles);
   }
 }

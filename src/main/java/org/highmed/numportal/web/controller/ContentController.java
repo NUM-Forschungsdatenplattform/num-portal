@@ -44,7 +44,7 @@ import java.util.Map;
 @AllArgsConstructor
 @RequestMapping(value = "/content", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.handle-content", havingValue = "true")
+@ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
 public class ContentController extends CustomizedExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(ContentController.class);
