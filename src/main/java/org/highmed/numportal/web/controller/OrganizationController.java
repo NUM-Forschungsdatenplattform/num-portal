@@ -4,6 +4,7 @@ import org.highmed.numportal.domain.dto.OrganizationDto;
 import org.highmed.numportal.domain.dto.SearchCriteria;
 import org.highmed.numportal.domain.model.Organization;
 import org.highmed.numportal.domain.model.Roles;
+import org.highmed.numportal.feature.ConditionalOnAnyProperty;
 import org.highmed.numportal.mapper.OrganizationMapper;
 import org.highmed.numportal.service.OrganizationService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
@@ -15,7 +16,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/organization", produces = "application/json")
 @AllArgsConstructor
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+@ConditionalOnAnyProperty({"feature.core"})
 public class OrganizationController extends CustomizedExceptionHandler {
 
   private final OrganizationService organizationService;

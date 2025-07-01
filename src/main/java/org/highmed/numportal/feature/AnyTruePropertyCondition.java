@@ -12,11 +12,11 @@ public class AnyTruePropertyCondition implements Condition {
 
   @Override
   public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-    if (!metadata.isAnnotated(AnyTruePropertyCondition.class.getName())) {
+    if (!metadata.isAnnotated(ConditionalOnAnyProperty.class.getName())) {
       return true;
     }
 
-    Map<String, Object> attributes = metadata.getAnnotationAttributes(AnyTruePropertyCondition.class.getName());
+    Map<String, Object> attributes = metadata.getAnnotationAttributes(ConditionalOnAnyProperty.class.getName());
     String[] properties = (String[]) attributes.get("value");
 
     Environment env = context.getEnvironment();

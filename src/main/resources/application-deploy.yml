@@ -113,11 +113,6 @@ logging:
     org.highmed.numportal: ${LOG_LEVEL}
 
 feature:
-  search-by-manager: ${FEATURE_SEARCH_BY_MANAGER}
-  handle-user: ${FEATURE_HANDLE_USER:true}
-  working-with-aql: ${FEATURE_WORKING_WITH_AQL:true}
-  cohort-explorer: ${FEATURE_COHORT_EXPLORER:true}
-  handle-content: ${FEATURE_HANDLE_CONTENT:true}
-  handle-user-messages: ${FEATURE_HANDLE_USER_MESSAGES:true}
-  handle-organization: ${FEATURE_HANDLE_ORGANIZATION:true}
-  handle-project: ${FEATURE_HANDLE_PROJECT:true}
+  search-by-manager: ${FEATURE_SEARCH_BY_MANAGER:false}
+  core: ${FEATURE_CORE:true}
+  cohort-explorer: ${FEATURE_COHORT_EXPLORER:false}

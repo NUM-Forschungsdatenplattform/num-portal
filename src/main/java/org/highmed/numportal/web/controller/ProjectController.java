@@ -9,6 +9,7 @@ import org.highmed.numportal.domain.model.Comment;
 import org.highmed.numportal.domain.model.ExportType;
 import org.highmed.numportal.domain.model.Project;
 import org.highmed.numportal.domain.model.Roles;
+import org.highmed.numportal.feature.ConditionalOnAnyProperty;
 import org.highmed.numportal.mapper.CommentMapper;
 import org.highmed.numportal.mapper.ProjectMapper;
 import org.highmed.numportal.mapper.ProjectViewMapper;
@@ -26,7 +27,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -64,7 +64,7 @@ import static org.highmed.numportal.domain.templates.ExceptionsTemplate.PROJECT_
 @AllArgsConstructor
 @RequestMapping(value = "/project", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+@ConditionalOnAnyProperty({"feature.core"})
 public class ProjectController extends CustomizedExceptionHandler {
 
   private final ProjectService projectService;

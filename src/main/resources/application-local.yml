@@ -108,5 +108,5 @@ user-service:
 
 feature:
   search-by-manager: false
-  num-portal: true
-  cohort-explorer: true
+  core: true
+  cohort-explorer: false

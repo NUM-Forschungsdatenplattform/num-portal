@@ -5,6 +5,7 @@ import org.highmed.numportal.domain.dto.MetricsDto;
 import org.highmed.numportal.domain.dto.NavigationItemDto;
 import org.highmed.numportal.domain.dto.ProjectInfoDto;
 import org.highmed.numportal.domain.model.Roles;
+import org.highmed.numportal.feature.ConditionalOnAnyProperty;
 import org.highmed.numportal.service.ContentService;
 import org.highmed.numportal.service.exception.CustomizedExceptionHandler;
 import org.highmed.numportal.service.logger.ContextLog;
@@ -22,7 +23,6 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,7 +44,7 @@ import java.util.Map;
 @AllArgsConstructor
 @RequestMapping(value = "/content", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+@ConditionalOnAnyProperty({"feature.core"})
 public class ContentController extends CustomizedExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(ContentController.class);

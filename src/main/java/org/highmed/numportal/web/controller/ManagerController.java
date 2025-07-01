@@ -17,7 +17,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.ehrbase.openehr.sdk.response.dto.QueryResponseData;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,13 +34,13 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @AllArgsConstructor
 @RequestMapping(value = "/manager", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
+@ConditionalOnAnyProperty({"feature.search-by-manager", "feature.cohort-explorer"})
 public class ManagerController {
 
   private final EhrBaseService ehrBaseService;
   private final ManagerService managerService;
   private final ExportHeaderUtil exportHeaderUtil;
 
-  @ConditionalOnAnyProperty({"feature.search-by-manager", "feature.cohort-explorer"})
   @ContextLog(type = "Manager", description = "Execute AQL queries")
   @PostMapping("/execute/query")
   @Operation(description = "Executes an AQL query")
@@ -53,7 +52,6 @@ public class ManagerController {
     );
   }
 
-  @ConditionalOnAnyProperty({"feature.search-by-manager", "feature.cohort-explorer"})
   @PostMapping("/execute/project")
   @Operation(
       description = "Executes the manager project aql in the cohort returning medical data matching the templates")
@@ -68,7 +66,6 @@ public class ManagerController {
             principal.getSubject()));
   }
 
-  @ConditionalOnAnyProperty({"feature.search-by-manager", "feature.cohort-explorer"})
   @PostMapping(value = "/export")
   @Operation(description = "Executes the cohort default configuration returns the result as a csv file attachment")
   @PreAuthorize(Role.MANAGER)
@@ -87,3 +84,4 @@ public class ManagerController {
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }
 }
+

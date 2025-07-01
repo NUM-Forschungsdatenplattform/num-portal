@@ -20,7 +20,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -53,7 +52,7 @@ public class CohortController extends CustomizedExceptionHandler {
 
   private final CohortMapper cohortMapper;
 
-  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
+  @ConditionalOnAnyProperty({"feature.core", "feature.cohort-explorer"})
   @GetMapping("{cohortId}")
   @Operation(description = "Retrieves a single cohort.")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER_OR_APPROVER)
@@ -63,7 +62,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohort));
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @ContextLog(type = "CohortManagement", description = "Create cohort")
   @PostMapping
   @Operation(description = "Create a cohort")
@@ -75,7 +74,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @ContextLog(type = "CohortManagement", description = "Update cohort")
   @PutMapping(value = "/{id}")
   @Operation(description = "Updates a cohort")
@@ -88,7 +87,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortMapper.convertToDto(cohortEntity));
   }
 
-  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
+  @ConditionalOnAnyProperty({"feature.core", "feature.cohort-explorer"})
   @PostMapping("/size")
   @Operation(description = "Retrieves the cohort group size without saving")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR_OR_RESEARCHER)
@@ -107,7 +106,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(cohortGroupSize);
   }
 
-  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
+  @ConditionalOnAnyProperty({"feature.core", "feature.cohort-explorer"})
   @PostMapping("/size/template")
   @Operation(description = "Retrieves the size of the templates")
   @PreAuthorize(Role.MANAGER_OR_STUDY_COORDINATOR)
@@ -129,7 +128,7 @@ public class CohortController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(sizePerTemplate);
   }
 
-  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
+  @ConditionalOnAnyProperty({"feature.core", "feature.cohort-explorer"})
   @PostMapping("/size/distribution")
   @Operation(
       description =

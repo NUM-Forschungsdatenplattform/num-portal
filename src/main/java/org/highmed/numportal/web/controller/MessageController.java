@@ -1,6 +1,7 @@
 package org.highmed.numportal.web.controller;
 
 import org.highmed.numportal.domain.dto.MessageDto;
+import org.highmed.numportal.feature.ConditionalOnAnyProperty;
 import org.highmed.numportal.service.MessageService;
 import org.highmed.numportal.service.logger.ContextLog;
 import org.highmed.numportal.web.config.Role;
@@ -10,11 +11,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,7 +34,7 @@ import java.util.List;
 @AllArgsConstructor
 @RequestMapping(value = "/message", produces = "application/json")
 @SecurityRequirement(name = "security_auth")
-@ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+@ConditionalOnAnyProperty({"feature.core"})
 public class MessageController {
 
   private final MessageService messageService;

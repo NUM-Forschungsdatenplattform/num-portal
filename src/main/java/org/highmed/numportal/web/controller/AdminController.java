@@ -25,7 +25,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -82,7 +81,7 @@ public class AdminController extends CustomizedExceptionHandler {
 
   private final NumProperties numProperties;
 
-  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
+  @ConditionalOnAnyProperty({"feature.core", "feature.cohort-explorer"})
   @GetMapping(value = "manuel-url", produces = MediaType.APPLICATION_JSON_VALUE)
   @Operation(description = "Returns value for user manual URL")
   public ResponseEntity<Map<String, Object>> getExternalUrls() {
@@ -91,7 +90,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(map);
   }
 
-  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
+  @ConditionalOnAnyProperty({"feature.core", "feature.cohort-explorer"})
   @GetMapping("/log-level")
   @Operation(description = "Returns the set log level")
   public ResponseEntity<Level> getLogLevel() {
@@ -99,7 +98,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(numLogger.getLevel());
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @PostMapping("/log-level/{logLevel}")
   @Operation(description = "Sets the log level for the backend")
   public ResponseEntity<Level> setLogLevel(@NotNull @PathVariable String logLevel) {
@@ -114,7 +113,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(numLogger.getLevel());
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @ContextLog(type = USER_MANAGEMENT, description = "Delete User")
   @DeleteMapping("user/{userId}")
   @PreAuthorize(Role.SUPER_ADMIN)
@@ -123,14 +122,14 @@ public class AdminController extends CustomizedExceptionHandler {
     userService.deleteUser(userId, principal.getSubject());
   }
 
-  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
+  @ConditionalOnAnyProperty({"feature.core", "feature.cohort-explorer"})
   @GetMapping("user/{userId}")
   @Operation(description = "Retrieves the information about the given user")
   public ResponseEntity<User> getUser(@AuthenticationPrincipal @NotNull Jwt principal, @NotNull @PathVariable String userId) {
     return ResponseEntity.ok(userService.getUserById(userId, true, principal.getSubject()));
   }
 
-  @ConditionalOnAnyProperty({"feature.num-portal", "feature.cohort-explorer"})
+  @ConditionalOnAnyProperty({"feature.core", "feature.cohort-explorer"})
   @GetMapping("user/{userId}/role")
   @Operation(description = "Retrieves the roles of the given user")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN)
@@ -139,7 +138,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(userService.getUserRoles(userId, principal.getSubject()));
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @ContextLog(type = "UserManagement", description = "Update user roles")
   @PostMapping("user/{userId}/role")
   @Operation(description = "Updates the users roles to the given set.")
@@ -152,7 +151,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(updatedRoles);
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @ContextLog(type = "UserManagement", description = "Update user organization")
   @PostMapping("user/{userId}/organization")
   @Operation(description = "Sets the user organization")
@@ -164,7 +163,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @ContextLog(type = "UserManagement", description = "Creates user details")
   @PostMapping("user/{userId}")
   @Operation(description = "Creates user details")
@@ -174,7 +173,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @ContextLog(type = "UserManagement", description = "Update user name", dtoPrint = false)
   @PostMapping("user/{userId}/name")
   @Operation(description = "Changes user name")
@@ -184,7 +183,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @ContextLog(type = "UserManagement", description = "Approve user")
   @PostMapping("user/{userId}/approve")
   @Operation(description = "Adds the given organization to the user")
@@ -194,7 +193,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @GetMapping("user/all")
   @Operation(description = "Retrieves a set of users that match the search string")
   @PreAuthorize(Role.SUPER_ADMIN_OR_ORGANIZATION_ADMIN_OR_STUDY_COORDINATOR)
@@ -207,7 +206,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(userService.searchUsers(principal.getSubject(), Roles.extractRoles(principal), criteria, pageable));
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @ContextLog(type = "UserManagement", description = "Update user active field")
   @PostMapping("user/{userId}/status")
   @Operation(description = "Updates user status for active flag (enabled field in keycloak representation).")
@@ -218,7 +217,7 @@ public class AdminController extends CustomizedExceptionHandler {
     return ResponseEntity.ok(SUCCESS_REPLY);
   }
 
-  @ConditionalOnProperty(value = "feature.num-portal", havingValue = "true")
+  @ConditionalOnAnyProperty({"feature.core"})
   @PostMapping(path = "pseudo/test", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @Operation(description = "Endpoint used for testing 3rd party pseudonyms")
   @PreAuthorize(Role.SUPER_ADMIN)
