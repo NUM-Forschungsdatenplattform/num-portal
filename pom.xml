@@ -41,7 +41,7 @@
     <mockserver-client.version>5.15.0</mockserver-client.version>
     <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
     <spring.cloud-version>2025.0.0</spring.cloud-version>
-    <jsoup.version>1.18.3</jsoup.version>
+    <jsoup.version>1.21.2</jsoup.version>
   </properties>
 
   <repositories>
