@@ -24,7 +24,7 @@
     <num-aql-editor-backend-starter.version>1.0.5</num-aql-editor-backend-starter.version>
     <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
     <logback-classic.version>1.5.17</logback-classic.version>
-    <modelmapper.version>3.2.2</modelmapper.version>
+    <modelmapper.version>3.2.5</modelmapper.version>
     <springdoc.version>2.8.9</springdoc.version>
     <java.version>17</java.version>
     <commons-csv.version>1.13.0</commons-csv.version>
