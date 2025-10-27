@@ -29,17 +29,17 @@ jobs:
           find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/unit-tests/ \;
           find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/test-results/integration-tests/ \;
       - name: Upload test coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-coverage-report
           path: target/site/jacoco-merged-test-coverage-report
       - name: Upload unit tests report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: unit-tests-report
           path: ~/test-results/unit-tests/
       - name: Upload integration tests report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: integration-tests-report
           path: ~/test-results/integration-tests/
