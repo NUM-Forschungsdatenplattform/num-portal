@@ -174,6 +174,11 @@ public class EhrBaseService {
   public List<QueryResponseData> executeRawQuery(AqlQuery aqlDto, Long projectId) {
 
     addSelectSecondlevelPseudonyms(aqlDto);
+
+    if (aqlDto.getLimit() == null && ehrBaseProperties.getLimit() != null) {
+      aqlDto.setLimit(ehrBaseProperties.getLimit());
+    }
+
     String query = AqlRenderer.render(aqlDto);
 
     try {
@@ -200,6 +205,10 @@ public class EhrBaseService {
   }
 
   public QueryResponseData executePlainQuery(String queryString) {
+
+    if (!queryString.toLowerCase().contains("limit ") && ehrBaseProperties.getLimit() != null) {
+      queryString += " LIMIT " + ehrBaseProperties.getLimit();
+    }
 
     NativeQuery<Record> query = Query.buildNativeQuery(queryString);
 

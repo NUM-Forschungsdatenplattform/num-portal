@@ -20,4 +20,6 @@ public class EhrBaseProperties {
   private String adminPassword;
 
   private String idPath = "ehr_status/subject/external_ref/id/value";
+
+  private Long limit;
 }
