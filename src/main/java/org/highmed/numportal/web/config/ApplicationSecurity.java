@@ -39,6 +39,7 @@ public class ApplicationSecurity {
     return (web) ->
         web.ignoring()
            .requestMatchers(AUTH_WHITELIST)
+           .requestMatchers(HttpMethod.GET, "/feature")
            .requestMatchers(HttpMethod.GET, "/content/navigation")
            .requestMatchers(HttpMethod.GET, "/content/cards")
            .requestMatchers(HttpMethod.GET, "/content/metrics")
